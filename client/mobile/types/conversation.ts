@@ -1,5 +1,3 @@
-import { RTCIceCandidate } from "react-native-webrtc";
-
 export interface CreateOnlineConversationRequest {
   novel?: string;
   shortStory?: string;
@@ -36,7 +34,14 @@ export interface ConversationSignalResponse {
 
 type PeerSignal =
   | { type: "offer" | "answer"; sdp: string }
-  | { type: "candidate"; candidate: RTCIceCandidate };
+  | { type: "candidate"; candidate: RTCIceCandidate }
+  | { type: "leave" };
+
+interface RTCIceCandidate {
+  candidate?: string;
+  sdpMLineIndex?: number | null;
+  sdpMid?: string | null;
+}
 
 export interface OnlineConversationDetail {
   id: string;

@@ -16,7 +16,7 @@ import (
 
 func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 	slog.Info("try to make connection")
-	memberIdRaw := r.Header.Get("Sec-WebSocket-Protocol")
+	memberIdRaw := r.Header.Get("X-User-Id")
 	memberId, err := uuid.Parse(memberIdRaw)
 	if err != nil {
 		slog.Error("fail to parse member id from raw string",
@@ -48,7 +48,6 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 		//OriginPatterns:     []string{"example.com"},
-		Subprotocols:       []string{memberIdRaw},
 		InsecureSkipVerify: true,
 	})
 	if err != nil {
@@ -216,17 +215,37 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		to, ok := c.connections[req.ToId]
-		if ok {
-			resp := dto.ConversationSignalResponse{
-				FromIds: []string{memberIdRaw},
-				Signal:  req.Signal,
+		for _, toId := range req.ToIds {
+			to, ok := c.connections[toId]
+			if ok {
+				resp := dto.ConversationSignalResponse{
+					FromIds: []string{memberIdRaw},
+					Signal:  req.Signal,
+				}
+				payload, err := json.Marshal(resp)
+				if err != nil {
+					slog.Error("fail to marshalling conversationSignal",
+						"resp", resp)
+					err = conn.Write(ctx, websocket.MessageText, []byte("fail to marshal"))
+					if err != nil {
+						slog.Error("fail to write payload",
+							"err", err,
+						)
+					}
+					return
+				}
+				err = to.Write(ctx, websocket.MessageText, payload)
+				if err != nil {
+					slog.Error("fail to write payload",
+						"err", err,
+					)
+					return
+				}
+				continue
 			}
-			payload, err := json.Marshal(resp)
+			err = c.service.PublishConversationSignal(memberIdRaw, toId, req.Signal)
 			if err != nil {
-				slog.Error("fail to marshalling conversationSignal",
-					"resp", resp)
-				err = conn.Write(ctx, websocket.MessageText, []byte("fail to marshal"))
+				err = conn.Write(ctx, websocket.MessageText, []byte("fail to publish"))
 				if err != nil {
 					slog.Error("fail to write payload",
 						"err", err,
@@ -234,24 +253,6 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 				}
 				return
 			}
-			err = to.Write(ctx, websocket.MessageText, payload)
-			if err != nil {
-				slog.Error("fail to write payload",
-					"err", err,
-				)
-				return
-			}
-			continue
-		}
-		err = c.service.PublishConversationSignal(memberIdRaw, req.ToId, req.Signal)
-		if err != nil {
-			err = conn.Write(ctx, websocket.MessageText, []byte("fail to publish"))
-			if err != nil {
-				slog.Error("fail to write payload",
-					"err", err,
-				)
-			}
-			return
 		}
 	}
 }

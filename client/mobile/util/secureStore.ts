@@ -1,16 +1,17 @@
 import { deleteItemAsync, getItemAsync, setItemAsync } from "expo-secure-store";
 
-async function saveSecureStore(key: string, value: string): Promise<void> {
+export async function saveSecureStore(
+  key: string,
+  value: string,
+): Promise<void> {
   await setItemAsync(key, value);
 }
 
-async function getSecureStore(key: string) {
-  const value = await getItemAsync(key);
+export async function getSecureStore(key: string): Promise<string> {
+  const value = (await getItemAsync(key)) ?? "";
   return value;
 }
 
-async function deleteSecureStore(key: string) {
+export async function deleteSecureStore(key: string): Promise<void> {
   await deleteItemAsync(key);
 }
-
-export { saveSecureStore, getSecureStore, deleteSecureStore };

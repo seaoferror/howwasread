@@ -1,7 +1,7 @@
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { colors } from "@/constants";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { ConversationSignalResponse } from "@/types/conversation";
 import {
   RTCPeerConnection,
@@ -13,6 +13,19 @@ import {
 
 import { baseUrl, localDevId } from "@/api/axios";
 import { getSecureStore } from "@/util/secureStore";
+
+//Prevent ts compiler kept trying to read dom definition of WebSocket written by Microsoft, which don't have header options
+declare let WebSocket: {
+  prototype: WebSocket;
+  new (
+    url: string,
+    protocols?: string | string[] | null,
+    options?: {
+      headers?: { [header: string]: string };
+      [key: string]: any;
+    } | null,
+  ): WebSocket;
+};
 
 export default function OnlineConversationRoomScreen() {
   const { id: conversationId } = useLocalSearchParams();
@@ -26,42 +39,27 @@ export default function OnlineConversationRoomScreen() {
   const ws = useRef<WebSocket>(null);
   const peers = useRef<Record<string, RTCPeerConnection>>({});
   const localAudio = useRef<MediaStream>(null);
-  const remoteAudio = useRef<Record<string, MediaStream>>({});
-  // const at = useRef<string>("");
+  const remoteAudios = useRef<Record<string, MediaStream>>({});
 
-  const getAudio = async () => {
+  const joinConversation = async () => {
+    console.log("try to connect ws");
+    ws.current = new WebSocket(
+      `ws://${baseUrl.ios}:8080/online/conversation/join?id=${conversationId}`,
+      undefined,
+      {
+        headers: {
+          Authorization: `Bearer ${await getSecureStore("accessToken")}`,
+          "X-User-Id": `${Platform.OS === "ios" ? localDevId.ios : localDevId.android}`,
+        },
+      },
+    );
+    console.log(
+      `ws://${baseUrl.ios}:8080/online/conversation/join?id=${conversationId}`,
+    );
     localAudio.current = await mediaDevices.getUserMedia({
       audio: true,
       video: false,
     });
-  };
-
-  const muteAudio = async () => {
-    if (localAudio.current) {
-      const audioTrack = localAudio.current.getAudioTracks()[0];
-      audioTrack.enabled = !audioTrack.enabled;
-      setMute(!mute);
-    }
-  };
-
-  // const getAccessToken = async () => {
-  //   at.current = (await getSecureStore("accessToken")) ?? "";
-  //   return;
-  // };
-
-  useEffect(() => {
-    // getAccessToken();
-    console.log("try to connect ws");
-    ws.current = new WebSocket(
-      `ws://${baseUrl.ios}:8080/online/conversation/join?id=${conversationId}`,
-      [`${Platform.OS === "ios" ? localDevId.ios : localDevId.android}`],
-    );
-
-    console.log(
-      `ws://${baseUrl.ios}:8080/online/conversation/join?id=${conversationId}`,
-    );
-
-    getAudio();
 
     ws.current.onmessage = async (event) => {
       console.log("get message");
@@ -85,7 +83,7 @@ export default function OnlineConversationRoomScreen() {
               if (event.candidate) {
                 ws.current?.send(
                   JSON.stringify({
-                    toId: fromId,
+                    toIds: [fromId],
                     signal: { type: "candidate", candidate: event.candidate },
                   }),
                 );
@@ -94,11 +92,11 @@ export default function OnlineConversationRoomScreen() {
           );
 
           peers.current[fromId].addEventListener("track", (event: any) => {
-            if (!remoteAudio.current[fromId]) {
-              remoteAudio.current[fromId] = new MediaStream();
+            if (!remoteAudios.current[fromId]) {
+              remoteAudios.current[fromId] = new MediaStream();
             }
             if (event.track) {
-              remoteAudio.current[fromId].addTrack(event.track);
+              remoteAudios.current[fromId].addTrack(event.track);
             }
           });
 
@@ -110,7 +108,7 @@ export default function OnlineConversationRoomScreen() {
           await peers.current[fromId].setLocalDescription(offer);
           ws.current?.send(
             JSON.stringify({
-              toId: fromId,
+              toIds: [fromId],
               signal: peers.current[fromId].localDescription,
             }),
           );
@@ -125,7 +123,7 @@ export default function OnlineConversationRoomScreen() {
         await peers.current[fromId].setLocalDescription(answer);
         ws.current?.send(
           JSON.stringify({
-            toId: fromId,
+            toIds: [fromId],
             signal: peers.current[fromId].localDescription,
           }),
         );
@@ -141,22 +139,59 @@ export default function OnlineConversationRoomScreen() {
         await peers.current[fromId].addIceCandidate(iceCandidate);
         return;
       }
+      if (data.signal.type === "leave") {
+        peers.current[fromId].close();
+        delete peers.current[fromId];
+        remoteAudios.current[fromId].release();
+        delete remoteAudios.current[fromId];
+      }
     };
+  };
+
+  const toggleAudio = () => {
+    if (localAudio.current) {
+      const audioTrack = localAudio.current.getAudioTracks()[0];
+      audioTrack.enabled = !audioTrack.enabled;
+      setMute(!mute);
+    }
+  };
+
+  useFocusEffect(() => {
+    joinConversation();
 
     return () => {
+      ws.current?.send(
+        JSON.stringify({
+          toIds: Object.keys(peers.current),
+          signal: { type: "leave" },
+        }),
+      );
+
+      for (const peer of Object.values(peers.current)) {
+        peer.close();
+      }
       peers.current = {};
+
+      localAudio.current?.release();
       localAudio.current = null;
-      remoteAudio.current = {};
+
+      for (const remoteAudio of Object.values(remoteAudios.current)) {
+        remoteAudio.release();
+      }
+      remoteAudios.current = {};
+
       ws.current?.close();
+      ws.current = null;
     };
-  }, [conversationId]);
+  });
 
   return (
     <View style={styles.container}>
       <View style={styles.content}>
         <Text style={styles.title}></Text>
         <Text style={styles.description}></Text>
-        <Pressable onPress={muteAudio} />
+        <Pressable onPress={toggleAudio} />
+        <Pressable onPress={() => router.replace("/conversation/online")} />
       </View>
     </View>
   );

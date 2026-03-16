@@ -17,7 +17,7 @@ export const axiosInstance = axios.create({
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
-    "X-User-Id": "b7e2c1af-4f3d-4e2a-1c85-2f6b7a1e5d3c",
+    "X-User-Id": `${Platform.OS === "ios" ? localDevId.ios : localDevId.android}`,
   },
 });
 
@@ -27,6 +27,6 @@ export const localDevInstance = axios.create({
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
-    "X-User-Id": "b7e2c1af-4f3d-4e2a-1c85-2f6b7a1e5d3c",
+    "X-User-Id": `${Platform.OS === "ios" ? localDevId.ios : localDevId.android}`,
   },
 });

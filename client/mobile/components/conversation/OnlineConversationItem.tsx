@@ -17,7 +17,7 @@ export default function OnlineConversationItem({
   return (
     <Pressable
       style={styles.container}
-      onPress={() => router.push(`/conversation/online/${conversation.id}`)}
+      onPress={() => router.replace(`/conversation/online/${conversation.id}`)}
     >
       <View
         style={[

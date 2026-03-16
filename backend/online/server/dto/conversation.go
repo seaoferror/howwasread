@@ -40,7 +40,7 @@ type ConversationSignalResponse struct {
 }
 
 type ConversationSignalRequest struct {
-	ToId   string          `json:"toId"`
+	ToIds  []string        `json:"toIds"`
 	Signal json.RawMessage `json:"signal"`
 }
 
