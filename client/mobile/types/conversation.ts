@@ -43,8 +43,16 @@ interface RTCIceCandidate {
   sdpMid?: string | null;
 }
 
-export interface OnlineConversationDetail {
+export interface GetConversationResponse {
   id: string;
-  title: string;
-  leaderId: string;
+  novel?: string;
+  shortStory?: string;
+  poem?: string;
+  play?: string;
+  film?: string;
+  by?: string;
+  rule?: string;
+  when: string;
+  length: string;
+  isModerator: boolean;
 }

@@ -32,7 +32,7 @@ export const queryKey = {
   CONVERSATION: "conversation",
   GET_MY_ID: "getMyId",
   GET_ONLINE_CONVERSATIONS: "getOnlineConversations",
-  JOIN_ONLINE_CONVERSATION: "joinOnlineConversation",
+  GET_ONLINE_CONVERSATION: "getOnlineConversation",
 };
 
 export const time = {

@@ -174,6 +174,11 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 	for {
 		ctx := context.Background()
 		msgType, data, err := conn.Read(ctx)
+		if websocket.CloseStatus(err) != -1 {
+			slog.Error("Connection closed",
+				"err", err)
+			return
+		}
 		if msgType != websocket.MessageText {
 			slog.Error("incorrect message type",
 				"msgType", msgType,
@@ -183,11 +188,6 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 				slog.Error("fail to write payload",
 					"err", err)
 			}
-			return
-		}
-		if websocket.CloseStatus(err) != -1 {
-			slog.Error("Connection closed",
-				"err", err)
 			return
 		}
 		if err != nil {

@@ -2,7 +2,7 @@ import { axiosInstance } from "@/api/axios";
 import {
   ConversationFeedResponse,
   CreateOnlineConversationRequest,
-  OnlineConversationDetail,
+  GetConversationResponse,
 } from "@/types/conversation";
 
 export async function getOnlineConversations(
@@ -15,9 +15,9 @@ export async function getOnlineConversations(
   return data;
 }
 
-export async function joinOnlineConversation(
+export async function getOnlineConversation(
   id: string,
-): Promise<OnlineConversationDetail> {
+): Promise<GetConversationResponse> {
   const { data } = await axiosInstance.get(`/online/conversation?id=${id}`);
   return data;
 }

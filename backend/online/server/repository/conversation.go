@@ -140,3 +140,15 @@ func (r *Repository) RemoveParticipant(ctx context.Context, conversationId bson.
 	}
 	return nil
 }
+
+func (r *Repository) GetConversation(ctx context.Context, conversationId bson.ObjectID) (*document.Conversation, error) {
+	opts := options.FindOne().SetProjection(bson.M{"p_ids": 0, "r_ids": 0})
+
+	var d document.Conversation
+	err := r.db.Collection("conversation").FindOne(ctx, bson.M{"_id": conversationId}, opts).Decode(&d)
+	if err != nil {
+		slog.Error("fail to find conversation", "err", err)
+		return nil, err
+	}
+	return &d, nil
+}

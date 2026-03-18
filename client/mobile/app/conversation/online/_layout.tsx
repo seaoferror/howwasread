@@ -8,6 +8,7 @@ export default function OnlineLayout() {
         options={{
           title: "Online conversation",
           headerShown: true,
+          animation: "slide_from_left",
         }}
       />
       <Stack.Screen
@@ -15,6 +16,14 @@ export default function OnlineLayout() {
         options={{
           title: "Create your online conversation",
           headerShown: true,
+        }}
+      />
+      <Stack.Screen
+        name="[id]"
+        options={{
+          title: "",
+          headerShown: false,
+          animation: "none",
         }}
       />
     </Stack>

@@ -35,7 +35,7 @@ type ConversationFeedResponse struct {
 }
 
 type ConversationSignalResponse struct {
-	FromIds []string        `json:"fromIds,omitempty"`
+	FromIds []string        `json:"fromIds"`
 	Signal  json.RawMessage `json:"signal,omitempty"`
 }
 
@@ -48,4 +48,19 @@ type ConversationSignalMessage struct {
 	FromId string          `json:"fromId"`
 	ToId   string          `json:"toId"`
 	Signal json.RawMessage `json:"signal,omitempty"`
+}
+
+type GetConversationResponse struct {
+	Id         string    `json:"id"`
+	Novel      string    `json:"novel,omitempty"`
+	ShortStory string    `json:"shortStory,omitempty"`
+	Poem       string    `json:"poem,omitempty"`
+	Play       string    `json:"play,omitempty"`
+	Film       string    `json:"film,omitempty"`
+	By         string    `json:"by,omitempty"`
+	Rule       string    `json:"rule,omitempty"`
+	When       time.Time `json:"when"`
+	Length     string    `json:"length"`
+
+	IsModerator bool `json:"isModerator"`
 }

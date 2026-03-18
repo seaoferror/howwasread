@@ -82,7 +82,8 @@
           "enableBackgroundPlayback": true,
           "enableBackgroundRecording": true
         }
-      ]
+      ],
+      "expo-sqlite"
     ],
     "experiments": {
       "typedRoutes": true,

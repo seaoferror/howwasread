@@ -1,4 +1,11 @@
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Platform,
+  Pressable,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { colors } from "@/constants";
 import { useRef, useState } from "react";
@@ -13,6 +20,9 @@ import {
 
 import { baseUrl, localDevId } from "@/api/axios";
 import { getSecureStore } from "@/util/secureStore";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { Feather } from "@expo/vector-icons";
+import { useGetOnlineConversation } from "@/hooks/useConversation";
 
 //Prevent ts compiler kept trying to read dom definition of WebSocket written by Microsoft, which don't have header options
 declare let WebSocket: {
@@ -29,11 +39,11 @@ declare let WebSocket: {
 
 export default function OnlineConversationRoomScreen() {
   const { id: conversationId } = useLocalSearchParams();
-  // const {
-  //   data: conversation,
-  //   isPending,
-  //   isError,
-  // } = useJoinOnlineConversation(String(roomId));
+  const {
+    data: conversation,
+    isPending,
+    isError,
+  } = useGetOnlineConversation(String(conversationId));
 
   const [mute, setMute] = useState(true);
   const ws = useRef<WebSocket>(null);
@@ -113,6 +123,7 @@ export default function OnlineConversationRoomScreen() {
             }),
           );
         }
+        //TODO: may be setPending false and make clean up possible in this point
         return;
       }
       const fromId = data.fromIds[0];
@@ -186,20 +197,51 @@ export default function OnlineConversationRoomScreen() {
   });
 
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}></Text>
-        <Text style={styles.description}></Text>
-        <Pressable onPress={toggleAudio} />
-        <Pressable onPress={() => router.replace("/conversation/online")} />
+    <SafeAreaView style={styles.container}>
+      <View style={styles.headerRow}>
+        <View style={styles.exitButton}>
+          <Feather
+            name="arrow-left"
+            size={28}
+            color={colors.BLACK}
+            onPress={() => router.replace("/conversation/online")}
+          />
+        </View>
       </View>
-    </View>
+      <View style={styles.participantContainer}>
+        <View style={styles.content} />
+        <View style={styles.controls}>
+          <Pressable style={styles.muteButton} onPress={toggleAudio}>
+            <Text style={styles.muteText}>{mute ? "Unmute" : "Mute"}</Text>
+          </Pressable>
+        </View>
+      </View>
+      <View style={styles.chatContainer}></View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { backgroundColor: colors.SAND_110 },
+  container: {
+    flex: 1,
+    backgroundColor: colors.SAND_110,
+  },
+  headerRow: {
+    marginBottom: 8,
+    paddingHorizontal: 16,
+    gap: 8,
+    backgroundColor: colors.SAND_110,
+    flexDirection: "row",
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+    height: 44,
+  },
+  exitButton: {
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   content: {
+    flex: 1,
     padding: 16,
   },
   title: {
@@ -213,4 +255,28 @@ const styles = StyleSheet.create({
     color: colors.BLACK,
     marginBottom: 14,
   },
+  participantContainer: {
+    flex: 1,
+  },
+  controls: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+  },
+  muteButton: {
+    backgroundColor: colors.SAND_110,
+    borderWidth: 1,
+    borderColor: colors.BLACK,
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+  },
+  muteText: {
+    color: colors.BLACK,
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  chatContainer: {},
 });

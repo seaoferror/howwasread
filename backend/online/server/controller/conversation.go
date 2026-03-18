@@ -9,12 +9,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func conversationRouter(c *Controller) {
 	c.Router(POST, "/online/conversation/create", c.createConversation)
 	c.Router(GET, "/online/conversation/list", c.getConversations)
 	c.Router(GET, "/online/conversation/join", c.joinConversation)
+	c.Router(GET, "/online/conversation", c.getConversation)
 }
 
 func (c *Controller) createConversation(w http.ResponseWriter, r *http.Request) {
@@ -135,6 +137,55 @@ func (c *Controller) getConversations(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			slog.Error("fail to write response body",
 				"err", err)
+		}
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(result)
+	if err != nil {
+		slog.Error("fail to write response body",
+			"err", err)
+	}
+}
+
+func (c *Controller) getConversation(w http.ResponseWriter, r *http.Request) {
+	memberIdRaw := r.Header.Get("X-User-Id")
+	memberId, err := uuid.Parse(memberIdRaw)
+	if err != nil {
+		slog.Error("fail to parse member id from raw string",
+			"err", err,
+			"memberIdRaw", memberIdRaw)
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		_, err = w.Write([]byte("incorrect header"))
+		if err != nil {
+			slog.Error("fail to write response body",
+				"err", err,
+			)
+		}
+		return
+	}
+	conversationIdRaw := r.URL.Query().Get("id")
+	conversationId, err := bson.ObjectIDFromHex(conversationIdRaw)
+	if err != nil {
+		slog.Error("fail to parse conversation object id from raw string",
+			"conversationIdRaw", conversationIdRaw)
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		_, err = w.Write([]byte("incorrect param"))
+		if err != nil {
+			slog.Error("fail to write response body",
+				"err", err,
+			)
+		}
+		return
+	}
+	result, err := c.service.GetConversation(r.Context(), conversationId, memberId)
+	if err != nil {
+		w.WriteHeader(getStatusCode(err))
+		_, err = w.Write([]byte(err.Error()))
+		if err != nil {
+			slog.Error("fail to write response body",
+				"err", err,
+			)
 		}
 		return
 	}

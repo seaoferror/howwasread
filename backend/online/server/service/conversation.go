@@ -94,7 +94,7 @@ func (s *Service) GetConversations(ctx context.Context, memberId uuid.UUID, page
 	return resp, nil
 }
 
-func (s *Service) GetParticipants(ctx context.Context, conversationId bson.ObjectID, myId uuid.UUID) (pids []string, err error) {
+func (s *Service) GetParticipants(ctx context.Context, conversationId bson.ObjectID, memberId uuid.UUID) (pids []string, err error) {
 	pidsRaw, err := s.repository.GetParticipants(ctx, conversationId)
 	if err != nil {
 		return nil, err
@@ -107,7 +107,7 @@ func (s *Service) GetParticipants(ctx context.Context, conversationId bson.Objec
 				"pidRaw.Data", pidRaw.Data)
 			return nil, err
 		}
-		if myId == pid {
+		if memberId == pid {
 			continue
 		}
 		pids = append(pids, pid.String())
@@ -151,4 +151,34 @@ func (s *Service) PublishConversationSignal(fromId, toId string, data []byte) er
 	}
 
 	return nil
+}
+
+func (s *Service) GetConversation(ctx context.Context, conversationId bson.ObjectID, memberId uuid.UUID) (*dto.GetConversationResponse, error) {
+	c, err := s.repository.GetConversation(ctx, conversationId)
+	if err != nil {
+		return nil, err
+	}
+	var isModerator bool
+	for _, m := range c.ModeratorIds {
+		if bytes.Equal(m.Data, memberId[:]) {
+			isModerator = true
+			break
+		}
+	}
+
+	resp := dto.GetConversationResponse{
+		Id:          c.Id.Hex(),
+		Novel:       c.Novel,
+		ShortStory:  c.ShortStory,
+		Poem:        c.Poem,
+		Play:        c.Play,
+		Film:        c.Film,
+		By:          c.By,
+		Rule:        c.Rule,
+		When:        c.When,
+		Length:      c.Length.String(),
+		IsModerator: isModerator,
+	}
+
+	return &resp, nil
 }
