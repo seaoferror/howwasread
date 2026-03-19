@@ -17,7 +17,24 @@ export default function OnlineConversationItem({
   return (
     <Pressable
       style={styles.container}
-      onPress={() => router.replace(`/conversation/online/${conversation.id}`)}
+      onPress={() =>
+        router.replace({
+          pathname: `/conversation/online/[id]`,
+          params: {
+            id: conversation.id,
+            novel: conversation.novel ?? "",
+            shortStory: conversation.shortStory ?? "",
+            poem: conversation.poem ?? "",
+            play: conversation.play ?? "",
+            film: conversation.film ?? "",
+            rule: conversation.rule ?? "",
+            by: conversation.by ?? "",
+            when: conversation.when,
+            length: conversation.length,
+            isModerator: conversation.isModerator ? "true" : "",
+          },
+        })
+      }
     >
       <View
         style={[
@@ -59,6 +76,9 @@ export default function OnlineConversationItem({
         )}
         {conversation.film && (
           <Text style={styles.detail}>Film: {conversation.film}</Text>
+        )}
+        {conversation.by && (
+          <Text style={styles.detail}>By: {conversation.by}</Text>
         )}
         {conversation.rule ? (
           <View>

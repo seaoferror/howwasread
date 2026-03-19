@@ -1,12 +1,5 @@
-import {
-  Platform,
-  Pressable,
-  StatusBar,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
-import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { useFocusEffect, useLocalSearchParams } from "expo-router";
 import { colors } from "@/constants";
 import { useRef, useState } from "react";
 import { ConversationSignalResponse } from "@/types/conversation";
@@ -17,12 +10,10 @@ import {
   mediaDevices,
   MediaStream,
 } from "react-native-webrtc";
-
 import { baseUrl, localDevId } from "@/api/axios";
 import { getSecureStore } from "@/util/secureStore";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Feather } from "@expo/vector-icons";
-import { useGetOnlineConversation } from "@/hooks/useConversation";
+import OnlineConversationRoomHeader from "@/components/conversation/OnlineConversationRoomHeader";
 
 //Prevent ts compiler kept trying to read dom definition of WebSocket written by Microsoft, which don't have header options
 declare let WebSocket: {
@@ -38,12 +29,19 @@ declare let WebSocket: {
 };
 
 export default function OnlineConversationRoomScreen() {
-  const { id: conversationId } = useLocalSearchParams();
   const {
-    data: conversation,
-    isPending,
-    isError,
-  } = useGetOnlineConversation(String(conversationId));
+    id: conversationId,
+    novel,
+    shortStory,
+    poem,
+    play,
+    film,
+    by,
+    rule,
+    when,
+    length,
+    isModerator,
+  } = useLocalSearchParams();
 
   const [mute, setMute] = useState(true);
   const ws = useRef<WebSocket>(null);
@@ -198,16 +196,17 @@ export default function OnlineConversationRoomScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.headerRow}>
-        <View style={styles.exitButton}>
-          <Feather
-            name="arrow-left"
-            size={28}
-            color={colors.BLACK}
-            onPress={() => router.replace("/conversation/online")}
-          />
-        </View>
-      </View>
+      <OnlineConversationRoomHeader
+        novel={String(novel)}
+        shortStory={String(shortStory)}
+        poem={String(poem)}
+        play={String(play)}
+        film={String(film)}
+        by={String(by)}
+        rule={String(rule)}
+        when={String(when)}
+        length={String(length)}
+      />
       <View style={styles.participantContainer}>
         <View style={styles.content} />
         <View style={styles.controls}>
@@ -225,20 +224,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.SAND_110,
-  },
-  headerRow: {
-    marginBottom: 8,
-    paddingHorizontal: 16,
-    gap: 8,
-    backgroundColor: colors.SAND_110,
-    flexDirection: "row",
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
-    height: 44,
-  },
-  exitButton: {
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
   },
   content: {
     flex: 1,
