@@ -58,15 +58,17 @@ func (s *Service) GetConversations(ctx context.Context, memberId uuid.UUID, page
 	}
 	for _, item := range items {
 		var isModerator bool
+		var isRegistrant bool
 		for _, mId := range item.ModeratorIds {
 			if bytes.Equal(mId.Data, memberId[:]) {
 				isModerator = true
+				break
 			}
 		}
-		var isRegistrant bool
 		for _, pId := range item.RegistrantIds {
 			if bytes.Equal(pId.Data, memberId[:]) {
 				isRegistrant = true
+				break
 			}
 		}
 		var ongoing bool
@@ -83,6 +85,7 @@ func (s *Service) GetConversations(ctx context.Context, memberId uuid.UUID, page
 			Film:         item.Film,
 			By:           item.By,
 			Rule:         item.Rule,
+			Capacity:     item.Capacity,
 			When:         item.When,
 			Length:       item.Length.String(),
 			Ongoing:      ongoing,

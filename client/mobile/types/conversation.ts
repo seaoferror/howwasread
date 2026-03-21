@@ -11,7 +11,7 @@ export interface CreateOnlineConversationRequest {
   length: string;
 }
 
-export interface ConversationFeedResponse {
+export interface OnlineConversationFeedResponse {
   id: string;
   novel?: string;
   shortStory?: string;
@@ -20,6 +20,7 @@ export interface ConversationFeedResponse {
   film?: string;
   by?: string;
   rule?: string;
+  capacity: number;
   when: string;
   length: string;
   ongoing: boolean;
@@ -43,16 +44,10 @@ interface RTCIceCandidate {
   sdpMid?: string | null;
 }
 
-export interface GetConversationResponse {
-  id: string;
-  novel?: string;
-  shortStory?: string;
-  poem?: string;
-  play?: string;
-  film?: string;
-  by?: string;
-  rule?: string;
-  when: string;
-  length: string;
-  isModerator: boolean;
+export type SeatCoordinate = { left: number; top: number };
+
+export interface SeatAssignment {
+  id?: string;
+  left: number;
+  top: number;
 }

@@ -14,9 +14,8 @@ export default function CapacityInput() {
           if (data === undefined) {
             return "capacity is required";
           }
-
-          if (Number.isNaN(data) || data <= 0) {
-            return "capacity should be more than 0";
+          if (Number.isNaN(data) || data >= 7 || data <= 1) {
+            return "capacity should be a number between 2 and 6";
           }
         },
       }}
@@ -24,7 +23,7 @@ export default function CapacityInput() {
         <InputField
           variant="standard"
           label="Capacity"
-          placeholder="6"
+          placeholder="5"
           inputMode="numeric"
           maxLength={3}
           returnKeyType="done"

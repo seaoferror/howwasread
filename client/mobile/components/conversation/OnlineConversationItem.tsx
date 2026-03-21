@@ -1,11 +1,11 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors } from "@/constants";
 import { router } from "expo-router";
-import { ConversationFeedResponse } from "@/types/conversation";
+import { OnlineConversationFeedResponse } from "@/types/conversation";
 import { useAuth } from "@/hooks/useAuth";
 
 interface OnlineConversationItemProps {
-  conversation: ConversationFeedResponse;
+  conversation: OnlineConversationFeedResponse;
 }
 
 export default function OnlineConversationItem({
@@ -27,8 +27,9 @@ export default function OnlineConversationItem({
             poem: conversation.poem ?? "",
             play: conversation.play ?? "",
             film: conversation.film ?? "",
-            rule: conversation.rule ?? "",
             by: conversation.by ?? "",
+            rule: conversation.rule ?? "",
+            capacity: conversation.capacity,
             when: conversation.when,
             length: conversation.length,
             isModerator: conversation.isModerator ? "true" : "",

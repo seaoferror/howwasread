@@ -1,13 +1,12 @@
 import { axiosInstance } from "@/api/axios";
 import {
-  ConversationFeedResponse,
   CreateOnlineConversationRequest,
-  GetConversationResponse,
+  OnlineConversationFeedResponse,
 } from "@/types/conversation";
 
 export async function getOnlineConversations(
   page = 1,
-): Promise<ConversationFeedResponse[]> {
+): Promise<OnlineConversationFeedResponse[]> {
   const { data } = await axiosInstance.get(
     `/online/conversation/list?page=${page}`,
   );
@@ -15,9 +14,9 @@ export async function getOnlineConversations(
   return data;
 }
 
-export async function getOnlineConversation(
+export async function getOnlineConversationPreAssignedIds(
   id: string,
-): Promise<GetConversationResponse> {
+): Promise<string[]> {
   const { data } = await axiosInstance.get(`/online/conversation?id=${id}`);
   return data;
 }

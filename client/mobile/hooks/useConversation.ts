@@ -2,7 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import {
   getOnlineConversations,
   createOnlineConversation,
-  getOnlineConversation,
+  getOnlineConversationPreAssignedIds,
 } from "@/api/conversation";
 import { queryKey } from "@/constants";
 import { AxiosError } from "axios";
@@ -21,10 +21,14 @@ export function useGetInfiniteOnlineConversations() {
   });
 }
 
-export function useGetOnlineConversation(id: string) {
+export function useGetOnlineConversationPreAssignedIds(id: string) {
   return useQuery({
-    queryFn: () => getOnlineConversation(id),
-    queryKey: [queryKey.CONVERSATION, queryKey.GET_ONLINE_CONVERSATION, id],
+    queryFn: () => getOnlineConversationPreAssignedIds(id),
+    queryKey: [
+      queryKey.CONVERSATION,
+      queryKey.GET_ONLINE_CONVERSATION_PRE_ASSIGNED_IDS,
+      id,
+    ],
     enabled: Boolean(id),
   });
 }

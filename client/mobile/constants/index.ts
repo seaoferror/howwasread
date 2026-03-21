@@ -1,3 +1,5 @@
+import { SeatCoordinate } from "@/types/conversation";
+
 export const colors = {
   WHITE: "#FFF",
   BLACK: "#000",
@@ -32,9 +34,51 @@ export const queryKey = {
   CONVERSATION: "conversation",
   GET_MY_ID: "getMyId",
   GET_ONLINE_CONVERSATIONS: "getOnlineConversations",
-  GET_ONLINE_CONVERSATION: "getOnlineConversation",
+  GET_ONLINE_CONVERSATION_PRE_ASSIGNED_IDS:
+    "getOnlineConversationPreAssignedIds",
 };
 
 export const time = {
   TEN_MINUTES: 10 * 60 * 1000,
+};
+
+export const SEAT_COORDINATES: Record<number, SeatCoordinate[]> = {
+  2: [
+    { left: 34, top: 50 },
+    { left: 66, top: 50 },
+  ],
+  3: [
+    { left: 50, top: 16 },
+    { left: 24, top: 68 },
+    { left: 76, top: 68 },
+  ],
+  4: [
+    { left: 50, top: 14 },
+    { left: 78, top: 50 },
+    { left: 50, top: 86 },
+    { left: 22, top: 50 },
+  ],
+  5: [
+    { left: 50, top: 12 },
+    { left: 74, top: 34 },
+    { left: 64, top: 76 },
+    { left: 36, top: 76 },
+    { left: 26, top: 34 },
+  ],
+  6: [
+    { left: 50, top: 12 },
+    { left: 74, top: 30 },
+    { left: 74, top: 70 },
+    { left: 50, top: 88 },
+    { left: 26, top: 70 },
+    { left: 26, top: 30 },
+  ],
+};
+
+export const SEAT_FILL_ORDER: Record<number, number[]> = {
+  2: [0, 1],
+  3: [0, 1, 2],
+  4: [0, 2, 1, 3],
+  5: [0, 3, 1, 4, 2],
+  6: [0, 3, 1, 5, 2, 4],
 };

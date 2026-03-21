@@ -27,6 +27,7 @@ type ConversationFeedResponse struct {
 	Film         string    `json:"film,omitempty"`
 	By           string    `json:"by,omitempty"`
 	Rule         string    `json:"rule,omitempty"`
+	Capacity     int       `json:"capacity"`
 	When         time.Time `json:"when"`
 	Length       string    `json:"length"`
 	Ongoing      bool      `json:"ongoing"`

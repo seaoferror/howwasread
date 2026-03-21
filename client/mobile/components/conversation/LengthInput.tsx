@@ -16,8 +16,8 @@ export default function LengthInput() {
           }
 
           const length = Number(data);
-          if (Number.isNaN(length) || length <= 0) {
-            return "length should be more than 0";
+          if (Number.isNaN(length) || length <= 19 || length >= 181) {
+            return "length should be a number between 20 and 180";
           }
         },
       }}
