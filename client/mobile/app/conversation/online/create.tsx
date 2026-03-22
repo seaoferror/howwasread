@@ -35,7 +35,7 @@ interface FormValue {
   film?: string;
   by?: string;
   rule?: string;
-  capacity: number;
+  capacity: string;
   year: string;
   monthDay: string;
   hour: string;
@@ -57,7 +57,7 @@ export default function OnlineConversationCreateScreen() {
       film: "",
       by: "",
       rule: "",
-      capacity: 6,
+      capacity: "6",
       year: String(now.getFullYear()),
       monthDay: `${now.getMonth() + 1}.${now.getDate()}`,
       hour: String(now.getHours()),
@@ -100,7 +100,7 @@ export default function OnlineConversationCreateScreen() {
         film: film,
         by: by,
         rule: rule,
-        capacity: capacity,
+        capacity: Number(capacity),
         when: when,
         length: `${length}m0s`,
       },
