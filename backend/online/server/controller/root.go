@@ -30,6 +30,7 @@ func NewController(s *service.Service, m *http.ServeMux) *Controller {
 	}
 
 	conversationRouter(c)
+	profileRouter(c)
 
 	return c
 }

@@ -2,20 +2,20 @@ import { Controller, useFormContext } from "react-hook-form";
 import InputField from "@/components/InputField";
 import { StyleSheet } from "react-native";
 
-export default function NicknameInput() {
+export default function NameInput() {
   const { control } = useFormContext();
 
   return (
     <Controller
-      name="nickname"
+      name="name"
       control={control}
       rules={{
         validate: (data: string) => {
-          if (!data || data.trim().length <= 4) {
-            return "name should be more than 4 characters";
+          if (!data || data.trim().length <= 1) {
+            return "name should be more than 1 characters";
           }
           if (!/^[A-Za-z ]+$/.test(data)) {
-            return "use English letters only";
+            return "use latin alphabets only";
           }
         },
       }}
@@ -25,7 +25,7 @@ export default function NicknameInput() {
           customHeight={55}
           variant="outlined"
           autoFocus
-          label="Your nickname"
+          label="Your name"
           placeholder=""
           returnKeyType="done"
           submitBehavior="blurAndSubmit"

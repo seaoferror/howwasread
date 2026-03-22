@@ -36,7 +36,8 @@ export interface ConversationSignalResponse {
 type PeerSignal =
   | { type: "offer" | "answer"; sdp: string }
   | { type: "candidate"; candidate: RTCIceCandidate }
-  | { type: "leave" };
+  | { type: "leave" }
+  | { type: "name"; name: string };
 
 interface RTCIceCandidate {
   candidate?: string;
@@ -48,6 +49,7 @@ export type SeatCoordinate = { left: number; top: number };
 
 export interface SeatAssignment {
   id?: string;
+  name?: string;
   left: number;
   top: number;
 }

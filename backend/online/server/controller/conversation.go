@@ -20,7 +20,6 @@ func conversationRouter(c *Controller) {
 }
 
 func (c *Controller) createConversation(w http.ResponseWriter, r *http.Request) {
-	var req dto.CreateConversationRequest
 	memberIdRaw := r.Header.Get("X-User-Id")
 	memberId, err := uuid.Parse(memberIdRaw)
 	if err != nil {
@@ -37,6 +36,7 @@ func (c *Controller) createConversation(w http.ResponseWriter, r *http.Request) 
 		}
 		return
 	}
+	var req dto.CreateConversationRequest
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		slog.Info("incorrect body",

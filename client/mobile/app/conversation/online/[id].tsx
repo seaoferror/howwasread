@@ -1,7 +1,7 @@
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { colors, SEAT_COORDINATES, SEAT_FILL_ORDER } from "@/constants";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   ConversationSignalResponse,
   SeatAssignment,
@@ -19,7 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import OnlineConversationRoomHeader from "@/components/conversation/OnlineConversationRoomHeader";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/hooks/useAuth";
-import { useGetOnlineConversationPreAssignedIds } from "@/hooks/useConversation";
+import { useProfile } from "@/hooks/useProfile";
 
 //Prevent ts compiler kept trying to read dom definition of WebSocket written by Microsoft, which don't have header options
 declare const WebSocket: {
@@ -36,6 +36,7 @@ declare const WebSocket: {
 
 export default function OnlineConversationRoomScreen() {
   const { id: authId } = useAuth();
+  const { profile } = useProfile();
   const fallbackId =
     (Platform.OS === "ios" ? localDevId.ios : localDevId.android) ??
     "local-user";
@@ -55,10 +56,15 @@ export default function OnlineConversationRoomScreen() {
     length,
     isModerator,
   } = useLocalSearchParams();
+  const coordinates = SEAT_COORDINATES[Number(capacity)];
+  const fillOrder = SEAT_FILL_ORDER[Number(capacity)];
 
   const [mute, setMute] = useState(true);
-  const [roomMemberIds, setRoomMemberIds] = useState<string[]>([myId]);
   const [seatAssignments, setSeatAssignments] = useState<SeatAssignment[]>([]);
+  const participantIds = useRef<string[]>([myId]);
+  const participantNames = useRef<Record<string, string>>({
+    myId: profile.name,
+  });
   const ws = useRef<WebSocket>(null);
   const peers = useRef<Record<string, RTCPeerConnection>>({});
   const localAudio = useRef<MediaStream>(null);
@@ -94,7 +100,7 @@ export default function OnlineConversationRoomScreen() {
           router.replace("/conversation/online");
           return;
         }
-        setRoomMemberIds([...roomMemberIds, ...unique]);
+        participantIds.current = [...participantIds.current, ...unique];
         for (const fromId of unique) {
           peers.current[fromId] = new RTCPeerConnection({
             iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
@@ -141,8 +147,15 @@ export default function OnlineConversationRoomScreen() {
               signal: peers.current[fromId].localDescription,
             }),
           );
+
+          ws.current?.send(
+            JSON.stringify({
+              toIds: [fromId],
+              signal: { type: "name", name: profile.name },
+            }),
+          );
         }
-        //TODO: may be setPending false and make clean up possible in this point
+        coordinateSeat();
         return;
       }
       const fromId = data.fromIds[0];
@@ -159,6 +172,15 @@ export default function OnlineConversationRoomScreen() {
         );
         return;
       }
+      if (data.signal.type === "name") {
+        participantNames.current = {
+          ...participantNames.current,
+          fromId: data.signal.name,
+        };
+        coordinateSeat();
+        return;
+      }
+
       if (data.signal.type === "answer") {
         const offerDescription = new RTCSessionDescription(data.signal);
         await peers.current[fromId].setRemoteDescription(offerDescription);
@@ -174,9 +196,30 @@ export default function OnlineConversationRoomScreen() {
         delete peers.current[fromId];
         remoteAudios.current[fromId].release();
         delete remoteAudios.current[fromId];
-        setRoomMemberIds(roomMemberIds.filter((x) => x !== fromId));
+        participantIds.current = participantIds.current.filter(
+          (x) => x !== fromId,
+        );
+        coordinateSeat();
       }
     };
+  };
+
+  const coordinateSeat = () => {
+    const unique = [...new Set(participantIds.current)];
+    const occupantBySeat: Record<number, string> = {};
+    unique.forEach((id, idx) => {
+      const seatIndex = fillOrder[idx];
+      occupantBySeat[seatIndex] = id;
+    });
+
+    const nextAssignments: SeatAssignment[] = coordinates.map(
+      (coordinate, idx) => ({
+        id: occupantBySeat[idx],
+        name: participantNames.current[occupantBySeat[idx]],
+        ...coordinate,
+      }),
+    );
+    setSeatAssignments(nextAssignments);
   };
 
   const toggleAudio = () => {
@@ -212,27 +255,6 @@ export default function OnlineConversationRoomScreen() {
     };
   });
 
-  useEffect(() => {
-    const coordinates = SEAT_COORDINATES[Number(capacity)];
-    const fillOrder = SEAT_FILL_ORDER[Number(capacity)];
-
-    const unique = [...new Set(roomMemberIds)];
-    const occupantBySeat: Record<number, string> = {};
-    unique.forEach((id, i) => {
-      const seatIndex = fillOrder[i];
-      occupantBySeat[seatIndex] = id;
-    });
-
-    const nextAssignments: SeatAssignment[] = coordinates.map(
-      (coordinate, i) => ({
-        id: occupantBySeat[i],
-        ...coordinate,
-      }),
-    );
-
-    setSeatAssignments(nextAssignments);
-  }, [capacity, roomMemberIds]);
-
   return (
     <SafeAreaView style={styles.container}>
       <OnlineConversationRoomHeader
@@ -248,9 +270,9 @@ export default function OnlineConversationRoomScreen() {
       />
       <View style={styles.participantContainer}>
         <View style={styles.participantArea}>
-          {seatAssignments.map((seat, index) => (
+          {seatAssignments.map((seat, idx) => (
             <View
-              key={index}
+              key={idx}
               style={[
                 styles.participantSeat,
                 { left: `${seat.left}%`, top: `${seat.top}%` },
@@ -265,7 +287,7 @@ export default function OnlineConversationRoomScreen() {
               ) : (
                 <Feather name="circle" size={24} color="black" />
               )}
-              <Text style={styles.participantId}>{seat.id ?? ""}</Text>
+              <Text style={styles.participantId}>{seat.name ?? ""}</Text>
             </View>
           ))}
         </View>

@@ -16,7 +16,6 @@ import { AxiosError } from "axios";
 function useGetMyId() {
   const { data } = useQuery({
     queryFn: getMyId,
-
     queryKey: [queryKey.AUTH, queryKey.GET_MY_ID],
   });
 

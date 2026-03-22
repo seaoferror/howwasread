@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
 func (r *Repository) SaveNewMemberId(idRaw []byte) error {
@@ -35,7 +36,7 @@ func (r *Repository) SetServerIP(ctx context.Context, memberId uuid.UUID, ip str
 		UpdateOne(ctx, bson.M{"_id": bson.Binary{Subtype: 4, Data: memberId[:]}},
 			bson.M{"$set": bson.M{"server_ip": ip}})
 	if err != nil {
-		slog.Error("fail to set ip to conversation doc's server ips",
+		slog.Error("fail to set ip to member doc's server ips",
 			"err", err)
 		return err
 	}
@@ -48,9 +49,31 @@ func (r *Repository) RemoveServerIP(ctx context.Context, memberId uuid.UUID) err
 		UpdateOne(ctx, bson.M{"_id": bson.Binary{Subtype: 4, Data: memberId[:]}},
 			bson.M{"$unset": bson.M{"server_ip": ""}})
 	if err != nil {
-		slog.Error("fail to remove ip to conversation doc's server ips",
+		slog.Error("fail to remove ip to member doc's server ips",
 			"err", err)
 		return err
 	}
 	return nil
+}
+
+func (r *Repository) SetName(ctx context.Context, memberId uuid.UUID, name string) error {
+	_, err := r.db.Collection("member").
+		UpdateOne(ctx, bson.M{"_id": bson.Binary{Subtype: 4, Data: memberId[:]}},
+			bson.M{"$set": bson.M{"name": name}})
+	if err != nil {
+		slog.Error("fail to set name to member doc", "err", err)
+		return err
+	}
+	return nil
+}
+
+func (r *Repository) GetProfile(ctx context.Context, memberId uuid.UUID) (*document.Member, error) {
+	opt := options.FindOne().SetProjection(bson.M{"name": 1})
+
+	var d document.Member
+	err := r.db.Collection("member").FindOne(ctx, bson.M{"_id": bson.Binary{Subtype: 4, Data: memberId[:]}}, opt).Decode(&d)
+	if err != nil {
+		slog.Error("fail to find member profile")
+	}
+	return &d, nil
 }

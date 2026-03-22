@@ -3,27 +3,27 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "@/constants";
 import FixedBottomCTA from "@/components/FixedBottomCTA";
 import { FormProvider, useForm } from "react-hook-form";
-import NicknameInput from "@/components/profile/NicknameInput";
-import { useNewcomer } from "@/hooks/useNewcomer";
+import NameInput from "@/components/profile/NameInput";
+import { useProfile } from "@/hooks/useProfile";
 import { router } from "expo-router";
 
 interface FormValue {
-  nickname: string;
+  name: string;
 }
 
 export default function NicknameScreen() {
-  const nicknameForm = useForm<FormValue>({
+  const nameForm = useForm<FormValue>({
     defaultValues: {
-      nickname: "",
+      name: "",
     },
   });
-  const { setNicknameMutation } = useNewcomer();
+  const { setNameMutation } = useProfile();
 
   const onSubmit = async (formValue: FormValue) => {
-    const { nickname } = formValue;
+    const { name } = formValue;
 
-    setNicknameMutation.mutate(
-      { nickname },
+    setNameMutation.mutate(
+      { name: name },
       {
         onSuccess: () => {
           router.push("/profile/newcomer/birth-year");
@@ -33,18 +33,18 @@ export default function NicknameScreen() {
   };
 
   return (
-    <FormProvider {...nicknameForm}>
+    <FormProvider {...nameForm}>
       <SafeAreaView style={styles.container}>
         <Text style={styles.guideLine}>
-          We strongly recommend to set a nickname which is convenient to be
-          called by others
+          We strongly recommend to set a name which is convenient to be called
+          by others
         </Text>
         <View style={styles.content}>
-          <NicknameInput />
+          <NameInput />
         </View>
         <FixedBottomCTA
-          label="Set nickname"
-          onPress={nicknameForm.handleSubmit(onSubmit)}
+          label="Set this name"
+          onPress={nameForm.handleSubmit(onSubmit)}
         />
       </SafeAreaView>
     </FormProvider>

@@ -36,6 +36,8 @@ export const queryKey = {
   GET_ONLINE_CONVERSATIONS: "getOnlineConversations",
   GET_ONLINE_CONVERSATION_PRE_ASSIGNED_IDS:
     "getOnlineConversationPreAssignedIds",
+  PROFILE: "profile",
+  GET_MY_PROFILE: "getMyProfile",
 };
 
 export const time = {
