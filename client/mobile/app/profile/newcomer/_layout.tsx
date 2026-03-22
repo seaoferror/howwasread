@@ -4,9 +4,9 @@ export default function NewcomerLayout() {
   return (
     <Stack>
       <Stack.Screen
-        name="nickname"
+        name="name"
         options={{
-          title: "Set your nickname",
+          title: "Set your name",
           headerShown: true,
         }}
       />

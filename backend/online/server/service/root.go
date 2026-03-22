@@ -3,8 +3,6 @@ package service
 import (
 	"backend/online/server/kafka/producer"
 	"backend/online/server/repository"
-
-	"github.com/google/uuid"
 )
 
 type Service struct {

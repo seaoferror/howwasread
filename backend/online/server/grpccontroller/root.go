@@ -6,18 +6,18 @@ import (
 	"context"
 )
 
-type GrpcController struct {
+type GRPCController struct {
 	pb.UnimplementedSignalServiceServer
 	controller *controller.Controller
 }
 
-func NewGrpcController(controller *controller.Controller) *GrpcController {
-	gc := GrpcController{controller: controller}
+func NewGRPCController(controller *controller.Controller) *GRPCController {
+	gc := GRPCController{controller: controller}
 
 	return &gc
 }
 
-func (gc *GrpcController) RelaySignal(ctx context.Context, in *pb.RelaySignalRequest) (*pb.RelaySignalResponse, error) {
+func (gc *GRPCController) RelaySignal(ctx context.Context, in *pb.RelaySignalRequest) (*pb.RelaySignalResponse, error) {
 	err := gc.controller.RelaySignal(ctx, in.FromId, in.ToId, in.Signal)
 	if err != nil {
 		return nil, err

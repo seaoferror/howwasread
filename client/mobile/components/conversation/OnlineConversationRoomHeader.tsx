@@ -90,13 +90,15 @@ export default function OnlineConversationRoomHeader({
                 onPress={() => router.replace("/conversation/online")}
               />
             </View>
-            <Pressable
-              style={styles.headerCenter}
-              onPress={() => setOpen(true)}
-            >
+            <View style={styles.headerCenter}>
               <Text style={styles.headerText}>Exchange ideas</Text>
-              <SimpleLineIcons name="arrow-down" size={12} color="black" />
-            </Pressable>
+              <SimpleLineIcons
+                name="arrow-down"
+                size={25}
+                color="black"
+                onPress={() => setOpen(true)}
+              />
+            </View>
           </View>
         </View>
       )}
@@ -135,7 +137,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.SAND_110,
     flexDirection: "row",
     paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
-    height: 44,
+    height: Platform.OS === "ios" ? 44 : 65,
   },
   exitButton: {
     borderRadius: 8,

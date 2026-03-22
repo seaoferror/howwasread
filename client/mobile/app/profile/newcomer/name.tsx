@@ -11,7 +11,7 @@ interface FormValue {
   name: string;
 }
 
-export default function NicknameScreen() {
+export default function NameScreen() {
   const nameForm = useForm<FormValue>({
     defaultValues: {
       name: "",

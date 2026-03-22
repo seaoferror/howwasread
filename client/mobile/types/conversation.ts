@@ -37,7 +37,7 @@ type PeerSignal =
   | { type: "offer" | "answer"; sdp: string }
   | { type: "candidate"; candidate: RTCIceCandidate }
   | { type: "leave" }
-  | { type: "name"; name: string };
+  | { type: "name-offer" | "name-answer"; name: string };
 
 interface RTCIceCandidate {
   candidate?: string;

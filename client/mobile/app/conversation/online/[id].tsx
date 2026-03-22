@@ -35,12 +35,9 @@ declare const WebSocket: {
 };
 
 export default function OnlineConversationRoomScreen() {
-  const { id: authId } = useAuth();
+  // const { id: myId } = useAuth();
   const { profile } = useProfile();
-  const fallbackId =
-    (Platform.OS === "ios" ? localDevId.ios : localDevId.android) ??
-    "local-user";
-  const myId = authId ?? fallbackId;
+  const myId = Platform.OS === "ios" ? localDevId.ios : localDevId.android;
 
   const {
     id: conversationId,
@@ -61,10 +58,8 @@ export default function OnlineConversationRoomScreen() {
 
   const [mute, setMute] = useState(true);
   const [seatAssignments, setSeatAssignments] = useState<SeatAssignment[]>([]);
-  const participantIds = useRef<string[]>([myId]);
-  const participantNames = useRef<Record<string, string>>({
-    myId: profile.name,
-  });
+  const participantIds = useRef<string[]>([]);
+  const participantNames = useRef<Record<string, string>>({});
   const ws = useRef<WebSocket>(null);
   const peers = useRef<Record<string, RTCPeerConnection>>({});
   const localAudio = useRef<MediaStream>(null);
@@ -89,6 +84,9 @@ export default function OnlineConversationRoomScreen() {
       audio: true,
       video: false,
     });
+    participantIds.current = [myId];
+    participantNames.current[myId] = profile.name;
+    coordinateSeat();
 
     ws.current.onmessage = async (event) => {
       console.log("get message");
@@ -151,7 +149,7 @@ export default function OnlineConversationRoomScreen() {
           ws.current?.send(
             JSON.stringify({
               toIds: [fromId],
-              signal: { type: "name", name: profile.name },
+              signal: { type: "name-offer", name: profile.name },
             }),
           );
         }
@@ -172,10 +170,24 @@ export default function OnlineConversationRoomScreen() {
         );
         return;
       }
-      if (data.signal.type === "name") {
+      if (data.signal.type === "name-offer") {
         participantNames.current = {
           ...participantNames.current,
-          fromId: data.signal.name,
+          [fromId]: data.signal.name,
+        };
+        ws.current?.send(
+          JSON.stringify({
+            toIds: [fromId],
+            signal: { type: "name-answer", name: profile.name },
+          }),
+        );
+        coordinateSeat();
+        return;
+      }
+      if (data.signal.type === "name-answer") {
+        participantNames.current = {
+          ...participantNames.current,
+          [fromId]: data.signal.name,
         };
         coordinateSeat();
         return;
@@ -199,6 +211,7 @@ export default function OnlineConversationRoomScreen() {
         participantIds.current = participantIds.current.filter(
           (x) => x !== fromId,
         );
+        delete participantNames.current[fromId];
         coordinateSeat();
       }
     };
@@ -243,15 +256,18 @@ export default function OnlineConversationRoomScreen() {
       for (const peer of Object.values(peers.current)) {
         peer.close();
       }
-      peers.current = {};
       localAudio.current?.release();
-      localAudio.current = null;
       for (const remoteAudio of Object.values(remoteAudios.current)) {
         remoteAudio.release();
       }
-      remoteAudios.current = {};
       ws.current?.close();
-      ws.current = null;
+
+      // participantIds.current = [];
+      // participantNames.current = {};
+      // localAudio.current = null;
+      // ws.current = null;
+      // peers.current = {};
+      // remoteAudios.current = {};
     };
   });
 
