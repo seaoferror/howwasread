@@ -26,7 +26,7 @@ export default function NameScreen() {
       { name: name },
       {
         onSuccess: () => {
-          router.push("/profile/newcomer/birth-year");
+          router.push("/conversation");
         },
       },
     );

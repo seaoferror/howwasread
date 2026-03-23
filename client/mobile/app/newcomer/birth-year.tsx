@@ -24,7 +24,7 @@ export default function BirthYearScreen() {
       { birthYear },
       {
         onSuccess: () => {
-          // router.push("/profile/newcomer/ethnicity");
+          // router.push("/newcomer/ethnicity");
         },
       },
     );

@@ -11,7 +11,7 @@ export default function OnlineConversationHomeScreen() {
       <OnlineConversationList />
       <Pressable
         style={styles.createButton}
-        onPress={() => router.push("/conversation/online/create")}
+        onPress={() => router.push("/online/create")}
       >
         <Feather name="plus" size={32} color="black" />
       </Pressable>

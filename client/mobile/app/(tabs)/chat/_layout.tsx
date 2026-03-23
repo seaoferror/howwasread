@@ -1,13 +1,13 @@
 import { Stack } from "expo-router";
 
-export default function ConversationLayout() {
+export default function ChatLayout() {
   return (
     <Stack>
       <Stack.Screen
-        name="online"
+        name="index"
         options={{
-          title: "",
-          headerShown: false,
+          title: "Chat",
+          headerShown: true,
         }}
       />
     </Stack>
