@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Toast from "react-native-toast-message";
-import { getSecureStore, saveSecureStore } from "@/util/secureStore";
+import { getSecureStore, saveSecureStore } from "@/util/storage";
 import {
   getMyId,
   loginInWithEmail,

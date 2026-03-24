@@ -1,4 +1,4 @@
-import { getSecureStore, saveSecureStore } from "@/util/secureStore";
+import { getSecureStore, saveSecureStore } from "@/util/storage";
 import { axiosInstance } from "@/api/axios";
 
 async function refreshAccessToken() {

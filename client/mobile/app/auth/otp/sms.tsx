@@ -5,7 +5,7 @@ import FixedBottomCTA from "@/components/FixedBottomCTA";
 import { FormProvider, useForm } from "react-hook-form";
 import { useAuth } from "@/hooks/useAuth";
 import { router } from "expo-router";
-import { getSecureStore } from "@/util/secureStore";
+import { getSecureStore } from "@/util/storage";
 import Toast from "react-native-toast-message";
 import OTPInput from "@/components/auth/OTPInput";
 

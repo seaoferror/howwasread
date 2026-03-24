@@ -14,12 +14,15 @@ import {
   MediaStream,
 } from "react-native-webrtc";
 import { baseUrl, localDevId } from "@/api/axios";
-import { getSecureStore } from "@/util/secureStore";
+import { getSecureStore } from "@/util/storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import OnlineConversationRoomHeader from "@/components/conversation/OnlineConversationRoomHeader";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
+import { useActionSheet } from "@expo/react-native-action-sheet";
+import { useSendLike } from "@/hooks/useChat";
+import Toast from "react-native-toast-message";
 
 //Prevent ts compiler kept trying to read dom definition of WebSocket written by Microsoft, which don't have header options
 declare const WebSocket: {
@@ -53,8 +56,10 @@ export default function OnlineConversationRoomScreen() {
     length,
     isModerator,
   } = useLocalSearchParams();
+  const { showActionSheetWithOptions } = useActionSheet();
   const coordinates = SEAT_COORDINATES[Number(capacity)];
   const fillOrder = SEAT_FILL_ORDER[Number(capacity)];
+  const sendLikeMutation = useSendLike();
 
   const [mute, setMute] = useState(true);
   const [seatAssignments, setSeatAssignments] = useState<SeatAssignment[]>([]);
@@ -95,7 +100,7 @@ export default function OnlineConversationRoomScreen() {
       if (!data.signal) {
         const unique = [...new Set(data.fromIds)];
         if (unique.length >= Number(capacity)) {
-          router.replace("/conversation/online");
+          router.replace("/conversation");
           return;
         }
         participantIds.current = [...participantIds.current, ...unique];
@@ -218,7 +223,9 @@ export default function OnlineConversationRoomScreen() {
   };
 
   const coordinateSeat = () => {
-    const unique = [...new Set(participantIds.current)];
+    const unique = [...new Set(participantIds.current)].sort((a, b) =>
+      a.localeCompare(b),
+    );
     const occupantBySeat: Record<number, string> = {};
     unique.forEach((id, idx) => {
       const seatIndex = fillOrder[idx];
@@ -241,6 +248,39 @@ export default function OnlineConversationRoomScreen() {
       audioTrack.enabled = !audioTrack.enabled;
       setMute(!mute);
     }
+  };
+
+  const handlePressParticipant = (id: string, name: string) => {
+    if (isModerator) {
+      return;
+    }
+    showActionSheetWithOptions(
+      {
+        title: `To ${name}`,
+        // message: ``,
+        options: ["send like", "cancel"],
+        cancelButtonIndex: 1,
+      },
+      (selectedIndex?: number) => {
+        switch (selectedIndex) {
+          case 0:
+            sendLikeMutation.mutate(
+              { toId: id },
+              {
+                onSuccess: () => {
+                  Toast.show({
+                    type: "success",
+                    text1: `${name} will know you sent like after this conversation`,
+                  });
+                },
+              },
+            );
+            break;
+          case 1:
+            break;
+        }
+      },
+    );
   };
 
   useFocusEffect(() => {
@@ -299,6 +339,12 @@ export default function OnlineConversationRoomScreen() {
                   name="person-circle-outline"
                   size={24}
                   color="black"
+                  onPress={
+                    seat.id !== myId
+                      ? () =>
+                          handlePressParticipant(seat.id ?? "", seat.name ?? "")
+                      : undefined
+                  }
                 />
               ) : (
                 <Feather name="circle" size={24} color="black" />

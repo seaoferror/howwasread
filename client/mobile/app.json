@@ -83,6 +83,7 @@
           "enableBackgroundRecording": true
         }
       ],
+      "@react-native-google-signin/google-signin",
       "expo-sqlite"
     ],
     "experiments": {

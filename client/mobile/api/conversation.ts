@@ -14,13 +14,6 @@ export async function getOnlineConversations(
   return data;
 }
 
-export async function getOnlineConversationPreAssignedIds(
-  id: string,
-): Promise<string[]> {
-  const { data } = await axiosInstance.get(`/online/conversation?id=${id}`);
-  return data;
-}
-
 export async function createOnlineConversation(
   body: CreateOnlineConversationRequest,
 ): Promise<{ id: string }> {

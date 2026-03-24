@@ -4,7 +4,7 @@ import CustomButton from "@/components/CustomButton";
 import { Link, router, useFocusEffect } from "expo-router";
 import { colors } from "@/constants";
 import AppleSignInButton from "@/components/auth/AppleSignInButton";
-import { deleteSecureStore } from "@/util/secureStore";
+import { deleteSecureStore } from "@/util/storage";
 
 export default function AuthScreen() {
   useFocusEffect(() => {

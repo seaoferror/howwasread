@@ -13,7 +13,7 @@ import {
 import Toast from "react-native-toast-message";
 import { useAuth } from "@/hooks/useAuth";
 import { router } from "expo-router";
-import { getSecureStore, saveSecureStore } from "@/util/secureStore";
+import { getSecureStore, saveSecureStore } from "@/util/storage";
 
 interface FormValue {
   countryCode: CountryCode;
