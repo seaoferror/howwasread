@@ -34,6 +34,7 @@ type Conversation struct {
 	ModeratorIds   []bson.Binary `bson:"m_ids"`
 	RegistrantIds  []bson.Binary `bson:"r_ids"`
 	ParticipantIds []bson.Binary `bson:"p_ids"`
+	BanIds         []bson.Binary `bson:"b_ids"`
 }
 
 //type Org struct {

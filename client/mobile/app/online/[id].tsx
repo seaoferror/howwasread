@@ -1,6 +1,11 @@
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { colors, SEAT_COORDINATES, SEAT_FILL_ORDER } from "@/constants";
+import {
+  colors,
+  queryKey,
+  SEAT_COORDINATES,
+  SEAT_FILL_ORDER,
+} from "@/constants";
 import { useRef, useState } from "react";
 import {
   ConversationSignalResponse,
@@ -18,12 +23,13 @@ import { getSecureStore } from "@/util/storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import OnlineConversationRoomHeader from "@/components/conversation/OnlineConversationRoomHeader";
 import { Feather, Ionicons } from "@expo/vector-icons";
-import { useAuth } from "@/hooks/useAuth";
 import { useProfile } from "@/hooks/useProfile";
 import { useActionSheet } from "@expo/react-native-action-sheet";
 import { useSendLike } from "@/hooks/useChat";
 import Toast from "react-native-toast-message";
 import CustomButton from "@/components/CustomButton";
+import queryClient from "@/api/queryClient";
+import { useBanParticipant } from "@/hooks/useConversation";
 
 //Prevent ts compiler kept trying to read dom definition of WebSocket written by Microsoft, which don't have header options
 declare const WebSocket: {
@@ -39,7 +45,6 @@ declare const WebSocket: {
 };
 
 export default function OnlineConversationRoomScreen() {
-  // const { id: myId } = useAuth();
   const { profile } = useProfile();
   const myId = Platform.OS === "ios" ? localDevId.ios : localDevId.android;
 
@@ -61,6 +66,7 @@ export default function OnlineConversationRoomScreen() {
   const coordinates = SEAT_COORDINATES[Number(capacity)];
   const fillOrder = SEAT_FILL_ORDER[Number(capacity)];
   const sendLikeMutation = useSendLike();
+  const banParticipantMutation = useBanParticipant();
 
   const [seatAssignments, setSeatAssignments] = useState<SeatAssignment[]>([]);
   const [mute, setMute] = useState<boolean>(false);
@@ -223,6 +229,12 @@ export default function OnlineConversationRoomScreen() {
         delete participantNames.current[fromId];
         coordinateSeat();
       }
+      if (data.signal.type === "ban") {
+        await queryClient.invalidateQueries({
+          queryKey: [queryKey.CONVERSATION, queryKey.GET_ONLINE_CONVERSATIONS],
+        });
+        router.replace("/conversation");
+      }
       if (data.signal.type === "mute") {
         participantMutes.current[fromId] = !participantMutes.current[fromId];
         coordinateSeat();
@@ -269,13 +281,52 @@ export default function OnlineConversationRoomScreen() {
 
   const handlePressParticipant = (id: string, name: string) => {
     if (isModerator) {
+      showActionSheetWithOptions(
+        {
+          options: [`Send like to ${name}`, `Ban ${name}`, "Cancel"],
+          destructiveButtonIndex: 1,
+          cancelButtonIndex: 2,
+        },
+        (selectedIndex?: number) => {
+          switch (selectedIndex) {
+            case 0:
+              sendLikeMutation.mutate(
+                { toId: id },
+                {
+                  onSuccess: () => {
+                    Toast.show({
+                      type: "success",
+                      text1: `${name} will know you sent like after this conversation`,
+                    });
+                  },
+                },
+              );
+              break;
+            case 1:
+              banParticipantMutation.mutate(
+                { conversationId: String(conversationId), banId: id },
+                {
+                  onSuccess: () => {
+                    ws.current?.send(
+                      JSON.stringify({
+                        toId: id,
+                        signal: { type: "ban" },
+                      }),
+                    );
+                  },
+                },
+              );
+              break;
+            case 2:
+              break;
+          }
+        },
+      );
       return;
     }
     showActionSheetWithOptions(
       {
-        title: `To ${name}`,
-        // message: ``,
-        options: ["send like", "cancel"],
+        options: [`Send like to ${name}`, "Cancel"],
         cancelButtonIndex: 1,
       },
       (selectedIndex?: number) => {

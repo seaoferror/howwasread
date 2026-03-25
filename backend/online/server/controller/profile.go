@@ -22,22 +22,12 @@ func (c *Controller) getMyProfile(w http.ResponseWriter, r *http.Request) {
 			"err", err,
 			"memberIdRaw", memberIdRaw,
 		)
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		_, err = w.Write([]byte("incorrect header"))
-		if err != nil {
-			slog.Error("fail to write response body",
-				"err", err,
-			)
-		}
+		handleParseError(w)
 		return
 	}
 	result, err := c.service.GetMyProfile(r.Context(), memberId)
 	if err != nil {
-		w.WriteHeader(getStatusCode(err))
-		_, err = w.Write([]byte(err.Error()))
-		if err != nil {
-			slog.Error("fail to write response body", "err", err)
-		}
+		handleServiceError(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -56,13 +46,7 @@ func (c *Controller) setName(w http.ResponseWriter, r *http.Request) {
 			"err", err,
 			"memberIdRaw", memberIdRaw,
 		)
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		_, err = w.Write([]byte("incorrect header"))
-		if err != nil {
-			slog.Error("fail to write response body",
-				"err", err,
-			)
-		}
+		handleParseError(w)
 		return
 	}
 	var req dto.SetNameRequest
@@ -71,22 +55,12 @@ func (c *Controller) setName(w http.ResponseWriter, r *http.Request) {
 		slog.Info("incorrect body",
 			"err", err,
 		)
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		_, err = w.Write([]byte("incorrect request body"))
-		if err != nil {
-			slog.Error("fail to write response body",
-				"err", err,
-			)
-		}
+		handleParseError(w)
 		return
 	}
 	err = c.service.SetName(r.Context(), memberId, req.Name)
 	if err != nil {
-		w.WriteHeader(getStatusCode(err))
-		_, err = w.Write([]byte(err.Error()))
-		if err != nil {
-			slog.Error("fail to write response body", "err", err)
-		}
+		handleServiceError(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusOK)

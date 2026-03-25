@@ -46,6 +46,7 @@ export function useProfile() {
 
   return {
     profile: {
+      id: data?.id ?? "",
       name: data?.name ?? "",
     },
     setNameMutation: setNameMutation,

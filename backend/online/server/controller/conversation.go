@@ -17,6 +17,7 @@ func conversationRouter(c *Controller) {
 	c.Router(GET, "/online/conversation/list", c.getConversations)
 	c.Router(GET, "/online/conversation/join", c.joinConversation)
 	c.Router(GET, "/online/conversation", c.getConversation)
+	c.Router(POST, "/online/conversation/ban", c.banParticipant)
 }
 
 func (c *Controller) createConversation(w http.ResponseWriter, r *http.Request) {
@@ -27,13 +28,7 @@ func (c *Controller) createConversation(w http.ResponseWriter, r *http.Request) 
 			"err", err,
 			"memberIdRaw", memberIdRaw,
 		)
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		_, err = w.Write([]byte("incorrect header"))
-		if err != nil {
-			slog.Error("fail to write response body",
-				"err", err,
-			)
-		}
+		handleParseError(w)
 		return
 	}
 	var req dto.CreateConversationRequest
@@ -42,23 +37,17 @@ func (c *Controller) createConversation(w http.ResponseWriter, r *http.Request) 
 		slog.Info("incorrect body",
 			"err", err,
 		)
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		_, err = w.Write([]byte("incorrect request body"))
-		if err != nil {
-			slog.Error("fail to write response body",
-				"err", err,
-			)
-		}
+		handleParseError(w)
 		return
 	}
 
 	length, err := time.ParseDuration(req.Length)
 	if err != nil {
-		w.WriteHeader(http.StatusUnprocessableEntity)
 		slog.Error("fail to parse duration from rawLength",
 			"err", err,
 			"req.Length", req.Length,
 		)
+		handleParseError(w)
 		return
 	}
 
@@ -77,21 +66,13 @@ func (c *Controller) createConversation(w http.ResponseWriter, r *http.Request) 
 		length,
 	)
 	if err != nil {
-		w.WriteHeader(getStatusCode(err))
-		_, err = w.Write([]byte(err.Error()))
-		if err != nil {
-			slog.Error("fail to write response body",
-				"err", err,
-			)
-		}
+		handleServiceError(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(w).Encode(result)
 	if err != nil {
-		slog.Error("fail to write response body",
-			"err", err,
-		)
+		slog.Error("fail to write response body", "err", err)
 	}
 }
 
@@ -103,13 +84,7 @@ func (c *Controller) getConversations(w http.ResponseWriter, r *http.Request) {
 			"err", err,
 			"memberIdRaw", memberIdRaw,
 		)
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		_, err = w.Write([]byte("incorrect header"))
-		if err != nil {
-			slog.Error("fail to write response body",
-				"err", err,
-			)
-		}
+		handleParseError(w)
 		return
 	}
 	pageRaw := r.URL.Query().Get("page")
@@ -118,13 +93,7 @@ func (c *Controller) getConversations(w http.ResponseWriter, r *http.Request) {
 		slog.Info("incorrect query param for page",
 			"err", err,
 			"pageRaw", pageRaw)
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		_, err = w.Write([]byte("wrong cursor"))
-		if err != nil {
-			slog.Error("fail to write response body",
-				"err", err,
-			)
-		}
+		handleParseError(w)
 		return
 	}
 	if page < 1 {
@@ -132,12 +101,7 @@ func (c *Controller) getConversations(w http.ResponseWriter, r *http.Request) {
 	}
 	result, err := c.service.GetConversations(r.Context(), memberId, page)
 	if err != nil {
-		w.WriteHeader(getStatusCode(err))
-		_, err = w.Write([]byte(err.Error()))
-		if err != nil {
-			slog.Error("fail to write response body",
-				"err", err)
-		}
+		handleParseError(w)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -155,13 +119,7 @@ func (c *Controller) getConversation(w http.ResponseWriter, r *http.Request) {
 		slog.Error("fail to parse member id from raw string",
 			"err", err,
 			"memberIdRaw", memberIdRaw)
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		_, err = w.Write([]byte("incorrect header"))
-		if err != nil {
-			slog.Error("fail to write response body",
-				"err", err,
-			)
-		}
+		handleParseError(w)
 		return
 	}
 	conversationIdRaw := r.URL.Query().Get("id")
@@ -169,24 +127,12 @@ func (c *Controller) getConversation(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		slog.Error("fail to parse conversation object id from raw string",
 			"conversationIdRaw", conversationIdRaw)
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		_, err = w.Write([]byte("incorrect param"))
-		if err != nil {
-			slog.Error("fail to write response body",
-				"err", err,
-			)
-		}
+		handleParseError(w)
 		return
 	}
 	result, err := c.service.GetConversation(r.Context(), conversationId, memberId)
 	if err != nil {
-		w.WriteHeader(getStatusCode(err))
-		_, err = w.Write([]byte(err.Error()))
-		if err != nil {
-			slog.Error("fail to write response body",
-				"err", err,
-			)
-		}
+		handleServiceError(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -195,4 +141,41 @@ func (c *Controller) getConversation(w http.ResponseWriter, r *http.Request) {
 		slog.Error("fail to write response body",
 			"err", err)
 	}
+}
+
+func (c *Controller) banParticipant(w http.ResponseWriter, r *http.Request) {
+	memberIdRaw := r.Header.Get("X-User-Id")
+	memberId, err := uuid.Parse(memberIdRaw)
+	if err != nil {
+		slog.Error("fail to parse member id from raw string",
+			"err", err,
+			"memberIdRaw", memberIdRaw)
+		handleParseError(w)
+		return
+	}
+	var req dto.BanParticipantRequest
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		handleParseError(w)
+		return
+	}
+	conversationId, err := bson.ObjectIDFromHex(req.ConversationId)
+	if err != nil {
+		slog.Error("fail to parse conversation id from raw string", "err", err)
+		handleParseError(w)
+		return
+	}
+	banId, err := uuid.Parse(req.BanId)
+	if err != nil {
+		slog.Error("fail to parse ban id from raw string", "err", err,
+			"req.BanId", banId)
+		handleParseError(w)
+		return
+	}
+	err = c.service.BanParticipant(r.Context(), memberId, conversationId, banId)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }

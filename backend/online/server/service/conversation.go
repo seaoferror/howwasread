@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"time"
 
@@ -52,11 +53,20 @@ func (s *Service) CreateConversation(
 func (s *Service) GetConversations(ctx context.Context, memberId uuid.UUID, page int) ([]dto.ConversationFeedResponse, error) {
 	resp := []dto.ConversationFeedResponse{}
 
-	items, err := s.repository.GetNextConversations(ctx, page)
+	items, err := s.repository.FindConversations(ctx, page)
 	if err != nil {
 		return nil, err
 	}
 	for _, item := range items {
+		var isBanned bool
+		for _, bId := range item.BanIds {
+			if bytes.Equal(bId.Data, memberId[:]) {
+				isBanned = true
+			}
+		}
+		if isBanned {
+			continue
+		}
 		var isModerator bool
 		var isRegistrant bool
 		for _, mId := range item.ModeratorIds {
@@ -65,8 +75,8 @@ func (s *Service) GetConversations(ctx context.Context, memberId uuid.UUID, page
 				break
 			}
 		}
-		for _, pId := range item.RegistrantIds {
-			if bytes.Equal(pId.Data, memberId[:]) {
+		for _, rId := range item.RegistrantIds {
+			if bytes.Equal(rId.Data, memberId[:]) {
 				isRegistrant = true
 				break
 			}
@@ -98,7 +108,7 @@ func (s *Service) GetConversations(ctx context.Context, memberId uuid.UUID, page
 }
 
 func (s *Service) GetParticipants(ctx context.Context, conversationId bson.ObjectID, memberId uuid.UUID) (pids []string, err error) {
-	pidsRaw, err := s.repository.GetParticipants(ctx, conversationId)
+	pidsRaw, err := s.repository.FindParticipantIds(ctx, conversationId)
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +129,7 @@ func (s *Service) GetParticipants(ctx context.Context, conversationId bson.Objec
 }
 
 func (s *Service) AddParticipant(ctx context.Context, conversationId bson.ObjectID, memberId uuid.UUID) error {
-	err := s.repository.AddParticipant(ctx, conversationId, memberId)
+	err := s.repository.AddParticipantId(ctx, conversationId, memberId)
 	if err != nil {
 		return err
 	}
@@ -127,7 +137,7 @@ func (s *Service) AddParticipant(ctx context.Context, conversationId bson.Object
 }
 
 func (s *Service) RemoveParticipant(ctx context.Context, conversationId bson.ObjectID, memberId uuid.UUID) error {
-	err := s.repository.RemoveParticipant(ctx, conversationId, memberId)
+	err := s.repository.RemoveParticipantId(ctx, conversationId, memberId)
 	if err != nil {
 		return err
 	}
@@ -184,4 +194,26 @@ func (s *Service) GetConversation(ctx context.Context, conversationId bson.Objec
 	}
 
 	return &resp, nil
+}
+
+func (s *Service) BanParticipant(ctx context.Context, modId uuid.UUID, conversationId bson.ObjectID, banId uuid.UUID) error {
+	mIds, err := s.repository.FindModeratorIds(ctx, conversationId)
+	if err != nil {
+		return err
+	}
+	isMod := false
+	for _, mId := range mIds {
+		if bytes.Equal(mId.Data, modId[:]) {
+			isMod = true
+			break
+		}
+	}
+	if !isMod {
+		return errors.New("you cannot ban")
+	}
+	err = s.repository.AddBanId(ctx, conversationId, banId)
+	if err != nil {
+		return err
+	}
+	return nil
 }

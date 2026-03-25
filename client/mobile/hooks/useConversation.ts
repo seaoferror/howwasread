@@ -2,6 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import {
   getOnlineConversations,
   createOnlineConversation,
+  banParticipant,
 } from "@/api/conversation";
 import { queryKey } from "@/constants";
 import { AxiosError } from "axios";
@@ -28,6 +29,19 @@ export function useCreateOnlineConversation() {
         queryKey: [queryKey.CONVERSATION, queryKey.GET_ONLINE_CONVERSATIONS],
       });
     },
+    onError: (error: AxiosError) => {
+      console.log(error?.response?.data);
+      Toast.show({
+        type: "error",
+        text1: String(error?.response?.data),
+      });
+    },
+  });
+}
+
+export function useBanParticipant() {
+  return useMutation({
+    mutationFn: banParticipant,
     onError: (error: AxiosError) => {
       console.log(error?.response?.data);
       Toast.show({

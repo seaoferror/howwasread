@@ -2,6 +2,7 @@ package controller
 
 import (
 	"backend/online/server/service"
+	"log/slog"
 	"net/http"
 
 	"github.com/coder/websocket"
@@ -55,4 +56,22 @@ func (c *Controller) Router(httpMethod HTTPMethod, path string, handler http.Han
 
 func getStatusCode(err error) int {
 	return http.StatusBadRequest
+}
+
+func handleParseError(w http.ResponseWriter) {
+	w.WriteHeader(http.StatusUnprocessableEntity)
+	_, err := w.Write([]byte("Not valid request"))
+	if err != nil {
+		slog.Error("fail to write response body",
+			"err", err,
+		)
+	}
+}
+
+func handleServiceError(w http.ResponseWriter, err error) {
+	w.WriteHeader(getStatusCode(err))
+	_, err = w.Write([]byte(err.Error()))
+	if err != nil {
+		slog.Error("fail to write response body", "err", err)
+	}
 }

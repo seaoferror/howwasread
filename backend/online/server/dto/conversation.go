@@ -65,3 +65,8 @@ type GetConversationResponse struct {
 
 	IsModerator bool `json:"isModerator"`
 }
+
+type BanParticipantRequest struct {
+	ConversationId string `json:"conversationId"`
+	BanId          string `json:"banId"`
+}

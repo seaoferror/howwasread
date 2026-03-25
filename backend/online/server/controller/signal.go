@@ -22,13 +22,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 		slog.Error("fail to parse member id from raw string",
 			"err", err,
 			"memberIdRaw", memberIdRaw)
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		_, err = w.Write([]byte("incorrect header"))
-		if err != nil {
-			slog.Error("fail to write response body",
-				"err", err,
-			)
-		}
+		handleParseError(w)
 		return
 	}
 	conversationIdRaw := r.URL.Query().Get("id")
@@ -36,13 +30,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		slog.Error("fail to parse conversation object id from raw string",
 			"conversationIdRaw", conversationIdRaw)
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		_, err = w.Write([]byte("incorrect header"))
-		if err != nil {
-			slog.Error("fail to write response body",
-				"err", err,
-			)
-		}
+		handleParseError(w)
 		return
 	}
 
@@ -51,14 +39,14 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 		InsecureSkipVerify: true,
 	})
 	if err != nil {
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		_, err = w.Write([]byte("incorrect header"))
+		slog.Error("fail to accept connection", err)
+		w.WriteHeader(http.StatusBadRequest)
+		_, err = w.Write([]byte("fail to make websocket connection"))
 		if err != nil {
 			slog.Error("fail to write response body",
 				"err", err,
 			)
 		}
-		slog.Info("fail to accept connection", err)
 		return
 	}
 	if c.connections == nil {

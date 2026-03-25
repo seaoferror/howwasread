@@ -54,11 +54,11 @@ func (s *Service) SetName(ctx context.Context, memberId uuid.UUID, name string) 
 }
 
 func (s *Service) GetMyProfile(ctx context.Context, id uuid.UUID) (*dto.GetMyProfileResponse, error) {
-	profile, err := s.repository.GetProfile(ctx, id)
+	profile, err := s.repository.FindProfile(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	res := dto.GetMyProfileResponse{Name: profile.Name}
+	res := dto.GetMyProfileResponse{Id: id.String(), Name: profile.Name}
 
 	return &res, nil
 }

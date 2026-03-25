@@ -5,5 +5,6 @@ type SetNameRequest struct {
 }
 
 type GetMyProfileResponse struct {
+	Id   string `json:"id"`
 	Name string `json:"name"`
 }

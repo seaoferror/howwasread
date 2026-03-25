@@ -28,6 +28,11 @@ export interface OnlineConversationFeedResponse {
   isRegistrant: boolean;
 }
 
+export interface BanParticipantRequest {
+  conversationId: string;
+  banId: string;
+}
+
 export interface ConversationSignalResponse {
   fromIds: string[];
   signal?: PeerSignal;
@@ -37,6 +42,7 @@ type PeerSignal =
   | { type: "offer" | "answer"; sdp: string }
   | { type: "candidate"; candidate: RTCIceCandidate }
   | { type: "leave" }
+  | { type: "ban" }
   | { type: "mute" }
   | { type: "name-offer" | "name-answer"; name: string };
 

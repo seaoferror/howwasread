@@ -30,6 +30,7 @@ func (r *Repository) SaveConversation(ctx context.Context, memberId uuid.UUID, c
 			{4, memberId[:]},
 		},
 		ParticipantIds: []bson.Binary{},
+		BanIds:         []bson.Binary{},
 	}
 	filter := bson.M{"_id": bson.Binary{Subtype: 4, Data: memberId[:]}}
 	update := bson.M{
@@ -71,7 +72,7 @@ func (r *Repository) SaveConversation(ctx context.Context, memberId uuid.UUID, c
 	return nil
 }
 
-func (r *Repository) GetNextConversations(ctx context.Context, page int) ([]document.Conversation, error) {
+func (r *Repository) FindConversations(ctx context.Context, page int) ([]document.Conversation, error) {
 	filter := bson.M{
 		"when":    bson.M{"$gt": time.Now().Add(-9 * time.Hour)},
 		"expired": false,
@@ -102,7 +103,7 @@ func (r *Repository) GetNextConversations(ctx context.Context, page int) ([]docu
 	return items, nil
 }
 
-func (r *Repository) GetParticipants(ctx context.Context, conversationId bson.ObjectID) ([]bson.Binary, error) {
+func (r *Repository) FindParticipantIds(ctx context.Context, conversationId bson.ObjectID) ([]bson.Binary, error) {
 	opts := options.FindOne().SetProjection(bson.M{"p_ids": 1})
 
 	var d document.Conversation
@@ -113,7 +114,7 @@ func (r *Repository) GetParticipants(ctx context.Context, conversationId bson.Ob
 	return d.ParticipantIds, nil
 }
 
-func (r *Repository) AddParticipant(ctx context.Context, conversationId bson.ObjectID, memberId uuid.UUID) error {
+func (r *Repository) AddParticipantId(ctx context.Context, conversationId bson.ObjectID, memberId uuid.UUID) error {
 	_, err := r.db.Collection("conversation").
 		UpdateOne(ctx, bson.M{"_id": conversationId},
 			bson.M{"$push": bson.M{"p_ids": bson.Binary{4, memberId[:]}}})
@@ -127,7 +128,7 @@ func (r *Repository) AddParticipant(ctx context.Context, conversationId bson.Obj
 	return nil
 }
 
-func (r *Repository) RemoveParticipant(ctx context.Context, conversationId bson.ObjectID, memberId uuid.UUID) error {
+func (r *Repository) RemoveParticipantId(ctx context.Context, conversationId bson.ObjectID, memberId uuid.UUID) error {
 	_, err := r.db.Collection("conversation").
 		UpdateOne(ctx, bson.M{"_id": conversationId},
 			bson.M{"$pull": bson.M{"p_ids": bson.Binary{4, memberId[:]}}})
@@ -151,4 +152,31 @@ func (r *Repository) GetConversation(ctx context.Context, conversationId bson.Ob
 		return nil, err
 	}
 	return &d, nil
+}
+
+func (r *Repository) FindModeratorIds(ctx context.Context, conversationId bson.ObjectID) ([]bson.Binary, error) {
+	opt := options.FindOne().SetProjection(bson.M{"m_ids": 1})
+
+	var d document.Conversation
+	err := r.db.Collection("conversation").
+		FindOne(ctx, bson.M{"_id": conversationId}, opt).Decode(&d)
+	if err != nil {
+		slog.Error("fail to find mod ids", "err", err)
+		return nil, err
+	}
+	return d.ModeratorIds, nil
+}
+
+func (r *Repository) AddBanId(ctx context.Context, conversationId bson.ObjectID, banId uuid.UUID) error {
+	_, err := r.db.Collection("conversation").
+		UpdateOne(ctx, bson.M{"_id": conversationId},
+			bson.M{"$push": bson.M{"b_ids": bson.Binary{4, banId[:]}}})
+	if err != nil {
+		slog.Error("fail to add participant member id to conversation",
+			"err", err,
+			"conversationId", conversationId,
+			"memberId", banId.String())
+		return err
+	}
+	return nil
 }

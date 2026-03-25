@@ -67,7 +67,7 @@ func (r *Repository) SetName(ctx context.Context, memberId uuid.UUID, name strin
 	return nil
 }
 
-func (r *Repository) GetProfile(ctx context.Context, memberId uuid.UUID) (*document.Member, error) {
+func (r *Repository) FindProfile(ctx context.Context, memberId uuid.UUID) (*document.Member, error) {
 	opt := options.FindOne().SetProjection(bson.M{"name": 1})
 
 	var d document.Member
