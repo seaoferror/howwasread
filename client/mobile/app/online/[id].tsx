@@ -1,4 +1,4 @@
-import { Platform, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import { colors, SEAT_COORDINATES, SEAT_FILL_ORDER } from "@/constants";
 import { useRef, useState } from "react";
@@ -23,6 +23,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { useActionSheet } from "@expo/react-native-action-sheet";
 import { useSendLike } from "@/hooks/useChat";
 import Toast from "react-native-toast-message";
+import CustomButton from "@/components/CustomButton";
 
 //Prevent ts compiler kept trying to read dom definition of WebSocket written by Microsoft, which don't have header options
 declare const WebSocket: {
@@ -61,10 +62,11 @@ export default function OnlineConversationRoomScreen() {
   const fillOrder = SEAT_FILL_ORDER[Number(capacity)];
   const sendLikeMutation = useSendLike();
 
-  const [mute, setMute] = useState(true);
   const [seatAssignments, setSeatAssignments] = useState<SeatAssignment[]>([]);
+  const [mute, setMute] = useState<boolean>(false);
   const participantIds = useRef<string[]>([]);
   const participantNames = useRef<Record<string, string>>({});
+  const participantMutes = useRef<Record<string, boolean>>({});
   const ws = useRef<WebSocket>(null);
   const peers = useRef<Record<string, RTCPeerConnection>>({});
   const localAudio = useRef<MediaStream>(null);
@@ -91,6 +93,7 @@ export default function OnlineConversationRoomScreen() {
     });
     participantIds.current = [myId];
     participantNames.current[myId] = profile.name;
+    participantMutes.current[myId] = false;
     coordinateSeat();
 
     ws.current.onmessage = async (event) => {
@@ -104,7 +107,9 @@ export default function OnlineConversationRoomScreen() {
           return;
         }
         participantIds.current = [...participantIds.current, ...unique];
+
         for (const fromId of unique) {
+          participantMutes.current[fromId] = false;
           peers.current[fromId] = new RTCPeerConnection({
             iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
           });
@@ -197,7 +202,6 @@ export default function OnlineConversationRoomScreen() {
         coordinateSeat();
         return;
       }
-
       if (data.signal.type === "answer") {
         const offerDescription = new RTCSessionDescription(data.signal);
         await peers.current[fromId].setRemoteDescription(offerDescription);
@@ -219,6 +223,10 @@ export default function OnlineConversationRoomScreen() {
         delete participantNames.current[fromId];
         coordinateSeat();
       }
+      if (data.signal.type === "mute") {
+        participantMutes.current[fromId] = !participantMutes.current[fromId];
+        coordinateSeat();
+      }
     };
   };
 
@@ -236,6 +244,7 @@ export default function OnlineConversationRoomScreen() {
       (coordinate, idx) => ({
         id: occupantBySeat[idx],
         name: participantNames.current[occupantBySeat[idx]],
+        mute: participantMutes.current[occupantBySeat[idx]],
         ...coordinate,
       }),
     );
@@ -246,6 +255,14 @@ export default function OnlineConversationRoomScreen() {
     if (localAudio.current) {
       const audioTrack = localAudio.current.getAudioTracks()[0];
       audioTrack.enabled = !audioTrack.enabled;
+      participantMutes.current[myId] = !participantMutes.current[myId];
+      ws.current?.send(
+        JSON.stringify({
+          toId: Object.keys(peers.current),
+          signal: { type: "mute" },
+        }),
+      );
+      coordinateSeat();
       setMute(!mute);
     }
   };
@@ -335,17 +352,27 @@ export default function OnlineConversationRoomScreen() {
               ]}
             >
               {seat.id ? (
-                <Ionicons
-                  name="person-circle-outline"
-                  size={24}
-                  color="black"
-                  onPress={
-                    seat.id !== myId
-                      ? () =>
-                          handlePressParticipant(seat.id ?? "", seat.name ?? "")
-                      : undefined
-                  }
-                />
+                <>
+                  {seat.mute ? (
+                    <Feather name="mic-off" size={10} color="black" />
+                  ) : (
+                    <></>
+                  )}
+                  <Ionicons
+                    name="person-circle-outline"
+                    size={24}
+                    color="black"
+                    onPress={
+                      seat.id !== myId
+                        ? () =>
+                            handlePressParticipant(
+                              seat.id ?? "",
+                              seat.name ?? "",
+                            )
+                        : undefined
+                    }
+                  />
+                </>
               ) : (
                 <Feather name="circle" size={24} color="black" />
               )}
@@ -353,9 +380,14 @@ export default function OnlineConversationRoomScreen() {
             </View>
           ))}
         </View>
-        <View style={styles.controls}></View>
+        <View style={styles.controls}>
+          {mute ? (
+            <CustomButton label="turn off your mic" onPress={toggleAudio} />
+          ) : (
+            <CustomButton label="turn on your mic" onPress={toggleAudio} />
+          )}
+        </View>
       </View>
-      <View style={styles.chatContainer}></View>
     </SafeAreaView>
   );
 }
@@ -406,18 +438,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 12,
   },
-  muteButton: {
-    backgroundColor: colors.SAND_110,
-    borderWidth: 1,
-    borderColor: colors.BLACK,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-  },
-  muteText: {
-    color: colors.BLACK,
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  chatContainer: {},
 });

@@ -5,7 +5,7 @@ import {
   StyleProp,
   StyleSheet,
   Text,
-  ViewStyle
+  ViewStyle,
 } from "react-native";
 import { colors } from "@/constants";
 
@@ -16,13 +16,13 @@ interface CustomButtonProps extends PressableProps {
   style?: StyleProp<ViewStyle>;
 }
 
-function CustomButton({
-                        label,
-                        size = "large",
-                        variant = "filled",
-                        style = null,
-                        ...props
-                      }: CustomButtonProps) {
+export default function CustomButton({
+  label,
+  size = "large",
+  variant = "filled",
+  style = null,
+  ...props
+}: CustomButtonProps) {
   return (
     <Pressable
       {...props}
@@ -32,7 +32,7 @@ function CustomButton({
         styles[variant],
         props.disabled && styles.disabled,
         pressed && styles.pressed,
-        style
+        style,
       ]}
     >
       <Text style={styles[`${variant}Text`]}>{label}</Text>
@@ -44,47 +44,45 @@ const styles = StyleSheet.create({
   container: {
     borderRadius: 8,
     justifyContent: "center",
-    alignItems: "center"
+    alignItems: "center",
   },
   large: {
     width: "100%",
-    height: 44
+    height: 44,
   },
   medium: {
     height: 38,
     alignSelf: "center",
-    paddingHorizontal: 12
+    paddingHorizontal: 12,
   },
   filled: {
-    backgroundColor: colors.BLACK
+    backgroundColor: colors.BLACK,
   },
   standard: {},
   outlined: {
     backgroundColor: colors.WHITE,
     borderWidth: 1,
-    borderColor: colors.BLACK
+    borderColor: colors.BLACK,
   },
   pressed: {
-    opacity: 0.8
+    opacity: 0.8,
   },
   disabled: {
-    backgroundColor: colors.GRAY_300
+    backgroundColor: colors.GRAY_300,
   },
   standardText: {
     fontSize: 17,
     fontWeight: "bold",
-    color: colors.BLACK
+    color: colors.BLACK,
   },
   filledText: {
     fontSize: 17,
     fontWeight: "bold",
-    color: colors.WHITE
+    color: colors.WHITE,
   },
   outlinedText: {
     fontSize: 17,
     fontWeight: "bold",
-    color: colors.BLACK
-  }
+    color: colors.BLACK,
+  },
 });
-
-export default CustomButton;
