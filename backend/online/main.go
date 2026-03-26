@@ -1,11 +1,11 @@
 package main
 
 import (
-	"backend/online/server"
+	"backend/online/internal"
 )
 
 func main() {
 
-	server.NewServer()
+	internal.NewServer()
 
 }

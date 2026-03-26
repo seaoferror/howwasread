@@ -1,9 +1,9 @@
 package main
 
 import (
-	"backend/auth/server"
+	"backend/auth/internal"
 )
 
 func main() {
-	server.NewServer()
+	internal.NewServer()
 }

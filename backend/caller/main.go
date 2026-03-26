@@ -1,8 +1,8 @@
 package main
 
-import "backend/caller/server"
+import "backend/caller/internal"
 
 func main() {
-	server.NewServer()
+	internal.NewServer()
 
 }

@@ -369,13 +369,6 @@ export default function OnlineConversationRoomScreen() {
         remoteAudio.release();
       }
       ws.current?.close();
-
-      // participantIds.current = [];
-      // participantNames.current = {};
-      // localAudio.current = null;
-      // ws.current = null;
-      // peers.current = {};
-      // remoteAudios.current = {};
     };
   });
 
