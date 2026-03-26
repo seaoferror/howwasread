@@ -31,27 +31,20 @@ func (r *Repository) SaveNewMemberId(idRaw []byte) error {
 	return nil
 }
 
-func (r *Repository) SetServerIP(ctx context.Context, memberId uuid.UUID, ip string) error {
-	_, err := r.db.Collection("member").
-		UpdateOne(ctx, bson.M{"_id": bson.Binary{Subtype: 4, Data: memberId[:]}},
-			bson.M{"$set": bson.M{"server_ip": ip}})
-	if err != nil {
-		slog.Error("fail to set ip to member doc's internal ips",
-			"err", err)
-		return err
+func (r *Repository) SetServerIP(ctx context.Context, memberId, ip string) error {
+	result := r.redisClient.Do(ctx, r.redisClient.B().Set().Key(memberId).Value(ip).Build())
+	if result.Error() != nil {
+		slog.Error("fail to save member ip", "err", result.Error())
+		return result.Error()
 	}
 	return nil
 }
 
-func (r *Repository) RemoveServerIP(ctx context.Context, memberId uuid.UUID) error {
-
-	_, err := r.db.Collection("member").
-		UpdateOne(ctx, bson.M{"_id": bson.Binary{Subtype: 4, Data: memberId[:]}},
-			bson.M{"$unset": bson.M{"server_ip": ""}})
-	if err != nil {
-		slog.Error("fail to remove ip to member doc's internal ips",
-			"err", err)
-		return err
+func (r *Repository) RemoveServerIP(ctx context.Context, memberId string) error {
+	result := r.redisClient.Do(ctx, r.redisClient.B().Del().Key(memberId).Build())
+	if result.Error() != nil {
+		slog.Error("fail to remove member ip", "err", result.Error())
+		return result.Error()
 	}
 	return nil
 }

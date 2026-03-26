@@ -1,36 +1,27 @@
 package repository
 
 import (
-	"context"
 	"log"
-	"log/slog"
 	"os"
 
-	"go.mongodb.org/mongo-driver/v2/mongo"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
-	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
-
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/redis/rueidis"
 )
 
 type Repository struct {
-	client *mongo.Client
-	db     *mongo.Database
+	client rueidis.Client
 }
 
 func NewRepository() *Repository {
-	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
-	opts := options.Client().ApplyURI(os.Getenv("MONGODB_URI")).SetServerAPIOptions(serverAPI)
-	client, err := mongo.Connect(opts)
+	clientOption := rueidis.ClientOption{
+		InitAddress: []string{os.Getenv("REDIS_URL")},
+	}
+	client, err := rueidis.NewClient(clientOption)
 	if err != nil {
-		log.Panicf("fail to connect mongodb: %v", err)
+		log.Panicf("Fail to connect to redis: %v", err)
 	}
 
-	err = client.Ping(context.Background(), readpref.Primary())
-	if err != nil {
-		log.Panicf("fail to ping mongodb: %v", err)
-	}
-	slog.Info("success to connect mongodb")
-	r := &Repository{client, client.Database("db")}
-	return r
+	r := Repository{client: client}
+
+	return &r
 }

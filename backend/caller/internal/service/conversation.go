@@ -6,17 +6,11 @@ import (
 	"encoding/json"
 	"log/slog"
 
-	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func (s *Service) PropagateSignal(ctx context.Context, fromId, toIdRaw string, signal json.RawMessage) error {
-	toId, err := uuid.Parse(toIdRaw)
-	if err != nil {
-		slog.Error("fail to parse")
-		return err
-	}
+func (s *Service) PropagateSignal(ctx context.Context, fromId, toId string, signal json.RawMessage) error {
 	ip, err := s.repository.GetServerIP(ctx, toId)
 	if err != nil {
 		return err
@@ -44,7 +38,7 @@ func (s *Service) PropagateSignal(ctx context.Context, fromId, toIdRaw string, s
 
 	req := pb.RelaySignalRequest{
 		FromId: fromId,
-		ToId:   toIdRaw,
+		ToId:   toId,
 		Signal: signal,
 	}
 	_, err = client.RelaySignal(ctx, &req)

@@ -39,7 +39,7 @@ func (r *Repository) SaveConversation(ctx context.Context, memberId uuid.UUID, c
 		},
 	}
 
-	session, err := r.client.StartSession()
+	session, err := r.mongoClient.StartSession()
 	if err != nil {
 		slog.Error("fail to start transaction for insert new conversation",
 			"err", err)

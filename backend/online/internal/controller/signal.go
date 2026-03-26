@@ -62,7 +62,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 		destroy := context.Background()
 		conn.Close(websocket.StatusNormalClosure, "")
 		delete(c.connections, memberIdRaw)
-		c.service.RemoveServerIP(destroy, memberId)
+		c.service.RemoveServerIP(destroy, memberIdRaw)
 		c.service.RemoveParticipant(destroy, conversationId, memberId)
 		slog.Info("success to close connection",
 			"number of current connection", len(c.connections))
@@ -70,7 +70,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 
 	init := context.Background()
 
-	err = c.service.SetServerIP(init, memberId, ip)
+	err = c.service.SetServerIP(init, memberIdRaw, ip)
 	if err != nil {
 		err = conn.Write(init, websocket.MessageText, []byte(err.Error()))
 		if err != nil {
