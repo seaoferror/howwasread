@@ -25,12 +25,7 @@ func (c *Controller) sendLike(w http.ResponseWriter, r *http.Request) {
 		handleParseError(w)
 		return
 	}
-	toId, err := uuid.Parse(req.ToId)
-	if err != nil {
-		handleParseError(w)
-		return
-	}
-	err = c.service.SendLike(r.Context(), memberId, toId)
+	err = c.service.SendLike(r.Context(), memberId, req.ToId)
 	if err != nil {
 		handleServiceError(w, err)
 		return

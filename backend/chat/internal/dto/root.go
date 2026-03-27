@@ -1,5 +1,7 @@
 package dto
 
+import "github.com/google/uuid"
+
 type SendLikeRequest struct {
-	ToId string `json:"toId"`
+	ToId uuid.UUID `json:"toId"`
 }

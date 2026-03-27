@@ -23,15 +23,16 @@ func NewRepository() *Repository {
 	}
 	_, err = db.Exec(`
 	CREATE TABLE IF NOT EXISTS member (
-		id CHAR(36) NOT NULL PRIMARY KEY,
+		id BINARY(16) NOT NULL PRIMARY KEY,
 		name VARCHAR(255) NOT NULL
 	);
 	CREATE TABLE IF NOT EXISTS message (
-		id CHAR(36) NOT NULL PRIMARY KEY,
-		to_id CHAR(36) NOT NULL,
-		content JSON NOT NULL,
-		CONSTRAINT fk_message_to_member FOREIGN KEY (to_id) REFERENCES member(id),
-		INDEX INDEX idx_message_to_id (to_id);
+		id BINARY(16) NOT NULL PRIMARY KEY,
+		to_id BINARY(16) NOT NULL,
+	    from_id BINARY(16) NOT NULL,
+	    content_type VARCHAR(50) NOT NULL,
+		content TEXT NOT NULL,
+		INDEX idx_message_to_id_id (to_id, id)
 	);`)
 	if err != nil {
 		panic(err)

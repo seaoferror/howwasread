@@ -29,9 +29,8 @@ func NewController(s *service.Service, m *http.ServeMux) *Controller {
 		service: s,
 		mux:     m,
 	}
-	//
-	//conversationRouter(c)
-	//profileRouter(c)
+
+	chatRouter(c)
 
 	return c
 }
