@@ -58,7 +58,7 @@ func (s *Service) GetMyProfile(ctx context.Context, id uuid.UUID) (*dto.GetMyPro
 	if err != nil {
 		return nil, err
 	}
-	res := dto.GetMyProfileResponse{Id: id.String(), Name: profile.Name}
+	res := dto.GetMyProfileResponse{Id: id, Name: profile.Name}
 
 	return &res, nil
 }

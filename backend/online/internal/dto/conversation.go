@@ -3,6 +3,8 @@ package dto
 import (
 	"encoding/json"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type CreateConversationRequest struct {
@@ -36,19 +38,13 @@ type ConversationFeedResponse struct {
 }
 
 type ConversationSignalResponse struct {
-	FromIds []string        `json:"fromIds"`
+	FromIds []uuid.UUID     `json:"fromIds"`
 	Signal  json.RawMessage `json:"signal,omitempty"`
 }
 
 type ConversationSignalRequest struct {
-	ToIds  []string        `json:"toIds"`
+	ToIds  []uuid.UUID     `json:"toIds"`
 	Signal json.RawMessage `json:"signal"`
-}
-
-type ConversationSignalMessage struct {
-	FromId string          `json:"fromId"`
-	ToId   string          `json:"toId"`
-	Signal json.RawMessage `json:"signal,omitempty"`
 }
 
 type GetConversationResponse struct {
@@ -67,6 +63,6 @@ type GetConversationResponse struct {
 }
 
 type BanParticipantRequest struct {
-	ConversationId string `json:"conversationId"`
-	BanId          string `json:"banId"`
+	ConversationId string    `json:"conversationId"`
+	BanId          uuid.UUID `json:"banId"`
 }

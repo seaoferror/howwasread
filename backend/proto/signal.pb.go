@@ -23,8 +23,8 @@ const (
 
 type RelaySignalRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	FromId        string                 `protobuf:"bytes,1,opt,name=fromId,proto3" json:"fromId,omitempty"`
-	ToId          string                 `protobuf:"bytes,2,opt,name=toId,proto3" json:"toId,omitempty"`
+	FromId        []byte                 `protobuf:"bytes,1,opt,name=fromId,proto3" json:"fromId,omitempty"`
+	ToId          []byte                 `protobuf:"bytes,2,opt,name=toId,proto3" json:"toId,omitempty"`
 	Signal        []byte                 `protobuf:"bytes,3,opt,name=signal,proto3" json:"signal,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -60,18 +60,18 @@ func (*RelaySignalRequest) Descriptor() ([]byte, []int) {
 	return file_proto_signal_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *RelaySignalRequest) GetFromId() string {
+func (x *RelaySignalRequest) GetFromId() []byte {
 	if x != nil {
 		return x.FromId
 	}
-	return ""
+	return nil
 }
 
-func (x *RelaySignalRequest) GetToId() string {
+func (x *RelaySignalRequest) GetToId() []byte {
 	if x != nil {
 		return x.ToId
 	}
-	return ""
+	return nil
 }
 
 func (x *RelaySignalRequest) GetSignal() []byte {
@@ -123,8 +123,8 @@ const file_proto_signal_proto_rawDesc = "" +
 	"\n" +
 	"\x12proto/signal.proto\x12\rsignalservice\"X\n" +
 	"\x12RelaySignalRequest\x12\x16\n" +
-	"\x06fromId\x18\x01 \x01(\tR\x06fromId\x12\x12\n" +
-	"\x04toId\x18\x02 \x01(\tR\x04toId\x12\x16\n" +
+	"\x06fromId\x18\x01 \x01(\fR\x06fromId\x12\x12\n" +
+	"\x04toId\x18\x02 \x01(\fR\x04toId\x12\x16\n" +
 	"\x06signal\x18\x03 \x01(\fR\x06signal\"\x15\n" +
 	"\x13RelaySignalResponse2e\n" +
 	"\rSignalService\x12T\n" +

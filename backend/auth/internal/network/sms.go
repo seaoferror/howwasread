@@ -36,7 +36,7 @@ func (n *Network) verifySMSOTP(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
-	result, rt, err := n.service.VerifySMSOTP(req.SessionId, req.OTP, req.VerificationId)
+	result, rt, err := n.service.VerifySMSOTP(req.SessionId, req.VerificationId, req.OTP)
 	if err != nil {
 		c.JSON(getStatusCode(err), err.Error())
 		return

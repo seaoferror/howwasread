@@ -47,7 +47,7 @@ func (c *signalServiceClient) RelaySignal(ctx context.Context, in *RelaySignalRe
 	return out, nil
 }
 
-// SignalServiceServer is the internal API for SignalService service.
+// SignalServiceServer is the server API for SignalService service.
 // All implementations must embed UnimplementedSignalServiceServer
 // for forward compatibility.
 type SignalServiceServer interface {

@@ -10,7 +10,7 @@ import (
 func (s *Service) SendLike(ctx context.Context, fromId, toId uuid.UUID) error {
 	messageId, err := uuid.NewV7()
 	if err != nil {
-		slog.Error("fail to create uuid v7 for saving message", "err", err)
+		slog.Error("fail to create uuid v7 for saving payload", "err", err)
 		return err
 	}
 	err = s.repository.SaveLike(ctx, messageId, fromId, toId)

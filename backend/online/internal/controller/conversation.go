@@ -165,14 +165,7 @@ func (c *Controller) banParticipant(w http.ResponseWriter, r *http.Request) {
 		handleParseError(w)
 		return
 	}
-	banId, err := uuid.Parse(req.BanId)
-	if err != nil {
-		slog.Error("fail to parse ban id from raw string", "err", err,
-			"req.BanId", banId)
-		handleParseError(w)
-		return
-	}
-	err = c.service.BanParticipant(r.Context(), memberId, conversationId, banId)
+	err = c.service.BanParticipant(r.Context(), memberId, conversationId, req.BanId)
 	if err != nil {
 		handleServiceError(w, err)
 		return

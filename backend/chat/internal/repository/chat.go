@@ -9,7 +9,7 @@ import (
 
 func (r *Repository) SaveLike(ctx context.Context, messageId, fromId, toId uuid.UUID) error {
 
-	_, err := r.db.ExecContext(ctx, `INSERT INTO message (
+	_, err := r.db.ExecContext(ctx, `INSERT INTO payload (
                      id, to_id, from_id, content_type, content) VALUES (?, ?, ?, ?, ?)`,
 		messageId[:], toId[:], fromId[:], "text", "👍")
 	if err != nil {

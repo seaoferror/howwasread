@@ -2,6 +2,7 @@ package service
 
 import (
 	"backend/online/internal/dto"
+	"backend/payload"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -107,7 +108,7 @@ func (s *Service) GetConversations(ctx context.Context, memberId uuid.UUID, page
 	return resp, nil
 }
 
-func (s *Service) GetParticipants(ctx context.Context, conversationId bson.ObjectID, memberId uuid.UUID) (pids []string, err error) {
+func (s *Service) GetParticipants(ctx context.Context, conversationId bson.ObjectID, memberId uuid.UUID) (pids []uuid.UUID, err error) {
 	pidsRaw, err := s.repository.FindParticipantIds(ctx, conversationId)
 	if err != nil {
 		return nil, err
@@ -123,7 +124,7 @@ func (s *Service) GetParticipants(ctx context.Context, conversationId bson.Objec
 		if memberId == pid {
 			continue
 		}
-		pids = append(pids, pid.String())
+		pids = append(pids, pid)
 	}
 	return pids, nil
 }
@@ -144,10 +145,10 @@ func (s *Service) RemoveParticipant(ctx context.Context, conversationId bson.Obj
 	return nil
 }
 
-func (s *Service) PublishConversationSignal(fromId, toId string, data []byte) error {
-	msg := dto.ConversationSignalMessage{
-		FromId: fromId,
-		ToId:   toId,
+func (s *Service) PublishConversationSignal(fromId, toId uuid.UUID, data []byte) error {
+	msg := payload.ConversationSignal{
+		FromId: fromId[:],
+		ToId:   toId[:],
 		Signal: data,
 	}
 

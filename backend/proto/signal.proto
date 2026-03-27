@@ -9,8 +9,8 @@ service SignalService {
 }
 
 message RelaySignalRequest {
-  string fromId = 1;
-  string toId = 2;
+  bytes fromId = 1;
+  bytes toId = 2;
   bytes signal = 3;
 }
 

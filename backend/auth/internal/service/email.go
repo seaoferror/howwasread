@@ -36,7 +36,7 @@ func (s *Service) CheckEmailUsability(ctx context.Context, email string) (bool, 
 	return true, nil
 }
 
-func (s *Service) CreateMemberByEmail(ctx context.Context, email, password string) (map[string]string, error) {
+func (s *Service) CreateMemberByEmail(ctx context.Context, email, password string) (map[string]uuid.UUID, error) {
 	if !isValidEmail(email) {
 		return nil, ErrSignUpWithEmail
 	}
@@ -85,7 +85,7 @@ func (s *Service) CreateMemberByEmail(ctx context.Context, email, password strin
 		return nil, ErrInternalServer
 	}
 
-	return map[string]string{"verificationId": vid}, nil
+	return map[string]uuid.UUID{"verificationId": vid}, nil
 }
 
 func (s *Service) LoginWithEmail(email, password string) (*dto.LoginWithEmailResponse, string /*refreshToken*/, error) {
@@ -126,7 +126,7 @@ func (s *Service) LoginWithEmail(email, password string) (*dto.LoginWithEmailRes
 		err = s.repository.SaveEmailBySessionId(sid, email)
 		resp.EmailVerified = true
 		resp.PhoneNumberVerified = false
-		resp.SessionId = sid.String()
+		resp.SessionId = uuid.UUID(sid)
 		return &resp, "", nil
 	}
 
@@ -149,18 +149,18 @@ func (s *Service) LoginWithEmail(email, password string) (*dto.LoginWithEmailRes
 	return &resp, rt, nil
 }
 
-func (s *Service) sendEmailOTP(email string) (string, error) {
+func (s *Service) sendEmailOTP(email string) (uuid.UUID, error) {
 	otp := strconv.Itoa(rand.Intn(900000) + 100000)
 	vid, err := gocql.RandomUUID()
 	if err != nil {
 		slog.Error("fail to make random uuid for verification id",
 			"err", err,
 		)
-		return "", ErrInternalServer
+		return uuid.UUID{}, ErrInternalServer
 	}
 	err = s.repository.SaveEmailAndOtpByVerificationId(vid, email, otp)
 	if err != nil {
-		return "", ErrInternalServer
+		return uuid.UUID{}, ErrInternalServer
 	}
 	go func() {
 		from := os.Getenv("FROM_EMAIL")
@@ -188,16 +188,11 @@ func (s *Service) sendEmailOTP(email string) (string, error) {
 		}
 	}()
 
-	return vid.String(), nil
+	return uuid.UUID(vid), nil
 }
 
-func (s *Service) VerifyEmailOTP(otp, verificationId string) (*dto.VerifyEmailOTPResponse, error) {
-	vid, err := gocql.ParseUUID(verificationId)
-	if err != nil {
-		slog.Info("fail to parse uuid from verificationId in req", err)
-		return nil, ErrVerifyEmailOTP
-	}
-	email, dbOTP, err := s.repository.FindEmailAndOTPByVerificationId(vid)
+func (s *Service) VerifyEmailOTP(otp string, verificationId uuid.UUID) (*dto.VerifyEmailOTPResponse, error) {
+	email, dbOTP, err := s.repository.FindEmailAndOTPByVerificationId(gocql.UUID(verificationId))
 	if err != nil {
 		return nil, ErrVerifyEmailOTP
 	}
@@ -229,7 +224,7 @@ func (s *Service) VerifyEmailOTP(otp, verificationId string) (*dto.VerifyEmailOT
 
 	resp := dto.VerifyEmailOTPResponse{
 		EmailVerified: true,
-		SessionId:     sid.String(),
+		SessionId:     uuid.UUID(sid),
 	}
 	return &resp, nil
 }

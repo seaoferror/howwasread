@@ -158,7 +158,7 @@ func (s *Service) SignInWithApple(
 
 			resp := dto.SignInWithAppleResponse{
 				PhoneNumberVerified: false,
-				SessionId:           sessionId.String(),
+				SessionId:           uuid.UUID(sessionId),
 			}
 			return &resp, "", nil
 		}
@@ -185,7 +185,7 @@ func (s *Service) SignInWithApple(
 
 			resp := dto.SignInWithAppleResponse{
 				PhoneNumberVerified: false,
-				SessionId:           sessionId.String(),
+				SessionId:           uuid.UUID(sessionId),
 			}
 			return &resp, "", nil
 		}
@@ -240,7 +240,7 @@ func (s *Service) SignInWithApple(
 
 		resp := dto.SignInWithAppleResponse{
 			PhoneNumberVerified: false,
-			SessionId:           sessionId.String(),
+			SessionId:           uuid.UUID(sessionId),
 		}
 		return &resp, "", nil
 	}

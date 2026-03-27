@@ -71,11 +71,11 @@ func (kp *KafkaProducer) PushMessage(topic string, message []byte) error {
 
 	select {
 	case succeedMsg := <-kp.producer.Successes():
-		log.Print("Success to produce message",
+		log.Print("Success to produce payload",
 			"partition", succeedMsg.Partition)
 		return nil
 	case err := <-kp.producer.Errors():
-		log.Print("Failed to produce message",
+		log.Print("Failed to produce payload",
 			"err", err)
 		return err
 	}

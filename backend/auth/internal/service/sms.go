@@ -14,8 +14,8 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 )
 
-func (s *Service) SendSMSOTP(sessionId *string, phoneNumber string) (map[string]string, error) {
-	if sessionId != nil {
+func (s *Service) SendSMSOTP(sessionId uuid.UUID, phoneNumber string) (map[string]uuid.UUID, error) {
+	if sessionId == uuid.Nil {
 		email, err := s.repository.FindEmailByPhoneNumber(phoneNumber)
 		if errors.Is(err, gocql.ErrNotFound) {
 			err = nil
@@ -58,42 +58,24 @@ func (s *Service) SendSMSOTP(sessionId *string, phoneNumber string) (map[string]
 	if err != nil {
 		return nil, ErrInternalServer
 	}
-	res := map[string]string{"verificationId": vid.String()}
+	res := map[string]uuid.UUID{"verificationId": uuid.UUID(vid)}
 	return res, nil
 }
 
-func (s *Service) VerifySMSOTP(sessionId *string, otp, verificationId string) (*dto.VerifySMSOTPResponse, string /*refreshToken*/, error) {
+func (s *Service) VerifySMSOTP(sessionId, verificationId uuid.UUID, otp string) (*dto.VerifySMSOTPResponse, string, error) {
 	var email string
-	if sessionId != nil {
-		sid, err := gocql.ParseUUID(*sessionId)
-		if err != nil {
-			slog.Info("fail to parse SessionId from OTPVerifyReq",
-				"err", err,
-				"SessionId", *sessionId,
-			)
-			return nil, "", ErrVerifySMSOTP
-		}
-
-		email, err = s.repository.FindEmailBySessionId(sid)
+	var err error
+	if sessionId != uuid.Nil {
+		email, err = s.repository.FindEmailBySessionId(gocql.UUID(sessionId))
 		if err != nil {
 			return nil, "", ErrVerifySMSOTP
 		}
 	}
-
-	vid, err := gocql.ParseUUID(verificationId)
-	if err != nil {
-		slog.Info("fail to parse verificationId from request",
-			"err", err,
-			"id", verificationId,
-		)
-		return nil, "", ErrVerifySMSOTP
-	}
-	phoneNumber, err := s.repository.FindPhoneNumberByVerificationId(vid)
+	phoneNumber, err := s.repository.FindPhoneNumberByVerificationId(gocql.UUID(verificationId))
 	if err != nil {
 		return nil, "", ErrVerifySMSOTP
 	}
-
-	if sessionId != nil {
+	if sessionId != uuid.Nil {
 		e, err := s.repository.FindEmailByPhoneNumber(phoneNumber)
 		if errors.Is(err, gocql.ErrNotFound) {
 			err = nil
@@ -133,7 +115,7 @@ func (s *Service) VerifySMSOTP(sessionId *string, otp, verificationId string) (*
 		return &r, "", nil
 	}
 
-	if sessionId == nil {
+	if sessionId == uuid.Nil {
 		var idv7 uuid.UUID
 		id, err := s.repository.FindIdByPhoneNumber(phoneNumber)
 		if errors.Is(err, gocql.ErrNotFound) {
@@ -173,13 +155,8 @@ func (s *Service) VerifySMSOTP(sessionId *string, otp, verificationId string) (*
 			AccessToken:         at,
 		}
 		if idv7 != uuid.Nil {
-			err = s.kafkaProducer.PushMessage("auth.new_member_id", id.Bytes())
-			if err != nil {
-				//TODO: Retry logic with grpc or rest
-				return &r, rt, nil
-			}
+			_ = s.kafkaProducer.PushMessage("auth.new_member_id", id.Bytes())
 		}
-
 		return &r, rt, nil
 	}
 
@@ -221,10 +198,6 @@ func (s *Service) VerifySMSOTP(sessionId *string, otp, verificationId string) (*
 		PhoneNumberVerified: true,
 		AccessToken:         at,
 	}
-	err = s.kafkaProducer.PushMessage("auth.new_member_id", id.Bytes())
-	if err != nil {
-		//TODO: Retry logic with grpc or rest
-		return &r, rt, nil
-	}
+	_ = s.kafkaProducer.PushMessage("auth.new_member_id", id.Bytes())
 	return &r, rt, nil
 }

@@ -53,7 +53,7 @@ func connectConsumer(groupID string) (sarama.ConsumerGroup, error) {
 	cfg.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{sarama.NewBalanceStrategySticky()}
 	//if balance strategy need to be change flexible, use switch-case with config di
 	cfg.Consumer.Offsets.Initial = sarama.OffsetOldest
-	//this setting make possible to consume message which is stored but not consumed for certain reason like worker internal down
+	//this setting make possible to consume payload which is stored but not consumed for certain reason like worker internal down
 
 	return sarama.NewConsumerGroup([]string{os.Getenv("KAFKA_URL")}, groupID, cfg)
 }
@@ -73,7 +73,7 @@ func (ks *KafkaConsumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim
 			session.MarkMessage(msg, "")
 			err := ks.distinguishMessage(msg)
 			if err != nil {
-				log.Printf("Fail to save message: %v", err)
+				log.Printf("Fail to save payload: %v", err)
 			}
 			continue
 		case <-session.Context().Done():
@@ -149,8 +149,8 @@ func toggleConsumptionFlow(client sarama.ConsumerGroup, isPaused *bool) {
 }
 
 func (ks *KafkaConsumer) distinguishMessage(message *sarama.ConsumerMessage) error {
-	//if message.Topic == "auth.new_member_id" {
-	//	err := ks.service.SaveNewMemberId(message.Value)
+	//if payload.Topic == "auth.new_member_id" {
+	//	err := ks.service.SaveNewMemberId(payload.Value)
 	//	if err != nil {
 	//		return err
 	//	}

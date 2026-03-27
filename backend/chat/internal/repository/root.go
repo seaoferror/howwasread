@@ -26,7 +26,7 @@ func NewRepository() *Repository {
 		id BINARY(16) NOT NULL PRIMARY KEY,
 		name VARCHAR(255) NOT NULL
 	);
-	CREATE TABLE IF NOT EXISTS message (
+	CREATE TABLE IF NOT EXISTS payload (
 		id BINARY(16) NOT NULL PRIMARY KEY,
 		to_id BINARY(16) NOT NULL,
 	    from_id BINARY(16) NOT NULL,

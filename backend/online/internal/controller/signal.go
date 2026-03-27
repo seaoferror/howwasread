@@ -50,9 +50,9 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if c.connections == nil {
-		c.connections = make(map[string]*websocket.Conn)
+		c.connections = make(map[uuid.UUID]*websocket.Conn)
 	}
-	c.connections[memberIdRaw] = conn
+	c.connections[memberId] = conn
 	slog.Info("success to make connection",
 		"number of current connection", len(c.connections))
 
@@ -61,7 +61,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		destroy := context.Background()
 		conn.Close(websocket.StatusNormalClosure, "")
-		delete(c.connections, memberIdRaw)
+		delete(c.connections, memberId)
 		c.service.RemoveServerIP(destroy, memberIdRaw)
 		c.service.RemoveParticipant(destroy, conversationId, memberId)
 		slog.Info("success to close connection",
@@ -124,7 +124,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, pid := range pids {
 		resp := dto.ConversationSignalResponse{
-			FromIds: []string{memberIdRaw},
+			FromIds: []uuid.UUID{memberId},
 		}
 		payload, err := json.Marshal(resp)
 		if err != nil {
@@ -148,7 +148,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 			}
 			continue
 		}
-		err = c.service.PublishConversationSignal(memberIdRaw, pid, []byte{})
+		err = c.service.PublishConversationSignal(memberId, pid, []byte{})
 		if err != nil {
 			err = conn.Write(init, websocket.MessageText, []byte("fail to publish"))
 			if err != nil {
@@ -168,10 +168,10 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if msgType != websocket.MessageText {
-			slog.Error("incorrect message type",
+			slog.Error("incorrect payload type",
 				"msgType", msgType,
 				"data", data)
-			err = conn.Write(ctx, websocket.MessageText, []byte("incorrect message type"))
+			err = conn.Write(ctx, websocket.MessageText, []byte("incorrect payload type"))
 			if err != nil {
 				slog.Error("fail to write payload",
 					"err", err)
@@ -207,7 +207,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 			to, ok := c.connections[toId]
 			if ok {
 				resp := dto.ConversationSignalResponse{
-					FromIds: []string{memberIdRaw},
+					FromIds: []uuid.UUID{memberId},
 					Signal:  req.Signal,
 				}
 				payload, err := json.Marshal(resp)
@@ -231,7 +231,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 				}
 				continue
 			}
-			err = c.service.PublishConversationSignal(memberIdRaw, toId, req.Signal)
+			err = c.service.PublishConversationSignal(memberId, toId, req.Signal)
 			if err != nil {
 				err = conn.Write(ctx, websocket.MessageText, []byte("fail to publish"))
 				if err != nil {
@@ -245,9 +245,9 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (c *Controller) RelaySignal(ctx context.Context, fromId, toId string, signal []byte) error {
+func (c *Controller) RelaySignal(ctx context.Context, fromId, toId uuid.UUID, signal []byte) error {
 	resp := dto.ConversationSignalResponse{
-		FromIds: []string{fromId},
+		FromIds: []uuid.UUID{fromId},
 		Signal:  signal,
 	}
 	payload, err := json.Marshal(resp)

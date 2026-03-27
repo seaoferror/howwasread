@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/coder/websocket"
+	"github.com/google/uuid"
 )
 
 type HTTPMethod int
@@ -20,7 +21,7 @@ const (
 type Controller struct {
 	service     *service.Service
 	mux         *http.ServeMux
-	connections map[string]*websocket.Conn
+	connections map[uuid.UUID]*websocket.Conn
 }
 
 func NewController(s *service.Service, m *http.ServeMux) *Controller {

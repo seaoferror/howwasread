@@ -32,7 +32,7 @@ func NewServer() {
 	go func() {
 		err := ks.GetMessage([]string{"online.new_member_name"})
 		if err != nil {
-			slog.Error("fail to get message from kafka",
+			slog.Error("fail to get payload from kafka",
 				"err", err)
 			return
 		}

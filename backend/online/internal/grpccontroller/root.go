@@ -4,6 +4,8 @@ import (
 	"backend/online/internal/controller"
 	pb "backend/proto"
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type GRPCController struct {
@@ -18,7 +20,9 @@ func NewGRPCController(controller *controller.Controller) *GRPCController {
 }
 
 func (gc *GRPCController) RelaySignal(ctx context.Context, in *pb.RelaySignalRequest) (*pb.RelaySignalResponse, error) {
-	err := gc.controller.RelaySignal(ctx, in.FromId, in.ToId, in.Signal)
+	fromId := uuid.UUID(in.FromId)
+	toId := uuid.UUID(in.ToId)
+	err := gc.controller.RelaySignal(ctx, fromId, toId, in.Signal)
 	if err != nil {
 		return nil, err
 	}

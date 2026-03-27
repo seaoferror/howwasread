@@ -1,5 +1,7 @@
 package dto
 
+import "github.com/google/uuid"
+
 type CheckEmailRequest struct {
 	Email string `json:"email"`
 }
@@ -9,20 +11,20 @@ type SignInWithEmailRequest struct {
 }
 
 type LoginWithEmailResponse struct {
-	PhoneNumberVerified bool   `json:"phoneNumberVerified"`
-	EmailVerified       bool   `json:"emailVerified"`
-	VerificationId      string `json:"verificationId"`
-	SessionId           string `json:"sessionId"`
-	AccessToken         string `json:"accessToken"`
+	PhoneNumberVerified bool      `json:"phoneNumberVerified"`
+	EmailVerified       bool      `json:"emailVerified"`
+	VerificationId      uuid.UUID `json:"verificationId"`
+	SessionId           uuid.UUID `json:"sessionId"`
+	AccessToken         string    `json:"accessToken"`
 }
 
 type VerifyEmailOTPRequest struct {
-	VerificationId string `json:"verificationId"`
-	OTP            string `json:"otp"`
+	VerificationId uuid.UUID `json:"verificationId"`
+	OTP            string    `json:"otp"`
 }
 type VerifyEmailOTPResponse struct {
-	EmailVerified bool   `json:"emailVerified"`
-	SessionId     string `json:"session_id"`
+	EmailVerified bool      `json:"emailVerified"`
+	SessionId     uuid.UUID `json:"session_id"`
 }
 
 type SignInWithAppleRequest struct {
@@ -33,7 +35,7 @@ type SignInWithAppleRequest struct {
 }
 
 type SignInWithAppleResponse struct {
-	PhoneNumberVerified bool   `json:"phoneNumberVerified"`
-	SessionId           string `json:"sessionId"`
-	AccessToken         string `json:"accessToken"`
+	PhoneNumberVerified bool      `json:"phoneNumberVerified"`
+	SessionId           uuid.UUID `json:"sessionId"`
+	AccessToken         string    `json:"accessToken"`
 }
