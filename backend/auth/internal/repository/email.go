@@ -11,10 +11,14 @@ import (
 func (r *Repository) SaveEmailLoginInfo(id gocql.UUID, email, password string) error {
 	err := r.session.Batch(gocql.LoggedBatch).
 		Query(
-			"INSERT INTO member_by_email (email_verified, phone_number_verified, id, email, password, role) VALUES (?, ?, ?, ?, ?, ?);",
+			`INSERT INTO member_by_email (
+                             email_verified, phone_number_verified, id, email, password, role
+                             ) VALUES (?, ?, ?, ?, ?, ?);`,
 			false, false, id, email, password, constant.RoleUser).
 		Query(
-			"INSERT INTO member_by_id (email_verified, phone_number_verified, id, email, role) VALUES (?, ?, ?, ?, ?)",
+			`INSERT INTO member_by_id (
+                          email_verified, phone_number_verified, id, email, role
+                          ) VALUES (?, ?, ?, ?, ?)`,
 			false, false, id, email, constant.RoleUser).
 		Exec()
 	if err != nil {
@@ -29,7 +33,7 @@ func (r *Repository) SaveEmailLoginInfo(id gocql.UUID, email, password string) e
 
 func (r *Repository) FindEmailById(id gocql.UUID) (email string, err error) {
 	err = r.session.Query(
-		"SELECT email FROM member_by_id WHERE id = ?",
+		`SELECT email FROM member_by_id WHERE id = ?`,
 		id,
 	).Scan(&email)
 	if err != nil {
@@ -44,7 +48,7 @@ func (r *Repository) FindEmailById(id gocql.UUID) (email string, err error) {
 func (r *Repository) EmailExists(ctx context.Context, email string) (bool, error) {
 	var c int64
 	err := r.session.Query(
-		"SELECT COUNT(1) FROM member_by_email WHERE email = ?",
+		`SELECT COUNT(1) FROM member_by_email WHERE email = ?`,
 		email,
 	).ScanContext(ctx, &c)
 	if c == 0 {
@@ -62,7 +66,7 @@ func (r *Repository) EmailExists(ctx context.Context, email string) (bool, error
 
 func (r *Repository) FindLoginInfoByEmail(email string) (emailVerified, phoneNumberVerified bool, id gocql.UUID, password, role string, err error) {
 	err = r.session.Query(
-		"SELECT email_verified, phone_number_verified, id, password, role FROM member_by_email WHERE email = ?",
+		`SELECT email_verified, phone_number_verified, id, password, role FROM member_by_email WHERE email = ?`,
 		email,
 	).Scan(&emailVerified, &phoneNumberVerified, &id, &password, &role)
 	if err != nil {

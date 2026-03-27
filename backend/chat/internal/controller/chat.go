@@ -1,6 +1,8 @@
 package controller
 
 import (
+	"backend/chat/internal/dto"
+	"encoding/json"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -17,5 +19,21 @@ func (c *Controller) sendLike(w http.ResponseWriter, r *http.Request) {
 		handleParseError(w)
 		return
 	}
-
+	var req dto.SendLikeRequest
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		handleParseError(w)
+		return
+	}
+	toId, err := uuid.Parse(req.ToId)
+	if err != nil {
+		handleParseError(w)
+		return
+	}
+	err = c.service.SendLike(r.Context(), memberId, toId)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }

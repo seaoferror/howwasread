@@ -10,13 +10,19 @@ import (
 func (r *Repository) SaveAppleSignInInfo(id gocql.UUID, appleSignInUser, email string, phoneNumberVerified bool) error {
 	err := r.session.Batch(gocql.LoggedBatch).
 		Query(
-			"INSERT INTO member_by_email (email_verified, phone_number_verified, id, apple_sign_in_user, email, role) VALUES (?, ?, ?, ?, ?, ?);",
+			`INSERT INTO member_by_email (
+                             email_verified, phone_number_verified, id, apple_sign_in_user, email, role
+                             ) VALUES (?, ?, ?, ?, ?, ?);`,
 			true, phoneNumberVerified, id, appleSignInUser, email, constant.RoleUser).
 		Query(
-			"INSERT INTO member_by_id (email_verified, phone_number_verified, id, apple_sign_in_user, email, role) VALUES (?, ?, ?, ?, ?, ?)",
+			`INSERT INTO member_by_id (
+                          email_verified, phone_number_verified, id, apple_sign_in_user, email, role
+                          ) VALUES (?, ?, ?, ?, ?, ?)`,
 			true, phoneNumberVerified, id, appleSignInUser, email, constant.RoleUser).
 		Query(
-			"INSERT INTO member_by_apple_sign_in_user (email_verified, id, apple_sign_in_user, email, role) VALUES (?, ?, ?, ?, ?)",
+			`INSERT INTO member_by_apple_sign_in_user (
+                                          email_verified, id, apple_sign_in_user, email, role
+                                          ) VALUES (?, ?, ?, ?, ?)`,
 			true, id, appleSignInUser, email, constant.RoleUser).
 		Exec()
 	if err != nil {
