@@ -16,3 +16,4 @@ type VerifySMSOTPResponse struct {
 	PhoneNumberVerified bool   `json:"phoneNumberVerified"`
 	AccessToken         string `json:"accessToken"`
 }
+					

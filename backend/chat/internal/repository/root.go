@@ -1,46 +1,48 @@
 package repository
 
 import (
-	"database/sql"
+	"log"
 	"os"
+	"time"
 
-	_ "github.com/go-sql-driver/mysql"
+	gocql "github.com/apache/cassandra-gocql-driver/v2"
+	"github.com/apache/cassandra-gocql-driver/v2/lz4"
 	_ "github.com/joho/godotenv/autoload"
 )
 
 type Repository struct {
-	db *sql.DB
+	session *gocql.Session
 }
 
 func NewRepository() *Repository {
-	db, err := sql.Open("mysql", os.Getenv("MY_SQL_URL"))
-	if err != nil {
-		panic(err)
-	}
-	err = db.Ping()
-	if err != nil {
-		panic(err)
-	}
-	_, err = db.Exec(`
-	CREATE TABLE IF NOT EXISTS member (
-		id BINARY(16) NOT NULL PRIMARY KEY,
-		name VARCHAR(255) NOT NULL
-	);
-	CREATE TABLE IF NOT EXISTS payload (
-		id BINARY(16) NOT NULL PRIMARY KEY,
-		to_id BINARY(16) NOT NULL,
-	    from_id BINARY(16) NOT NULL,
-	    content_type VARCHAR(50) NOT NULL,
-		content TEXT NOT NULL,
-		INDEX idx_message_to_id_id (to_id, id)
-	);`)
-	if err != nil {
-		panic(err)
-	}
-	//json fromId, type, content, created_at
-	// sender name should be updated whenever member change their profile, so no need to send them and save in sqlite
+	cluster := gocql.NewCluster(os.Getenv("CASSANDRA_URL"))
+	cluster.Keyspace = "default"
+	cluster.Timeout = 1 * time.Minute
+	cluster.Consistency = gocql.Quorum
+	cluster.Compressor = &lz4.LZ4Compressor{}
+	//cluster.PageSize = 1000
+	//cluster.NextPagePrefetch = 0.25
+	//cluster.Tracer =
 
-	r := Repository{db: db}
+	session, err := gocql.NewSession(*cluster)
+	if err != nil {
+		log.Panicf("fail to create session from cassandra cluster: %v", err)
+	}
+	err = session.Query(`CREATE TABLE IF NOT EXISTS message_by_to_id (
+	id uuid,
+	to_id uuid,
+	from_id uuid,
+	content_type text,
+	content text,
+	PRIMARY KEY ((to_id), id));`).Exec()
+	if err != nil {
+		log.Panicf("fail to create table payload: %v", err)
+	}
 
-	return &r
+	log.Print("success to connect cassandra")
+	r := &Repository{
+		session: session,
+	}
+
+	return r
 }
