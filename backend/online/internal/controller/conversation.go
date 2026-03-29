@@ -3,6 +3,7 @@ package controller
 import (
 	"backend/online/internal/dto"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -28,7 +29,7 @@ func (c *Controller) createConversation(w http.ResponseWriter, r *http.Request) 
 			"err", err,
 			"memberIdRaw", memberIdRaw,
 		)
-		handleParseError(w)
+		handleError(w, errors.New("fail to parse"))
 		return
 	}
 	var req dto.CreateConversationRequest
@@ -37,7 +38,7 @@ func (c *Controller) createConversation(w http.ResponseWriter, r *http.Request) 
 		slog.Info("incorrect body",
 			"err", err,
 		)
-		handleParseError(w)
+		handleError(w, errors.New("fail to parse"))
 		return
 	}
 
@@ -47,7 +48,7 @@ func (c *Controller) createConversation(w http.ResponseWriter, r *http.Request) 
 			"err", err,
 			"req.Length", req.Length,
 		)
-		handleParseError(w)
+		handleError(w, errors.New("fail to parse"))
 		return
 	}
 
@@ -66,7 +67,7 @@ func (c *Controller) createConversation(w http.ResponseWriter, r *http.Request) 
 		length,
 	)
 	if err != nil {
-		handleServiceError(w, err)
+		handleError(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -84,7 +85,7 @@ func (c *Controller) getConversations(w http.ResponseWriter, r *http.Request) {
 			"err", err,
 			"memberIdRaw", memberIdRaw,
 		)
-		handleParseError(w)
+		handleError(w, errors.New("fail to parse"))
 		return
 	}
 	pageRaw := r.URL.Query().Get("page")
@@ -93,7 +94,7 @@ func (c *Controller) getConversations(w http.ResponseWriter, r *http.Request) {
 		slog.Info("incorrect query param for page",
 			"err", err,
 			"pageRaw", pageRaw)
-		handleParseError(w)
+		handleError(w, errors.New("fail to parse"))
 		return
 	}
 	if page < 1 {
@@ -101,7 +102,7 @@ func (c *Controller) getConversations(w http.ResponseWriter, r *http.Request) {
 	}
 	result, err := c.service.GetConversations(r.Context(), memberId, page)
 	if err != nil {
-		handleParseError(w)
+		handleError(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -119,7 +120,7 @@ func (c *Controller) getConversation(w http.ResponseWriter, r *http.Request) {
 		slog.Error("fail to parse member id from raw string",
 			"err", err,
 			"memberIdRaw", memberIdRaw)
-		handleParseError(w)
+		handleError(w, errors.New("fail to parse"))
 		return
 	}
 	conversationIdRaw := r.URL.Query().Get("id")
@@ -127,12 +128,12 @@ func (c *Controller) getConversation(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		slog.Error("fail to parse conversation object id from raw string",
 			"conversationIdRaw", conversationIdRaw)
-		handleParseError(w)
+		handleError(w, errors.New("fail to parse"))
 		return
 	}
 	result, err := c.service.GetConversation(r.Context(), conversationId, memberId)
 	if err != nil {
-		handleServiceError(w, err)
+		handleError(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -150,24 +151,24 @@ func (c *Controller) banParticipant(w http.ResponseWriter, r *http.Request) {
 		slog.Error("fail to parse member id from raw string",
 			"err", err,
 			"memberIdRaw", memberIdRaw)
-		handleParseError(w)
+		handleError(w, errors.New("fail to parse"))
 		return
 	}
 	var req dto.BanParticipantRequest
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		handleParseError(w)
+		handleError(w, errors.New("fail to parse"))
 		return
 	}
 	conversationId, err := bson.ObjectIDFromHex(req.ConversationId)
 	if err != nil {
 		slog.Error("fail to parse conversation id from raw string", "err", err)
-		handleParseError(w)
+		handleError(w, errors.New("fail to parse"))
 		return
 	}
 	err = c.service.BanParticipant(r.Context(), memberId, conversationId, req.BanId)
 	if err != nil {
-		handleServiceError(w, err)
+		handleError(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusOK)

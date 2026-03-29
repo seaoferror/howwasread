@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"time"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
@@ -12,7 +13,7 @@ import (
 )
 
 func (s *Service) PropagateSignal(ctx context.Context, fromId, toId uuid.UUID, signal json.RawMessage) error {
-	ip, err := s.repository.GetServerIP(ctx, toId.String())
+	ip, err := s.repository.GetServerIP(ctx, string(toId[:]))
 	if err != nil {
 		return err
 	}
@@ -34,7 +35,7 @@ func (s *Service) PropagateSignal(ctx context.Context, fromId, toId uuid.UUID, s
 
 	client := pb.NewSignalServiceClient(cc)
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
 	req := pb.RelaySignalRequest{

@@ -19,16 +19,16 @@ func (s *Service) SaveNewMemberId(idRaw []byte) error {
 	return nil
 }
 
-func (s *Service) SetServerIP(ctx context.Context, memberId, ip string) error {
-	err := s.repository.SetServerIP(ctx, memberId, ip)
+func (s *Service) SetServerIP(ctx context.Context, memberId uuid.UUID, ip string) error {
+	err := s.repository.SetServerIP(ctx, string(memberId[:]), ip)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *Service) RemoveServerIP(ctx context.Context, memberId string) error {
-	err := s.repository.RemoveServerIP(ctx, memberId)
+func (s *Service) RemoveServerIP(ctx context.Context, memberId uuid.UUID) error {
+	err := s.repository.RemoveServerIP(ctx, string(memberId[:]))
 	if err != nil {
 		return err
 	}

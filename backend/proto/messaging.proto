@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+option go_package = "backend/proto";
+
+package messagingservice;
+
+service MessagingService {
+  rpc RelayMessaging(RelayMessagingRequest) returns (RelayMessagingResponse);
+}
+
+message RelayMessagingRequest {
+  bytes toId = 1;
+  bytes roomId = 2;
+  bytes fromId = 3;
+  string contentType = 4;
+  string content = 5;
+}
+
+message RelayMessagingResponse {
+}

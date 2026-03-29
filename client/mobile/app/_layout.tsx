@@ -11,6 +11,7 @@ export default function RootLayout() {
     <SQLiteProvider
       databaseName="db"
       //onInit={}
+      options={{ enableChangeListener: true }}
     >
       <ActionSheetProvider>
         <QueryClientProvider client={queryClient}>

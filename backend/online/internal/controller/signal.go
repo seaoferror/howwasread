@@ -22,7 +22,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 		slog.Error("fail to parse member id from raw string",
 			"err", err,
 			"memberIdRaw", memberIdRaw)
-		handleParseError(w)
+		handleError(w, errors.New("fail to parse"))
 		return
 	}
 	conversationIdRaw := r.URL.Query().Get("id")
@@ -30,7 +30,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		slog.Error("fail to parse conversation object id from raw string",
 			"conversationIdRaw", conversationIdRaw)
-		handleParseError(w)
+		handleError(w, errors.New("fail to parse"))
 		return
 	}
 
@@ -40,13 +40,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		slog.Error("fail to accept connection", err)
-		w.WriteHeader(http.StatusBadRequest)
-		_, err = w.Write([]byte("fail to make websocket connection"))
-		if err != nil {
-			slog.Error("fail to write response body",
-				"err", err,
-			)
-		}
+		handleError(w, errors.New("fail to accept ws connection"))
 		return
 	}
 	if c.connections == nil {
@@ -62,7 +56,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 		destroy := context.Background()
 		conn.Close(websocket.StatusNormalClosure, "")
 		delete(c.connections, memberId)
-		c.service.RemoveServerIP(destroy, memberIdRaw)
+		c.service.RemoveServerIP(destroy, memberId)
 		c.service.RemoveParticipant(destroy, conversationId, memberId)
 		slog.Info("success to close connection",
 			"number of current connection", len(c.connections))
@@ -70,24 +64,14 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 
 	init := context.Background()
 
-	err = c.service.SetServerIP(init, memberIdRaw, ip)
+	err = c.service.SetServerIP(init, memberId, ip)
 	if err != nil {
-		err = conn.Write(init, websocket.MessageText, []byte(err.Error()))
-		if err != nil {
-			slog.Error("fail to write payload",
-				"err", err,
-			)
-		}
+		handleWebsocketError(init, conn, err)
 		return
 	}
 	pids, err := c.service.GetParticipants(init, conversationId, memberId)
 	if err != nil {
-		err = conn.Write(init, websocket.MessageText, []byte(err.Error()))
-		if err != nil {
-			slog.Error("fail to write payload",
-				"err", err,
-			)
-		}
+		handleWebsocketError(init, conn, err)
 		return
 	}
 	if pids != nil {
@@ -95,12 +79,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 		payload, err := json.Marshal(resp)
 		if err != nil {
 			slog.Error("fail to marshal")
-			err = conn.Write(init, websocket.MessageText, []byte("fail to get participants"))
-			if err != nil {
-				slog.Error("fail to write payload",
-					"err", err,
-				)
-			}
+			handleWebsocketError(init, conn, err)
 			return
 		}
 		err = conn.Write(init, websocket.MessageText, payload)
@@ -114,12 +93,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 
 	err = c.service.AddParticipant(init, conversationId, memberId)
 	if err != nil {
-		err = conn.Write(init, websocket.MessageText, []byte(err.Error()))
-		if err != nil {
-			slog.Error("fail to write payload",
-				"err", err,
-			)
-		}
+		handleWebsocketError(init, conn, err)
 		return
 	}
 	for _, pid := range pids {
@@ -129,12 +103,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 		payload, err := json.Marshal(resp)
 		if err != nil {
 			slog.Error("fail to marshal")
-			err = conn.Write(init, websocket.MessageText, []byte("fail to get participants"))
-			if err != nil {
-				slog.Error("fail to write payload",
-					"err", err,
-				)
-			}
+			handleWebsocketError(init, conn, errors.New("fail to get participant"))
 			return
 		}
 		p, ok := c.connections[pid]
@@ -150,12 +119,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 		}
 		err = c.service.PublishConversationSignal(memberId, pid, []byte{})
 		if err != nil {
-			err = conn.Write(init, websocket.MessageText, []byte("fail to publish"))
-			if err != nil {
-				slog.Error("fail to write payload",
-					"err", err,
-				)
-			}
+			handleWebsocketError(init, conn, errors.New("fail to publish"))
 			return
 		}
 	}
@@ -171,22 +135,13 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 			slog.Error("incorrect payload type",
 				"msgType", msgType,
 				"data", data)
-			err = conn.Write(ctx, websocket.MessageText, []byte("incorrect payload type"))
-			if err != nil {
-				slog.Error("fail to write payload",
-					"err", err)
-			}
+			handleWebsocketError(ctx, conn, errors.New("incorrect payload type"))
 			return
 		}
 		if err != nil {
 			slog.Error("read error",
 				"err", err)
-			err = conn.Write(ctx, websocket.MessageText, []byte("read error"))
-			if err != nil {
-				slog.Error("fail to write payload",
-					"err", err,
-				)
-			}
+			handleWebsocketError(ctx, conn, errors.New("read error"))
 			return
 		}
 		var req dto.ConversationSignalRequest
@@ -194,15 +149,9 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			slog.Error("fail to unmarshalling data",
 				"err", err)
-			err = conn.Write(ctx, websocket.MessageText, []byte("fail to unmarshal"))
-			if err != nil {
-				slog.Error("fail to write payload",
-					"err", err,
-				)
-			}
+			handleWebsocketError(ctx, conn, errors.New("incorrect data"))
 			return
 		}
-
 		for _, toId := range req.ToIds {
 			to, ok := c.connections[toId]
 			if ok {
@@ -213,13 +162,8 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 				payload, err := json.Marshal(resp)
 				if err != nil {
 					slog.Error("fail to marshalling conversationSignal",
-						"resp", resp)
-					err = conn.Write(ctx, websocket.MessageText, []byte("fail to marshal"))
-					if err != nil {
-						slog.Error("fail to write payload",
-							"err", err,
-						)
-					}
+						"err", err)
+					handleWebsocketError(ctx, conn, errors.New("something went wrong"))
 					return
 				}
 				err = to.Write(ctx, websocket.MessageText, payload)
@@ -233,12 +177,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 			}
 			err = c.service.PublishConversationSignal(memberId, toId, req.Signal)
 			if err != nil {
-				err = conn.Write(ctx, websocket.MessageText, []byte("fail to publish"))
-				if err != nil {
-					slog.Error("fail to write payload",
-						"err", err,
-					)
-				}
+				handleWebsocketError(ctx, conn, errors.New("fail to publish"))
 				return
 			}
 		}

@@ -146,7 +146,7 @@ func (s *Service) RemoveParticipant(ctx context.Context, conversationId bson.Obj
 }
 
 func (s *Service) PublishConversationSignal(fromId, toId uuid.UUID, data []byte) error {
-	msg := payload.ConversationSignal{
+	msg := payload.OnlineConversationSignal{
 		FromId: fromId[:],
 		ToId:   toId[:],
 		Signal: data,

@@ -153,7 +153,7 @@ func toggleConsumptionFlow(client sarama.ConsumerGroup, isPaused *bool) {
 func (ks *KafkaConsumer) distinguishMessage(message *sarama.ConsumerMessage) error {
 	ctx := context.Background()
 	if message.Topic == "conversation.signal" {
-		var m payload.ConversationSignal
+		var m payload.OnlineConversationSignal
 		err := json.Unmarshal(message.Value, &m)
 		if err != nil {
 			slog.Error("fail to unmarshal payload value",
@@ -166,6 +166,26 @@ func (ks *KafkaConsumer) distinguishMessage(message *sarama.ConsumerMessage) err
 			return err
 		}
 		return nil
+	}
+	if message.Topic == "chat.messaging" {
+		var m payload.ChatMessaging
+		err := json.Unmarshal(message.Value, &m)
+		if err != nil {
+			slog.Error("fail to unmarshal payload value",
+				"err", err,
+				"payload.Value", message.Value)
+			return err
+		}
+		var toIds []uuid.UUID
+		for _, toId := range m.ToIds {
+			toIds = append(toIds, uuid.UUID(toId))
+		}
+
+		if m.RoomId == nil {
+			err = ks.service.PropagateMessaging(ctx, toIds, uuid.Nil, uuid.UUID(m.FromId), m.ContentType, m.Content)
+		}
+
+		err = ks.service.PropagateMessaging(ctx, toIds, uuid.UUID(m.RoomId), uuid.UUID(m.FromId), m.ContentType, m.Content)
 	}
 	return errors.New("this topic does not exist")
 }

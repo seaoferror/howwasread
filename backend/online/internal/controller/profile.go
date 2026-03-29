@@ -3,6 +3,7 @@ package controller
 import (
 	"backend/online/internal/dto"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -22,12 +23,12 @@ func (c *Controller) getMyProfile(w http.ResponseWriter, r *http.Request) {
 			"err", err,
 			"memberIdRaw", memberIdRaw,
 		)
-		handleParseError(w)
+		handleError(w, errors.New("fail to parse"))
 		return
 	}
 	result, err := c.service.GetMyProfile(r.Context(), memberId)
 	if err != nil {
-		handleServiceError(w, err)
+		handleError(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -46,7 +47,7 @@ func (c *Controller) setName(w http.ResponseWriter, r *http.Request) {
 			"err", err,
 			"memberIdRaw", memberIdRaw,
 		)
-		handleParseError(w)
+		handleError(w, errors.New("fail to parse"))
 		return
 	}
 	var req dto.SetNameRequest
@@ -55,12 +56,12 @@ func (c *Controller) setName(w http.ResponseWriter, r *http.Request) {
 		slog.Info("incorrect body",
 			"err", err,
 		)
-		handleParseError(w)
+		handleError(w, errors.New("fail to parse"))
 		return
 	}
 	err = c.service.SetName(r.Context(), memberId, req.Name)
 	if err != nil {
-		handleServiceError(w, err)
+		handleError(w, err)
 		return
 	}
 	w.WriteHeader(http.StatusOK)

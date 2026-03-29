@@ -2,10 +2,12 @@ package controller
 
 import (
 	"backend/chat/internal/service"
+	"context"
 	"log/slog"
 	"net/http"
 
 	"github.com/coder/websocket"
+	"github.com/google/uuid"
 )
 
 type HTTPMethod int
@@ -20,7 +22,7 @@ const (
 type Controller struct {
 	service     *service.Service
 	mux         *http.ServeMux
-	connections map[string]*websocket.Conn
+	connections map[uuid.UUID]*websocket.Conn
 }
 
 func NewController(s *service.Service, m *http.ServeMux) *Controller {
@@ -30,7 +32,7 @@ func NewController(s *service.Service, m *http.ServeMux) *Controller {
 		mux:     m,
 	}
 
-	chatRouter(c)
+	messagingRouter(c)
 
 	return c
 }
@@ -57,17 +59,16 @@ func getStatusCode(err error) int {
 	return http.StatusBadRequest
 }
 
-func handleParseError(w http.ResponseWriter) {
-	w.WriteHeader(http.StatusUnprocessableEntity)
-	_, err := w.Write([]byte("Not valid request"))
+func handleWebsocketError(ctx context.Context, conn *websocket.Conn, err error) {
+	err = conn.Write(ctx, websocket.MessageText, []byte(err.Error()))
 	if err != nil {
-		slog.Error("fail to write response body",
+		slog.Error("fail to write payload",
 			"err", err,
 		)
 	}
 }
 
-func handleServiceError(w http.ResponseWriter, err error) {
+func handleError(w http.ResponseWriter, err error) {
 	w.WriteHeader(getStatusCode(err))
 	_, err = w.Write([]byte(err.Error()))
 	if err != nil {

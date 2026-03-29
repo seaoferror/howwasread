@@ -57,7 +57,7 @@ func NewServer() {
 	}
 	gc := grpccontroller.NewGRPCController(c)
 	g := grpc.NewServer()
-	pb.RegisterSignalServiceServer(g, gc)
+	pb.RegisterMessagingServiceServer(g, gc)
 	err = g.Serve(lis)
 	if err != nil {
 		log.Fatalf("fail to serve: %v", err)
