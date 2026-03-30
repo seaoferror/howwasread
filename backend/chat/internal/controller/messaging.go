@@ -144,10 +144,7 @@ func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (c *Controller) RelayMessaging(
-	ctx context.Context,
-	toId, roomId, fromId uuid.UUID,
-	contentType, content string) error {
+func (c *Controller) RelayMessaging(ctx context.Context, toIds []uuid.UUID, roomId, fromId uuid.UUID, contentType, content string) error {
 	res := dto.MessagingResponse{
 		FromId:      fromId,
 		ContentType: contentType,
@@ -163,15 +160,18 @@ func (c *Controller) RelayMessaging(
 		return err
 	}
 
-	err = c.connections[toId].Write(ctx, websocket.MessageText, resRaw)
-	if err != nil {
-		slog.Error("fail to write payload",
-			"err", err,
-		)
-		//TODO: push fcm?
-		return err
+	for _, toId := range toIds {
+		func() {
+			err = c.connections[toId].Write(ctx, websocket.MessageText, resRaw)
+			if err != nil {
+				slog.Error("fail to write payload",
+					"err", err,
+				)
+				//TODO: notification fcm?
+				return
+			}
+		}()
 	}
-
 	return nil
 }
 

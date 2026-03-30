@@ -9,7 +9,7 @@ service MessagingService {
 }
 
 message RelayMessagingRequest {
-  bytes toId = 1;
+  repeated bytes toIds = 1;
   bytes roomId = 2;
   bytes fromId = 3;
   string contentType = 4;

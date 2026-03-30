@@ -12,7 +12,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func (s *Service) PropagateSignal(ctx context.Context, fromId, toId uuid.UUID, signal json.RawMessage) error {
+func (s *Service) PropagateSignal(fromId, toId uuid.UUID, signal json.RawMessage) error {
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	ip, err := s.repository.GetServerIP(ctx, string(toId[:]))
 	if err != nil {
 		return err

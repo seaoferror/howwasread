@@ -23,7 +23,7 @@ const (
 
 type RelayMessagingRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ToId          []byte                 `protobuf:"bytes,1,opt,name=toId,proto3" json:"toId,omitempty"`
+	ToIds         [][]byte               `protobuf:"bytes,1,rep,name=toIds,proto3" json:"toIds,omitempty"`
 	RoomId        []byte                 `protobuf:"bytes,2,opt,name=roomId,proto3" json:"roomId,omitempty"`
 	FromId        []byte                 `protobuf:"bytes,3,opt,name=fromId,proto3" json:"fromId,omitempty"`
 	ContentType   string                 `protobuf:"bytes,4,opt,name=contentType,proto3" json:"contentType,omitempty"`
@@ -62,9 +62,9 @@ func (*RelayMessagingRequest) Descriptor() ([]byte, []int) {
 	return file_proto_messaging_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *RelayMessagingRequest) GetToId() []byte {
+func (x *RelayMessagingRequest) GetToIds() [][]byte {
 	if x != nil {
-		return x.ToId
+		return x.ToIds
 	}
 	return nil
 }
@@ -137,9 +137,9 @@ var File_proto_messaging_proto protoreflect.FileDescriptor
 
 const file_proto_messaging_proto_rawDesc = "" +
 	"\n" +
-	"\x15proto/messaging.proto\x12\x10messagingservice\"\x97\x01\n" +
-	"\x15RelayMessagingRequest\x12\x12\n" +
-	"\x04toId\x18\x01 \x01(\fR\x04toId\x12\x16\n" +
+	"\x15proto/messaging.proto\x12\x10messagingservice\"\x99\x01\n" +
+	"\x15RelayMessagingRequest\x12\x14\n" +
+	"\x05toIds\x18\x01 \x03(\fR\x05toIds\x12\x16\n" +
 	"\x06roomId\x18\x02 \x01(\fR\x06roomId\x12\x16\n" +
 	"\x06fromId\x18\x03 \x01(\fR\x06fromId\x12 \n" +
 	"\vcontentType\x18\x04 \x01(\tR\vcontentType\x12\x18\n" +

@@ -62,5 +62,4 @@ func NewServer() {
 	if err != nil {
 		log.Fatalf("fail to serve: %v", err)
 	}
-
 }

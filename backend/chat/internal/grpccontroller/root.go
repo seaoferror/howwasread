@@ -24,7 +24,12 @@ func (gc *GRPCController) RelayMessaging(ctx context.Context, in *pb.RelayMessag
 	if len(in.RoomId) == 0 {
 		roomId = uuid.Nil
 	}
-	err := gc.controller.RelayMessaging(ctx, uuid.UUID(in.ToId), roomId, uuid.UUID(in.FromId), in.ContentType, in.Content)
+	var toIds []uuid.UUID
+	for _, toId := range in.ToIds {
+		toIds = append(toIds, uuid.UUID(toId))
+	}
+
+	err := gc.controller.RelayMessaging(ctx, toIds, roomId, uuid.UUID(in.FromId), in.ContentType, in.Content)
 	if err != nil {
 		return nil, err
 	}
