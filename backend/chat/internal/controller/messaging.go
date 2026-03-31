@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"sync"
 
 	"github.com/coder/websocket"
 	"github.com/google/uuid"
@@ -59,20 +60,21 @@ func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
 		handleError(w, errors.New("fail to accept ws connection"))
 		return
 	}
-	if c.connections == nil {
-		c.connections = make(map[uuid.UUID]*websocket.Conn)
-	}
-	c.connections[memberId] = conn
+	c.csMutex.Lock()
+	c.conns[memberId] = conn
+	c.csMutex.Unlock()
 	slog.Info("success to make connection",
-		"number of current connection", len(c.connections))
+		"number of current connection", len(c.conns))
 
 	defer func() {
 		destroy := context.Background()
 		conn.Close(websocket.StatusNormalClosure, "")
-		delete(c.connections, memberId)
+		c.csMutex.Lock()
+		delete(c.conns, memberId)
+		c.csMutex.Unlock()
 		c.service.RemoveServerIP(destroy, memberId)
 		slog.Info("success to close connection",
-			"number of current connection", len(c.connections))
+			"number of current connection", len(c.conns))
 	}()
 
 	ip, _ := getPodIP()
@@ -83,7 +85,6 @@ func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
 		handleWebsocketError(init, conn, err)
 		return
 	}
-	//TODO: maybe get all recent chat which aren't fetched yet
 
 	for {
 		ctx := context.Background()
@@ -113,7 +114,9 @@ func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if req.ToIdType == "personal" {
-			to, ok := c.connections[req.ToId]
+			c.csMutex.RLock()
+			to, ok := c.conns[req.ToId]
+			c.csMutex.RUnlock()
 			if ok {
 				resp := dto.MessagingResponse{
 					FromId:      memberId,
@@ -160,18 +163,24 @@ func (c *Controller) RelayMessaging(ctx context.Context, toIds []uuid.UUID, room
 		return err
 	}
 
+	var wg sync.WaitGroup
 	for _, toId := range toIds {
-		func() {
-			err = c.connections[toId].Write(ctx, websocket.MessageText, resRaw)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			c.csMutex.RLock()
+			ct := c.conns[toId]
+			c.csMutex.RUnlock()
+			err = ct.Write(ctx, websocket.MessageText, resRaw)
 			if err != nil {
 				slog.Error("fail to write payload",
 					"err", err,
 				)
-				//TODO: notification fcm?
-				return
+				//TODO: fcm
 			}
 		}()
 	}
+	wg.Wait()
 	return nil
 }
 

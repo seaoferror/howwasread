@@ -5,6 +5,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"sync"
 
 	"github.com/coder/websocket"
 	"github.com/google/uuid"
@@ -20,9 +21,10 @@ const (
 )
 
 type Controller struct {
-	service     *service.Service
-	mux         *http.ServeMux
-	connections map[uuid.UUID]*websocket.Conn
+	service *service.Service
+	mux     *http.ServeMux
+	conns   map[uuid.UUID]*websocket.Conn
+	csMutex *sync.RWMutex
 }
 
 func NewController(s *service.Service, m *http.ServeMux) *Controller {
@@ -30,6 +32,8 @@ func NewController(s *service.Service, m *http.ServeMux) *Controller {
 	c := &Controller{
 		service: s,
 		mux:     m,
+		conns:   make(map[uuid.UUID]*websocket.Conn),
+		csMutex: &sync.RWMutex{},
 	}
 
 	messagingRouter(c)

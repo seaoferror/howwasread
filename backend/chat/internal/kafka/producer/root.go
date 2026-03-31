@@ -49,7 +49,7 @@ func createProducer() (sarama.AsyncProducer, error) {
 	cfg.Producer.Return.Errors = true
 	cfg.Producer.Compression = sarama.CompressionZSTD
 	cfg.Producer.RequiredAcks = sarama.WaitForLocal
-	cfg.Producer.Retry.Max = 30
+	cfg.Producer.Retry.Max = 1_000_000_000
 	cfg.Producer.Retry.Backoff = time.Millisecond * 10
 	//cfg.Producer.Idempotent = true
 	//cfg.Producer.RequiredAcks = sarama.WaitForAll

@@ -43,23 +43,24 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 		handleError(w, errors.New("fail to accept ws connection"))
 		return
 	}
-	if c.connections == nil {
-		c.connections = make(map[uuid.UUID]*websocket.Conn)
-	}
-	c.connections[memberId] = conn
+	c.csMutex.Lock()
+	c.conns[memberId] = conn
+	c.csMutex.Unlock()
 	slog.Info("success to make connection",
-		"number of current connection", len(c.connections))
+		"number of current connection", len(c.conns))
 
 	ip, _ := getPodIP()
 
 	defer func() {
 		destroy := context.Background()
 		conn.Close(websocket.StatusNormalClosure, "")
-		delete(c.connections, memberId)
+		c.csMutex.Lock()
+		delete(c.conns, memberId)
+		c.csMutex.Unlock()
 		c.service.RemoveServerIP(destroy, memberId)
 		c.service.RemoveParticipant(destroy, conversationId, memberId)
 		slog.Info("success to close connection",
-			"number of current connection", len(c.connections))
+			"number of current connection", len(c.conns))
 	}()
 
 	init := context.Background()
@@ -106,7 +107,9 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 			handleWebsocketError(init, conn, errors.New("fail to get participant"))
 			return
 		}
-		p, ok := c.connections[pid]
+		c.csMutex.RLock()
+		p, ok := c.conns[pid]
+		c.csMutex.RUnlock()
 		if ok {
 			err = p.Write(init, websocket.MessageText, payload)
 			if err != nil {
@@ -153,7 +156,9 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		for _, toId := range req.ToIds {
-			to, ok := c.connections[toId]
+			c.csMutex.RLock()
+			to, ok := c.conns[toId]
+			c.csMutex.RUnlock()
 			if ok {
 				resp := dto.ConversationSignalResponse{
 					FromIds: []uuid.UUID{memberId},
@@ -195,8 +200,10 @@ func (c *Controller) RelaySignal(ctx context.Context, fromId, toId uuid.UUID, si
 			"err", err)
 		return err
 	}
-
-	err = c.connections[toId].Write(ctx, websocket.MessageText, payload)
+	c.csMutex.RLock()
+	wsc := c.conns[toId]
+	c.csMutex.RUnlock()
+	err = wsc.Write(ctx, websocket.MessageText, payload)
 	if err != nil {
 		slog.Error("fail to write payload",
 			"err", err,

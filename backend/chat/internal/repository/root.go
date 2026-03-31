@@ -33,13 +33,12 @@ func NewRepository() *Repository {
 	err = session.Query(`CREATE TABLE IF NOT EXISTS message_by_to_id (
     to_id_type text,
     to_id uuid,
-    read boolean,
     id uuid,
     from_id uuid,
     content_type text,
     content text,
-    PRIMARY KEY ((to_id_type, to_id), read, id)
-    ) WITH CLUSTERING ORDER BY (read ASC, id DESC);`).Exec()
+    PRIMARY KEY ((to_id_type, to_id), id)
+    ) WITH CLUSTERING ORDER BY (id DESC);`).Exec()
 	if err != nil {
 		log.Panicf("fail to create table payload: %v", err)
 	}

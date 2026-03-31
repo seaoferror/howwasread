@@ -151,6 +151,7 @@ func toggleConsumptionFlow(client sarama.ConsumerGroup, isPaused *bool) {
 }
 
 func (ks *KafkaConsumer) distinguishMessage(message *sarama.ConsumerMessage) error {
+	ctx := context.Background()
 	if message.Topic == "conversation.signal" {
 		var m payload.OnlineConversationSignal
 		err := json.Unmarshal(message.Value, &m)
@@ -160,7 +161,7 @@ func (ks *KafkaConsumer) distinguishMessage(message *sarama.ConsumerMessage) err
 				"payload.Value", message.Value)
 			return err
 		}
-		err = ks.service.PropagateSignal(uuid.UUID(m.FromId), uuid.UUID(m.ToId), m.Signal)
+		err = ks.service.PropagateSignal(ctx, uuid.UUID(m.FromId), uuid.UUID(m.ToId), m.Signal)
 		if err != nil {
 			return err
 		}
@@ -181,10 +182,10 @@ func (ks *KafkaConsumer) distinguishMessage(message *sarama.ConsumerMessage) err
 		}
 
 		if m.RoomId == nil {
-			err = ks.service.PropagateMessaging(toIds, uuid.Nil, uuid.UUID(m.FromId), m.ContentType, m.Content)
+			err = ks.service.PropagateMessaging(ctx, toIds, uuid.Nil, uuid.UUID(m.FromId), m.ContentType, m.Content)
 		}
 
-		err = ks.service.PropagateMessaging(toIds, uuid.UUID(m.RoomId), uuid.UUID(m.FromId), m.ContentType, m.Content)
+		err = ks.service.PropagateMessaging(ctx, toIds, uuid.UUID(m.RoomId), uuid.UUID(m.FromId), m.ContentType, m.Content)
 	}
 	return errors.New("this topic does not exist")
 }
