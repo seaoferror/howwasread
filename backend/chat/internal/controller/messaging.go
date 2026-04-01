@@ -169,15 +169,18 @@ func (c *Controller) RelayMessaging(ctx context.Context, toIds []uuid.UUID, room
 		go func() {
 			defer wg.Done()
 			c.csMutex.RLock()
-			ct := c.conns[toId]
+			ct, ok := c.conns[toId]
 			c.csMutex.RUnlock()
-			err = ct.Write(ctx, websocket.MessageText, resRaw)
-			if err != nil {
-				slog.Error("fail to write payload",
-					"err", err,
-				)
-				//TODO: fcm
+			if ok {
+				err = ct.Write(ctx, websocket.MessageText, resRaw)
+				if err != nil {
+					slog.Error("fail to write payload",
+						"err", err,
+					)
+					//TODO: fcm
+				}
 			}
+			//TODO: fcm
 		}()
 	}
 	wg.Wait()

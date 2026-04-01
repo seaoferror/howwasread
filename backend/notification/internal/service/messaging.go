@@ -1,14 +1,20 @@
 package service
 
 import (
+	"backend/notification/internal/constant"
+	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
+	"io"
 	"log/slog"
+	"net/http"
 	"sync"
 	"time"
 
 	"firebase.google.com/go/v4/messaging"
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
@@ -18,29 +24,137 @@ func (s *Service) NotifyMessaging(ctx context.Context,
 
 	var wg sync.WaitGroup
 	ec := make(chan error)
-	tc := make(chan map[uuid.UUID]string, len(toIds))
+
 	for _, toId := range toIds {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			ctxt, cancel := context.WithTimeout(ctx, 3*time.Second)
 			defer cancel()
-			t, err := s.repository.FindDevicePushToken(ctxt, gocql.UUID(toId))
+			id, err := uuid.NewV7()
+			if err != nil {
+				slog.Error("fail to create uuid V7 for messaging", "err", err)
+				ec <- err
+				return
+			}
+			err = s.repository.SaveMessaging(
+				ctxt, gocql.UUID(id), gocql.UUID(toId), gocql.UUID(roomId), gocql.UUID(fromId),
+				contentType, content)
+			if err != nil {
+				ec <- err
+			}
+		}()
+	}
+	wg.Wait()
+
+	apntc := make(chan map[uuid.UUID]string)
+	fcmtc := make(chan map[uuid.UUID]string)
+	for _, toId := range toIds {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			ctxt, cancel := context.WithTimeout(ctx, 3*time.Second)
+			defer cancel()
+			os, t, err := s.repository.FindDevicePushToken(ctxt, gocql.UUID(toId))
 			if err != nil {
 				ec <- err
 				return
 			}
-			tc <- map[uuid.UUID]string{toId: t}
+			if os == "ios" {
+				apntc <- map[uuid.UUID]string{toId: t}
+				return
+			}
+			fcmtc <- map[uuid.UUID]string{toId: t}
 		}()
 	}
 	wg.Wait()
-	close(tc)
-	tm := make(map[string]uuid.UUID)
-	var tokens []string
-	for t := range tc {
+	close(apntc)
+	close(fcmtc)
+	apntm := make(map[string]uuid.UUID)
+	var apnts []string
+	for t := range fcmtc {
 		for k, v := range t {
-			tm[v] = k
-			tokens = append(tokens, v)
+			apntm[v] = k
+			apnts = append(apnts, v)
+		}
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
+		"iss": s.teamId,
+		"iat": time.Now().Unix(),
+	})
+	token.Header["kid"] = s.keyId
+	func() {
+		authorization, err := token.SignedString(s.privateKey)
+		if err != nil {
+			slog.Error("fail to make authorization token", "err", err)
+			ec <- err
+			return
+		}
+		type Alert struct {
+			Title string `json:"title"`
+			Body  string `json:"body"`
+		}
+		type Aps struct {
+			Alert Alert `json:"alert"`
+		}
+		type Payload struct {
+			Aps Aps `json:"aps"`
+		}
+		payload, err := json.Marshal(Payload{
+			Aps: Aps{
+				Alert: Alert{
+					Title: "",
+					Body:  "",
+				},
+			},
+		})
+		if err != nil {
+			slog.Error("fail to marshal payload for apn",
+				"err", err)
+			ec <- err
+			return
+		}
+		for _, t := range apnts {
+			go func() {
+				req, err1 := http.NewRequest("POST", constant.ApplePushURL+t, bytes.NewBuffer(payload))
+				if err1 != nil {
+					ec <- err1
+					return
+				}
+				req.Header.Set("apns-topic", s.BundleIdentifier)
+				req.Header.Set("authorization", authorization)
+				req.Header.Set("Content-Type", "application/json")
+				client := &http.Client{}
+				res, err1 := client.Do(req)
+				if err1 != nil {
+					slog.Error("fail to send request", "err1", err1)
+					ec <- err1
+					return
+				}
+				defer res.Body.Close()
+				bodyRaw, err1 := io.ReadAll(res.Body)
+				if err1 != nil {
+					slog.Error("fail to read body", "err", err1)
+					ec <- err1
+					return
+				}
+				if res.StatusCode == http.StatusOK {
+					return
+				}
+				slog.Error("fail to send apn notification",
+					"failedId", apntm[t],
+					"statusCode", res.StatusCode,
+					"response", string(bodyRaw))
+			}()
+		}
+	}()
+
+	fcmtm := make(map[string]uuid.UUID)
+	var fcmts []string
+	for t := range fcmtc {
+		for k, v := range t {
+			fcmtm[v] = k
+			fcmts = append(fcmts, v)
 		}
 	}
 
@@ -52,17 +166,13 @@ func (s *Service) NotifyMessaging(ctx context.Context,
 			ec <- err
 			return
 		}
-		data := make(map[string]string)
-		if roomId != uuid.Nil {
-			data["roomId"] = roomId.String()
-		}
-		data["fromId"] = fromId.String()
-		data["contentType"] = contentType
-		data["content"] = content
 
 		message := &messaging.MulticastMessage{
-			Data:   data,
-			Tokens: tokens,
+			Notification: &messaging.Notification{
+				Title: "",
+				Body:  "",
+			},
+			Tokens: fcmts,
 		}
 		br, err := client.SendEachForMulticast(ctx, message)
 		if err != nil {
@@ -74,7 +184,7 @@ func (s *Service) NotifyMessaging(ctx context.Context,
 			for i, resp := range br.Responses {
 				if !resp.Success {
 					// The order of responses corresponds to the order of the registration tokens.
-					failedIds = append(failedIds, tm[tokens[i]].String())
+					failedIds = append(failedIds, fcmtm[fcmts[i]].String())
 				}
 			}
 			slog.Error("failed ids to get push notification", "failedIds", failedIds)
@@ -89,20 +199,3 @@ func (s *Service) NotifyMessaging(ctx context.Context,
 	}
 	return errors.Join(errs...)
 }
-
-//I can trigger sqlite message saving by fcm, so I don't need to save any message in my database
-//for _, toId := range toIds {
-//	wg.Add(1)
-//	go func(capturedToId uuid.UUID) {
-//		defer wg.Done()
-//		ctxt, cancel := context.WithTimeout(ctx, 3*time.Second)
-//		defer cancel()
-//		err := s.repository.SaveMessaging(
-//			ctxt, gocql.UUID(capturedToId), gocql.UUID(roomId), gocql.UUID(fromId),
-//			contentType, content)
-//		if err != nil {
-//			ec <- err
-//		}
-//	}(toId)
-//}
-//wg.Wait()

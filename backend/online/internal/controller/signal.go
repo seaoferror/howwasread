@@ -201,14 +201,16 @@ func (c *Controller) RelaySignal(ctx context.Context, fromId, toId uuid.UUID, si
 		return err
 	}
 	c.csMutex.RLock()
-	wsc := c.conns[toId]
+	wsc, ok := c.conns[toId]
 	c.csMutex.RUnlock()
-	err = wsc.Write(ctx, websocket.MessageText, payload)
-	if err != nil {
-		slog.Error("fail to write payload",
-			"err", err,
-		)
-		return err
+	if ok {
+		err = wsc.Write(ctx, websocket.MessageText, payload)
+		if err != nil {
+			slog.Error("fail to write payload",
+				"err", err,
+			)
+			return err
+		}
 	}
 	return nil
 }

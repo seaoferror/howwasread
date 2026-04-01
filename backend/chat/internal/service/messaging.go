@@ -24,7 +24,7 @@ func (s *Service) SendLike(ctx context.Context, fromId, toId uuid.UUID) error {
 }
 
 func (s *Service) PublishPersonalMessaging(toId, fromId uuid.UUID, contentType, content string) error {
-	err := s.publishMessaging([]uuid.UUID{toId}, uuid.Nil, fromId, contentType, content)
+	err := s.publishMessaging([]uuid.UUID{toId}, []byte{}, fromId, contentType, content)
 	if err != nil {
 		return err
 	}
@@ -33,17 +33,15 @@ func (s *Service) PublishPersonalMessaging(toId, fromId uuid.UUID, contentType, 
 
 func (s *Service) publishMessaging(
 	toIds []uuid.UUID,
-	roomId,
+	roomId []byte,
 	fromId uuid.UUID,
 	contentType,
 	content string) error {
 	p := payload.ChatMessaging{
 		FromId:      fromId[:],
+		RoomId:      roomId,
 		ContentType: contentType,
 		Content:     content,
-	}
-	if roomId != uuid.Nil {
-		p.RoomId = roomId[:]
 	}
 
 	for _, toId := range toIds {

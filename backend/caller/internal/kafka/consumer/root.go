@@ -180,12 +180,7 @@ func (ks *KafkaConsumer) distinguishMessage(message *sarama.ConsumerMessage) err
 		for _, toId := range m.ToIds {
 			toIds = append(toIds, uuid.UUID(toId))
 		}
-
-		if m.RoomId == nil {
-			err = ks.service.PropagateMessaging(ctx, toIds, uuid.Nil, uuid.UUID(m.FromId), m.ContentType, m.Content)
-		}
-
-		err = ks.service.PropagateMessaging(ctx, toIds, uuid.UUID(m.RoomId), uuid.UUID(m.FromId), m.ContentType, m.Content)
+		err = ks.service.PropagateMessaging(ctx, toIds, m.RoomId, uuid.UUID(m.FromId), m.ContentType, m.Content)
 	}
 	return errors.New("this topic does not exist")
 }

@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *Service) PropagateMessaging(ctx context.Context, toIds []uuid.UUID, roomId, fromId uuid.UUID, contentType, content string) error {
+func (s *Service) PropagateMessaging(ctx context.Context, toIds []uuid.UUID, roomId []byte, fromId uuid.UUID, contentType, content string) error {
 	ec := make(chan error)
 	var pushToIds [][]byte
 	relayToIdsByIPs := make(map[string][][]byte)
@@ -63,12 +63,10 @@ func (s *Service) PropagateMessaging(ctx context.Context, toIds []uuid.UUID, roo
 			client := pb.NewMessagingServiceClient(cc)
 			req := pb.RelayMessagingRequest{
 				ToIds:       ids,
+				RoomId:      roomId,
 				FromId:      fromId[:],
 				ContentType: contentType,
 				Content:     content,
-			}
-			if roomId != uuid.Nil {
-				req.RoomId = roomId[:]
 			}
 			ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
 			defer cancel()
@@ -121,12 +119,10 @@ func (s *Service) PropagateMessaging(ctx context.Context, toIds []uuid.UUID, roo
 		client := pb.NewNotificationServiceClient(cc)
 		req := pb.NotifyMessagingRequest{
 			ToIds:       pushToIds,
+			RoomId:      roomId,
 			FromId:      fromId[:],
 			ContentType: contentType,
 			Content:     content,
-		}
-		if roomId != uuid.Nil {
-			req.RoomId = roomId[:]
 		}
 		_, err = client.NotifyMessaging(ctxt, &req)
 		if err != nil {

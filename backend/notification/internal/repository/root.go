@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"context"
 	"log"
 	"os"
 	"time"
@@ -34,8 +33,4 @@ func NewRepository() *Repository {
 	}
 
 	return r
-}
-
-func (r *Repository) FindDevicePushToken(ctx context.Context, id gocql.UUID) (string, error) {
-	return "", nil
 }

@@ -1,7 +1,7 @@
 package grpccontroller
 
 import (
-	"backend/notification/internal/service"
+	"backend/notification/internal/controller"
 	pb "backend/proto"
 	"context"
 
@@ -9,26 +9,23 @@ import (
 )
 
 type GRPCController struct {
-	service *service.Service
+	controller *controller.Controller
 	pb.UnimplementedNotificationServiceServer
 }
 
-func NewGRPCController(service *service.Service) *GRPCController {
-	gc := GRPCController{service: service}
+func NewGRPCController(controller *controller.Controller) *GRPCController {
+	gc := GRPCController{controller: controller}
 
 	return &gc
 }
 
 func (gc *GRPCController) NotifyMessaging(ctx context.Context, in *pb.NotifyMessagingRequest) (*pb.NotifyMessagingResponse, error) {
 	roomId := uuid.UUID(in.RoomId)
-	if len(in.RoomId) == 0 {
-		roomId = uuid.Nil
-	}
 	var toIds []uuid.UUID
 	for _, toId := range in.ToIds {
 		toIds = append(toIds, uuid.UUID(toId))
 	}
-	err := gc.service.NotifyMessaging(ctx, toIds, roomId, uuid.UUID(in.FromId), in.ContentType, in.Content)
+	err := gc.controller.NotifyMessaging(ctx, toIds, roomId, uuid.UUID(in.FromId), in.ContentType, in.Content)
 	if err != nil {
 		return nil, err
 	}

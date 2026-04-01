@@ -21,9 +21,6 @@ func NewGRPCController(controller *controller.Controller) *GRPCController {
 
 func (gc *GRPCController) RelayMessaging(ctx context.Context, in *pb.RelayMessagingRequest) (*pb.RelayMessagingResponse, error) {
 	roomId := uuid.UUID(in.RoomId)
-	if len(in.RoomId) == 0 {
-		roomId = uuid.Nil
-	}
 	var toIds []uuid.UUID
 	for _, toId := range in.ToIds {
 		toIds = append(toIds, uuid.UUID(toId))

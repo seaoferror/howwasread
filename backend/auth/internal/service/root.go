@@ -36,7 +36,7 @@ func NewService(r *repository.Repository, kp *producer.KafkaProducer) *Service {
 		secretKeyAT:   []byte(os.Getenv("SECRET_KEY_AT")),
 		secretKeyRT:   []byte(os.Getenv("SECRET_KEY_RT")),
 		issuer:        os.Getenv("ISSUER"),
-		audience:      os.Getenv("AUDIENCE"),
+		audience:      os.Getenv("BUNDLE_IDENTIFIER"),
 		twilioClient:  client,
 	}
 }
