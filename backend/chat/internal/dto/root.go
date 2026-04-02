@@ -14,6 +14,7 @@ type MessagingRequest struct {
 }
 
 type MessagingResponse struct {
+	Id          uuid.UUID `json:"id"`
 	RoomId      uuid.UUID `json:"roomId,omitempty"`
 	FromId      uuid.UUID `json:"fromId"`
 	ContentType string    `json:"contentType"`

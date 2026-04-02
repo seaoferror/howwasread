@@ -2,9 +2,13 @@ package service
 
 import (
 	"backend/payload"
+	pb "backend/proto"
 	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
+	"sync"
+	"time"
 
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
 	"github.com/google/uuid"
@@ -59,4 +63,50 @@ func (s *Service) publishMessaging(
 		return err
 	}
 	return nil
+}
+
+func (s *Service) NotifyMessaging(
+	ctx context.Context,
+	toIds [][]byte, roomId, fromId uuid.UUID,
+	contentType, content string) error {
+	ec := make(chan error)
+	var wg sync.WaitGroup
+	for _, toId := range toIds {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := s.repository.RemoveServerIP(ctx, string(toId[:]))
+			if err != nil {
+				ec <- err
+				return
+			}
+		}()
+	}
+	wg.Wait()
+
+	client := pb.NewNotificationServiceClient(s.clientConn)
+	req := pb.NotifyMessagingRequest{
+		ToIds:       toIds,
+		FromId:      fromId[:],
+		ContentType: contentType,
+		Content:     content,
+	}
+	if roomId != uuid.Nil {
+		req.RoomId = roomId[:]
+	}
+	ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	_, err := client.NotifyMessaging(ctxt, &req)
+	if err != nil {
+		slog.Error("fail to relay messaging",
+			"err", err)
+		ec <- err
+	}
+	close(ec)
+	var es []error
+	for e := range ec {
+		es = append(es, e)
+	}
+
+	return errors.Join(es...)
 }

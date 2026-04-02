@@ -100,19 +100,6 @@ func (s *Service) PropagateMessaging(ctx context.Context, toIds []uuid.UUID, roo
 		defer cancel()
 		var err error
 		s.ccsMutex.RLock()
-		if s.clientConns["push-service"] == nil {
-			var opts []grpc.DialOption
-			opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-			s.ccsMutex.Lock()
-			s.clientConns["push-service"], err = grpc.NewClient("push-service:50051", opts...)
-			s.ccsMutex.Unlock()
-			if err != nil {
-				slog.Error("fail to get *ClientConn",
-					"err", err)
-				ec <- err
-				return
-			}
-		}
 		cc := s.clientConns["push-service"]
 		s.ccsMutex.RUnlock()
 

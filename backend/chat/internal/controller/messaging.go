@@ -17,6 +17,7 @@ import (
 func messagingRouter(c *Controller) {
 	c.Router(POST, "/chat/like", c.sendLike)
 	c.Router(GET, "/chat/messaging/connect", c.connectMessaging)
+	c.Router(GET, "/chat/messaging/recent", c.getRecentMessages)
 }
 
 func (c *Controller) sendLike(w http.ResponseWriter, r *http.Request) {
@@ -38,6 +39,9 @@ func (c *Controller) sendLike(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func (c *Controller) getRecentMessages(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
@@ -68,7 +72,10 @@ func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
 
 	defer func() {
 		destroy := context.Background()
-		conn.Close(websocket.StatusNormalClosure, "")
+		err = conn.Close(websocket.StatusNormalClosure, "")
+		if err != nil {
+			slog.Error("fail to close conn", "err", err)
+		}
 		c.csMutex.Lock()
 		delete(c.conns, memberId)
 		c.csMutex.Unlock()
@@ -85,7 +92,6 @@ func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
 		handleWebsocketError(init, conn, err)
 		return
 	}
-
 	for {
 		ctx := context.Background()
 		msgType, data, err := conn.Read(ctx)
@@ -118,73 +124,113 @@ func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
 			to, ok := c.conns[req.ToId]
 			c.csMutex.RUnlock()
 			if ok {
-				resp := dto.MessagingResponse{
-					FromId:      memberId,
-					ContentType: req.ContentType,
-					Content:     req.Content,
-				}
-				payload, err := json.Marshal(resp)
-				if err != nil {
-					slog.Error("fail to marshal",
-						"err", err)
-					handleWebsocketError(ctx, conn, errors.New("fail to marshal"))
-					return
-				}
-				err = to.Write(ctx, websocket.MessageText, payload)
-				if err != nil {
-					slog.Error("fail to write payload",
-						"err", err)
-					return
-				}
-				continue
+				err = func() error {
+					id, err := uuid.NewV7()
+					if err != nil {
+						slog.Error("fail to create uuid V7", "err", err)
+						return err
+					}
+					resp := dto.MessagingResponse{
+						Id:          id,
+						FromId:      memberId,
+						ContentType: req.ContentType,
+						Content:     req.Content,
+					}
+					payload, err := json.Marshal(resp)
+					if err != nil {
+						slog.Error("fail to marshal",
+							"err", err)
+						return err
+					}
+					err = to.Write(ctx, websocket.MessageText, payload)
+					if err != nil {
+						slog.Error("fail to write payload",
+							"err", err)
+						return err
+					}
+					return nil
+				}()
 			}
-			err = c.service.PublishPersonalMessaging(req.ToId, memberId, req.ContentType, req.Content)
-			if err != nil {
-				handleWebsocketError(ctx, conn, errors.New("fail to publish"))
-				return
+			if !ok || err != nil {
+				err = c.service.PublishPersonalMessaging(req.ToId, memberId, req.ContentType, req.Content)
+				if err != nil {
+					handleWebsocketError(ctx, conn, errors.New("something went wrong"))
+					return
+				}
 			}
 		}
 	}
 }
 
 func (c *Controller) RelayMessaging(ctx context.Context, toIds []uuid.UUID, roomId, fromId uuid.UUID, contentType, content string) error {
-	res := dto.MessagingResponse{
-		FromId:      fromId,
-		ContentType: contentType,
-		Content:     content,
-	}
-	if roomId != uuid.Nil {
-		res.RoomId = roomId
-	}
-	resRaw, err := json.Marshal(res)
-	if err != nil {
-		slog.Error("fail to marshal MessagingResponse",
-			"err", err)
-		return err
+	ec := make(chan error)
+
+	func() {
+		var wg sync.WaitGroup
+		var pushToIds [][]byte
+		var mu sync.Mutex
+		for _, toId := range toIds {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				c.csMutex.RLock()
+				ct, ok := c.conns[toId]
+				c.csMutex.RUnlock()
+				var err error
+				if ok {
+					id, err := uuid.NewV7()
+					if err != nil {
+						slog.Error("fail to create uuid V7", "err", err)
+						ec <- err
+						return
+					}
+					res := dto.MessagingResponse{
+						Id:          id,
+						FromId:      fromId,
+						ContentType: contentType,
+						Content:     content,
+					}
+					if roomId != uuid.Nil {
+						res.RoomId = roomId
+					}
+					resRaw, err := json.Marshal(res)
+					if err != nil {
+						slog.Error("fail to marshal MessagingResponse",
+							"err", err)
+						ec <- err
+						return
+					}
+					err = ct.Write(ctx, websocket.MessageText, resRaw)
+					if err != nil {
+						slog.Info("fail to write payload",
+							"err", err,
+						)
+					}
+				}
+				if !ok || err != nil {
+					mu.Lock()
+					pushToIds = append(pushToIds, toId[:])
+					mu.Unlock()
+				}
+			}()
+		}
+		wg.Wait()
+		if pushToIds != nil {
+			err := c.service.NotifyMessaging(ctx, pushToIds, roomId, fromId, contentType, content)
+			if err != nil {
+				slog.Error("fail to notify message", "err", err)
+				ec <- err
+			}
+		}
+	}()
+
+	close(ec)
+	var es []error
+	for e := range ec {
+		es = append(es, e)
 	}
 
-	var wg sync.WaitGroup
-	for _, toId := range toIds {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			c.csMutex.RLock()
-			ct, ok := c.conns[toId]
-			c.csMutex.RUnlock()
-			if ok {
-				err = ct.Write(ctx, websocket.MessageText, resRaw)
-				if err != nil {
-					slog.Error("fail to write payload",
-						"err", err,
-					)
-					//TODO: fcm
-				}
-			}
-			//TODO: fcm
-		}()
-	}
-	wg.Wait()
-	return nil
+	return errors.Join(es...)
 }
 
 // getPodIp will replace with k8s configmap pod ip
