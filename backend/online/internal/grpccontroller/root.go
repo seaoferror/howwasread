@@ -21,8 +21,11 @@ func NewGRPCController(controller *controller.Controller) *GRPCController {
 
 func (gc *GRPCController) RelaySignal(ctx context.Context, in *pb.RelaySignalRequest) (*pb.RelaySignalResponse, error) {
 	fromId := uuid.UUID(in.FromId)
-	toId := uuid.UUID(in.ToId)
-	err := gc.controller.RelaySignal(ctx, fromId, toId, in.Signal)
+	toIds := make([]uuid.UUID, len(in.ToIds))
+	for _, toId := range in.ToIds {
+		toIds = append(toIds, uuid.UUID(toId))
+	}
+	err := gc.controller.RelaySignal(ctx, toIds, fromId, in.Signal)
 	if err != nil {
 		return nil, err
 	}

@@ -79,9 +79,11 @@ func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
 		c.csMutex.Lock()
 		delete(c.conns, memberId)
 		c.csMutex.Unlock()
-		c.service.RemoveServerIP(destroy, memberId)
+		c.service.RemoveServerIP(destroy, memberId[:])
+		c.csMutex.RLock()
 		slog.Info("success to close connection",
 			"number of current connection", len(c.conns))
+		c.csMutex.RUnlock()
 	}()
 
 	ip, _ := getPodIP()
@@ -146,6 +148,10 @@ func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
 					if err != nil {
 						slog.Error("fail to write payload",
 							"err", err)
+						err1 := to.CloseNow()
+						if err1 != nil {
+							slog.Error("fail to close zombie connection", "err", err1)
+						}
 						return err
 					}
 					return nil
@@ -162,75 +168,85 @@ func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (c *Controller) RelayMessaging(ctx context.Context, toIds []uuid.UUID, roomId, fromId uuid.UUID, contentType, content string) error {
-	ec := make(chan error)
-
-	func() {
-		var wg sync.WaitGroup
-		var pushToIds [][]byte
-		var mu sync.Mutex
-		for _, toId := range toIds {
+func (c *Controller) RelayMessaging(ctx context.Context, toIds [][]byte, roomId, fromId uuid.UUID, contentType, content string) ([][]byte, error) {
+	var wg sync.WaitGroup
+	var pushToIds [][]byte
+	var mu sync.Mutex
+	id, err := uuid.NewV7()
+	if err != nil {
+		slog.Error("fail to create uuid V7", "err", err)
+		return toIds, err
+	}
+	res := dto.MessagingResponse{
+		Id:          id,
+		FromId:      fromId,
+		ContentType: contentType,
+		Content:     content,
+	}
+	if roomId != uuid.Nil {
+		res.RoomId = roomId
+	}
+	resRaw, _ := json.Marshal(res)
+	var es []error
+	var em sync.Mutex
+	for _, toId := range toIds {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			c.csMutex.RLock()
+			ct, ok := c.conns[uuid.UUID(toId)]
+			c.csMutex.RUnlock()
+			var err1 error
+			if ok {
+				err1 = ct.Write(ctx, websocket.MessageText, resRaw)
+				if err1 != nil {
+					slog.Error("fail to write payload",
+						"err", err1,
+					)
+					em.Lock()
+					es = append(es, err1)
+					em.Unlock()
+					err2 := ct.CloseNow()
+					if err2 != nil {
+						slog.Error("fail to close zombie connection", "err", err2)
+						em.Lock()
+						es = append(es, err2)
+						em.Unlock()
+					}
+				}
+			}
+			if !ok || err1 != nil {
+				mu.Lock()
+				pushToIds = append(pushToIds, toId[:])
+				mu.Unlock()
+			}
+		}()
+	}
+	wg.Wait()
+	if pushToIds != nil {
+		for _, toId := range pushToIds {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				c.csMutex.RLock()
-				ct, ok := c.conns[toId]
-				c.csMutex.RUnlock()
-				var err error
-				if ok {
-					id, err := uuid.NewV7()
-					if err != nil {
-						slog.Error("fail to create uuid V7", "err", err)
-						ec <- err
-						return
-					}
-					res := dto.MessagingResponse{
-						Id:          id,
-						FromId:      fromId,
-						ContentType: contentType,
-						Content:     content,
-					}
-					if roomId != uuid.Nil {
-						res.RoomId = roomId
-					}
-					resRaw, err := json.Marshal(res)
-					if err != nil {
-						slog.Error("fail to marshal MessagingResponse",
-							"err", err)
-						ec <- err
-						return
-					}
-					err = ct.Write(ctx, websocket.MessageText, resRaw)
-					if err != nil {
-						slog.Info("fail to write payload",
-							"err", err,
-						)
-					}
-				}
-				if !ok || err != nil {
-					mu.Lock()
-					pushToIds = append(pushToIds, toId[:])
-					mu.Unlock()
+				err1 := c.service.RemoveServerIP(ctx, toId)
+				if err1 != nil {
+					em.Lock()
+					es = append(es, err1)
+					em.Unlock()
+					return
 				}
 			}()
 		}
 		wg.Wait()
-		if pushToIds != nil {
-			err := c.service.NotifyMessaging(ctx, pushToIds, roomId, fromId, contentType, content)
-			if err != nil {
-				slog.Error("fail to notify message", "err", err)
-				ec <- err
-			}
+		err1 := c.service.NotifyMessaging(ctx, pushToIds, roomId, fromId, contentType, content)
+		if err1 != nil {
+			em.Lock()
+			es = append(es, err1)
+			em.Unlock()
+			return pushToIds, errors.Join(es...)
 		}
-	}()
-
-	close(ec)
-	var es []error
-	for e := range ec {
-		es = append(es, e)
 	}
-
-	return errors.Join(es...)
+	return nil, errors.Join(es...)
 }
 
 // getPodIp will replace with k8s configmap pod ip

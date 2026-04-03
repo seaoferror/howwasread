@@ -1,8 +1,7 @@
 package main
 
-import "backend/caller/internal"
+import "backend/submessaging/internal"
 
 func main() {
 	internal.NewServer()
-
 }

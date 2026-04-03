@@ -1,19 +1,17 @@
 package payload
 
-import (
-	"encoding/json"
-)
+import "encoding/json"
 
 type OnlineConversationSignal struct {
-	FromId json.RawMessage `json:"fromId"`
-	ToId   json.RawMessage `json:"toId"`
+	FromId []byte          `json:"fromId"`
+	ToIds  [][]byte        `json:"toIds"`
 	Signal json.RawMessage `json:"signal,omitempty"`
 }
 
 type ChatMessaging struct {
-	ToIds       []json.RawMessage `json:"toIds"`
-	RoomId      json.RawMessage   `json:"roomId,omitempty"`
-	FromId      json.RawMessage   `json:"fromId"`
-	ContentType string            `json:"contentType"`
-	Content     string            `json:"content"`
+	ToIds       [][]byte `json:"toIds"`
+	RoomId      []byte   `json:"roomId,omitempty"`
+	FromId      []byte   `json:"fromId"`
+	ContentType string   `json:"contentType"`
+	Content     string   `json:"content"`
 }

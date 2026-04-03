@@ -5,9 +5,7 @@ import (
 	pb "backend/proto"
 	"context"
 	"encoding/json"
-	"errors"
 	"log/slog"
-	"sync"
 	"time"
 
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
@@ -28,7 +26,7 @@ func (s *Service) SendLike(ctx context.Context, fromId, toId uuid.UUID) error {
 }
 
 func (s *Service) PublishPersonalMessaging(toId, fromId uuid.UUID, contentType, content string) error {
-	err := s.publishMessaging([]uuid.UUID{toId}, []byte{}, fromId, contentType, content)
+	err := s.publishMessaging([][]byte{toId[:]}, []byte{}, fromId, contentType, content)
 	if err != nil {
 		return err
 	}
@@ -36,20 +34,17 @@ func (s *Service) PublishPersonalMessaging(toId, fromId uuid.UUID, contentType, 
 }
 
 func (s *Service) publishMessaging(
-	toIds []uuid.UUID,
+	toIds [][]byte,
 	roomId []byte,
 	fromId uuid.UUID,
 	contentType,
 	content string) error {
 	p := payload.ChatMessaging{
+		ToIds:       toIds,
 		FromId:      fromId[:],
 		RoomId:      roomId,
 		ContentType: contentType,
 		Content:     content,
-	}
-
-	for _, toId := range toIds {
-		p.ToIds = append(p.ToIds, toId[:])
 	}
 
 	pRaw, err := json.Marshal(p)
@@ -69,21 +64,6 @@ func (s *Service) NotifyMessaging(
 	ctx context.Context,
 	toIds [][]byte, roomId, fromId uuid.UUID,
 	contentType, content string) error {
-	ec := make(chan error)
-	var wg sync.WaitGroup
-	for _, toId := range toIds {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			err := s.repository.RemoveServerIP(ctx, string(toId[:]))
-			if err != nil {
-				ec <- err
-				return
-			}
-		}()
-	}
-	wg.Wait()
-
 	client := pb.NewNotificationServiceClient(s.clientConn)
 	req := pb.NotifyMessagingRequest{
 		ToIds:       toIds,
@@ -98,15 +78,9 @@ func (s *Service) NotifyMessaging(
 	defer cancel()
 	_, err := client.NotifyMessaging(ctxt, &req)
 	if err != nil {
-		slog.Error("fail to relay messaging",
+		slog.Error("fail to notify messaging",
 			"err", err)
-		ec <- err
+		return err
 	}
-	close(ec)
-	var es []error
-	for e := range ec {
-		es = append(es, e)
-	}
-
-	return errors.Join(es...)
+	return nil
 }

@@ -145,18 +145,18 @@ func (s *Service) RemoveParticipant(ctx context.Context, conversationId bson.Obj
 	return nil
 }
 
-func (s *Service) PublishConversationSignal(fromId, toId uuid.UUID, data []byte) error {
-	msg := payload.OnlineConversationSignal{
+func (s *Service) PublishConversationSignal(fromId uuid.UUID, toIds [][]byte, signal []byte) error {
+	p := payload.OnlineConversationSignal{
 		FromId: fromId[:],
-		ToId:   toId[:],
-		Signal: data,
+		ToIds:  toIds,
+		Signal: signal,
 	}
 
-	value, err := json.Marshal(msg)
+	value, err := json.Marshal(p)
 	if err != nil {
 		slog.Error("fail to marshal msg",
 			"err", err,
-			"msg", msg)
+			"msg", p)
 		return err
 	}
 	err = s.kafkaProducer.PushMessage("conversation.signal", value)

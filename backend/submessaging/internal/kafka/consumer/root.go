@@ -1,8 +1,8 @@
 package consumer
 
 import (
-	"backend/caller/internal/service"
 	"backend/payload"
+	"backend/submessaging/internal/service"
 	"context"
 	"encoding/json"
 	"errors"
@@ -73,9 +73,10 @@ func (ks *KafkaConsumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim
 		select {
 		case msg := <-claim.Messages():
 			session.MarkMessage(msg, "")
-			err := ks.distinguishMessage(msg)
+			err := ks.distinguishMessage(session.Context(), msg)
 			if err != nil {
-				log.Printf("Fail to save payload: %v", err)
+				log.Printf("Fail to manage message: %v", err)
+				return err
 			}
 			continue
 		case <-session.Context().Done():
@@ -93,13 +94,8 @@ func (ks *KafkaConsumer) GetMessage(topics []string) error {
 		defer wg.Done()
 		for {
 			if err := ks.consumer.Consume(ctx, topics, ks); err != nil {
-				if errors.Is(err, sarama.ErrClosedConsumerGroup) {
-					//mostly rebalancing
-					return
-				}
-				log.Printf("Error from consumer: %v", err)
+				return
 			}
-
 			if ctx.Err() != nil {
 				return
 			}
@@ -150,23 +146,7 @@ func toggleConsumptionFlow(client sarama.ConsumerGroup, isPaused *bool) {
 	*isPaused = !*isPaused
 }
 
-func (ks *KafkaConsumer) distinguishMessage(message *sarama.ConsumerMessage) error {
-	ctx := context.Background()
-	if message.Topic == "conversation.signal" {
-		var m payload.OnlineConversationSignal
-		err := json.Unmarshal(message.Value, &m)
-		if err != nil {
-			slog.Error("fail to unmarshal payload value",
-				"err", err,
-				"payload.Value", message.Value)
-			return err
-		}
-		err = ks.service.PropagateSignal(ctx, uuid.UUID(m.FromId), uuid.UUID(m.ToId), m.Signal)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
+func (ks *KafkaConsumer) distinguishMessage(ctx context.Context, message *sarama.ConsumerMessage) error {
 	if message.Topic == "chat.messaging" {
 		var m payload.ChatMessaging
 		err := json.Unmarshal(message.Value, &m)
@@ -176,11 +156,10 @@ func (ks *KafkaConsumer) distinguishMessage(message *sarama.ConsumerMessage) err
 				"payload.Value", message.Value)
 			return err
 		}
-		var toIds []uuid.UUID
-		for _, toId := range m.ToIds {
-			toIds = append(toIds, uuid.UUID(toId))
+		err = ks.service.PropagateMessaging(ctx, m.ToIds, m.RoomId, m.FromId, m.ContentType, m.Content)
+		if err != nil {
+			return err
 		}
-		err = ks.service.PropagateMessaging(ctx, toIds, m.RoomId, uuid.UUID(m.FromId), m.ContentType, m.Content)
 	}
 	return errors.New("this topic does not exist")
 }

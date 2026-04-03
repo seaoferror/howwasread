@@ -1,7 +1,8 @@
 package service
 
 import (
-	"backend/caller/internal/repository"
+	"backend/submessaging/internal/kafka/producer"
+	"backend/submessaging/internal/repository"
 	"log/slog"
 	"sync"
 
@@ -13,13 +14,15 @@ type Service struct {
 	repository  *repository.Repository
 	clientConns map[string]*grpc.ClientConn
 	ccsMutex    *sync.RWMutex
+	producer    *producer.KafkaProducer
 }
 
-func NewService(r *repository.Repository) *Service {
+func NewService(r *repository.Repository, kp *producer.KafkaProducer) *Service {
 	s := &Service{
 		repository:  r,
 		clientConns: make(map[string]*grpc.ClientConn),
 		ccsMutex:    &sync.RWMutex{},
+		producer:    kp,
 	}
 	var opts []grpc.DialOption
 	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))

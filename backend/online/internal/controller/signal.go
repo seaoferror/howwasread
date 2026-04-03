@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"sync"
 
 	"github.com/coder/websocket"
 	"github.com/google/uuid"
@@ -77,12 +78,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 	}
 	if pids != nil {
 		resp := dto.ConversationSignalResponse{FromIds: pids}
-		payload, err := json.Marshal(resp)
-		if err != nil {
-			slog.Error("fail to marshal")
-			handleWebsocketError(init, conn, err)
-			return
-		}
+		payload, _ := json.Marshal(resp)
 		err = conn.Write(init, websocket.MessageText, payload)
 		if err != nil {
 			slog.Error("fail to write payload",
@@ -91,38 +87,50 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-
 	err = c.service.AddParticipant(init, conversationId, memberId)
 	if err != nil {
 		handleWebsocketError(init, conn, err)
 		return
 	}
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var publishToIds [][]byte
+	res := dto.ConversationSignalResponse{
+		FromIds: []uuid.UUID{memberId},
+	}
+	resRaw, _ := json.Marshal(res)
 	for _, pid := range pids {
-		resp := dto.ConversationSignalResponse{
-			FromIds: []uuid.UUID{memberId},
-		}
-		payload, err := json.Marshal(resp)
-		if err != nil {
-			slog.Error("fail to marshal")
-			handleWebsocketError(init, conn, errors.New("fail to get participant"))
-			return
-		}
-		c.csMutex.RLock()
-		p, ok := c.conns[pid]
-		c.csMutex.RUnlock()
-		if ok {
-			err = p.Write(init, websocket.MessageText, payload)
-			if err != nil {
-				slog.Error("fail to write payload",
-					"err", err,
-				)
-				return
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			c.csMutex.RLock()
+			p, ok := c.conns[pid]
+			c.csMutex.RUnlock()
+			var err1 error
+			if ok {
+				err1 = p.Write(init, websocket.MessageText, resRaw)
+				if err1 != nil {
+					slog.Error("fail to write payload",
+						"err", err1,
+					)
+					err2 := p.CloseNow()
+					if err2 != nil {
+						slog.Error("fail to close zombie connection", "err", err2)
+					}
+				}
 			}
-			continue
-		}
-		err = c.service.PublishConversationSignal(memberId, pid, []byte{})
+			if !ok || err1 != nil {
+				mu.Lock()
+				publishToIds = append(publishToIds, pid[:])
+				mu.Unlock()
+			}
+		}()
+	}
+	wg.Wait()
+	if publishToIds != nil {
+		err = c.service.PublishConversationSignal(memberId, publishToIds, []byte{})
 		if err != nil {
-			handleWebsocketError(init, conn, errors.New("fail to publish"))
+			slog.Error("fail to publish message", "err", err)
 			return
 		}
 	}
@@ -155,64 +163,95 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 			handleWebsocketError(ctx, conn, errors.New("incorrect data"))
 			return
 		}
+		publishToIds = nil
+		res = dto.ConversationSignalResponse{
+			FromIds: []uuid.UUID{memberId},
+			Signal:  req.Signal,
+		}
+		resRaw, _ = json.Marshal(res)
 		for _, toId := range req.ToIds {
-			c.csMutex.RLock()
-			to, ok := c.conns[toId]
-			c.csMutex.RUnlock()
-			if ok {
-				resp := dto.ConversationSignalResponse{
-					FromIds: []uuid.UUID{memberId},
-					Signal:  req.Signal,
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				c.csMutex.RLock()
+				to, ok := c.conns[toId]
+				c.csMutex.RUnlock()
+				var err1 error
+				if ok {
+					err1 = to.Write(ctx, websocket.MessageText, resRaw)
+					if err1 != nil {
+						slog.Error("fail to write payload",
+							"err", err1,
+						)
+						err2 := to.CloseNow()
+						if err2 != nil {
+							slog.Error("fail to close zombie connection", "err", err2)
+						}
+					}
 				}
-				payload, err := json.Marshal(resp)
-				if err != nil {
-					slog.Error("fail to marshalling conversationSignal",
-						"err", err)
-					handleWebsocketError(ctx, conn, errors.New("something went wrong"))
-					return
+				if !ok || err1 != nil {
+					mu.Lock()
+					publishToIds = append(publishToIds, toId[:])
+					mu.Unlock()
 				}
-				err = to.Write(ctx, websocket.MessageText, payload)
-				if err != nil {
-					slog.Error("fail to write payload",
-						"err", err,
-					)
-					return
-				}
-				continue
-			}
-			err = c.service.PublishConversationSignal(memberId, toId, req.Signal)
+			}()
+		}
+		wg.Wait()
+		if publishToIds != nil {
+			err = c.service.PublishConversationSignal(memberId, publishToIds, req.Signal)
 			if err != nil {
 				handleWebsocketError(ctx, conn, errors.New("fail to publish"))
+				slog.Error("fail to publish", "err", err)
 				return
 			}
 		}
 	}
 }
 
-func (c *Controller) RelaySignal(ctx context.Context, fromId, toId uuid.UUID, signal []byte) error {
-	resp := dto.ConversationSignalResponse{
+func (c *Controller) RelaySignal(ctx context.Context, toIds []uuid.UUID, fromId uuid.UUID, signal []byte) error {
+	var errs []error
+	var em sync.Mutex
+	var wg sync.WaitGroup
+	res := dto.ConversationSignalResponse{
 		FromIds: []uuid.UUID{fromId},
 		Signal:  signal,
 	}
-	payload, err := json.Marshal(resp)
-	if err != nil {
-		slog.Error("fail to marshal ConversationSignalResponse",
-			"err", err)
-		return err
+	resRaw, _ := json.Marshal(res)
+	for _, toId := range toIds {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			c.csMutex.RLock()
+			wsc, ok := c.conns[toId]
+			c.csMutex.RUnlock()
+			var err error
+			if ok {
+				err = wsc.Write(ctx, websocket.MessageText, resRaw)
+				if err != nil {
+					slog.Error("fail to write payload", "err", err)
+					em.Lock()
+					errs = append(errs, err)
+					em.Unlock()
+					err1 := wsc.CloseNow()
+					if err1 != nil {
+						slog.Error("fail to close zombie connection", "err", err)
+						em.Lock()
+						errs = append(errs, err1)
+						em.Unlock()
+					}
+				}
+				return
+			}
+			err1 := c.service.RemoveServerIP(ctx, toId)
+			if err != nil {
+				errs = append(errs, err1)
+				return
+			}
+		}()
 	}
-	c.csMutex.RLock()
-	wsc, ok := c.conns[toId]
-	c.csMutex.RUnlock()
-	if ok {
-		err = wsc.Write(ctx, websocket.MessageText, payload)
-		if err != nil {
-			slog.Error("fail to write payload",
-				"err", err,
-			)
-			return err
-		}
-	}
-	return nil
+	wg.Wait()
+
+	return errors.Join(errs...)
 }
 
 // getPodIp will replace with k8s configmap pod ip

@@ -17,4 +17,5 @@ message RelayMessagingRequest {
 }
 
 message RelayMessagingResponse {
+  repeated bytes failedIds = 1;
 }
