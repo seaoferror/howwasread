@@ -11,10 +11,10 @@ import (
 )
 
 func tokenRouter(c *Controller) {
-	c.Router(POST, "/notification/device-push-token", c.setDevicePushToken)
+	c.Router(POST, "/notification/device-push-token", c.registerDevicePushToken)
 }
 
-func (c *Controller) setDevicePushToken(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) registerDevicePushToken(w http.ResponseWriter, r *http.Request) {
 	memberIdRaw := r.Header.Get("X-User-Id")
 	memberId, err := uuid.Parse(memberIdRaw)
 	if err != nil {

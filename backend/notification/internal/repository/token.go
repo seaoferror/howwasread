@@ -14,7 +14,7 @@ func (r *Repository) SaveMessaging(ctx context.Context, id, toId, roomId, fromId
 	if uuid.UUID(roomId) == uuid.Nil {
 		rId = nil
 	}
-	err := r.session.Query(`INSERT INTO messaging_by_toId 
+	err := r.session.Query(`INSERT INTO message_by_to_id 
     (id, to_id, room_id, from_id, content_type, content) VALUES (?, ?, ?, ?, ?, ?)`,
 		id, toId, rId, fromId, contentType, content).ExecContext(ctx)
 	if err != nil {
@@ -44,4 +44,14 @@ func (r *Repository) FindDevicePushToken(ctx context.Context, id gocql.UUID) (os
 		return "", "", err
 	}
 	return os, token, nil
+}
+
+func (r *Repository) RemoveInvalidDeviceToken(ctx context.Context, id gocql.UUID) error {
+	err := r.session.Query(`UPDATE device_push_token_by_id SET token = null WHERE id = ?`,
+		id).ExecContext(ctx)
+	if err != nil {
+		slog.Error("fail to remove invalid device token", "err", err)
+		return err
+	}
+	return nil
 }

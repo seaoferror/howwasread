@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -22,33 +21,39 @@ func (s *Service) NotifyMessaging(ctx context.Context,
 	toIds []uuid.UUID, roomId, fromId uuid.UUID,
 	contentType, content string) error {
 
+	var em sync.Mutex
+	var es []error
 	var wg sync.WaitGroup
-	ec := make(chan error)
-
+	id, err0 := uuid.NewV7()
+	if err0 != nil {
+		slog.Error("fail to create uuid V7 for messaging", "err", err0)
+		return err0
+	}
 	for _, toId := range toIds {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			ctxt, cancel := context.WithTimeout(ctx, 3*time.Second)
 			defer cancel()
-			id, err := uuid.NewV7()
-			if err != nil {
-				slog.Error("fail to create uuid V7 for messaging", "err", err)
-				ec <- err
-				return
-			}
-			err = s.repository.SaveMessaging(
+			err := s.repository.SaveMessaging(
 				ctxt, gocql.UUID(id), gocql.UUID(toId), gocql.UUID(roomId), gocql.UUID(fromId),
 				contentType, content)
 			if err != nil {
-				ec <- err
+				em.Lock()
+				es = append(es, err)
+				em.Unlock()
 			}
 		}()
 	}
 	wg.Wait()
+	if errors.Join(es...) != nil {
+		return errors.Join(es...)
+	}
 
-	apntc := make(chan map[uuid.UUID]string)
-	fcmtc := make(chan map[uuid.UUID]string)
+	apntm := make(map[string]uuid.UUID)
+	var am sync.Mutex
+	fcmtm := make(map[string]uuid.UUID)
+	var fm sync.Mutex
 	for _, toId := range toIds {
 		wg.Add(1)
 		go func() {
@@ -56,146 +61,147 @@ func (s *Service) NotifyMessaging(ctx context.Context,
 			ctxt, cancel := context.WithTimeout(ctx, 3*time.Second)
 			defer cancel()
 			os, t, err := s.repository.FindDevicePushToken(ctxt, gocql.UUID(toId))
+			if errors.Is(err, gocql.ErrNotFound) || t == "" {
+				err = nil
+				return
+			}
 			if err != nil {
-				ec <- err
+				em.Lock()
+				es = append(es, err)
+				em.Unlock()
 				return
 			}
 			if os == "ios" {
-				apntc <- map[uuid.UUID]string{toId: t}
+				am.Lock()
+				apntm[t] = toId
+				am.Unlock()
 				return
 			}
-			fcmtc <- map[uuid.UUID]string{toId: t}
+			fm.Lock()
+			fcmtm[t] = toId
+			fm.Unlock()
 		}()
 	}
 	wg.Wait()
-	close(apntc)
-	close(fcmtc)
-	apntm := make(map[string]uuid.UUID)
-	var apnts []string
-	for t := range fcmtc {
-		for k, v := range t {
-			apntm[v] = k
-			apnts = append(apnts, v)
-		}
+	if errors.Join(es...) != nil {
+		return errors.Join(es...)
 	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
 		"iss": s.teamId,
 		"iat": time.Now().Unix(),
 	})
 	token.Header["kid"] = s.keyId
-	func() {
-		authorization, err := token.SignedString(s.privateKey)
-		if err != nil {
-			slog.Error("fail to make authorization token", "err", err)
-			ec <- err
-			return
-		}
-		type Alert struct {
-			Title string `json:"title"`
-			Body  string `json:"body"`
-		}
-		type Aps struct {
-			Alert Alert `json:"alert"`
-		}
-		type Payload struct {
-			Aps Aps `json:"aps"`
-		}
-		payload, err := json.Marshal(Payload{
-			Aps: Aps{
-				Alert: Alert{
-					Title: "",
-					Body:  "",
-				},
-			},
-		})
-		if err != nil {
-			slog.Error("fail to marshal payload for apn",
-				"err", err)
-			ec <- err
-			return
-		}
-		for _, t := range apnts {
-			go func() {
-				req, err1 := http.NewRequest("POST", constant.ApplePushURL+t, bytes.NewBuffer(payload))
-				if err1 != nil {
-					ec <- err1
-					return
-				}
-				req.Header.Set("apns-topic", s.BundleIdentifier)
-				req.Header.Set("authorization", authorization)
-				req.Header.Set("Content-Type", "application/json")
-				client := &http.Client{}
-				res, err1 := client.Do(req)
-				if err1 != nil {
-					slog.Error("fail to send request", "err1", err1)
-					ec <- err1
-					return
-				}
-				defer res.Body.Close()
-				bodyRaw, err1 := io.ReadAll(res.Body)
-				if err1 != nil {
-					slog.Error("fail to read body", "err", err1)
-					ec <- err1
-					return
-				}
-				if res.StatusCode == http.StatusOK {
-					return
-				}
-				slog.Error("fail to send apn notification",
-					"failedId", apntm[t],
-					"statusCode", res.StatusCode,
-					"response", string(bodyRaw))
-			}()
-		}
-	}()
 
-	fcmtm := make(map[string]uuid.UUID)
-	var fcmts []string
-	for t := range fcmtc {
-		for k, v := range t {
-			fcmtm[v] = k
-			fcmts = append(fcmts, v)
-		}
+	authorization, err := token.SignedString(s.privateKey)
+	if err != nil {
+		slog.Error("fail to make authorization token", "err", err)
+		return err
 	}
-
-	func() {
-		client, err := s.app.Messaging(ctx)
-		if err != nil {
-			slog.Error("fail to create fcm client",
-				"err", err)
-			ec <- err
-			return
-		}
-
-		message := &messaging.MulticastMessage{
-			Notification: &messaging.Notification{
+	type Alert struct {
+		Title string `json:"title"`
+		Body  string `json:"body"`
+	}
+	type Aps struct {
+		Alert Alert `json:"alert"`
+	}
+	type Payload struct {
+		Aps Aps `json:"aps"`
+	}
+	payload, _ := json.Marshal(Payload{
+		Aps: Aps{
+			Alert: Alert{
 				Title: "",
 				Body:  "",
 			},
-			Tokens: fcmts,
-		}
-		br, err := client.SendEachForMulticast(ctx, message)
-		if err != nil {
-			ec <- err
-			return
-		}
-		if br.FailureCount > 0 {
-			var failedIds []string
-			for i, resp := range br.Responses {
-				if !resp.Success {
-					// The order of responses corresponds to the order of the registration tokens.
-					failedIds = append(failedIds, fcmtm[fcmts[i]].String())
-				}
+		},
+	})
+	var failedIds []uuid.UUID
+	var mu sync.Mutex
+	for t := range apntm {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			req, err1 := http.NewRequestWithContext(ctx, "POST", constant.ApplePushURL+t, bytes.NewBuffer(payload))
+			if err1 != nil {
+				em.Lock()
+				es = append(es, err1)
+				em.Unlock()
+				return
 			}
-			slog.Error("failed ids to get push notification", "failedIds", failedIds)
-			//TODO: publish this to kafka and retry?
-		}
-	}()
-
-	close(ec)
-	var errs []error
-	for err := range ec {
-		errs = append(errs, err)
+			req.Header.Set("apns-topic", s.BundleIdentifier)
+			req.Header.Set("authorization", authorization)
+			req.Header.Set("Content-Type", "application/json")
+			client := &http.Client{}
+			res, err1 := client.Do(req)
+			if err1 != nil {
+				slog.Error("fail to send request", "err1", err1)
+				em.Lock()
+				es = append(es, err1)
+				em.Unlock()
+				return
+			}
+			defer res.Body.Close()
+			if res.StatusCode == http.StatusOK {
+				return
+			}
+			mu.Lock()
+			slog.Error("fail to send apn notification",
+				"failedId", apntm[t])
+			failedIds = append(failedIds, apntm[t])
+			mu.Unlock()
+		}()
 	}
-	return errors.Join(errs...)
+	wg.Wait()
+
+	client, err := s.app.Messaging(ctx)
+	if err != nil {
+		slog.Error("fail to create fcm messaging client",
+			"err", err)
+		return err
+	}
+
+	var fcmts []string
+	for t := range fcmtm {
+		fcmts = append(fcmts, t)
+	}
+
+	message := &messaging.MulticastMessage{
+		Notification: &messaging.Notification{
+			Title: "",
+			Body:  "",
+		},
+		Tokens: fcmts,
+	}
+	br, err := client.SendEachForMulticast(ctx, message)
+	if err != nil {
+		return err
+	}
+	if br.FailureCount > 0 {
+		for i, resp := range br.Responses {
+			if !resp.Success {
+				slog.Info("fail to send fcm notification",
+					"failedId", fcmtm[fcmts[i]])
+				failedIds = append(failedIds, fcmtm[fcmts[i]])
+			}
+		}
+	}
+	for _, failedId := range failedIds {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err2 := s.repository.RemoveInvalidDeviceToken(ctx, gocql.UUID(failedId))
+			if err2 != nil {
+				em.Lock()
+				es = append(es, err2)
+				em.Unlock()
+			}
+		}()
+	}
+	wg.Wait()
+	if errors.Join(es...) != nil {
+		return errors.Join(es...)
+	}
+
+	return nil
 }
