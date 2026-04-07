@@ -4,7 +4,6 @@ import (
 	pb "backend/proto"
 	"context"
 	"encoding/json"
-	"errors"
 	"log/slog"
 	"sync"
 	"time"
@@ -16,22 +15,15 @@ import (
 )
 
 func (s *Service) PropagateSignal(ctx context.Context, toIds [][]byte, fromId []byte, signal json.RawMessage) {
-	ctxt, cancel := context.WithTimeout(ctx, 1*time.Second)
-	defer cancel()
 	var wg sync.WaitGroup
 	relayToIdsByIPs := make(map[string][][]byte)
 	var rm sync.Mutex
-	var errs []error
-	var em sync.Mutex
 	for _, toId := range toIds {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			ip, err := s.repository.GetServerIP(ctxt, string(toId))
+			ip, err := s.repository.GetServerIP(ctx, string(toId))
 			if err != nil || ip == "" {
-				em.Lock()
-				errs = append(errs, err)
-				em.Unlock()
 				return
 			}
 			rm.Lock()
@@ -54,9 +46,7 @@ func (s *Service) PropagateSignal(ctx context.Context, toIds [][]byte, fromId []
 				opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 				cc, err = grpc.NewClient(ip+":50051", opts...)
 				if err != nil {
-					em.Lock()
-					errs = append(errs, err)
-					em.Unlock()
+					slog.Error("fail to make new grpc client", "err", err)
 					return
 				}
 				s.ccsMutex.Lock()
@@ -72,12 +62,6 @@ func (s *Service) PropagateSignal(ctx context.Context, toIds [][]byte, fromId []
 			ctxg, cancel := context.WithTimeout(ctx, 3*time.Second)
 			defer cancel()
 			_, err = client.RelaySignal(ctxg, &req)
-			if err != nil {
-				slog.Error("fail to relay signal", "err", err)
-				em.Lock()
-				errs = append(errs, err)
-				em.Unlock()
-			}
 			st, ok := status.FromError(err)
 			if ok && (st.Code() == codes.Unavailable || st.Code() == codes.DeadlineExceeded) {
 				s.ccsMutex.RLock()
@@ -85,18 +69,35 @@ func (s *Service) PropagateSignal(ctx context.Context, toIds [][]byte, fromId []
 				s.ccsMutex.RUnlock()
 				if err != nil {
 					slog.Error("fail to close grpc client connection", "err", err)
-					errs = append(errs, err)
 				}
 				s.ccsMutex.Lock()
 				delete(s.clientConns, ip)
 				s.ccsMutex.Unlock()
+				var wg1 sync.WaitGroup
+				for _, tid := range ids {
+					wg1.Add(1)
+					go func() {
+						defer wg1.Done()
+						currentIP, err1 := s.repository.GetServerIP(ctx, string(tid))
+						if err1 != nil {
+							return
+						}
+						if currentIP == ip {
+							err1 = s.repository.RemoveServerIP(ctx, string(tid))
+							if err1 != nil {
+								return
+							}
+						}
+					}()
+				}
+				wg1.Wait()
+			}
+			if err != nil {
+				slog.Error("fail to relay signal", "err", err)
 			}
 		}()
 	}
 	wg.Wait()
-	err := errors.Join(errs...)
-	if err != nil {
-		slog.Error("fail to propagate whole signal", "err", err)
-	}
+
 	return
 }

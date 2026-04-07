@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -24,24 +25,33 @@ func (s *Service) NotifyMessaging(ctx context.Context,
 	var em sync.Mutex
 	var es []error
 	var wg sync.WaitGroup
-	id, err0 := uuid.NewV7()
-	if err0 != nil {
-		slog.Error("fail to create uuid V7 for messaging", "err", err0)
-		return err0
-	}
+	apntm := make(map[string]uuid.UUIDs)
+	var am sync.Mutex
+	fcmtm := make(map[string]uuid.UUIDs)
+	var fm sync.Mutex
 	for _, toId := range toIds {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			ctxt, cancel := context.WithTimeout(ctx, 3*time.Second)
 			defer cancel()
-			err := s.repository.SaveMessaging(
-				ctxt, gocql.UUID(id), gocql.UUID(toId), gocql.UUID(roomId), gocql.UUID(fromId),
-				contentType, content)
+			result, err := s.repository.FindPushTokenById(ctxt, gocql.UUID(toId))
 			if err != nil {
 				em.Lock()
 				es = append(es, err)
 				em.Unlock()
+				return
+			}
+			for _, d := range result {
+				if d.OS == "ios" {
+					am.Lock()
+					apntm[d.DevicePushToken] = uuid.UUIDs{uuid.UUID(d.Id), uuid.UUID(d.DeviceId)}
+					am.Unlock()
+					return
+				}
+				fm.Lock()
+				fcmtm[d.DevicePushToken] = uuid.UUIDs{uuid.UUID(d.Id), uuid.UUID(d.DeviceId)}
+				fm.Unlock()
 			}
 		}()
 	}
@@ -50,41 +60,20 @@ func (s *Service) NotifyMessaging(ctx context.Context,
 		return errors.Join(es...)
 	}
 
-	apntm := make(map[string]uuid.UUID)
-	var am sync.Mutex
-	fcmtm := make(map[string]uuid.UUID)
-	var fm sync.Mutex
-	for _, toId := range toIds {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			ctxt, cancel := context.WithTimeout(ctx, 3*time.Second)
-			defer cancel()
-			os, t, err := s.repository.FindDevicePushToken(ctxt, gocql.UUID(toId))
-			if errors.Is(err, gocql.ErrNotFound) || t == "" {
-				err = nil
-				return
-			}
-			if err != nil {
-				em.Lock()
-				es = append(es, err)
-				em.Unlock()
-				return
-			}
-			if os == "ios" {
-				am.Lock()
-				apntm[t] = toId
-				am.Unlock()
-				return
-			}
-			fm.Lock()
-			fcmtm[t] = toId
-			fm.Unlock()
-		}()
+	if contentType != "text" {
+		content = fmt.Sprintf("(%s)", contentType)
 	}
-	wg.Wait()
-	if errors.Join(es...) != nil {
-		return errors.Join(es...)
+
+	senderName, err := s.repository.FindNameById(ctx, gocql.UUID(fromId))
+	if err != nil {
+		return err
+	}
+	var roomName string
+	if roomId != uuid.Nil {
+		roomName, err = s.repository.FindRoomNameById(ctx, gocql.UUID(roomId))
+	}
+	if err != nil {
+		return err
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
@@ -99,8 +88,9 @@ func (s *Service) NotifyMessaging(ctx context.Context,
 		return err
 	}
 	type Alert struct {
-		Title string `json:"title"`
-		Body  string `json:"body"`
+		Title    string `json:"title"`
+		Subtitle string `json:"subtitle"`
+		Body     string `json:"body"`
 	}
 	type Aps struct {
 		Alert Alert `json:"alert"`
@@ -108,21 +98,27 @@ func (s *Service) NotifyMessaging(ctx context.Context,
 	type Payload struct {
 		Aps Aps `json:"aps"`
 	}
+	alert := Alert{
+		Body: content,
+	}
+	alert.Title = senderName
+	if roomId != uuid.Nil {
+		alert.Title = roomName
+		alert.Subtitle = senderName
+	}
+
 	payload, _ := json.Marshal(Payload{
 		Aps: Aps{
-			Alert: Alert{
-				Title: "",
-				Body:  "",
-			},
+			Alert: alert,
 		},
 	})
-	var failedIds []uuid.UUID
+	var failedIds []uuid.UUIDs
 	var mu sync.Mutex
 	for t := range apntm {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			req, err1 := http.NewRequestWithContext(ctx, "POST", constant.ApplePushURL+t, bytes.NewBuffer(payload))
+			req, err1 := http.NewRequestWithContext(ctx, http.MethodPost, constant.ApplePushURL+t, bytes.NewBuffer(payload))
 			if err1 != nil {
 				em.Lock()
 				es = append(es, err1)
@@ -168,8 +164,8 @@ func (s *Service) NotifyMessaging(ctx context.Context,
 
 	message := &messaging.MulticastMessage{
 		Notification: &messaging.Notification{
-			Title: "",
-			Body:  "",
+			Title: senderName,
+			Body:  content,
 		},
 		Tokens: fcmts,
 	}
@@ -190,7 +186,7 @@ func (s *Service) NotifyMessaging(ctx context.Context,
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err2 := s.repository.RemoveInvalidDeviceToken(ctx, gocql.UUID(failedId))
+			err2 := s.repository.RemovePushTokenByIdAndDeviceId(ctx, gocql.UUID(failedId[0]), gocql.UUID(failedId[1]))
 			if err2 != nil {
 				em.Lock()
 				es = append(es, err2)

@@ -9,9 +9,10 @@ type OnlineConversationSignal struct {
 }
 
 type ChatMessaging struct {
-	ToIds       [][]byte `json:"toIds"`
-	RoomId      []byte   `json:"roomId,omitempty"`
-	FromId      []byte   `json:"fromId"`
-	ContentType string   `json:"contentType"`
-	Content     string   `json:"content"`
+	Id          []byte `json:"id"`
+	FromId      []byte `json:"fromId"`
+	ToIdType    string `json:"toIdType"`
+	ToId        []byte `json:"toId"`
+	ContentType string `json:"contentType"`
+	Content     string `json:"content"`
 }

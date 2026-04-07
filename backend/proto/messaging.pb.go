@@ -23,11 +23,12 @@ const (
 
 type RelayMessagingRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	ToIds         [][]byte               `protobuf:"bytes,1,rep,name=toIds,proto3" json:"toIds,omitempty"`
-	RoomId        []byte                 `protobuf:"bytes,2,opt,name=roomId,proto3" json:"roomId,omitempty"`
-	FromId        []byte                 `protobuf:"bytes,3,opt,name=fromId,proto3" json:"fromId,omitempty"`
-	ContentType   string                 `protobuf:"bytes,4,opt,name=contentType,proto3" json:"contentType,omitempty"`
-	Content       string                 `protobuf:"bytes,5,opt,name=content,proto3" json:"content,omitempty"`
+	Id            []byte                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	ToIds         [][]byte               `protobuf:"bytes,2,rep,name=toIds,proto3" json:"toIds,omitempty"`
+	RoomId        []byte                 `protobuf:"bytes,3,opt,name=roomId,proto3" json:"roomId,omitempty"`
+	FromId        []byte                 `protobuf:"bytes,4,opt,name=fromId,proto3" json:"fromId,omitempty"`
+	ContentType   string                 `protobuf:"bytes,5,opt,name=contentType,proto3" json:"contentType,omitempty"`
+	Content       string                 `protobuf:"bytes,6,opt,name=content,proto3" json:"content,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -60,6 +61,13 @@ func (x *RelayMessagingRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use RelayMessagingRequest.ProtoReflect.Descriptor instead.
 func (*RelayMessagingRequest) Descriptor() ([]byte, []int) {
 	return file_proto_messaging_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *RelayMessagingRequest) GetId() []byte {
+	if x != nil {
+		return x.Id
+	}
+	return nil
 }
 
 func (x *RelayMessagingRequest) GetToIds() [][]byte {
@@ -99,7 +107,6 @@ func (x *RelayMessagingRequest) GetContent() string {
 
 type RelayMessagingResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	FailedIds     [][]byte               `protobuf:"bytes,1,rep,name=failedIds,proto3" json:"failedIds,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -134,26 +141,19 @@ func (*RelayMessagingResponse) Descriptor() ([]byte, []int) {
 	return file_proto_messaging_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *RelayMessagingResponse) GetFailedIds() [][]byte {
-	if x != nil {
-		return x.FailedIds
-	}
-	return nil
-}
-
 var File_proto_messaging_proto protoreflect.FileDescriptor
 
 const file_proto_messaging_proto_rawDesc = "" +
 	"\n" +
-	"\x15proto/messaging.proto\x12\x10messagingservice\"\x99\x01\n" +
-	"\x15RelayMessagingRequest\x12\x14\n" +
-	"\x05toIds\x18\x01 \x03(\fR\x05toIds\x12\x16\n" +
-	"\x06roomId\x18\x02 \x01(\fR\x06roomId\x12\x16\n" +
-	"\x06fromId\x18\x03 \x01(\fR\x06fromId\x12 \n" +
-	"\vcontentType\x18\x04 \x01(\tR\vcontentType\x12\x18\n" +
-	"\acontent\x18\x05 \x01(\tR\acontent\"6\n" +
-	"\x16RelayMessagingResponse\x12\x1c\n" +
-	"\tfailedIds\x18\x01 \x03(\fR\tfailedIds2w\n" +
+	"\x15proto/messaging.proto\x12\x10messagingservice\"\xa9\x01\n" +
+	"\x15RelayMessagingRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\fR\x02id\x12\x14\n" +
+	"\x05toIds\x18\x02 \x03(\fR\x05toIds\x12\x16\n" +
+	"\x06roomId\x18\x03 \x01(\fR\x06roomId\x12\x16\n" +
+	"\x06fromId\x18\x04 \x01(\fR\x06fromId\x12 \n" +
+	"\vcontentType\x18\x05 \x01(\tR\vcontentType\x12\x18\n" +
+	"\acontent\x18\x06 \x01(\tR\acontent\"\x18\n" +
+	"\x16RelayMessagingResponse2w\n" +
 	"\x10MessagingService\x12c\n" +
 	"\x0eRelayMessaging\x12'.messagingservice.RelayMessagingRequest\x1a(.messagingservice.RelayMessagingResponseB\x0fZ\rbackend/protob\x06proto3"
 

@@ -8,7 +8,9 @@ import (
 )
 
 func SetLogger(kafkaProducer *producer.KafkaProducer) {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		AddSource: true,
+	}))
 
 	slog.SetDefault(logger)
 

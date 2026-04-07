@@ -148,15 +148,15 @@ func toggleConsumptionFlow(client sarama.ConsumerGroup, isPaused *bool) {
 
 func (ks *KafkaConsumer) distinguishMessage(ctx context.Context, message *sarama.ConsumerMessage) error {
 	if message.Topic == "chat.messaging" {
-		var m payload.ChatMessaging
-		err := json.Unmarshal(message.Value, &m)
+		var p payload.ChatMessaging
+		err := json.Unmarshal(message.Value, &p)
 		if err != nil {
 			slog.Error("fail to unmarshal payload value",
 				"err", err,
 				"payload.Value", message.Value)
 			return err
 		}
-		err = ks.service.PropagateMessaging(ctx, m.ToIds, m.RoomId, m.FromId, m.ContentType, m.Content)
+		err = ks.service.ManageMessaging(ctx, uuid.UUID(p.Id), uuid.UUID(p.FromId), p.ToIdType, uuid.UUID(p.ToId), p.ContentType, p.Content)
 		if err != nil {
 			return err
 		}

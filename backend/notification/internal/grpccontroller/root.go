@@ -20,12 +20,11 @@ func NewGRPCController(controller *controller.Controller) *GRPCController {
 }
 
 func (gc *GRPCController) NotifyMessaging(ctx context.Context, in *pb.NotifyMessagingRequest) (*pb.NotifyMessagingResponse, error) {
-	roomId := uuid.UUID(in.RoomId)
 	var toIds []uuid.UUID
 	for _, toId := range in.ToIds {
 		toIds = append(toIds, uuid.UUID(toId))
 	}
-	err := gc.controller.NotifyMessaging(ctx, toIds, roomId, uuid.UUID(in.FromId), in.ContentType, in.Content)
+	err := gc.controller.NotifyMessaging(ctx, toIds, uuid.UUID(in.RoomId), uuid.UUID(in.FromId), in.ContentType, in.Content)
 	if err != nil {
 		return nil, err
 	}

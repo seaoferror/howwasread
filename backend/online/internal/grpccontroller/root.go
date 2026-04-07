@@ -25,9 +25,6 @@ func (gc *GRPCController) RelaySignal(ctx context.Context, in *pb.RelaySignalReq
 	for _, toId := range in.ToIds {
 		toIds = append(toIds, uuid.UUID(toId))
 	}
-	err := gc.controller.RelaySignal(ctx, toIds, fromId, in.Signal)
-	if err != nil {
-		return nil, err
-	}
+	gc.controller.RelaySignal(ctx, toIds, fromId, in.Signal)
 	return nil, nil
 }

@@ -18,3 +18,12 @@ func (r *Repository) GetServerIP(ctx context.Context, id string) (string, error)
 	}
 	return value, nil
 }
+
+func (r *Repository) RemoveServerIP(ctx context.Context, memberId string) error {
+	result := r.client.Do(ctx, r.client.B().Del().Key(memberId).Build())
+	if result.Error() != nil {
+		slog.Error("fail to remove member ip", "err", result.Error())
+		return result.Error()
+	}
+	return nil
+}

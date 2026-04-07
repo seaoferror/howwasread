@@ -30,9 +30,14 @@ func (c *Controller) registerDevicePushToken(w http.ResponseWriter, r *http.Requ
 			"err", err)
 		handleError(w, errors.New("incorrect body"))
 	}
-	err = c.service.SetDevicePushToken(r.Context(), memberId, req.OS, req.Token)
+	err = c.service.SetDevicePushToken(r.Context(), memberId, req.DeviceId, req.OS, req.DevicePushToken)
 	if err != nil {
 		handleError(w, err)
 	}
 	w.WriteHeader(http.StatusOK)
+	slog.Info("200 OK device push token",
+		"id", memberId,
+		"deviceId", req.DeviceId,
+		"os", req.OS,
+		"devicePushToken", req.DevicePushToken)
 }

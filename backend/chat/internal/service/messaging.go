@@ -25,34 +25,16 @@ func (s *Service) SendLike(ctx context.Context, fromId, toId uuid.UUID) error {
 	return nil
 }
 
-func (s *Service) PublishPersonalMessaging(toId, fromId uuid.UUID, contentType, content string) error {
-	err := s.publishMessaging([][]byte{toId[:]}, []byte{}, fromId, contentType, content)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *Service) publishMessaging(
-	toIds [][]byte,
-	roomId []byte,
-	fromId uuid.UUID,
-	contentType,
-	content string) error {
-	p := payload.ChatMessaging{
-		ToIds:       toIds,
+func (s *Service) PublishMessaging(id, fromId uuid.UUID, toIdType string, toId uuid.UUID, contentType, content string) error {
+	p, _ := json.Marshal(payload.ChatMessaging{
+		Id:          id[:],
 		FromId:      fromId[:],
-		RoomId:      roomId,
+		ToIdType:    toIdType,
+		ToId:        toId[:],
 		ContentType: contentType,
 		Content:     content,
-	}
-
-	pRaw, err := json.Marshal(p)
-	if err != nil {
-		slog.Error("fail to Marshal", "err", err)
-		return err
-	}
-	err = s.kafkaProducer.PushMessage("chat.messaging", pRaw)
+	})
+	err := s.kafkaProducer.PushMessage("chat.messaging", p)
 	if err != nil {
 		slog.Error("fail to publish message", "err", err)
 		return err

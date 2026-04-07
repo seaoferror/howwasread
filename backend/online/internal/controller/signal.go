@@ -208,9 +208,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (c *Controller) RelaySignal(ctx context.Context, toIds []uuid.UUID, fromId uuid.UUID, signal []byte) error {
-	var errs []error
-	var em sync.Mutex
+func (c *Controller) RelaySignal(ctx context.Context, toIds []uuid.UUID, fromId uuid.UUID, signal []byte) {
 	var wg sync.WaitGroup
 	res := dto.ConversationSignalResponse{
 		FromIds: []uuid.UUID{fromId},
@@ -229,29 +227,16 @@ func (c *Controller) RelaySignal(ctx context.Context, toIds []uuid.UUID, fromId 
 				err = wsc.Write(ctx, websocket.MessageText, resRaw)
 				if err != nil {
 					slog.Error("fail to write payload", "err", err)
-					em.Lock()
-					errs = append(errs, err)
-					em.Unlock()
 					err1 := wsc.CloseNow()
 					if err1 != nil {
 						slog.Error("fail to close zombie connection", "err", err)
-						em.Lock()
-						errs = append(errs, err1)
-						em.Unlock()
 					}
 				}
-				return
-			}
-			err1 := c.service.RemoveServerIP(ctx, toId)
-			if err != nil {
-				errs = append(errs, err1)
 				return
 			}
 		}()
 	}
 	wg.Wait()
-
-	return errors.Join(errs...)
 }
 
 // getPodIp will replace with k8s configmap pod ip

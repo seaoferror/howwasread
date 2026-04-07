@@ -7,8 +7,8 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) SetDevicePushToken(ctx context.Context, id uuid.UUID, os, token string) error {
-	err := s.repository.SetDevicePushToken(ctx, gocql.UUID(id), os, token)
+func (s *Service) SetDevicePushToken(ctx context.Context, id, deviceId uuid.UUID, os, token string) error {
+	err := s.repository.SetPushTokenById(ctx, gocql.UUID(id), gocql.UUID(deviceId), os, token)
 	if err != nil {
 		return err
 	}
