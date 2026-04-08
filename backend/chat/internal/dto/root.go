@@ -6,8 +6,7 @@ type SendLikeRequest struct {
 	ToId uuid.UUID `json:"toId"`
 }
 
-type MessagingRequest struct {
-	Id          uuid.UUID `json:"id"`
+type SendMessagingRequest struct {
 	ToIdType    string    `json:"toIdType"`
 	ToId        uuid.UUID `json:"toId"`
 	ContentType string    `json:"contentType"`

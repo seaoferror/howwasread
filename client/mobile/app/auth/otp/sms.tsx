@@ -5,7 +5,7 @@ import FixedBottomCTA from "@/components/FixedBottomCTA";
 import { FormProvider, useForm } from "react-hook-form";
 import { useAuth } from "@/hooks/useAuth";
 import { router } from "expo-router";
-import { getSecureStore } from "@/util/storage";
+import { getSecureAsync } from "@/util/storage";
 import Toast from "react-native-toast-message";
 import OTPInput from "@/components/auth/OTPInput";
 
@@ -23,7 +23,7 @@ export default function SMSScreen() {
 
   const onSubmit = async (formValue: FormValue) => {
     const { otp } = formValue;
-    const verificationId = await getSecureStore("verificationId");
+    const verificationId = await getSecureAsync("verificationId");
     if (!verificationId) {
       console.error("fail to get verification Id");
       Toast.show({
@@ -34,7 +34,7 @@ export default function SMSScreen() {
     }
     console.log("execute post sms otp mutate");
     verifySMSOTPMutation.mutate(
-      { otp, verificationId, sessionId: await getSecureStore("sessionId") },
+      { otp, verificationId, sessionId: await getSecureAsync("sessionId") },
       {
         onSuccess: () => router.replace("/"),
       },

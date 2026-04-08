@@ -19,7 +19,7 @@ import {
   MediaStream,
 } from "react-native-webrtc";
 import { baseUrl, localDevId } from "@/api/axios";
-import { getSecureStore } from "@/util/storage";
+import { getSecureAsync } from "@/util/storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import OnlineConversationRoomHeader from "@/components/conversation/OnlineConversationRoomHeader";
 import { Feather, Ionicons } from "@expo/vector-icons";
@@ -31,7 +31,6 @@ import CustomButton from "@/components/CustomButton";
 import queryClient from "@/api/queryClient";
 import { useBanParticipant } from "@/hooks/useConversation";
 
-//Prevent ts compiler kept trying to read dom definition of WebSocket written by Microsoft, which don't have header options
 declare const WebSocket: {
   prototype: WebSocket;
   new (
@@ -85,7 +84,7 @@ export default function OnlineConversationRoomScreen() {
       undefined,
       {
         headers: {
-          Authorization: `Bearer ${await getSecureStore("accessToken")}`,
+          Authorization: `Bearer ${await getSecureAsync("accessToken")}`,
           "X-User-Id": `${Platform.OS === "ios" ? localDevId.ios : localDevId.android}`,
         },
       },

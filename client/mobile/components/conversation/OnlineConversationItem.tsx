@@ -19,7 +19,7 @@ export default function OnlineConversationItem({
       style={styles.container}
       onPress={() =>
         router.replace({
-          pathname: `/conversation/online/[id]`,
+          pathname: `/online/[id]`,
           params: {
             id: conversation.id,
             novel: conversation.novel ?? "",

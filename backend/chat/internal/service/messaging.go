@@ -25,7 +25,11 @@ func (s *Service) SendLike(ctx context.Context, fromId, toId uuid.UUID) error {
 	return nil
 }
 
-func (s *Service) PublishMessaging(id, fromId uuid.UUID, toIdType string, toId uuid.UUID, contentType, content string) error {
+func (s *Service) PublishMessaging(fromId uuid.UUID, toIdType string, toId uuid.UUID, contentType, content string) (map[string]uuid.UUID, error) {
+	id, err := uuid.NewV7()
+	if err != nil {
+		return nil, err
+	}
 	p, _ := json.Marshal(payload.ChatMessaging{
 		Id:          id[:],
 		FromId:      fromId[:],
@@ -34,12 +38,12 @@ func (s *Service) PublishMessaging(id, fromId uuid.UUID, toIdType string, toId u
 		ContentType: contentType,
 		Content:     content,
 	})
-	err := s.kafkaProducer.PushMessage("chat.messaging", p)
+	err = s.kafkaProducer.PushMessage("chat.messaging", p)
 	if err != nil {
 		slog.Error("fail to publish message", "err", err)
-		return err
+		return nil, err
 	}
-	return nil
+	return map[string]uuid.UUID{"id": id}, nil
 }
 
 func (s *Service) NotifyMessaging(

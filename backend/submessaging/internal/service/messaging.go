@@ -25,6 +25,7 @@ func (s *Service) ManageMessaging(ctx context.Context, id uuid.UUID, fromId uuid
 	var roomId []byte
 	if toIdType == "personal" {
 		toIds = append(toIds, toId[:])
+		toIds = append(toIds, fromId[:])
 	}
 	if toIdType == "room" {
 		roomId = toId[:]
@@ -36,7 +37,6 @@ func (s *Service) ManageMessaging(ctx context.Context, id uuid.UUID, fromId uuid
 			toIds = append(toIds, pid[:])
 		}
 	}
-	toIds = append(toIds, fromId[:])
 	var wg sync.WaitGroup
 	var es []error
 	var em sync.Mutex
@@ -102,6 +102,9 @@ func (s *Service) ManageMessaging(ctx context.Context, id uuid.UUID, fromId uuid
 					if err != nil {
 						slog.Error("fail to get *ClientConn for relay",
 							"err", err)
+						pm.Lock()
+						pushToIds = append(pushToIds, tids...)
+						pm.Unlock()
 						return
 					}
 					s.ccsMutex.Lock()
@@ -122,13 +125,11 @@ func (s *Service) ManageMessaging(ctx context.Context, id uuid.UUID, fromId uuid
 				_, err := client.RelayMessaging(ctxt, &req)
 				st, ok := status.FromError(err)
 				if ok && (st.Code() == codes.Unavailable || st.Code() == codes.DeadlineExceeded) {
-					err = nil
 					s.ccsMutex.RLock()
 					err = s.clientConns[ip].Close()
 					s.ccsMutex.RUnlock()
 					if err != nil {
 						slog.Error("fail to close grpc client connection", "err", err)
-						return
 					}
 					s.ccsMutex.Lock()
 					delete(s.clientConns, ip)
@@ -151,13 +152,12 @@ func (s *Service) ManageMessaging(ctx context.Context, id uuid.UUID, fromId uuid
 						}()
 					}
 					wg1.Wait()
-					pm.Lock()
-					pushToIds = append(pushToIds, tids...)
-					pm.Unlock()
-					return
 				}
 				if err != nil {
 					slog.Error("fail to relay messaging", "err", err)
+					pm.Lock()
+					pushToIds = append(pushToIds, tids...)
+					pm.Unlock()
 					return
 				}
 			}()

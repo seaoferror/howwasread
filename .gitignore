@@ -143,16 +143,15 @@ coverage.out
 *.rej
 
 
-# Firebase config files
+# Firebase
 google-services.json
 GoogleService-Info.plist
-
-# Firebase service account key (never commit)
-holiday2-3d1c4-firebase-adminsdk-fbsvc-1c03b4c361.json
-
-# Optional: ignore any service-account style keys
 *firebase-adminsdk-*.json
 *serviceAccount*.json
+
+# apn
+AuthKey*.p8
+
 
 expo-env.d.ts
 

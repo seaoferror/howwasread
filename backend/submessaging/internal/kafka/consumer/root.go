@@ -72,12 +72,12 @@ func (ks *KafkaConsumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim
 	for {
 		select {
 		case msg := <-claim.Messages():
-			session.MarkMessage(msg, "")
 			err := ks.distinguishMessage(session.Context(), msg)
 			if err != nil {
 				log.Printf("Fail to manage message: %v", err)
 				return err
 			}
+			session.MarkMessage(msg, "")
 			continue
 		case <-session.Context().Done():
 			return nil
@@ -160,6 +160,7 @@ func (ks *KafkaConsumer) distinguishMessage(ctx context.Context, message *sarama
 		if err != nil {
 			return err
 		}
+		return nil
 	}
 	return errors.New("this topic does not exist")
 }

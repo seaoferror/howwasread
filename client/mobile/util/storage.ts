@@ -1,4 +1,9 @@
-import { deleteItemAsync, getItemAsync, setItemAsync } from "expo-secure-store";
+import {
+  deleteItemAsync,
+  getItem,
+  getItemAsync,
+  setItemAsync,
+} from "expo-secure-store";
 import Storage from "expo-sqlite/kv-store";
 
 export async function saveSecureStore(
@@ -8,12 +13,17 @@ export async function saveSecureStore(
   await setItemAsync(key, value);
 }
 
-export async function getSecureStore(key: string): Promise<string> {
+export async function getSecureAsync(key: string): Promise<string> {
   const value = await getItemAsync(key);
   return value ?? "";
 }
 
-export async function deleteSecureStore(key: string): Promise<void> {
+export function getSecure(key: string): string {
+  const value = getItem(key)
+  return value ?? ""
+}
+
+export async function deleteSecure(key: string): Promise<void> {
   await deleteItemAsync(key);
 }
 

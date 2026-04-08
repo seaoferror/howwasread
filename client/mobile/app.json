@@ -29,7 +29,12 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyCgfatUffsSIpaCuzlWfKW1WCZL5kGJOjM"
+        }
+      }
     },
     "web": {
       "output": "static",
@@ -84,7 +89,14 @@
         }
       ],
       "@react-native-google-signin/google-signin",
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-maps",
+        {
+          "requestLocationPermission": true,
+          "locationPermission": "Allow $(PRODUCT_NAME) to use your location"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

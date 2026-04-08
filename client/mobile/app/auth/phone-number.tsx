@@ -13,7 +13,7 @@ import {
 import Toast from "react-native-toast-message";
 import { useAuth } from "@/hooks/useAuth";
 import { router } from "expo-router";
-import { getSecureStore, saveSecureStore } from "@/util/storage";
+import { getSecureAsync, saveSecureStore } from "@/util/storage";
 
 interface FormValue {
   countryCode: CountryCode;
@@ -32,7 +32,7 @@ export default function PhoneNumberScreen() {
 
   const onSubmit = async (formValues: FormValue) => {
     console.log("start submit");
-    const s = await getSecureStore("timeSmsLastSent");
+    const s = await getSecureAsync("timeSmsLastSent");
     const t = s ? Number(s) : 0;
     if (Date.now() - t <= time.TEN_MINUTES) {
       Toast.show({
@@ -69,7 +69,7 @@ export default function PhoneNumberScreen() {
     console.log("execute mutate");
     requestSMSOTPMutation.mutate(
       {
-        sessionId: await getSecureStore("sessionId"),
+        sessionId: await getSecureAsync("sessionId"),
         phoneNumber: wholeNumber,
       },
       {

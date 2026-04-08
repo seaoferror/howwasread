@@ -1,4 +1,4 @@
-import { getSecureStore, saveSecureStore } from "@/util/storage";
+import { getSecureAsync, saveSecureStore } from "@/util/storage";
 import { axiosInstance } from "@/api/axios";
 
 async function refreshAccessToken() {
@@ -12,8 +12,8 @@ async function refreshAccessToken() {
   }
 }
 
-axiosInstance.interceptors.request.use((config) => {
-  const token = getSecureStore("accessToken");
+axiosInstance.interceptors.request.use(async (config) => {
+  const token = await getSecureAsync("accessToken");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }

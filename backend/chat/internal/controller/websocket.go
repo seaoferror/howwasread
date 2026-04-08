@@ -61,38 +61,25 @@ func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
 		handleWebsocketError(init, conn, err)
 		return
 	}
-	for {
-		ctx := context.Background()
-		msgType, data, err := conn.Read(ctx)
-		if websocket.CloseStatus(err) != -1 {
-			slog.Error("Connection closed",
-				"err", err)
-			return
-		}
-		if msgType != websocket.MessageText {
-			slog.Error("incorrect payload type",
-				"msgType", msgType,
-				"data", data)
-			handleWebsocketError(ctx, conn, errors.New("incorrect payload type"))
-			return
-		}
-		if err != nil {
-			slog.Error("read error",
-				"err", err)
-			handleWebsocketError(ctx, conn, errors.New("read error"))
-			return
-		}
-		var req dto.MessagingRequest
-		err = json.Unmarshal(data, &req)
-		if err != nil {
-			handleWebsocketError(ctx, conn, errors.New("fail to unmarshal"))
-			return
-		}
-		err = c.service.PublishMessaging(req.Id, memberId, req.ToIdType, req.ToId, req.ContentType, req.Content)
-		if err != nil {
-			handleWebsocketError(ctx, conn, errors.New("something went wrong"))
-			return
-		}
+	ctx := context.Background()
+	msgType, data, err := conn.Read(ctx)
+	if websocket.CloseStatus(err) != -1 {
+		slog.Error("Connection closed",
+			"err", err)
+		return
+	}
+	if msgType != websocket.MessageText {
+		slog.Error("incorrect payload type",
+			"msgType", msgType,
+			"data", data)
+		handleWebsocketError(ctx, conn, errors.New("incorrect payload type"))
+		return
+	}
+	if err != nil {
+		slog.Error("read error",
+			"err", err)
+		handleWebsocketError(ctx, conn, errors.New("read error"))
+		return
 	}
 }
 

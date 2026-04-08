@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Toast from "react-native-toast-message";
-import { getSecureStore, saveSecureStore } from "@/util/storage";
+import { getSecureAsync, saveSecureStore } from "@/util/storage";
 import {
   getMyId,
   loginInWithEmail,
@@ -44,7 +44,7 @@ function useLoginWithEmail() {
     onSuccess: async (data) => {
       if (!data.emailVerified) {
         saveSecureStore("verificationId", data.verificationId ?? "");
-        const v = await getSecureStore("verificationId");
+        const v = await getSecureAsync("verificationId");
         console.log(v);
         return;
       }
@@ -85,7 +85,7 @@ function useVerifyEmailOTP() {
     onSuccess: async (data) => {
       console.log(data.sessionId);
       saveSecureStore("sessionId", data?.sessionId ?? "");
-      console.log(await getSecureStore("sessionId"));
+      console.log(await getSecureAsync("sessionId"));
     },
     onError: (error: AxiosError) => {
       Toast.show({
