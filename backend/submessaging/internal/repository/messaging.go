@@ -18,7 +18,7 @@ func (r *Repository) FindParticipantIds(ctx context.Context, roomId gocql.UUID) 
 	return participantIds, nil
 }
 
-func (r *Repository) SaveMessaging(ctx context.Context, id, toId, fromId gocql.UUID, roomId []byte, contentType, content string) error {
+func (r *Repository) SaveMessaging(ctx context.Context, id, toId, fromId, roomId gocql.UUID, contentType, content string) error {
 	err := r.session.Query(`INSERT INTO message_by_to_id 
     (id, to_id, from_id, room_id, content_type, content) VALUES (?, ?, ?, ?, ?, ?) USING TTL ?`,
 		id, toId, fromId, roomId, contentType, content, constant.Message_TTL).ExecContext(ctx)

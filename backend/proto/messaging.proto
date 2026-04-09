@@ -18,4 +18,5 @@ message RelayMessagingRequest {
 }
 
 message RelayMessagingResponse {
+  repeated bytes pushToIds = 1;
 }

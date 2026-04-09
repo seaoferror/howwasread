@@ -20,7 +20,9 @@ func NewGRPCController(controller *controller.Controller) *GRPCController {
 }
 
 func (gc *GRPCController) RelayMessaging(ctx context.Context, in *pb.RelayMessagingRequest) (*pb.RelayMessagingResponse, error) {
-	err := gc.controller.RelayMessaging(ctx, uuid.UUID(in.Id), in.ToIds, uuid.UUID(in.RoomId), uuid.UUID(in.FromId), in.ContentType, in.Content)
-	return nil, err
+	pushToIds, err := gc.controller.RelayMessaging(ctx, uuid.UUID(in.Id), in.ToIds, uuid.UUID(in.RoomId), uuid.UUID(in.FromId), in.ContentType, in.Content)
+	return &pb.RelayMessagingResponse{
+		PushToIds: pushToIds,
+	}, err
 
 }

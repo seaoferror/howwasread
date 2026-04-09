@@ -22,13 +22,12 @@ import (
 // redis, fcm, apn, grpc error will not stop consumption
 func (s *Service) ManageMessaging(ctx context.Context, id uuid.UUID, fromId uuid.UUID, toIdType string, toId uuid.UUID, contentType string, content string) error {
 	var toIds [][]byte
-	var roomId []byte
+	roomId := toId
 	if toIdType == "personal" {
 		toIds = append(toIds, toId[:])
 		toIds = append(toIds, fromId[:])
 	}
 	if toIdType == "room" {
-		roomId = toId[:]
 		participantIds, err := s.repository.FindParticipantIds(ctx, gocql.UUID(toId))
 		if err != nil {
 			return err
@@ -44,7 +43,7 @@ func (s *Service) ManageMessaging(ctx context.Context, id uuid.UUID, fromId uuid
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err := s.repository.SaveMessaging(ctx, gocql.UUID(id), gocql.UUID(tid), gocql.UUID(fromId), roomId, contentType, content)
+			err := s.repository.SaveMessaging(ctx, gocql.UUID(id), gocql.UUID(tid), gocql.UUID(fromId), gocql.UUID(roomId), contentType, content)
 			if err != nil {
 				em.Lock()
 				es = append(es, err)
@@ -68,8 +67,10 @@ func (s *Service) ManageMessaging(ctx context.Context, id uuid.UUID, fromId uuid
 		for _, tid := range toIds {
 			wg.Add(1)
 			go func() {
+				ctxr, cancel := context.WithTimeout(ctx, 1*time.Second)
+				defer cancel()
 				defer wg.Done()
-				ip, err := s.repository.GetServerIP(ctx, string(tid))
+				ip, err := s.repository.GetServerIP(ctxr, string(tid))
 				if err != nil {
 					pm.Lock()
 					pushToIds = append(pushToIds, tid)
@@ -117,14 +118,14 @@ func (s *Service) ManageMessaging(ctx context.Context, id uuid.UUID, fromId uuid
 				req := pb.RelayMessagingRequest{
 					Id:          id[:],
 					ToIds:       tids,
-					RoomId:      roomId,
+					RoomId:      roomId[:],
 					FromId:      fromId[:],
 					ContentType: contentType,
 					Content:     content,
 				}
 				ctxt, cancel := context.WithTimeout(ctx, time.Second*5)
 				defer cancel()
-				_, err = client.RelayMessaging(ctxt, &req)
+				res, err := client.RelayMessaging(ctxt, &req)
 				st, ok := status.FromError(err)
 				if ok && (st.Code() == codes.Unavailable || st.Code() == codes.DeadlineExceeded) {
 					s.ccsMutex.Lock()
@@ -139,7 +140,9 @@ func (s *Service) ManageMessaging(ctx context.Context, id uuid.UUID, fromId uuid
 						wg1.Add(1)
 						go func() {
 							defer wg1.Done()
-							currentIP, err1 := s.repository.GetServerIP(ctx, string(tid))
+							ctxr, cancel1 := context.WithTimeout(context.Background(), 1*time.Second)
+							defer cancel1()
+							currentIP, err1 := s.repository.GetServerIP(ctxr, string(tid))
 							if err1 != nil {
 								return
 							}
@@ -160,6 +163,27 @@ func (s *Service) ManageMessaging(ctx context.Context, id uuid.UUID, fromId uuid
 					pm.Unlock()
 					return
 				}
+				pushToIds = append(pushToIds, res.PushToIds...)
+				var wg1 sync.WaitGroup
+				for _, tid := range res.PushToIds {
+					wg1.Add(1)
+					go func() {
+						defer wg1.Done()
+						ctxr, cancel1 := context.WithTimeout(context.Background(), 1*time.Second)
+						defer cancel1()
+						currentIP, err1 := s.repository.GetServerIP(ctxr, string(tid))
+						if err1 != nil {
+							return
+						}
+						if currentIP == ip {
+							err1 = s.repository.RemoveServerIP(ctxr, string(tid))
+							if err1 != nil {
+								return
+							}
+						}
+					}()
+				}
+				wg1.Wait()
 			}()
 		}
 		wg.Wait()
@@ -171,8 +195,6 @@ func (s *Service) ManageMessaging(ctx context.Context, id uuid.UUID, fromId uuid
 			}
 		}
 
-		ctxt, cancel := context.WithTimeout(ctx, 5*time.Second)
-		defer cancel()
 		s.ccsMutex.RLock()
 		cc := s.clientConns["push-service"]
 		s.ccsMutex.RUnlock()
@@ -180,11 +202,15 @@ func (s *Service) ManageMessaging(ctx context.Context, id uuid.UUID, fromId uuid
 		client := pb.NewNotificationServiceClient(cc)
 		req := pb.NotifyMessagingRequest{
 			ToIds:       filteredIds,
-			RoomId:      roomId,
 			FromId:      fromId[:],
 			ContentType: contentType,
 			Content:     content,
 		}
+		if toIdType == "room" {
+			req.RoomId = roomId[:]
+		}
+		ctxt, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
 		_, err := client.NotifyMessaging(ctxt, &req)
 		if err != nil {
 			slog.Error("fail to notify message", "err", err)

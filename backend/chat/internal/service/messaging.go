@@ -3,11 +3,9 @@ package service
 import (
 	"backend/chat/internal/dto"
 	"backend/payload"
-	pb "backend/proto"
 	"context"
 	"encoding/json"
 	"log/slog"
-	"time"
 
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
 	"github.com/google/uuid"
@@ -35,6 +33,7 @@ func (s *Service) GetRecentMessages(ctx context.Context, id, cursor uuid.UUID) (
 		r := dto.MessagingResponse{
 			Id:          uuid.UUID(m.Id),
 			FromId:      uuid.UUID(m.FromId),
+			RoomId:      uuid.UUID(m.RoomId),
 			ContentType: m.ContentType,
 			Content:     m.Content,
 		}
@@ -67,27 +66,27 @@ func (s *Service) PublishMessaging(fromId uuid.UUID, toIdType string, toId uuid.
 	return map[string]uuid.UUID{"id": id}, nil
 }
 
-func (s *Service) NotifyMessaging(
-	ctx context.Context,
-	toIds [][]byte, roomId, fromId uuid.UUID,
-	contentType, content string) error {
-	client := pb.NewNotificationServiceClient(s.clientConn)
-	req := pb.NotifyMessagingRequest{
-		ToIds:       toIds,
-		FromId:      fromId[:],
-		ContentType: contentType,
-		Content:     content,
-	}
-	if roomId != uuid.Nil {
-		req.RoomId = roomId[:]
-	}
-	ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	_, err := client.NotifyMessaging(ctxt, &req)
-	if err != nil {
-		slog.Error("fail to notify messaging",
-			"err", err)
-		return err
-	}
-	return nil
-}
+//func (s *Service) NotifyMessaging(
+//	ctx context.Context,
+//	toIds [][]byte, roomId, fromId uuid.UUID,
+//	contentType, content string) error {
+//	client := pb.NewNotificationServiceClient(s.clientConn)
+//	req := pb.NotifyMessagingRequest{
+//		ToIds:       toIds,
+//		FromId:      fromId[:],
+//		ContentType: contentType,
+//		Content:     content,
+//	}
+//	if roomId != uuid.Nil {
+//		req.RoomId = roomId[:]
+//	}
+//	ctxt, cancel := context.WithTimeout(ctx, 10*time.Second)
+//	defer cancel()
+//	_, err := client.NotifyMessaging(ctxt, &req)
+//	if err != nil {
+//		slog.Error("fail to notify messaging",
+//			"err", err)
+//		return err
+//	}
+//	return nil
+//}

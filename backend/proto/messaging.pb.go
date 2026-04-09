@@ -107,6 +107,7 @@ func (x *RelayMessagingRequest) GetContent() string {
 
 type RelayMessagingResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	PushToIds     [][]byte               `protobuf:"bytes,1,rep,name=pushToIds,proto3" json:"pushToIds,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -141,6 +142,13 @@ func (*RelayMessagingResponse) Descriptor() ([]byte, []int) {
 	return file_proto_messaging_proto_rawDescGZIP(), []int{1}
 }
 
+func (x *RelayMessagingResponse) GetPushToIds() [][]byte {
+	if x != nil {
+		return x.PushToIds
+	}
+	return nil
+}
+
 var File_proto_messaging_proto protoreflect.FileDescriptor
 
 const file_proto_messaging_proto_rawDesc = "" +
@@ -152,8 +160,9 @@ const file_proto_messaging_proto_rawDesc = "" +
 	"\x06roomId\x18\x03 \x01(\fR\x06roomId\x12\x16\n" +
 	"\x06fromId\x18\x04 \x01(\fR\x06fromId\x12 \n" +
 	"\vcontentType\x18\x05 \x01(\tR\vcontentType\x12\x18\n" +
-	"\acontent\x18\x06 \x01(\tR\acontent\"\x18\n" +
-	"\x16RelayMessagingResponse2w\n" +
+	"\acontent\x18\x06 \x01(\tR\acontent\"6\n" +
+	"\x16RelayMessagingResponse\x12\x1c\n" +
+	"\tpushToIds\x18\x01 \x03(\fR\tpushToIds2w\n" +
 	"\x10MessagingService\x12c\n" +
 	"\x0eRelayMessaging\x12'.messagingservice.RelayMessagingRequest\x1a(.messagingservice.RelayMessagingResponseB\x0fZ\rbackend/protob\x06proto3"
 

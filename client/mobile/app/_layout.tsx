@@ -53,7 +53,7 @@ async function initDB(db: SQLiteDatabase) {
     PRAGMA journal_mode = 'wal';
     CREATE TABLE IF NOT EXISTS message (
         id BLOB PRIMARY KEY NOT NULL,
-        room_id BLOB,
+        room_id BLOB NOT NULL,
         from_id BLOB NOT NULL,
         content_type TEXT NOT NULL,
         content TEXT NOT NULL,
@@ -67,6 +67,9 @@ function RootNavigator() {
   const ws = useRef<WebSocket>(null);
 
   useEffect(() => {
+    if (!id) {
+      return
+    }
     const connectMessaging = async () => {
       const row = await db.getFirstAsync<{ id: Uint8Array }>(
         `SELECT id FROM message ORDER BY rowid DESC LIMIT 1`,
@@ -84,11 +87,11 @@ function RootNavigator() {
             `INSERT OR IGNORE INTO message (id, room_id, from_id, content_type, content, created_at)
                VALUES (?, ?, ?, ?, ?, ?);`,
             uuidParse(m.id),
-            m.roomId ? uuidParse(m.roomId) : null,
+            uuidParse(m.roomId),
             uuidParse(m.fromId),
             m.contentType,
             m.content,
-            getTimestamp(m.id), // Get timestamp assuming you generate this from the ID
+            getTimestamp(m.id),
           );
         }
       }

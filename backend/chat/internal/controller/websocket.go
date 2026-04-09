@@ -83,18 +83,16 @@ func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (c *Controller) RelayMessaging(ctx context.Context, id uuid.UUID, toIds [][]byte, roomId, fromId uuid.UUID, contentType, content string) error {
+func (c *Controller) RelayMessaging(ctx context.Context, id uuid.UUID, toIds [][]byte, roomId, fromId uuid.UUID, contentType, content string) ([][]byte, error) {
 	var wg sync.WaitGroup
 	var pushToIds [][]byte
 	var mu sync.Mutex
 	res := dto.MessagingResponse{
 		Id:          id,
+		RoomId:      roomId,
 		FromId:      fromId,
 		ContentType: contentType,
 		Content:     content,
-	}
-	if roomId != uuid.Nil {
-		res.RoomId = roomId
 	}
 	resRaw, _ := json.Marshal(res)
 	for _, toId := range toIds {
@@ -125,23 +123,6 @@ func (c *Controller) RelayMessaging(ctx context.Context, id uuid.UUID, toIds [][
 		}()
 	}
 	wg.Wait()
-	if pushToIds != nil {
-		for _, toId := range pushToIds {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				err1 := c.service.RemoveServerIP(ctx, toId)
-				if err1 != nil {
-					return
-				}
-			}()
-		}
-		wg.Wait()
-		err1 := c.service.NotifyMessaging(ctx, pushToIds, roomId, fromId, contentType, content)
-		if err1 != nil {
-			slog.Error("fail to notify messaging", "err", err1)
-			return err1
-		}
-	}
-	return nil
+
+	return pushToIds, nil
 }
