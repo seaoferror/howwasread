@@ -35,7 +35,7 @@ func (s *Service) NotifyMessaging(ctx context.Context,
 			defer wg.Done()
 			ctxt, cancel := context.WithTimeout(ctx, 3*time.Second)
 			defer cancel()
-			result, err := s.repository.FindPushTokenById(ctxt, gocql.UUID(toId))
+			result, err := s.repository.FindPushTokensById(ctxt, gocql.UUID(toId))
 			if err != nil {
 				em.Lock()
 				es = append(es, err)

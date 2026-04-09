@@ -19,13 +19,13 @@ func (r *Repository) SetPushTokenById(ctx context.Context, id, deviceId gocql.UU
 	return nil
 }
 
-func (r *Repository) FindPushTokenById(ctx context.Context, id gocql.UUID) (result []data.FindDevicePushToken, err error) {
+func (r *Repository) FindPushTokensById(ctx context.Context, id gocql.UUID) (result []data.FindPushTokensById, err error) {
 	iter := r.session.Query(`SELECT device_id, os, token FROM device_push_token_by_id WHERE id = ?`,
 		id).IterContext(ctx)
 	var deviceId gocql.UUID
 	var os, token string
 	for iter.Scan(&deviceId, &os, &token) {
-		result = append(result, data.FindDevicePushToken{
+		result = append(result, data.FindPushTokensById{
 			Id:              id,
 			DeviceId:        deviceId,
 			OS:              os,

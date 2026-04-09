@@ -1,6 +1,7 @@
 package service
 
 import (
+	"backend/chat/internal/dto"
 	"backend/payload"
 	pb "backend/proto"
 	"context"
@@ -23,6 +24,26 @@ func (s *Service) SendLike(ctx context.Context, fromId, toId uuid.UUID) error {
 		return err
 	}
 	return nil
+}
+
+func (s *Service) GetRecentMessages(ctx context.Context, id, cursor uuid.UUID) (res []dto.MessagingResponse, err error) {
+	result, err := s.repository.FindMessagesByToIdAndId(ctx, gocql.UUID(id), gocql.UUID(cursor))
+	if err != nil {
+		return nil, err
+	}
+	for _, m := range result {
+		r := dto.MessagingResponse{
+			Id:          uuid.UUID(m.Id),
+			FromId:      uuid.UUID(m.FromId),
+			ContentType: m.ContentType,
+			Content:     m.Content,
+		}
+		if m.RoomId != nil {
+			r.RoomId = uuid.UUID(m.RoomId)
+		}
+		res = append(res, r)
+	}
+	return res, nil
 }
 
 func (s *Service) PublishMessaging(fromId uuid.UUID, toIdType string, toId uuid.UUID, contentType, content string) (map[string]uuid.UUID, error) {

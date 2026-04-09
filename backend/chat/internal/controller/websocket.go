@@ -35,9 +35,9 @@ func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
 	}
 	c.csMutex.Lock()
 	c.conns[memberId] = conn
-	c.csMutex.Unlock()
 	slog.Info("success to make connection",
 		"number of current connection", len(c.conns))
+	c.csMutex.Unlock()
 
 	defer func() {
 		destroy := context.Background()

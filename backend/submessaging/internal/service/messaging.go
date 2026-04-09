@@ -53,8 +53,9 @@ func (s *Service) ManageMessaging(ctx context.Context, id uuid.UUID, fromId uuid
 		}()
 	}
 	wg.Wait()
-	if errors.Join(es...) != nil {
-		return errors.Join(es...)
+	err0 := errors.Join(es...)
+	if err0 != nil {
+		return err0
 	}
 
 	//this will be background job
@@ -95,10 +96,11 @@ func (s *Service) ManageMessaging(ctx context.Context, id uuid.UUID, fromId uuid
 				s.ccsMutex.RLock()
 				cc, ok := s.clientConns[ip]
 				s.ccsMutex.RUnlock()
+				var err error
 				if !ok {
 					var opts []grpc.DialOption
 					opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-					cc, err := grpc.NewClient(ip+":50051", opts...)
+					cc, err = grpc.NewClient(ip+":50051", opts...)
 					if err != nil {
 						slog.Error("fail to get *ClientConn for relay",
 							"err", err)
@@ -122,16 +124,14 @@ func (s *Service) ManageMessaging(ctx context.Context, id uuid.UUID, fromId uuid
 				}
 				ctxt, cancel := context.WithTimeout(ctx, time.Second*5)
 				defer cancel()
-				_, err := client.RelayMessaging(ctxt, &req)
+				_, err = client.RelayMessaging(ctxt, &req)
 				st, ok := status.FromError(err)
 				if ok && (st.Code() == codes.Unavailable || st.Code() == codes.DeadlineExceeded) {
-					s.ccsMutex.RLock()
+					s.ccsMutex.Lock()
 					err = s.clientConns[ip].Close()
-					s.ccsMutex.RUnlock()
 					if err != nil {
 						slog.Error("fail to close grpc client connection", "err", err)
 					}
-					s.ccsMutex.Lock()
 					delete(s.clientConns, ip)
 					s.ccsMutex.Unlock()
 					var wg1 sync.WaitGroup

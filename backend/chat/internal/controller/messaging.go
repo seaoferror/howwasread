@@ -66,7 +66,27 @@ func (c *Controller) sendMessaging(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) getRecentMessages(w http.ResponseWriter, r *http.Request) {
-
+	memberIdRaw := r.Header.Get("X-User-Id")
+	memberId, err := uuid.Parse(memberIdRaw)
+	if err != nil {
+		handleError(w, errors.New("fail to parse"))
+		return
+	}
+	cursor, err := uuid.Parse(r.URL.Query().Get("cursor"))
+	if err != nil {
+		handleError(w, errors.New("fail to parse"))
+		return
+	}
+	result, err := c.service.GetRecentMessages(r.Context(), memberId, cursor)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	err = json.NewEncoder(w).Encode(result)
+	if err != nil {
+		slog.Error("fail to write response body",
+			"err", err)
+	}
 }
 
 // getPodIp will replace with k8s configmap pod ip

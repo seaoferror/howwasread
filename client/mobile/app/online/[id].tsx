@@ -77,170 +77,6 @@ export default function OnlineConversationRoomScreen() {
   const localAudio = useRef<MediaStream>(null);
   const remoteAudios = useRef<Record<string, MediaStream>>({});
 
-  const joinConversation = async () => {
-    console.log("try to connect ws");
-    ws.current = new WebSocket(
-      `ws://${baseUrl.ios}:8080/online/conversation/join?id=${conversationId}`,
-      undefined,
-      {
-        headers: {
-          Authorization: `Bearer ${await getSecureAsync("accessToken")}`,
-          "X-User-Id": `${Platform.OS === "ios" ? localDevId.ios : localDevId.android}`,
-        },
-      },
-    );
-    console.log(
-      `ws://${baseUrl.ios}:8080/online/conversation/join?id=${conversationId}`,
-    );
-    localAudio.current = await mediaDevices.getUserMedia({
-      audio: true,
-      video: false,
-    });
-    participantIds.current = [myId];
-    participantNames.current[myId] = profile.name;
-    participantMutes.current[myId] = false;
-    coordinateSeat();
-
-    ws.current.onmessage = async (event) => {
-      console.log("get message");
-
-      const data: ConversationSignalResponse = JSON.parse(event.data);
-      if (!data.signal) {
-        const unique = [...new Set(data.fromIds)];
-        if (unique.length >= Number(capacity)) {
-          router.replace("/conversation");
-          return;
-        }
-        participantIds.current = [...participantIds.current, ...unique];
-
-        for (const fromId of unique) {
-          participantMutes.current[fromId] = false;
-          peers.current[fromId] = new RTCPeerConnection({
-            iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-          });
-
-          localAudio.current?.getTracks().forEach((track) => {
-            if (localAudio.current) {
-              peers.current[fromId].addTrack(track, localAudio.current);
-            }
-          });
-
-          peers.current[fromId].addEventListener(
-            "icecandidate",
-            (event: any) => {
-              if (event.candidate) {
-                ws.current?.send(
-                  JSON.stringify({
-                    toIds: [fromId],
-                    signal: { type: "candidate", candidate: event.candidate },
-                  }),
-                );
-              }
-            },
-          );
-
-          peers.current[fromId].addEventListener("track", (event: any) => {
-            if (!remoteAudios.current[fromId]) {
-              remoteAudios.current[fromId] = new MediaStream();
-            }
-            if (event.track) {
-              remoteAudios.current[fromId].addTrack(event.track);
-            }
-          });
-
-          const offer = await peers.current[fromId].createOffer({
-            offerToReceiveAudio: true,
-            offerToReceiveVideo: false,
-            voiceActivityDetection: true,
-          });
-          await peers.current[fromId].setLocalDescription(offer);
-          ws.current?.send(
-            JSON.stringify({
-              toIds: [fromId],
-              signal: peers.current[fromId].localDescription,
-            }),
-          );
-
-          ws.current?.send(
-            JSON.stringify({
-              toIds: [fromId],
-              signal: { type: "name-offer", name: profile.name },
-            }),
-          );
-        }
-        coordinateSeat();
-        return;
-      }
-      const fromId = data.fromIds[0];
-      if (data.signal.type === "offer") {
-        const offer = new RTCSessionDescription(data.signal);
-        await peers.current[fromId].setRemoteDescription(offer);
-        const answer = await peers.current[fromId].createAnswer();
-        await peers.current[fromId].setLocalDescription(answer);
-        ws.current?.send(
-          JSON.stringify({
-            toIds: [fromId],
-            signal: peers.current[fromId].localDescription,
-          }),
-        );
-        return;
-      }
-      if (data.signal.type === "name-offer") {
-        participantNames.current = {
-          ...participantNames.current,
-          [fromId]: data.signal.name,
-        };
-        ws.current?.send(
-          JSON.stringify({
-            toIds: [fromId],
-            signal: { type: "name-answer", name: profile.name },
-          }),
-        );
-        coordinateSeat();
-        return;
-      }
-      if (data.signal.type === "name-answer") {
-        participantNames.current = {
-          ...participantNames.current,
-          [fromId]: data.signal.name,
-        };
-        coordinateSeat();
-        return;
-      }
-      if (data.signal.type === "answer") {
-        const offerDescription = new RTCSessionDescription(data.signal);
-        await peers.current[fromId].setRemoteDescription(offerDescription);
-        return;
-      }
-      if (data.signal.type === "candidate") {
-        const iceCandidate = new RTCIceCandidate(data.signal.candidate);
-        await peers.current[fromId].addIceCandidate(iceCandidate);
-        return;
-      }
-      if (data.signal.type === "leave") {
-        peers.current[fromId].close();
-        delete peers.current[fromId];
-        remoteAudios.current[fromId].release();
-        delete remoteAudios.current[fromId];
-        participantIds.current = participantIds.current.filter(
-          (x) => x !== fromId,
-        );
-        delete participantNames.current[fromId];
-        coordinateSeat();
-      }
-      if (data.signal.type === "ban") {
-        await queryClient.invalidateQueries({
-          queryKey: [queryKey.CONVERSATION, queryKey.GET_ONLINE_CONVERSATIONS],
-        });
-        router.replace("/conversation");
-      }
-      if (data.signal.type === "mute") {
-        participantMutes.current[fromId] = !participantMutes.current[fromId];
-        coordinateSeat();
-      }
-    };
-  };
-
   const coordinateSeat = () => {
     const unique = [...new Set(participantIds.current)].sort((a, b) =>
       a.localeCompare(b),
@@ -351,6 +187,172 @@ export default function OnlineConversationRoomScreen() {
   };
 
   useFocusEffect(() => {
+    const joinConversation = async () => {
+      console.log("try to connect ws");
+      ws.current = new WebSocket(
+        `ws://${baseUrl.ios}:8080/online/conversation/join?id=${conversationId}`,
+        undefined,
+        {
+          headers: {
+            Authorization: `Bearer ${await getSecureAsync("accessToken")}`,
+            "X-User-Id": `${Platform.OS === "ios" ? localDevId.ios : localDevId.android}`,
+          },
+        },
+      );
+      console.log(
+        `ws://${baseUrl.ios}:8080/online/conversation/join?id=${conversationId}`,
+      );
+      localAudio.current = await mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+      });
+      participantIds.current = [myId];
+      participantNames.current[myId] = profile.name;
+      participantMutes.current[myId] = false;
+      coordinateSeat();
+
+      ws.current.onmessage = async (event) => {
+        console.log("get message");
+
+        const data: ConversationSignalResponse = JSON.parse(event.data);
+        if (!data.signal) {
+          const unique = [...new Set(data.fromIds)];
+          if (unique.length >= Number(capacity)) {
+            router.replace("/conversation");
+            return;
+          }
+          participantIds.current = [...participantIds.current, ...unique];
+
+          for (const fromId of unique) {
+            participantMutes.current[fromId] = false;
+            peers.current[fromId] = new RTCPeerConnection({
+              iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+            });
+
+            localAudio.current?.getTracks().forEach((track) => {
+              if (localAudio.current) {
+                peers.current[fromId].addTrack(track, localAudio.current);
+              }
+            });
+
+            peers.current[fromId].addEventListener(
+              "icecandidate",
+              (event: any) => {
+                if (event.candidate) {
+                  ws.current?.send(
+                    JSON.stringify({
+                      toIds: [fromId],
+                      signal: { type: "candidate", candidate: event.candidate },
+                    }),
+                  );
+                }
+              },
+            );
+
+            peers.current[fromId].addEventListener("track", (event: any) => {
+              if (!remoteAudios.current[fromId]) {
+                remoteAudios.current[fromId] = new MediaStream();
+              }
+              if (event.track) {
+                remoteAudios.current[fromId].addTrack(event.track);
+              }
+            });
+
+            const offer = await peers.current[fromId].createOffer({
+              offerToReceiveAudio: true,
+              offerToReceiveVideo: false,
+              voiceActivityDetection: true,
+            });
+            await peers.current[fromId].setLocalDescription(offer);
+            ws.current?.send(
+              JSON.stringify({
+                toIds: [fromId],
+                signal: peers.current[fromId].localDescription,
+              }),
+            );
+
+            ws.current?.send(
+              JSON.stringify({
+                toIds: [fromId],
+                signal: { type: "name-offer", name: profile.name },
+              }),
+            );
+          }
+          coordinateSeat();
+          return;
+        }
+        const fromId = data.fromIds[0];
+        if (data.signal.type === "offer") {
+          const offer = new RTCSessionDescription(data.signal);
+          await peers.current[fromId].setRemoteDescription(offer);
+          const answer = await peers.current[fromId].createAnswer();
+          await peers.current[fromId].setLocalDescription(answer);
+          ws.current?.send(
+            JSON.stringify({
+              toIds: [fromId],
+              signal: peers.current[fromId].localDescription,
+            }),
+          );
+          return;
+        }
+        if (data.signal.type === "name-offer") {
+          participantNames.current = {
+            ...participantNames.current,
+            [fromId]: data.signal.name,
+          };
+          ws.current?.send(
+            JSON.stringify({
+              toIds: [fromId],
+              signal: { type: "name-answer", name: profile.name },
+            }),
+          );
+          coordinateSeat();
+          return;
+        }
+        if (data.signal.type === "name-answer") {
+          participantNames.current = {
+            ...participantNames.current,
+            [fromId]: data.signal.name,
+          };
+          coordinateSeat();
+          return;
+        }
+        if (data.signal.type === "answer") {
+          const offerDescription = new RTCSessionDescription(data.signal);
+          await peers.current[fromId].setRemoteDescription(offerDescription);
+          return;
+        }
+        if (data.signal.type === "candidate") {
+          const iceCandidate = new RTCIceCandidate(data.signal.candidate);
+          await peers.current[fromId].addIceCandidate(iceCandidate);
+          return;
+        }
+        if (data.signal.type === "leave") {
+          peers.current[fromId].close();
+          delete peers.current[fromId];
+          remoteAudios.current[fromId].release();
+          delete remoteAudios.current[fromId];
+          participantIds.current = participantIds.current.filter(
+            (x) => x !== fromId,
+          );
+          delete participantNames.current[fromId];
+          coordinateSeat();
+        }
+        if (data.signal.type === "ban") {
+          await queryClient.invalidateQueries({
+            queryKey: [
+              queryKey.CONVERSATION,
+              queryKey.GET_ONLINE_CONVERSATIONS,
+            ],
+          });
+          router.replace("/conversation");
+        }
+        if (data.signal.type === "mute") {
+          participantMutes.current[fromId] = !participantMutes.current[fromId];
+          coordinateSeat();
+        }
+      };
+    };
     joinConversation();
 
     return () => {
