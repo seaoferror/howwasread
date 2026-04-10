@@ -6,7 +6,7 @@ import (
 )
 
 func (r *Repository) SetServerIP(ctx context.Context, memberId, ip string) error {
-	result := r.client.Do(ctx, r.client.B().Set().Key(memberId).Value(ip).Build())
+	result := r.client.Do(ctx, r.client.B().Sadd().Key(memberId).Member(ip).Build())
 	if result.Error() != nil {
 		slog.Error("fail to save member ip", "err", result.Error())
 		return result.Error()
@@ -14,8 +14,8 @@ func (r *Repository) SetServerIP(ctx context.Context, memberId, ip string) error
 	return nil
 }
 
-func (r *Repository) RemoveServerIP(ctx context.Context, memberId string) error {
-	result := r.client.Do(ctx, r.client.B().Del().Key(memberId).Build())
+func (r *Repository) RemoveServerIP(ctx context.Context, memberId, ip string) error {
+	result := r.client.Do(ctx, r.client.B().Srem().Key(memberId).Member(ip).Build())
 	if result.Error() != nil {
 		slog.Error("fail to remove member ip", "err", result.Error())
 		return result.Error()

@@ -23,7 +23,8 @@ const (
 type Controller struct {
 	service *service.Service
 	mux     *http.ServeMux
-	conns   map[uuid.UUID]*websocket.Conn
+	conns   map[uuid.UUID]map[uuid.UUID]*websocket.Conn
+	numbers int
 	csMutex *sync.RWMutex
 }
 
@@ -32,7 +33,7 @@ func NewController(s *service.Service, m *http.ServeMux) *Controller {
 	c := &Controller{
 		service: s,
 		mux:     m,
-		conns:   make(map[uuid.UUID]*websocket.Conn),
+		conns:   make(map[uuid.UUID]map[uuid.UUID]*websocket.Conn),
 		csMutex: &sync.RWMutex{},
 	}
 

@@ -2,6 +2,7 @@ package controller
 
 import (
 	"backend/chat/internal/dto"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -14,16 +15,20 @@ import (
 )
 
 func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
-	memberIdRaw := r.Header.Get("X-User-Id")
-	memberId, err := uuid.Parse(memberIdRaw)
+	memberId, err := uuid.Parse(r.Header.Get("X-User-Id"))
 	if err != nil {
-		slog.Error("fail to parse member id from raw string",
-			"err", err,
-			"memberIdRaw", memberIdRaw)
+		slog.Error("fail to parse member id from header",
+			"err", err)
 		handleError(w, errors.New("fail to parse"))
 		return
 	}
-	slog.Info("try to make connection", "memberId", memberIdRaw)
+	deviceId, err := uuid.Parse(r.Header.Get("Device-Id"))
+	if err != nil {
+		slog.Error("fail to parse device id from header",
+			"err", err)
+		handleError(w, errors.New("fail to parse"))
+		return
+	}
 	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 		//OriginPatterns:     []string{"example.com"},
 		InsecureSkipVerify: true,
@@ -34,26 +39,34 @@ func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	c.csMutex.Lock()
-	c.conns[memberId] = conn
+	if c.conns[memberId] == nil {
+		c.conns[memberId] = make(map[uuid.UUID]*websocket.Conn)
+	}
+	c.conns[memberId][deviceId] = conn
+	c.numbers = c.numbers + 1
 	slog.Info("success to make connection",
-		"number of current connection", len(c.conns))
+		"number of current connection", c.numbers)
 	c.csMutex.Unlock()
 
+	ip, _ := getPodIP()
 	defer func() {
 		destroy := context.Background()
 		err = conn.Close(websocket.StatusNormalClosure, "")
 		if err != nil {
 			slog.Error("fail to close conn", "err", err)
 		}
-		c.service.RemoveServerIP(destroy, memberId[:])
 		c.csMutex.Lock()
-		delete(c.conns, memberId)
-		slog.Info("success to close connection",
-			"number of current connection", len(c.conns))
+		delete(c.conns[memberId], deviceId)
+		c.numbers = c.numbers - 1
 		c.csMutex.Unlock()
+		c.csMutex.RLock()
+		slog.Info("success to close connection",
+			"number of current connection", c.numbers)
+		if len(c.conns[memberId]) == 0 {
+			c.service.RemoveServerIP(destroy, memberId[:], ip)
+		}
+		c.csMutex.RUnlock()
 	}()
-
-	ip, _ := getPodIP()
 
 	init := context.Background()
 	err = c.service.SetServerIP(init, memberId, ip)
@@ -96,26 +109,46 @@ func (c *Controller) RelayMessaging(ctx context.Context, id uuid.UUID, toIds [][
 	}
 	resRaw, _ := json.Marshal(res)
 	for _, toId := range toIds {
+		r := resRaw
+		if bytes.Equal(toId, roomId[:]) {
+			res1 := res
+			res1.RoomId = fromId
+			resRaw1, _ := json.Marshal(res1)
+			r = resRaw1
+		}
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			c.csMutex.RLock()
 			ct, ok := c.conns[uuid.UUID(toId)]
-			c.csMutex.RUnlock()
-			var err1 error
+			var sm sync.Mutex
+			var success bool
 			if ok {
-				err1 = ct.Write(ctx, websocket.MessageText, resRaw)
-				if err1 != nil {
-					slog.Error("fail to write payload",
-						"err", err1,
-					)
-					err2 := ct.CloseNow()
-					if err2 != nil {
-						slog.Error("fail to close zombie connection", "err", err2)
-					}
+				var wg1 sync.WaitGroup
+				for _, cd := range ct {
+					wg1.Add(1)
+					go func() {
+						defer wg1.Done()
+						err1 := cd.Write(ctx, websocket.MessageText, r)
+						if err1 != nil {
+							slog.Error("fail to write payload",
+								"err", err1,
+							)
+							err2 := cd.CloseNow()
+							if err2 != nil {
+								slog.Error("fail to close zombie connection", "err", err2)
+							}
+							return
+						}
+						sm.Lock()
+						success = true
+						sm.Unlock()
+					}()
 				}
+				wg1.Wait()
 			}
-			if !ok || err1 != nil {
+			c.csMutex.RUnlock()
+			if !ok || !success {
 				mu.Lock()
 				pushToIds = append(pushToIds, toId[:])
 				mu.Unlock()

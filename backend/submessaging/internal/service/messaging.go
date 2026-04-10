@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"slices"
 	"sync"
 	"time"
 
@@ -43,6 +44,15 @@ func (s *Service) ManageMessaging(ctx context.Context, id uuid.UUID, fromId uuid
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			if bytes.Equal(tid, roomId[:]) {
+				err := s.repository.SaveMessaging(ctx, gocql.UUID(id), gocql.UUID(tid), gocql.UUID(fromId), gocql.UUID(fromId), contentType, content)
+				if err != nil {
+					em.Lock()
+					es = append(es, err)
+					em.Unlock()
+				}
+				return
+			}
 			err := s.repository.SaveMessaging(ctx, gocql.UUID(id), gocql.UUID(tid), gocql.UUID(fromId), gocql.UUID(roomId), contentType, content)
 			if err != nil {
 				em.Lock()
@@ -70,21 +80,17 @@ func (s *Service) ManageMessaging(ctx context.Context, id uuid.UUID, fromId uuid
 				ctxr, cancel := context.WithTimeout(ctx, 1*time.Second)
 				defer cancel()
 				defer wg.Done()
-				ip, err := s.repository.GetServerIP(ctxr, string(tid))
-				if err != nil {
-					pm.Lock()
-					pushToIds = append(pushToIds, tid)
-					pm.Unlock()
-					return
-				}
-				if ip == "" {
+				ips, err := s.repository.GetServerIPs(ctxr, string(tid))
+				if err != nil || ips == nil {
 					pm.Lock()
 					pushToIds = append(pushToIds, tid)
 					pm.Unlock()
 					return
 				}
 				rm.Lock()
-				relayToIdsByIP[ip] = append(relayToIdsByIP[ip], tid)
+				for _, ip := range ips {
+					relayToIdsByIP[ip] = append(relayToIdsByIP[ip], tid)
+				}
 				rm.Unlock()
 			}()
 		}
@@ -142,12 +148,12 @@ func (s *Service) ManageMessaging(ctx context.Context, id uuid.UUID, fromId uuid
 							defer wg1.Done()
 							ctxr, cancel1 := context.WithTimeout(context.Background(), 1*time.Second)
 							defer cancel1()
-							currentIP, err1 := s.repository.GetServerIP(ctxr, string(tid))
+							currentIPs, err1 := s.repository.GetServerIPs(ctxr, string(tid))
 							if err1 != nil {
 								return
 							}
-							if currentIP == ip {
-								err1 = s.repository.RemoveServerIP(ctx, string(tid))
+							if slices.Contains(currentIPs, ip) {
+								err1 = s.repository.RemoveServerIP(ctx, string(tid), ip)
 								if err1 != nil {
 									return
 								}
@@ -171,12 +177,12 @@ func (s *Service) ManageMessaging(ctx context.Context, id uuid.UUID, fromId uuid
 						defer wg1.Done()
 						ctxr, cancel1 := context.WithTimeout(context.Background(), 1*time.Second)
 						defer cancel1()
-						currentIP, err1 := s.repository.GetServerIP(ctxr, string(tid))
+						currentIPs, err1 := s.repository.GetServerIPs(ctxr, string(tid))
 						if err1 != nil {
 							return
 						}
-						if currentIP == ip {
-							err1 = s.repository.RemoveServerIP(ctxr, string(tid))
+						if slices.Contains(currentIPs, ip) {
+							err1 = s.repository.RemoveServerIP(ctxr, string(tid), ip)
 							if err1 != nil {
 								return
 							}

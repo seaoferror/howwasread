@@ -14,8 +14,8 @@ func (s *Service) SetServerIP(ctx context.Context, memberId uuid.UUID, ip string
 	return nil
 }
 
-func (s *Service) RemoveServerIP(ctx context.Context, memberId []byte) error {
-	err := s.repository.RemoveServerIP(ctx, string(memberId))
+func (s *Service) RemoveServerIP(ctx context.Context, memberId []byte, ip string) error {
+	err := s.repository.RemoveServerIP(ctx, string(memberId), ip)
 	if err != nil {
 		return err
 	}
