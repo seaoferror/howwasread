@@ -4,7 +4,7 @@ import { colors } from "@/constants";
 import FixedBottomCTA from "@/components/FixedBottomCTA";
 import { FormProvider, useForm } from "react-hook-form";
 import NameInput from "@/components/profile/NameInput";
-import { useProfile } from "@/hooks/useProfile";
+import { useMyProfile } from "@/hooks/useMyProfile";
 import { router } from "expo-router";
 
 interface FormValue {
@@ -17,7 +17,7 @@ export default function NameScreen() {
       name: "",
     },
   });
-  const { setNameMutation } = useProfile();
+  const { setNameMutation } = useMyProfile();
 
   const onSubmit = async (formValue: FormValue) => {
     const { name } = formValue;

@@ -58,7 +58,9 @@ export default function ChatList() {
       }));
       setPreview(p);
     };
-    wrapper();
+    if (preview.length === 0) {
+      wrapper();
+    }
   });
   return <FlatList
     data={preview}

@@ -1,8 +1,13 @@
 import { axiosInstance } from "@/api/axios";
-import { GetMyProfileResponse } from "@/types/profile";
+import { GetProfileResponse } from "@/types/profile";
 
-export async function getMyProfile(): Promise<GetMyProfileResponse> {
-  const { data } = await axiosInstance.get("/profile");
+export async function getMyProfile(): Promise<GetProfileResponse> {
+  const { data } = await axiosInstance.get("/profile/my");
+  return data;
+}
+
+export async function getProfile(id: string): Promise<GetProfileResponse> {
+  const { data } = await axiosInstance.get(`/profile?id=${id}`)
   return data;
 }
 

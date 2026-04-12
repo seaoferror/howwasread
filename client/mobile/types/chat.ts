@@ -10,6 +10,11 @@ export interface ChatPreview extends MessagingResponse{
   createdAt: string;
 }
 
+export interface GetChatRoomInfoResponse {
+  name: string
+  roomType: string
+}
+
 export interface MessageEntity {
   id: Uint8Array;
   room_id: Uint8Array;

@@ -47,7 +47,7 @@ function useSetBirthYear() {
   });
 }
 
-export function useProfile() {
+export function useMyProfile() {
   const { data } = useGetMyProfile();
 
   const setNameMutation = useSetName();

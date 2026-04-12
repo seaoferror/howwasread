@@ -4,7 +4,7 @@ import { colors } from "@/constants";
 import FixedBottomCTA from "@/components/FixedBottomCTA";
 import { FormProvider, useForm } from "react-hook-form";
 import BirthYearBox from "@/components/profile/BirthYearBox";
-import { useProfile } from "@/hooks/useProfile";
+import { useMyProfile } from "@/hooks/useMyProfile";
 import { router } from "expo-router";
 
 interface FormValue {
@@ -15,7 +15,7 @@ export default function BirthYearScreen() {
   const birthYearForm = useForm<FormValue>({
     defaultValues: { birthYear: 2000 },
   });
-  const { setBirthYearMutation } = useProfile();
+  const { setBirthYearMutation } = useMyProfile();
 
   const onSubmit = async (formValue: FormValue) => {
     const { birthYear } = formValue;

@@ -23,7 +23,7 @@ import { getSecureAsync } from "@/util/storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import OnlineConversationRoomHeader from "@/components/conversation/OnlineConversationRoomHeader";
 import { Feather, Ionicons } from "@expo/vector-icons";
-import { useProfile } from "@/hooks/useProfile";
+import { useMyProfile } from "@/hooks/useMyProfile";
 import { useActionSheet } from "@expo/react-native-action-sheet";
 import { useSendLike } from "@/hooks/useChat";
 import Toast from "react-native-toast-message";
@@ -44,7 +44,7 @@ declare const WebSocket: {
 };
 
 export default function OnlineConversationRoomScreen() {
-  const { profile } = useProfile();
+  const { profile } = useMyProfile();
   const myId = Platform.OS === "ios" ? localDevId.ios : localDevId.android;
 
   const {

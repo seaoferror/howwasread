@@ -39,7 +39,9 @@ export const queryKey = {
   PROFILE: "profile",
   GET_MY_PROFILE: "getMyProfile",
   GET_RECENT_MESSAGES: "getRecentMessages",
-  CHAT: "chat"
+  CHAT: "chat",
+  GET_CHAT_ROOM_INFO: "getChatRoomInfo",
+  GET_PROFILE: "getProfile"
 };
 
 export const time = {
