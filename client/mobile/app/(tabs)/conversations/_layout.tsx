@@ -1,12 +1,12 @@
 import { Stack } from "expo-router";
 
-export default function ConversationLayout() {
+export default function ConversationsLayout() {
   return (
     <Stack>
       <Stack.Screen
         name="index"
         options={{
-          title: "Conversation",
+          title: "Conversations",
           headerShown: true,
           animation: "slide_from_left",
         }}

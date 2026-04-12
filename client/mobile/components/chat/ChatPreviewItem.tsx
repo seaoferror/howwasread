@@ -48,8 +48,10 @@ export default function ChatPreviewItem({ preview }: ChatPreviewItemProps) {
       style={({ pressed }) => [styles.container, pressed && styles.pressed]}
       onPress={() =>
         router.push({
-          pathname: `/chat`,
-          params: { roomId: preview.roomId },
+          pathname: `/chat/[id]`,
+          params: {
+            id: preview.roomId
+          }
         })
       }
     >
@@ -67,7 +69,9 @@ export default function ChatPreviewItem({ preview }: ChatPreviewItemProps) {
           {preview.fromId === preview.roomId || preview.fromId === myProfile.id
             ? ""
             : `${fromProfile?.name}: `}
-          {preview.contentType === "text" ? preview.content : preview.contentType}
+          {preview.contentType === "text"
+            ? preview.content
+            : preview.contentType}
         </Text>
       </View>
 
@@ -75,7 +79,6 @@ export default function ChatPreviewItem({ preview }: ChatPreviewItemProps) {
         {formatPreviewDate(preview.createdAt)}
       </Text>
     </Pressable>
-
   );
 }
 

@@ -43,7 +43,7 @@ declare const WebSocket: {
   ): WebSocket;
 };
 
-export default function OnlineConversationRoomScreen() {
+export default function OnlineConversationScreen() {
   const { profile } = useMyProfile();
   const myId = Platform.OS === "ios" ? localDevId.ios : localDevId.android;
 
@@ -218,7 +218,7 @@ export default function OnlineConversationRoomScreen() {
         if (!data.signal) {
           const unique = [...new Set(data.fromIds)];
           if (unique.length >= Number(capacity)) {
-            router.replace("/conversation");
+            router.replace("/conversations");
             return;
           }
           participantIds.current = [...participantIds.current, ...unique];
@@ -345,7 +345,7 @@ export default function OnlineConversationRoomScreen() {
               queryKey.GET_ONLINE_CONVERSATIONS,
             ],
           });
-          router.replace("/conversation");
+          router.replace("/conversations");
         }
         if (data.signal.type === "mute") {
           participantMutes.current[fromId] = !participantMutes.current[fromId];

@@ -6,13 +6,13 @@ export interface MessagingResponse {
   content: string;
 }
 
-export interface ChatPreview extends MessagingResponse{
+export interface ChatPreview extends MessagingResponse {
   createdAt: string;
 }
 
 export interface GetChatRoomInfoResponse {
-  name: string
-  roomType: string
+  name: string;
+  type: string;
 }
 
 export interface MessageEntity {

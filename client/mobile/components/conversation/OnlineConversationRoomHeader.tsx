@@ -87,7 +87,7 @@ export default function OnlineConversationRoomHeader({
                 name="arrow-left"
                 size={28}
                 color={colors.BLACK}
-                onPress={() => router.replace("/conversation")}
+                onPress={() => router.replace("/conversations")}
               />
             </View>
             <View style={styles.headerCenter}>

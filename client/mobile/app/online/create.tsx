@@ -106,7 +106,7 @@ export default function OnlineConversationCreateScreen() {
       },
       {
         onSuccess: () => {
-          router.replace("/conversation");
+          router.replace("/conversations");
         },
       },
     );
