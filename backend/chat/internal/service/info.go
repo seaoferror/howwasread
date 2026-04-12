@@ -1,0 +1,54 @@
+package service
+
+import (
+	"backend/chat/internal/dto"
+	"context"
+	"errors"
+	"log/slog"
+	"strings"
+	"unicode"
+
+	gocql "github.com/apache/cassandra-gocql-driver/v2"
+	"github.com/google/uuid"
+)
+
+func (s *Service) SetName(ctx context.Context, memberId uuid.UUID, name string) error {
+	sanitizedName := strings.Map(func(r rune) rune {
+		if unicode.IsSpace(r) {
+			return -1
+		}
+		return r
+	}, name)
+	if len(sanitizedName) == 0 {
+		slog.Info("incorrect name")
+		return errors.New("incorrect name")
+	}
+	err := s.repository.SaveProfileNameById(ctx, gocql.UUID(memberId), sanitizedName)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Service) GetProfile(ctx context.Context, id uuid.UUID) (*dto.GetProfileResponse, error) {
+	name, err := s.repository.FindProfileById(ctx, gocql.UUID(id))
+	if err != nil {
+		return nil, err
+	}
+	res := dto.GetProfileResponse{
+		Id:   id,
+		Name: name,
+	}
+	return &res, nil
+}
+
+func (s *Service) GetChatRoomInfo(ctx context.Context, id uuid.UUID) (*dto.GetChatRoomInfoResponse, error) {
+	name, err := s.repository.FindChatRoomInfoById(ctx, gocql.UUID(id))
+	if err != nil {
+		return nil, err
+	}
+	res := dto.GetChatRoomInfoResponse{
+		Name: name,
+	}
+	return &res, nil
+}

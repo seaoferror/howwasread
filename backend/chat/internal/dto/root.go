@@ -20,3 +20,16 @@ type MessagingResponse struct {
 	ContentType string    `json:"contentType"`
 	Content     string    `json:"content"`
 }
+
+type GetChatRoomInfoResponse struct {
+	Name string `json:"name"`
+}
+
+type SetNameRequest struct {
+	Name string `json:"name"`
+}
+
+type GetProfileResponse struct {
+	Id   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+}

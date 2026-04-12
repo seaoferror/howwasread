@@ -38,6 +38,7 @@ func NewController(s *service.Service, m *http.ServeMux) *Controller {
 	}
 
 	messagingRouter(c)
+	infoRouter(c)
 
 	return c
 }

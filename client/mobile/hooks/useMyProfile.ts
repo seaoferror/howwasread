@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { getMyProfile, setBirthYear, setName } from "@/api/profile";
+import { getMyProfile, getProfile, setBirthYear, setName } from "@/api/profile";
 import Toast from "react-native-toast-message";
 import { queryKey } from "@/constants";
 
@@ -10,6 +10,15 @@ function useGetMyProfile() {
   });
 
   return { data };
+}
+
+export function useGetProfile(id: string) {
+  const { data } = useQuery({
+    queryFn: () => getProfile(id),
+    queryKey: [queryKey.PROFILE, queryKey.GET_PROFILE, id]
+  });
+
+  return { data }
 }
 
 function useSetName() {

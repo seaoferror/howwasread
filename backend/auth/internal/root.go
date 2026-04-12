@@ -1,22 +1,27 @@
 package internal
 
 import (
-	"backend/auth/internal/kafka/producer"
-	"backend/auth/internal/logger"
 	"backend/auth/internal/network"
 	"backend/auth/internal/repository"
 	"backend/auth/internal/service"
+	"log"
+	"log/slog"
+	"os"
 )
 
 func NewServer() {
 
-	kp := producer.NewKafkaProducer()
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		AddSource: true,
+	}))
 
-	logger.SetLogger(kp)
+	slog.SetDefault(logger)
+
+	log.Print("success to set logger")
 
 	r := repository.NewRepository()
 
-	s := service.NewService(r, kp)
+	s := service.NewService(r)
 
 	n := network.NewNetwork(s)
 

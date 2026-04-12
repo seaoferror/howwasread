@@ -117,37 +117,37 @@ func (s *Service) VerifySMSOTP(sessionId, verificationId uuid.UUID, otp string) 
 
 	if sessionId == uuid.Nil {
 		var idv7 uuid.UUID
-		id, err := s.repository.FindIdByPhoneNumber(phoneNumber)
-		if errors.Is(err, gocql.ErrNotFound) {
-			err = nil
-			idv7, err = uuid.NewV7()
-			if err != nil {
+		id, err1 := s.repository.FindIdByPhoneNumber(phoneNumber)
+		if errors.Is(err1, gocql.ErrNotFound) {
+			err1 = nil
+			idv7, err1 = uuid.NewV7()
+			if err1 != nil {
 				slog.Error("fail to create uuid v7 for phone number sign in user")
 				return nil, "", ErrInternalServer
 			}
 			id = gocql.UUID(idv7)
 		}
-		if err != nil {
+		if err1 != nil {
 			slog.Error("fail to find id by phone number except for not found",
-				"err", err,
+				"err", err1,
 			)
 			return nil, "", ErrInternalServer
 		}
-		err = s.repository.SavePhoneNumberLoginInfo(phoneNumber, id)
-		if err != nil {
+		err1 = s.repository.SavePhoneNumberLoginInfo(phoneNumber, id)
+		if err1 != nil {
 			return nil, "", ErrInternalServer
 		}
-		jti, err := gocql.RandomUUID()
-		if err != nil {
+		jti, err1 := gocql.RandomUUID()
+		if err1 != nil {
 			slog.Error("fail to make random uuid for jti")
 			return nil, "", ErrInternalServer
 		}
-		at, rt, err := s.createLoginTokens(id.String(), jti.String(), constant.RoleUser)
-		if err != nil {
+		at, rt, err1 := s.createLoginTokens(id.String(), jti.String(), constant.RoleUser)
+		if err1 != nil {
 			return nil, "", ErrInternalServer
 		}
-		err = s.repository.SaveRefreshTokenJTIById(id, jti)
-		if err != nil {
+		err1 = s.repository.SaveRefreshTokenJTIById(id, jti)
+		if err1 != nil {
 			return nil, "", ErrInternalServer
 		}
 		r := dto.VerifySMSOTPResponse{
@@ -155,7 +155,10 @@ func (s *Service) VerifySMSOTP(sessionId, verificationId uuid.UUID, otp string) 
 			AccessToken:         at,
 		}
 		if idv7 != uuid.Nil {
-			_ = s.kafkaProducer.PushMessage("auth.new_member_id", id.Bytes())
+			err1 = s.repository.SaveProfileId(id)
+			if err1 != nil {
+				return nil, "", ErrInternalServer
+			}
 		}
 		return &r, rt, nil
 	}
@@ -198,6 +201,9 @@ func (s *Service) VerifySMSOTP(sessionId, verificationId uuid.UUID, otp string) 
 		PhoneNumberVerified: true,
 		AccessToken:         at,
 	}
-	_ = s.kafkaProducer.PushMessage("auth.new_member_id", id.Bytes())
+	err = s.repository.SaveProfileId(id)
+	if err != nil {
+		return nil, "", ErrInternalServer
+	}
 	return &r, rt, nil
 }
