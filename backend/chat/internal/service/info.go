@@ -23,7 +23,7 @@ func (s *Service) SetName(ctx context.Context, memberId uuid.UUID, name string) 
 		slog.Info("incorrect name")
 		return errors.New("incorrect name")
 	}
-	err := s.repository.SaveProfileNameById(ctx, gocql.UUID(memberId), sanitizedName)
+	err := s.repository.SaveNameById(ctx, gocql.UUID(memberId), sanitizedName)
 	if err != nil {
 		return err
 	}

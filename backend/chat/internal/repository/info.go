@@ -29,8 +29,10 @@ func (r *Repository) FindProfileById(ctx context.Context, id gocql.UUID) (name s
 	return name, nil
 }
 
-func (r *Repository) SaveProfileNameById(ctx context.Context, id gocql.UUID, name string) error {
-	err := r.session.Query("UPDATE profile_by_id SET name = ? WHERE id = ?", name, id).
+func (r *Repository) SaveNameById(ctx context.Context, id gocql.UUID, name string) error {
+	err := r.session.Batch(gocql.LoggedBatch).
+		Query("UPDATE profile_by_id SET name = ? WHERE id = ?", name, id).
+		Query("INSERT INTO room_by_id (id, name) VALUES (?, ?)", id, name).
 		ExecContext(ctx)
 	if err != nil {
 		slog.Error("fail to save profile name by id",
