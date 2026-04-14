@@ -43,12 +43,13 @@ func (s *Service) GetProfile(ctx context.Context, id uuid.UUID) (*dto.GetProfile
 }
 
 func (s *Service) GetChatRoomInfo(ctx context.Context, id uuid.UUID) (*dto.GetChatRoomInfoResponse, error) {
-	name, err := s.repository.FindChatRoomInfoById(ctx, gocql.UUID(id))
+	name, roomType, err := s.repository.FindChatRoomInfoById(ctx, gocql.UUID(id))
 	if err != nil {
 		return nil, err
 	}
 	res := dto.GetChatRoomInfoResponse{
 		Name: name,
+		Type: roomType,
 	}
 	return &res, nil
 }

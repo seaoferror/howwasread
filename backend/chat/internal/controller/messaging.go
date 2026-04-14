@@ -66,6 +66,7 @@ func (c *Controller) sendMessaging(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *Controller) getRecentMessages(w http.ResponseWriter, r *http.Request) {
+	slog.Info("getRecentMessages")
 	memberIdRaw := r.Header.Get("X-User-Id")
 	memberId, err := uuid.Parse(memberIdRaw)
 	if err != nil {

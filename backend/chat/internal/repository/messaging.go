@@ -14,14 +14,14 @@ func (r *Repository) FindMessagesByToIdAndId(ctx context.Context, id, cursor goc
 		id, cursor).IterContext(ctx)
 	var messageId, fromId gocql.UUID
 	var roomId []byte
-	var content, contentType string
-	for iter.Scan(&messageId, &roomId, &fromId, &content, &contentType) {
+	var contentType, content string
+	for iter.Scan(&messageId, &roomId, &fromId, &contentType, &content) {
 		result = append(result, data.FindMessagesByToIdAndId{
 			Id:          messageId,
 			RoomId:      roomId,
 			FromId:      fromId,
-			Content:     content,
 			ContentType: contentType,
+			Content:     content,
 		})
 	}
 	err = iter.Close()

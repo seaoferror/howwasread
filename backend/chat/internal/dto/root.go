@@ -23,6 +23,7 @@ type MessagingResponse struct {
 
 type GetChatRoomInfoResponse struct {
 	Name string `json:"name"`
+	Type string `json:"type"`
 }
 
 type SetNameRequest struct {

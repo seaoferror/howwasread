@@ -3,7 +3,6 @@ package internal
 import (
 	"backend/chat/internal/controller"
 	"backend/chat/internal/grpccontroller"
-	"backend/chat/internal/kafka/consumer"
 	"backend/chat/internal/kafka/producer"
 	"backend/chat/internal/repository"
 	"backend/chat/internal/service"
@@ -28,17 +27,6 @@ func NewServer() {
 	r := repository.NewRepository()
 
 	s := service.NewService(r, kp)
-
-	ks := consumer.NewKafkaConsumer(s)
-
-	go func() {
-		err := ks.GetMessage([]string{"online.new_member_name"})
-		if err != nil {
-			slog.Error("fail to get payload from kafka",
-				"err", err)
-			return
-		}
-	}()
 
 	mux := http.NewServeMux()
 
