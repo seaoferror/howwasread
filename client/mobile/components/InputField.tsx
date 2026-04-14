@@ -14,6 +14,7 @@ interface InputFieldProps extends TextInputProps {
   error?: string;
   customHeight?: number;
   rightChild?: ReactNode;
+  leftChild?: ReactNode;
 }
 
 function InputField(
@@ -21,6 +22,7 @@ function InputField(
     label,
     variant = "filled",
     error = "",
+    leftChild = null,
     rightChild = null,
     customHeight = 44,
     ...props
@@ -39,6 +41,7 @@ function InputField(
           props.multiline && styles.multiline,
         ]}
       >
+        {leftChild}
         <TextInput
           ref={ref}
           autoCapitalize="none"
@@ -68,6 +71,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
+    gap: 10
   },
   filled: {
     backgroundColor: colors.GRAY_100,

@@ -5,21 +5,28 @@ import { useFocusEffect } from "expo-router";
 import { stringify as uuidStringify } from "uuid";
 import { useState } from "react";
 import { colors } from "@/constants";
-import { ChatPreview, MessageEntity } from "@/types/chat";
+import { Message, MessageEntity } from "@/types/chat";
 import ChatPreviewItem from "@/components/chat/ChatPreviewItem";
 
 export default function ChatList() {
-  const [preview, setPreview] = useState<ChatPreview[]>([]);
+  const [preview, setPreview] = useState<Omit<Message, "isDayFirst">[]>([]);
   const db = useSQLiteContext();
   SQLite.addDatabaseChangeListener(async (event) => {
-    const newMessageRaw = await db.getFirstAsync<MessageEntity>(
-      `SELECT * FROM message WHERE rowid = ?`,
+    const newMessageRaw = await db.getFirstAsync<Omit<MessageEntity, "is_day_first">>(
+      `SELECT id,
+              room_id,
+              from_id,
+              content_type,
+              content,
+              created_at
+       FROM message
+       WHERE rowid = ?`,
       event.rowId,
     );
 
     if (!newMessageRaw) return;
 
-    const newPreviewItem: ChatPreview = {
+    const newPreviewItem: Omit<Message, "isDayFirst"> = {
       id: uuidStringify(newMessageRaw.id),
       roomId: uuidStringify(newMessageRaw.room_id),
       fromId: uuidStringify(newMessageRaw.from_id),
@@ -37,8 +44,13 @@ export default function ChatList() {
   });
   useFocusEffect(() => {
     const wrapper = async () => {
-      const previewRaw = await db.getAllAsync<MessageEntity>(
-        `SELECT m.*
+      const previewRaw = await db.getAllAsync<Omit<MessageEntity,"is_day_first">>(
+        `SELECT m.id,
+                m.room_id,
+                m.from_id,
+                m.content_type,
+                m.content,
+                m.created_at
          FROM message m
                 INNER JOIN
               (SELECT room_id, MAX(rowid) AS max_rowid

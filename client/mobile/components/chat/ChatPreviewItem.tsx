@@ -1,12 +1,12 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { ChatPreview } from "@/types/chat";
+import { Message } from "@/types/chat";
 import { colors } from "@/constants";
 import { router } from "expo-router";
 import { useGetChatRoomInfo } from "@/hooks/useChat";
 import { useGetProfile, useMyProfile } from "@/hooks/useMyProfile";
 
 interface ChatPreviewItemProps {
-  preview: ChatPreview;
+  preview: Omit<Message, "isDayFirst">;
 }
 
 function formatPreviewDate(createdAt: string) {

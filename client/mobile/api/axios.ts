@@ -7,8 +7,8 @@ export const baseUrl = {
 };
 
 export const localDevId = {
-  android: "b7e2c1af-4f3d-4e2a-1c85-2f6b7a1e5d3c",
-  ios: "b7e2c1af-4f3d-4e2a-1c85-2f6b7a1e5d4c",
+  android: "019e0e84-f358-71a2-8b3c-d4e5f6012345",
+  ios: "019e0e84-f358-7d8e-9fa0-b1c2d3e4f506",
 };
 
 export const axiosInstance = axios.create({

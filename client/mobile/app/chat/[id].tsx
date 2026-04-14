@@ -1,11 +1,47 @@
-import { StyleSheet, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useLocalSearchParams, useNavigation } from "expo-router";
+import { useGetChatRoomInfo } from "@/hooks/useChat";
+import MessageList from "@/components/chat/MessageList";
+import { useEffect } from "react";
+import { colors } from "@/constants";
+import MessageInput from "@/components/chat/MessageInput";
 
 export default function ChatScreen() {
-  return <View>
+  const { id: roomId } = useLocalSearchParams();
+  const { data: roomInfo } = useGetChatRoomInfo(String(roomId));
+  const navigation = useNavigation();
 
-  </View>;
+  useEffect(() => {
+    navigation.setOptions({
+      title: roomInfo?.name,
+    });
+  }, [navigation, roomInfo]);
+
+  return (
+    <SafeAreaView style={styles.container} edges={["bottom"]}>
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 160 : 0}
+      >
+        <MessageList />
+        <MessageInput />
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
-  container: {}
+  container: {
+    flex: 1,
+    backgroundColor: colors.WHITE,
+  },
+  keyboardAvoidingView: {
+    flex: 1,
+  },
 });

@@ -41,7 +41,8 @@ export const queryKey = {
   GET_RECENT_MESSAGES: "getRecentMessages",
   CHAT: "chat",
   GET_CHAT_ROOM_INFO: "getChatRoomInfo",
-  GET_PROFILE: "getProfile"
+  GET_PROFILE: "getProfile",
+  FIND_MESSAGES_BY_ROOM_ID: "findMessagesByRoomId"
 };
 
 export const time = {

@@ -6,8 +6,9 @@ export interface MessagingResponse {
   content: string;
 }
 
-export interface ChatPreview extends MessagingResponse {
+export interface Message extends MessagingResponse {
   createdAt: string;
+  isDayFirst: boolean;
 }
 
 export interface GetChatRoomInfoResponse {
@@ -22,4 +23,12 @@ export interface MessageEntity {
   content_type: string;
   content: string;
   created_at: string;
+  is_day_first: number;
+}
+
+export interface SendMessagingRequest {
+  toIdType: string;
+  toId: string;
+  contentType: string
+  content: string
 }
