@@ -50,8 +50,8 @@ export default function ChatPreviewItem({ preview }: ChatPreviewItemProps) {
         router.push({
           pathname: `/chat/[id]`,
           params: {
-            id: preview.roomId
-          }
+            id: preview.roomId,
+          },
         })
       }
     >
@@ -131,4 +131,3 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 });
-

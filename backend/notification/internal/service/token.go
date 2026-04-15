@@ -7,8 +7,8 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) SetDevicePushToken(ctx context.Context, id, deviceId uuid.UUID, os, token string) error {
-	err := s.repository.SetPushTokenById(ctx, gocql.UUID(id), gocql.UUID(deviceId), os, token)
+func (s *Service) RegisterNotification(ctx context.Context, id, deviceId uuid.UUID, os, token string) error {
+	err := s.repository.SaveNotificationInfoById(ctx, gocql.UUID(id), gocql.UUID(deviceId), os, token)
 	if err != nil {
 		return err
 	}

@@ -1,4 +1,4 @@
-import { FlatList, StyleSheet, View } from "react-native";
+import { FlatList, StyleSheet } from "react-native";
 import { useSQLiteContext } from "expo-sqlite";
 import * as SQLite from "expo-sqlite";
 import { useFocusEffect } from "expo-router";

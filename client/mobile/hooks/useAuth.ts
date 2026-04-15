@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Toast from "react-native-toast-message";
-import { getSecureAsync, saveSecureStore } from "@/util/storage";
+import { getSecureAsync, setSecure } from "@/util/storage";
 import {
   getMyId,
   loginInWithEmail,
@@ -26,7 +26,7 @@ function useSignupWithEmail() {
   return useMutation({
     mutationFn: signUpWithEmail,
     onSuccess: async (data) => {
-      saveSecureStore("verificationId", data.verificationId);
+      setSecure("verificationId", data.verificationId);
       console.log("success to save verification Id");
     },
     onError: (error: AxiosError) => {
@@ -43,16 +43,16 @@ function useLoginWithEmail() {
     mutationFn: loginInWithEmail,
     onSuccess: async (data) => {
       if (!data.emailVerified) {
-        saveSecureStore("verificationId", data.verificationId ?? "");
+        setSecure("verificationId", data.verificationId ?? "");
         const v = await getSecureAsync("verificationId");
         console.log(v);
         return;
       }
       if (!data.phoneNumberVerified) {
-        saveSecureStore("sessionId", data?.sessionId ?? "");
+        setSecure("sessionId", data?.sessionId ?? "");
         return;
       }
-      saveSecureStore("accessToken", data?.accessToken ?? "");
+      setSecure("accessToken", data?.accessToken ?? "");
     },
     onError: (error: AxiosError) => {
       Toast.show({
@@ -67,7 +67,7 @@ function useRequestSMSOTP() {
   return useMutation({
     mutationFn: requestSMSOTP,
     onSuccess: (data) => {
-      saveSecureStore("verificationId", data.verificationId);
+      setSecure("verificationId", data.verificationId);
       console.log("success to save verificationId");
     },
     onError: (error: AxiosError) => {
@@ -84,7 +84,7 @@ function useVerifyEmailOTP() {
     mutationFn: verifyEmailOTP,
     onSuccess: async (data) => {
       console.log(data.sessionId);
-      saveSecureStore("sessionId", data?.sessionId ?? "");
+      setSecure("sessionId", data?.sessionId ?? "");
       console.log(await getSecureAsync("sessionId"));
     },
     onError: (error: AxiosError) => {
@@ -101,7 +101,7 @@ function useVerifySMSOTP() {
     mutationFn: verifySMSOTP,
     onSuccess: (data) => {
       if (data.phoneNumberVerified)
-        saveSecureStore("accessToken", data?.accessToken ?? "");
+        setSecure("accessToken", data?.accessToken ?? "");
     },
     onError: (error: AxiosError) => {
       Toast.show({
@@ -117,10 +117,10 @@ function useSignInWithApple() {
     mutationFn: signInWithApple,
     onSuccess: async (data) => {
       if (!data.phoneNumberVerified) {
-        saveSecureStore("sessionId", data?.sessionId ?? "");
+        setSecure("sessionId", data?.sessionId ?? "");
         return;
       }
-      saveSecureStore("accessToken", data?.accessToken ?? "");
+      setSecure("accessToken", data?.accessToken ?? "");
     },
     onError: (error: AxiosError) => {
       Toast.show({

@@ -10,11 +10,14 @@ import { baseUrl, localDevId } from "@/api/axios";
 import { MessagingResponse } from "@/types/chat";
 import { useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { getSecureAsync } from "@/util/storage";
+import { getSecureAsync, setSecure } from "@/util/storage";
 import { Platform } from "react-native";
 import { getTimestamp } from "@/util/time";
 import { getRecentMessages } from "@/api/chat";
 import { checkIfFirstOfDay, initDB } from "@/db/message";
+import { randomUUID } from "expo-crypto";
+import { useRegisterNotification } from "@/hooks/useNotification";
+import { getDevicePushTokenAsync } from "expo-notifications";
 
 declare const WebSocket: {
   prototype: WebSocket;
@@ -48,10 +51,20 @@ export default function RootLayout() {
 function RootNavigator() {
   const db = useSQLiteContext();
   const { id } = useAuth();
+  const registerNotificationMutation = useRegisterNotification();
   const ws = useRef<WebSocket>(null);
 
   useEffect(() => {
     const connectMessaging = async () => {
+      if (!(await getSecureAsync("deviceId"))) {
+        const deviceId = randomUUID();
+        await setSecure("deviceId", deviceId);
+        registerNotificationMutation.mutate({
+          deviceId: deviceId,
+          os: Platform.OS,
+          devicePushToken: (await getDevicePushTokenAsync()).data,
+        });
+      }
       const row = await db.getFirstAsync<{ id: Uint8Array }>(
         `SELECT id FROM message ORDER BY rowid DESC LIMIT 1`,
       );
@@ -89,6 +102,7 @@ function RootNavigator() {
           headers: {
             Authorization: `Bearer ${await getSecureAsync("accessToken")}`,
             "X-User-Id": `${Platform.OS === "ios" ? localDevId.ios : localDevId.android}`,
+            "Device-Id": await getSecureAsync("deviceId"),
           },
         },
       );
@@ -110,7 +124,7 @@ function RootNavigator() {
       };
     };
     // if (id)//just for development, this should be non commented when production
-      connectMessaging();
+    connectMessaging();
     return () => {
       ws.current?.close();
     };

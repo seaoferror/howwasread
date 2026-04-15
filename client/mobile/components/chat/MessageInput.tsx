@@ -5,12 +5,19 @@ import { colors } from "@/constants";
 import { useState } from "react";
 import { useLocalSearchParams } from "expo-router";
 import { useGetChatRoomInfo, useSendMessaging } from "@/hooks/useChat";
+import {
+  RecordingPresets,
+  useAudioRecorder,
+  useAudioRecorderState,
+} from "expo-audio";
 
 export default function MessageInput() {
   const { id: roomId } = useLocalSearchParams();
   const { data: roomInfo } = useGetChatRoomInfo(String(roomId));
   const [textContent, setTextContent] = useState("");
   const sendMessagingMutation = useSendMessaging();
+  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorderState = useAudioRecorderState(audioRecorder);
 
   const handleSendMessage = (contentType: string) => {
     const message = {
@@ -38,15 +45,30 @@ export default function MessageInput() {
       <InputField
         value={textContent}
         onChangeText={(text) => setTextContent(text)}
-        placeholder={"recording"}
+        placeholder={
+          recorderState.isRecording
+            ? `${recorderState.durationMillis / 1000}s`
+            : ""
+        }
         submitBehavior="newline"
         leftChild={
-          <Pressable
-            style={styles.buttonContainer}
-            onPress={() => handleMoreButton()}
-          >
-            <Feather name="plus" size={20} color={colors.WHITE} />
-          </Pressable>
+          recorderState.durationMillis === 0 ? (
+            <Pressable
+              style={styles.buttonContainer}
+              onPress={() => handleMoreButton()}
+            >
+              <Feather name="plus" size={20} color={colors.WHITE} />
+            </Pressable>
+          ) : (
+            <Pressable
+              style={styles.buttonContainer}
+              onPress={async () => {
+                await audioRecorder.prepareToRecordAsync();
+              }}
+            >
+              <Ionicons name="trash-bin" size={20} color={colors.RED_500} />
+            </Pressable>
+          )
         }
         rightChild={
           textContent.trim() ? (
@@ -56,11 +78,26 @@ export default function MessageInput() {
             >
               <Ionicons name="send-sharp" size={20} color={colors.WHITE} />
             </Pressable>
+          ) : recorderState.durationMillis !== 0 ? (
+            <Pressable style={styles.buttonContainer}>
+              <Ionicons name="send-outline" size={20} color={colors.WHITE} />
+            </Pressable>
+          ) : recorderState.isRecording ? (
+            <Pressable
+              style={styles.buttonContainer}
+              onPress={async () => {
+                await audioRecorder.stop();
+              }}
+            >
+              <Ionicons name="stop" size={20} color="black" />
+            </Pressable>
           ) : (
             <Pressable
               style={styles.buttonContainer}
-              onLongPress={() => {}}
-              onPressOut={() => {}}
+              onPress={async () => {
+                await audioRecorder.prepareToRecordAsync();
+                audioRecorder.record();
+              }}
             >
               <Ionicons name="mic" size={20} color="black" />
             </Pressable>

@@ -11,10 +11,10 @@ import (
 )
 
 func tokenRouter(c *Controller) {
-	c.Router(POST, "/notification/device-push-token", c.registerDevicePushToken)
+	c.Router(POST, "/notification/register", c.registerNotification)
 }
 
-func (c *Controller) registerDevicePushToken(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) registerNotification(w http.ResponseWriter, r *http.Request) {
 	memberIdRaw := r.Header.Get("X-User-Id")
 	memberId, err := uuid.Parse(memberIdRaw)
 	if err != nil {
@@ -23,14 +23,14 @@ func (c *Controller) registerDevicePushToken(w http.ResponseWriter, r *http.Requ
 			"memberIdRaw", memberIdRaw)
 		handleError(w, errors.New("incorrect body"))
 	}
-	var req dto.SetDevicePushTokenRequest
+	var req dto.RegisterNotificationRequest
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		slog.Error("fail to parse body",
 			"err", err)
 		handleError(w, errors.New("incorrect body"))
 	}
-	err = c.service.SetDevicePushToken(r.Context(), memberId, req.DeviceId, req.OS, req.DevicePushToken)
+	err = c.service.RegisterNotification(r.Context(), memberId, req.DeviceId, req.OS, req.DevicePushToken)
 	if err != nil {
 		handleError(w, err)
 	}

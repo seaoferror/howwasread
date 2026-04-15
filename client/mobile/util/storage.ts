@@ -6,7 +6,7 @@ import {
 } from "expo-secure-store";
 import Storage from "expo-sqlite/kv-store";
 
-export async function saveSecureStore(
+export async function setSecure(
   key: string,
   value: string,
 ): Promise<void> {

@@ -8,7 +8,7 @@ import (
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
 )
 
-func (r *Repository) SetPushTokenById(ctx context.Context, id, deviceId gocql.UUID, os, token string) error {
+func (r *Repository) SaveNotificationInfoById(ctx context.Context, id, deviceId gocql.UUID, os, token string) error {
 	err := r.session.Query(`INSERT INTO device_push_token_by_id (id, deviceId, os, token) VALUES (?, ?, ?, ?)`,
 		id, deviceId, os, token).ExecContext(ctx)
 	if err != nil {

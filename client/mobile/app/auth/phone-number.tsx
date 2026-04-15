@@ -13,7 +13,7 @@ import {
 import Toast from "react-native-toast-message";
 import { useAuth } from "@/hooks/useAuth";
 import { router } from "expo-router";
-import { getSecureAsync, saveSecureStore } from "@/util/storage";
+import { getSecureAsync, setSecure } from "@/util/storage";
 
 interface FormValue {
   countryCode: CountryCode;
@@ -74,7 +74,7 @@ export default function PhoneNumberScreen() {
       },
       {
         onSuccess: async () => {
-          await saveSecureStore("timeSmsLastSent", String(Date.now()));
+          await setSecure("timeSmsLastSent", String(Date.now()));
           router.push("/auth/otp/sms");
         },
       },

@@ -1,4 +1,4 @@
-import { getSecureAsync, saveSecureStore } from "@/util/storage";
+import { getSecureAsync, setSecure } from "@/util/storage";
 import { axiosInstance } from "@/api/axios";
 
 async function refreshAccessToken() {
@@ -11,6 +11,7 @@ async function refreshAccessToken() {
     throw new Error(message);
   }
 }
+
 
 axiosInstance.interceptors.request.use(async (config) => {
   const token = await getSecureAsync("accessToken");
@@ -35,7 +36,7 @@ axiosInstance.interceptors.response.use(
         originalRequest._retry = true;
         try {
           const { newToken } = await refreshAccessToken();
-          await saveSecureStore("accessToken", newToken);
+          await setSecure("accessToken", newToken);
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
           return axiosInstance(originalRequest);
         } catch (err) {
