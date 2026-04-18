@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
-	"net"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -16,6 +15,8 @@ func messagingRouter(c *Controller) {
 	c.Router(GET, "/chat/messaging/connect", c.connectMessaging)
 	c.Router(GET, "/chat/messaging/recent", c.getRecentMessages)
 	c.Router(POST, "/chat/messaging/send", c.sendMessaging)
+	c.Router(POST, "/chat/messaging/presigned", c.generatePresignedURL)
+	c.Router(GET, "/chat/messaging/signed", c.getSignedURL)
 }
 
 func (c *Controller) sendLike(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +53,7 @@ func (c *Controller) sendMessaging(w http.ResponseWriter, r *http.Request) {
 		handleError(w, errors.New("fail to parse"))
 		return
 	}
-	result, err := c.service.PublishMessaging(memberId, req.ToIdType, req.ToId, req.ContentType, req.Content)
+	result, err := c.service.PublishMessaging(r.Context(), memberId, req.ToIdType, req.ToId, req.ContentType, req.Content)
 	if err != nil {
 		handleError(w, err)
 		return
@@ -67,8 +68,7 @@ func (c *Controller) sendMessaging(w http.ResponseWriter, r *http.Request) {
 
 func (c *Controller) getRecentMessages(w http.ResponseWriter, r *http.Request) {
 	slog.Info("getRecentMessages")
-	memberIdRaw := r.Header.Get("X-User-Id")
-	memberId, err := uuid.Parse(memberIdRaw)
+	memberId, err := uuid.Parse(r.Header.Get("X-User-Id"))
 	if err != nil {
 		handleError(w, errors.New("fail to parse"))
 		return
@@ -83,6 +83,7 @@ func (c *Controller) getRecentMessages(w http.ResponseWriter, r *http.Request) {
 		handleError(w, err)
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 	err = json.NewEncoder(w).Encode(result)
 	if err != nil {
 		slog.Error("fail to write response body",
@@ -90,17 +91,56 @@ func (c *Controller) getRecentMessages(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// getPodIp will replace with k8s configmap pod ip
-func getPodIP() (string, error) {
-	addrs, err := net.InterfaceAddrs()
+func (c *Controller) generatePresignedURL(w http.ResponseWriter, r *http.Request) {
+	slog.Info("get presigned url request incoming")
+	memberId, err := uuid.Parse(r.Header.Get("X-User-Id"))
 	if err != nil {
-		return "", err
+		handleError(w, errors.New("fail to parse"))
+		return
 	}
-	for _, addr := range addrs {
-		ipNet, ok := addr.(*net.IPNet)
-		if ok && !ipNet.IP.IsLoopback() && ipNet.IP.To4() != nil {
-			return ipNet.IP.String(), nil
-		}
+	var req dto.GeneratePresignedURLRequest
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		handleError(w, errors.New("fail to parse"))
+		return
 	}
-	return "", errors.New("IP not found")
+	result, err := c.service.GeneratePresignedURL(r.Context(), memberId, req.ContentType)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(result)
+	if err != nil {
+		slog.Error("fail to write response body",
+			"err", err)
+	}
+}
+
+func (c *Controller) getSignedURL(w http.ResponseWriter, r *http.Request) {
+	slog.Info("get signed url request incoming")
+	memberId, err := uuid.Parse(r.Header.Get("X-User-Id"))
+	if err != nil {
+		handleError(w, errors.New("fail to parse"))
+		return
+	}
+	bucket := r.URL.Query().Get("bucket")
+	if bucket != "voice" && bucket != "photo" && bucket != "video" {
+		handleError(w, errors.New("bad request"))
+	}
+	filename, err := uuid.Parse(r.URL.Query().Get("filename"))
+	if err != nil {
+		handleError(w, errors.New("bad request"))
+	}
+	result, err := c.service.GenerateSignedURL(r.Context(), memberId, bucket, filename)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(result)
+	if err != nil {
+		slog.Error("fail to write response body",
+			"err", err)
+	}
 }

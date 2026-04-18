@@ -34,3 +34,13 @@ type GetProfileResponse struct {
 	Id   uuid.UUID `json:"id"`
 	Name string    `json:"name"`
 }
+
+type GeneratePresignedURLRequest struct {
+	ContentType string `json:"contentType"`
+}
+
+type GeneratePresignedURLResponse struct {
+	Filename uuid.UUID         `json:"filename"`
+	URL      string            `json:"url"`
+	Fields   map[string]string `json:"fields"`
+}

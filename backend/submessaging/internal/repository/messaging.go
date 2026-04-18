@@ -28,3 +28,13 @@ func (r *Repository) SaveMessaging(ctx context.Context, id, toId, fromId, roomId
 	}
 	return nil
 }
+
+func (r *Repository) SaveIdsByFileName(ctx context.Context, ids []gocql.UUID, filename gocql.UUID) error {
+	err := r.session.Query(`INSERT INTO ids_by_filename (ids, filename) VALUES (?, ?)`,
+		ids, filename).ExecContext(ctx)
+	if err != nil {
+		slog.Error("fail to ids by filename", "err", err)
+		return err
+	}
+	return nil
+}

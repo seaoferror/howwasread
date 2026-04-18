@@ -3,31 +3,41 @@ package service
 import (
 	"backend/chat/internal/kafka/producer"
 	"backend/chat/internal/repository"
-	"log/slog"
+	"context"
+	"log"
+	"os"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/feature/cloudfront/sign"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	_ "github.com/joho/godotenv/autoload"
 )
 
 type Service struct {
 	repository    *repository.Repository
 	kafkaProducer *producer.KafkaProducer
-	clientConn    *grpc.ClientConn
+	presignClient *s3.PresignClient
+	signer        *sign.URLSigner
 }
 
 func NewService(r *repository.Repository, kp *producer.KafkaProducer) *Service {
-	var opts []grpc.DialOption
-	opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	clientConn, err := grpc.NewClient("push-service:50051", opts...)
+	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(os.Getenv("S3_REGION")))
 	if err != nil {
-		slog.Error("fail to get *ClientConn",
-			"err", err)
-		panic(err)
+		log.Panicf("fail to config for presigned client: %v", err)
 	}
+	presignClient := s3.NewPresignClient(s3.NewFromConfig(cfg))
+
+	pk, err := sign.LoadPEMPrivKeyFile("aws_cloud_front_private_key.pem")
+	if err != nil {
+		log.Panicf("fail to make cloud front private key: %v", err)
+	}
+	signer := sign.NewURLSigner(os.Getenv("AWS_CLOUD_FRONT_KEY_PAIR_ID"), pk)
+
 	s := Service{
 		repository:    r,
 		kafkaProducer: kp,
-		clientConn:    clientConn,
+		presignClient: presignClient,
+		signer:        signer,
 	}
 	return &s
 }

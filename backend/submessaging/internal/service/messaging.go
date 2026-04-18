@@ -37,6 +37,21 @@ func (s *Service) ManageMessaging(ctx context.Context, id uuid.UUID, fromId uuid
 			toIds = append(toIds, pid[:])
 		}
 	}
+	if contentType != "text" {
+		filename, err := uuid.Parse(content)
+		if err != nil {
+			slog.Error("fail to parse uuid from content", "err", err)
+			return err
+		}
+		var refinedToIds []gocql.UUID
+		for _, tid := range toIds {
+			refinedToIds = append(refinedToIds, gocql.UUID(tid))
+		}
+		err = s.repository.SaveIdsByFileName(ctx, refinedToIds, gocql.UUID(filename))
+		if err != nil {
+			return err
+		}
+	}
 	var wg sync.WaitGroup
 	var es []error
 	var em sync.Mutex
@@ -153,7 +168,7 @@ func (s *Service) ManageMessaging(ctx context.Context, id uuid.UUID, fromId uuid
 								return
 							}
 							if slices.Contains(currentIPs, ip) {
-								err1 = s.repository.RemoveServerIP(ctx, string(tid), ip)
+								err1 = s.repository.RemoveServerIP(ctxr, string(tid), ip)
 								if err1 != nil {
 									return
 								}
