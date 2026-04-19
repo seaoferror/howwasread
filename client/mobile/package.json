@@ -47,6 +47,7 @@
     "expo-web-browser": "~15.0.10",
     "i18n-iso-countries": "^7.14.0",
     "libphonenumber-js": "^1.12.33",
+    "mime": "^4.1.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-hook-form": "^7.69.0",

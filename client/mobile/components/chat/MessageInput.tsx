@@ -2,11 +2,18 @@ import { Keyboard, Pressable, StyleSheet, View } from "react-native";
 import InputField from "@/components/InputField";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { colors } from "@/constants";
-import { useState } from "react";
+import { use, useState } from "react";
 import { useLocalSearchParams } from "expo-router";
-import { useGetChatRoomInfo, useSendMessaging } from "@/hooks/useChat";
+import {
+  useGeneratePresignedURL,
+  useGetChatRoomInfo,
+  useSendMessaging,
+  useUploadToS3,
+} from "@/hooks/useChat";
 import {
   RecordingPresets,
+  useAudioPlayer,
+  useAudioPlayerStatus,
   useAudioRecorder,
   useAudioRecorderState,
 } from "expo-audio";
@@ -14,23 +21,34 @@ import {
 export default function MessageInput() {
   const { id: roomId } = useLocalSearchParams();
   const { data: roomInfo } = useGetChatRoomInfo(String(roomId));
-  const [textContent, setTextContent] = useState("");
   const sendMessagingMutation = useSendMessaging();
+  const presignedURLMutation = useGeneratePresignedURL();
+  const uploadToS3Mutation = useUploadToS3();
+
+  const [textContent, setTextContent] = useState("");
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const recorderState = useAudioRecorderState(audioRecorder);
+  const audioPlayer = useAudioPlayer();
+  const playerState = useAudioPlayerStatus(audioPlayer);
 
-  const handleSendMessage = (contentType: string) => {
+  const handleSendMessage = (contentType: string, content: string) => {
     const message = {
       toIdType: String(roomInfo?.type),
       toId: String(roomId),
-      contentType: String(contentType),
-      content: textContent,
+      contentType: contentType,
+      content: content,
     };
 
     sendMessagingMutation.mutate(message, {
-      onSuccess: () => {
+      onSuccess: async () => {
         if (contentType === "text") {
           setTextContent("");
+          return;
+        }
+        if (contentType === "voice") {
+          await audioRecorder.prepareToRecordAsync();
+          audioPlayer.remove();
+          return;
         }
       },
     });
@@ -40,6 +58,32 @@ export default function MessageInput() {
     Keyboard.dismiss();
   }
 
+  const handleFileMessage = async (
+    contentType: string,
+    mimeType: string,
+    content: string,
+  ) => {
+    presignedURLMutation.mutate(
+      { contentType },
+      {
+        onSuccess: (data) => {
+          uploadToS3Mutation.mutate(
+            {
+              awsFields: data.fields,
+              awsPresignedURL: data.url,
+              localFileURI: content,
+              mimeType: mimeType,
+            },
+            {
+              onSuccess: () => {
+                handleSendMessage(contentType, data.filename);
+              },
+            },
+          );
+        },
+      },
+    );
+  };
   return (
     <View style={styles.container}>
       <InputField
@@ -47,12 +91,26 @@ export default function MessageInput() {
         onChangeText={(text) => setTextContent(text)}
         placeholder={
           recorderState.isRecording
-            ? `${recorderState.durationMillis / 1000}s`
-            : ""
+            ? `recording... ${recorderState.durationMillis / 1000}s`
+            : playerState.isLoaded
+              ? playerState.playing
+                ? `□ stop ${playerState.currentTime}`
+                : `▷ play ${playerState.duration}`
+              : ``
+        }
+        onPress={
+          playerState.isLoaded
+            ? playerState.playing
+              ? async () => {
+                  audioPlayer.pause();
+                  await audioPlayer.seekTo(0);
+                }
+              : audioPlayer.play
+            : () => {}
         }
         submitBehavior="newline"
         leftChild={
-          recorderState.durationMillis === 0 ? (
+          recorderState.durationMillis !== 0 && !audioPlayer.isLoaded ? (
             <Pressable
               style={styles.buttonContainer}
               onPress={() => handleMoreButton()}
@@ -64,6 +122,7 @@ export default function MessageInput() {
               style={styles.buttonContainer}
               onPress={async () => {
                 await audioRecorder.prepareToRecordAsync();
+                audioPlayer.remove();
               }}
             >
               <Ionicons name="trash-bin" size={20} color={colors.RED_500} />
@@ -74,12 +133,22 @@ export default function MessageInput() {
           textContent.trim() ? (
             <Pressable
               style={styles.buttonContainer}
-              onPress={() => handleSendMessage("text")}
+              onPress={() => handleSendMessage("text", textContent)}
             >
               <Ionicons name="send-sharp" size={20} color={colors.WHITE} />
             </Pressable>
           ) : recorderState.durationMillis !== 0 ? (
-            <Pressable style={styles.buttonContainer}>
+            <Pressable
+              style={styles.buttonContainer}
+              onPress={async () => {
+                if (!audioRecorder.uri) return;
+                await handleFileMessage(
+                  "voice",
+                  "audio/mp4",
+                  audioRecorder.uri,
+                );
+              }}
+            >
               <Ionicons name="send-outline" size={20} color={colors.WHITE} />
             </Pressable>
           ) : recorderState.isRecording ? (
@@ -87,6 +156,7 @@ export default function MessageInput() {
               style={styles.buttonContainer}
               onPress={async () => {
                 await audioRecorder.stop();
+                audioPlayer.replace(audioRecorder.uri);
               }}
             >
               <Ionicons name="stop" size={20} color="black" />

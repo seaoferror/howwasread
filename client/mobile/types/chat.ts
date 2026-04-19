@@ -29,6 +29,19 @@ export interface MessageEntity {
 export interface SendMessagingRequest {
   toIdType: string;
   toId: string;
-  contentType: string
-  content: string
+  contentType: string;
+  content: string;
+}
+
+export interface GeneratePresignedURLResponse {
+  filename: string;
+  url: string;
+  fields: Record<string, string>;
+}
+
+export interface UploadToS3Request {
+  awsPresignedURL: string;
+  awsFields: Record<string, string>;
+  mimeType: string;
+  localFileURI: string;
 }

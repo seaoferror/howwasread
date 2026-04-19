@@ -1,8 +1,11 @@
-import { StyleSheet, View, Text } from "react-native";
+import { StyleSheet, View, Text, Pressable } from "react-native";
 import { Message } from "@/types/chat";
 import { getHourMinute, getLongDate } from "@/util/time";
 import { useMyProfile } from "@/hooks/useMyProfile";
 import { colors } from "@/constants";
+import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
+import { useEffect } from "react";
+import { useGetSignedURL } from "@/hooks/useChat";
 
 interface MessageItemProps {
   message: Omit<Message, "roomId">;
@@ -10,7 +13,16 @@ interface MessageItemProps {
 
 export default function MessageItem({ message }: MessageItemProps) {
   const { profile } = useMyProfile();
-  console.log(message.contentType)
+  const { data } = useGetSignedURL({
+    contentType: message.contentType,
+    filename: message.content,
+  });
+  const audioPlayer = useAudioPlayer();
+  const playerState = useAudioPlayerStatus(audioPlayer);
+
+  useEffect(() => {
+    audioPlayer.replace(data?.url ?? "");
+  }, [audioPlayer, data]);
 
   return (
     <View style={styles.container}>
@@ -33,9 +45,32 @@ export default function MessageItem({ message }: MessageItemProps) {
         ]}
       >
         <View style={styles.messageContainer}>
-          <Text style={styles.content}>
-            {message.contentType === "text" ? message.content : ""}
-          </Text>
+          {message.contentType === "text" ? (
+            <Text style={styles.content}>{message.content}</Text>
+          ) : message.contentType === "voice" ? (
+            <Pressable
+              onPress={
+                playerState.isLoaded
+                  ? playerState.playing
+                    ? async () => {
+                        audioPlayer.pause();
+                        await audioPlayer.seekTo(0);
+                      }
+                    : audioPlayer.play
+                  : () => {}
+              }
+            >
+              <Text>
+                {playerState.isLoaded
+                  ? playerState.playing
+                    ? `□ stop ${playerState.currentTime}`
+                    : `▷ play ${playerState.duration}`
+                  : ``}
+              </Text>
+            </Pressable>
+          ) : (
+            <></>
+          )}
           <Text style={styles.time}>{getHourMinute(message.createdAt)}</Text>
         </View>
       </View>

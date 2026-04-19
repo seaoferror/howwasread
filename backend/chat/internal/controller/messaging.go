@@ -124,15 +124,15 @@ func (c *Controller) getSignedURL(w http.ResponseWriter, r *http.Request) {
 		handleError(w, errors.New("fail to parse"))
 		return
 	}
-	bucket := r.URL.Query().Get("bucket")
-	if bucket != "voice" && bucket != "photo" && bucket != "video" {
+	contentType := r.URL.Query().Get("contentType")
+	if contentType != "voice" && contentType != "photo" && contentType != "video" {
 		handleError(w, errors.New("bad request"))
 	}
 	filename, err := uuid.Parse(r.URL.Query().Get("filename"))
 	if err != nil {
 		handleError(w, errors.New("bad request"))
 	}
-	result, err := c.service.GenerateSignedURL(r.Context(), memberId, bucket, filename)
+	result, err := c.service.GenerateSignedURL(r.Context(), memberId, contentType, filename)
 	if err != nil {
 		handleError(w, err)
 		return

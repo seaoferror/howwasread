@@ -1,5 +1,12 @@
 import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
-import { getChatRoomInfo, sendLike, sendMessaging } from "@/api/chat";
+import {
+  generatePresignedURL,
+  getChatRoomInfo,
+  getSignedURL,
+  sendLike,
+  sendMessaging,
+  uploadToS3,
+} from "@/api/chat";
 import { AxiosError } from "axios";
 import Toast from "react-native-toast-message";
 import { queryKey } from "@/constants";
@@ -22,11 +29,7 @@ export function useSendLike() {
 export function useGetInfiniteMessages(db: SQLiteDatabase, roomId: string) {
   return useInfiniteQuery({
     queryFn: ({ pageParam }) => findMessagesByRoomId(db, roomId, pageParam),
-    queryKey: [
-      queryKey.CONVERSATION,
-      queryKey.FIND_MESSAGES_BY_ROOM_ID,
-      roomId,
-    ],
+    queryKey: [queryKey.CHAT, queryKey.FIND_MESSAGES_BY_ROOM_ID, roomId],
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
       const lastPost = lastPage[lastPage.length - 1];
@@ -53,5 +56,52 @@ export function useSendMessaging() {
         text1: String(error?.response?.data),
       });
     },
-  })
+  });
+}
+
+export function useGeneratePresignedURL() {
+  return useMutation({
+    mutationFn: generatePresignedURL,
+    onError: (error: AxiosError) => {
+      console.log(error?.response?.data);
+      Toast.show({
+        type: "error",
+        text1: String(error?.response?.data),
+      });
+    },
+  });
+}
+
+export function useUploadToS3() {
+  return useMutation({
+    mutationFn: uploadToS3,
+    onError: (error: AxiosError) => {
+      console.log(error?.response?.data);
+      Toast.show({
+        type: "error",
+        text1: String(error?.response?.data),
+      });
+    },
+  });
+}
+
+export function useGetSignedURL({
+  contentType,
+  filename,
+}: {
+  contentType: string;
+  filename: string;
+}) {
+  const { data } = useQuery({
+    queryKey: [queryKey.CHAT, queryKey.GET_SIGNED_URL, filename],
+    queryFn: () =>
+      getSignedURL({
+        contentType: contentType,
+        filename: filename,
+      }),
+    enabled: contentType !== "text",
+    staleTime: 1000 * 60 * 60,
+  });
+
+  return { data };
 }
