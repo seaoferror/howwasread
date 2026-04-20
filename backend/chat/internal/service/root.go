@@ -27,11 +27,11 @@ func NewService(r *repository.Repository, kp *producer.KafkaProducer) *Service {
 	}
 	presignClient := s3.NewPresignClient(s3.NewFromConfig(cfg))
 
-	pk, err := sign.LoadPEMPrivKeyFile("aws_cloud_front_private_key.pem")
+	pk, err := sign.LoadPEMPrivKeyFile("aws_cloudfront_private_key.pem")
 	if err != nil {
 		log.Panicf("fail to make cloud front private key: %v", err)
 	}
-	signer := sign.NewURLSigner(os.Getenv("AWS_CLOUD_FRONT_KEY_PAIR_ID"), pk)
+	signer := sign.NewURLSigner(os.Getenv("AWS_CLOUDFRONT_KEY_PAIR_ID"), pk)
 
 	s := Service{
 		repository:    r,

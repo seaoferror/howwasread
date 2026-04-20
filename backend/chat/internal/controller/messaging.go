@@ -104,6 +104,10 @@ func (c *Controller) generatePresignedURL(w http.ResponseWriter, r *http.Request
 		handleError(w, errors.New("fail to parse"))
 		return
 	}
+	if req.ContentType != "audio" && req.ContentType != "image" && req.ContentType != "video" {
+		handleError(w, errors.New("bad request"))
+		return
+	}
 	result, err := c.service.GeneratePresignedURL(r.Context(), memberId, req.ContentType)
 	if err != nil {
 		handleError(w, err)
@@ -125,7 +129,7 @@ func (c *Controller) getSignedURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	contentType := r.URL.Query().Get("contentType")
-	if contentType != "voice" && contentType != "photo" && contentType != "video" {
+	if contentType != "audio" && contentType != "photo" && contentType != "video" {
 		handleError(w, errors.New("bad request"))
 	}
 	filename, err := uuid.Parse(r.URL.Query().Get("filename"))

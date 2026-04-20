@@ -103,6 +103,7 @@ func (s *Service) GeneratePresignedURL(ctx context.Context, id uuid.UUID, conten
 		opts.Expires = 1 * time.Second
 		opts.Conditions = []any{
 			[]any{"content-length-range", 1, 1024 * 1024 * 1024},
+			[]any{"starts-with", "$Content-Type", contentType},
 		}
 	})
 	if err != nil {
