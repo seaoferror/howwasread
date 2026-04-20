@@ -29,7 +29,7 @@ resource "aws_cloudfront_distribution" "cloudfront_distribution" {
   enabled = true
 
   origin {
-    domain_name              = aws_s3_bucket.restricted_bucket.bucket_regional_domain_name
+    domain_name              = aws_s3_bucket.chat_bucket.bucket_regional_domain_name
     origin_id                = "myS3Origin"
     origin_access_control_id = aws_cloudfront_origin_access_control.s3_oac.id
   }

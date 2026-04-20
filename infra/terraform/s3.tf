@@ -1,5 +1,5 @@
-resource "aws_s3_bucket" "restricted_bucket" {
-  bucket = "my-mimetype-restricted-bucket-123" # Must be globally unique
+resource "aws_s3_bucket" "chat_bucket" {
+  bucket = "chat-bucket-14129" # Must be globally unique
 }
 
 
@@ -8,7 +8,7 @@ data "aws_iam_policy_document" "allow_cloudfront" {
     sid       = "AllowCloudFrontServicePrincipal"
     effect    = "Allow"
     actions   = ["s3:GetObject"]
-    resources = ["${aws_s3_bucket.restricted_bucket.arn}/*"]
+    resources = ["${aws_s3_bucket.chat_bucket.arn}/*"]
 
     principals {
       type        = "Service"
@@ -25,6 +25,6 @@ data "aws_iam_policy_document" "allow_cloudfront" {
 
 
 resource "aws_s3_bucket_policy" "bucket_policy" {
-  bucket = aws_s3_bucket.restricted_bucket.id
+  bucket = aws_s3_bucket.chat_bucket.id
   policy = data.aws_iam_policy_document.allow_cloudfront.json
 }
