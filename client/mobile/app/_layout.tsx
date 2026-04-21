@@ -56,15 +56,16 @@ function RootNavigator() {
 
   useEffect(() => {
     const connectMessaging = async () => {
-      if (!(await getSecureAsync("deviceId"))) {
-        const deviceId = randomUUID();
+      let deviceId = await getSecureAsync("deviceId")
+      if (!deviceId) {
+        deviceId = randomUUID();
         await setSecure("deviceId", deviceId);
-        registerNotificationMutation.mutate({
-          deviceId: deviceId,
-          os: Platform.OS,
-          devicePushToken: (await getDevicePushTokenAsync()).data,
-        });
       }
+      registerNotificationMutation.mutate({
+        deviceId: deviceId,
+        os: Platform.OS,
+        devicePushToken: (await getDevicePushTokenAsync()).data,
+      });
       const row = await db.getFirstAsync<{ id: Uint8Array }>(
         `SELECT id FROM message ORDER BY rowid DESC LIMIT 1`,
       );
