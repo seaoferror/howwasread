@@ -1,7 +1,7 @@
 package consumer
 
 import (
-	"backend/messageprocess/internal/service"
+	"backend/messagepreprocess/internal/service"
 	"backend/payload"
 	"context"
 	"encoding/json"

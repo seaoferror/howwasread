@@ -1,6 +1,6 @@
 package main
 
-import "backend/messageprocess/internal"
+import "backend/messagepreprocess/internal"
 
 func main() {
 	internal.NewServer()

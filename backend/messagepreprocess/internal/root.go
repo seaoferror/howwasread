@@ -1,10 +1,10 @@
 package internal
 
 import (
-	"backend/messageprocess/internal/kafka/consumer"
-	"backend/messageprocess/internal/kafka/producer"
-	"backend/messageprocess/internal/repository"
-	"backend/messageprocess/internal/service"
+	"backend/messagepreprocess/internal/kafka/consumer"
+	"backend/messagepreprocess/internal/kafka/producer"
+	"backend/messagepreprocess/internal/repository"
+	"backend/messagepreprocess/internal/service"
 	"log/slog"
 	"os"
 )

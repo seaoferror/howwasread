@@ -1,8 +1,8 @@
 package service
 
 import (
-	"backend/messageprocess/internal/kafka/producer"
-	"backend/messageprocess/internal/repository"
+	"backend/messagepreprocess/internal/kafka/producer"
+	"backend/messagepreprocess/internal/repository"
 )
 
 type Service struct {
