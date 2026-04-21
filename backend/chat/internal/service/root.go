@@ -15,12 +15,12 @@ import (
 
 type Service struct {
 	repository    *repository.Repository
-	kafkaProducer *producer.KafkaProducer
+	producer      *producer.Producer
 	presignClient *s3.PresignClient
 	signer        *sign.URLSigner
 }
 
-func NewService(r *repository.Repository, kp *producer.KafkaProducer) *Service {
+func NewService(r *repository.Repository, kp *producer.Producer) *Service {
 	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(os.Getenv("S3_REGION")))
 	if err != nil {
 		log.Panicf("fail to config for presigned client: %v", err)
@@ -35,7 +35,7 @@ func NewService(r *repository.Repository, kp *producer.KafkaProducer) *Service {
 
 	s := Service{
 		repository:    r,
-		kafkaProducer: kp,
+		producer:      kp,
 		presignClient: presignClient,
 		signer:        signer,
 	}

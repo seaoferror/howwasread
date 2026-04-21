@@ -10,12 +10,12 @@ import (
 	"github.com/google/uuid"
 )
 
-type Producer struct {
-	asyncProducer sarama.AsyncProducer
+type KafkaProducer struct {
+	producer sarama.AsyncProducer
 }
 
-func NewProducer() *Producer {
-	asyncProducer, err := createProducer()
+func NewKafkaProducer() *KafkaProducer {
+	producer, err := createProducer()
 	if err != nil {
 		slog.Error("fail to create producer",
 			"err", err,
@@ -23,7 +23,7 @@ func NewProducer() *Producer {
 		panic(err)
 	}
 	log.Print("success to create kafka producer")
-	kp := Producer{asyncProducer: asyncProducer}
+	kp := KafkaProducer{producer}
 
 	return &kp
 }
@@ -36,7 +36,7 @@ func createProducer() (sarama.AsyncProducer, error) {
 		return nil, err
 	}
 
-	cfg.ClientID = "chat.producer." + id.String()
+	cfg.ClientID = "signalrelay.producer." + id.String()
 	//cfg.Net.SASL.Enable = true
 	//cfg.Net.SASL.Version = 1
 	//cfg.Net.SASL.Mechanism = sarama.SASLTypePlaintext
@@ -58,27 +58,42 @@ func createProducer() (sarama.AsyncProducer, error) {
 	return sarama.NewAsyncProducer([]string{os.Getenv("KAFKA_URL")}, cfg)
 }
 
-func (p *Producer) PushMessage(topic string, value []byte) error {
+func (kp *KafkaProducer) PushMessage(topic string, header []sarama.RecordHeader, value []byte) error {
 
 	msg := sarama.ProducerMessage{
-		Topic: topic,
-		Value: sarama.ByteEncoder(value),
+		Topic:   topic,
+		Headers: header,
+		Value:   sarama.ByteEncoder(value),
 	}
 
-	p.asyncProducer.Input() <- &msg
+	kp.producer.Input() <- &msg
 
 	select {
-	case succeedMsg := <-p.asyncProducer.Successes():
+	case succeedMsg := <-kp.producer.Successes():
 		log.Print("Success to produce payload",
 			"partition", succeedMsg.Partition)
 		return nil
-	case err := <-p.asyncProducer.Errors():
+	case err := <-kp.producer.Errors():
 		log.Print("Failed to produce payload",
 			"err", err)
 		return err
 	}
 }
 
-func (p *Producer) Close() error {
-	return p.asyncProducer.Close()
+func (kp *KafkaProducer) Close() error {
+	return kp.producer.Close()
+}
+
+func (kp *KafkaProducer) PushDeadLetter(reason error, originalTopic string, value []byte) error {
+	headers := []sarama.RecordHeader{
+		{Key: []byte("x-error-message"), Value: []byte(reason.Error())},
+		{Key: []byte("x-original-topic"), Value: []byte(originalTopic)},
+		{Key: []byte("x-failed-at"), Value: []byte(time.Now().Format(time.RFC3339))},
+	}
+	err := kp.PushMessage("dlq", headers, value)
+	if err != nil {
+		slog.Error("fail to publish dead letter", "err", err)
+		return err
+	}
+	return nil
 }

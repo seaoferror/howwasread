@@ -23,7 +23,7 @@ func NewProducer() *Producer {
 		panic(err)
 	}
 	log.Print("success to create kafka producer")
-	kp := Producer{asyncProducer: asyncProducer}
+	kp := Producer{asyncProducer}
 
 	return &kp
 }
@@ -36,7 +36,7 @@ func createProducer() (sarama.AsyncProducer, error) {
 		return nil, err
 	}
 
-	cfg.ClientID = "chat.producer." + id.String()
+	cfg.ClientID = "message_notification.producer." + id.String()
 	//cfg.Net.SASL.Enable = true
 	//cfg.Net.SASL.Version = 1
 	//cfg.Net.SASL.Mechanism = sarama.SASLTypePlaintext
@@ -58,11 +58,12 @@ func createProducer() (sarama.AsyncProducer, error) {
 	return sarama.NewAsyncProducer([]string{os.Getenv("KAFKA_URL")}, cfg)
 }
 
-func (p *Producer) PushMessage(topic string, value []byte) error {
+func (p *Producer) PushMessage(topic string, header []sarama.RecordHeader, value []byte) error {
 
 	msg := sarama.ProducerMessage{
-		Topic: topic,
-		Value: sarama.ByteEncoder(value),
+		Topic:   topic,
+		Headers: header,
+		Value:   sarama.ByteEncoder(value),
 	}
 
 	p.asyncProducer.Input() <- &msg
@@ -81,4 +82,18 @@ func (p *Producer) PushMessage(topic string, value []byte) error {
 
 func (p *Producer) Close() error {
 	return p.asyncProducer.Close()
+}
+
+func (p *Producer) PushDeadLetter(reason error, originalTopic string, value []byte) error {
+	headers := []sarama.RecordHeader{
+		{Key: []byte("x-error-message"), Value: []byte(reason.Error())},
+		{Key: []byte("x-original-topic"), Value: []byte(originalTopic)},
+		{Key: []byte("x-failed-at"), Value: []byte(time.Now().Format(time.RFC3339))},
+	}
+	err := p.PushMessage("dlq", headers, value)
+	if err != nil {
+		slog.Error("fail to publish dead letter", "err", err)
+		return err
+	}
+	return nil
 }

@@ -19,9 +19,8 @@ import (
 )
 
 func (s *Service) NotifyMessaging(ctx context.Context,
-	toIds []uuid.UUID, roomId, fromId uuid.UUID,
+	toIds [][]byte, roomId, fromId uuid.UUID,
 	contentType, content string) error {
-
 	var em sync.Mutex
 	var es []error
 	var wg sync.WaitGroup
@@ -56,8 +55,9 @@ func (s *Service) NotifyMessaging(ctx context.Context,
 		}()
 	}
 	wg.Wait()
-	if errors.Join(es...) != nil {
-		return errors.Join(es...)
+	err0 := errors.Join(es...)
+	if err0 != nil {
+		return err0
 	}
 
 	if contentType != "text" {
@@ -195,8 +195,9 @@ func (s *Service) NotifyMessaging(ctx context.Context,
 		}()
 	}
 	wg.Wait()
-	if errors.Join(es...) != nil {
-		return errors.Join(es...)
+	err0 = errors.Join(es...)
+	if err0 != nil {
+		return err0
 	}
 
 	return nil

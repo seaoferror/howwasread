@@ -1,11 +1,11 @@
 package internal
 
 import (
-	"backend/chat/internal/controller"
-	"backend/chat/internal/grpccontroller"
-	"backend/chat/internal/kafka/producer"
-	"backend/chat/internal/repository"
-	"backend/chat/internal/service"
+	"backend/onlineconversation/internal/controller"
+	"backend/onlineconversation/internal/grpccontroller"
+	"backend/onlineconversation/internal/kafka/producer"
+	"backend/onlineconversation/internal/repository"
+	"backend/onlineconversation/internal/service"
 	pb "backend/proto"
 	"log"
 	"log/slog"
@@ -22,11 +22,11 @@ func NewServer() {
 	}))
 	slog.SetDefault(logger)
 
-	p := producer.NewProducer()
+	kp := producer.NewKafkaProducer()
 
 	r := repository.NewRepository()
 
-	s := service.NewService(r, p)
+	s := service.NewService(r, kp)
 
 	mux := http.NewServeMux()
 
@@ -47,10 +47,9 @@ func NewServer() {
 	}
 	gc := grpccontroller.NewGRPCController(c)
 	g := grpc.NewServer()
-	pb.RegisterMessagingServiceServer(g, gc)
+	pb.RegisterSignalServiceServer(g, gc)
 	err = g.Serve(lis)
 	if err != nil {
 		log.Fatalf("fail to serve: %v", err)
 	}
-
 }

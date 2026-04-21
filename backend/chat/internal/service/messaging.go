@@ -69,7 +69,7 @@ func (s *Service) PublishMessaging(ctx context.Context, fromId uuid.UUID, toIdTy
 			return nil, err1
 		}
 	}
-	p, _ := json.Marshal(payload.ChatMessaging{
+	p, _ := json.Marshal(payload.ChatMessage{
 		Id:          id[:],
 		FromId:      fromId[:],
 		ToIdType:    toIdType,
@@ -77,7 +77,7 @@ func (s *Service) PublishMessaging(ctx context.Context, fromId uuid.UUID, toIdTy
 		ContentType: contentType,
 		Content:     content,
 	})
-	err = s.kafkaProducer.PushMessage("chat.messaging", p)
+	err = s.producer.PushMessage("chat.message", p)
 	if err != nil {
 		slog.Error("fail to publish message", "err", err)
 		return nil, err
