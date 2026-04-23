@@ -14,7 +14,7 @@ message RelayMessagingRequest {
   bytes roomId = 3;
   bytes fromId = 4;
   string contentType = 5;
-  string content = 6;
+  repeated string contents = 6;
 }
 
 message RelayMessagingResponse {

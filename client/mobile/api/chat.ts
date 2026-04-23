@@ -31,7 +31,7 @@ export async function getChatRoomInfo(
   return data;
 }
 
-export async function sendMessaging(
+export async function sendMessage(
   body: SendMessagingRequest,
 ): Promise<{ id: string }> {
   const { data } = await axiosInstance.post("/chat/messaging/send", body);
@@ -40,7 +40,7 @@ export async function sendMessaging(
 
 export async function generatePresignedURL(body: {
   contentType: string;
-  numberOfContent: number;
+  n: number;
 }): Promise<GeneratePresignedURLResponse[]> {
   const { data } = await axiosInstance.post(`/chat/messaging/presigned`, body);
   return data;
@@ -51,13 +51,13 @@ export async function uploadToS3({
   awsFields,
   localFileURI,
   mimeType,
-  filename
+  filename,
 }: UploadToS3Request): Promise<void> {
   const formData = new FormData();
   Object.keys(awsFields).forEach((key) => {
     formData.append(key, awsFields[key]);
   });
-  formData.append("Content-type", mimeType)
+  formData.append("Content-type", mimeType);
   formData.append("file", new File(localFileURI), filename);
   const { data } = await axios.post(awsPresignedURL, formData, {
     headers: {
@@ -76,8 +76,8 @@ export async function getSignedURL({
 }): Promise<{ url: string }> {
   const { data } = await axiosInstance.get(`/chat/messaging/signed`, {
     params: {
-      contentType, // equivalent to contentType: contentType
-      filename, // equivalent to filename: filename
+      contentType,
+      filename,
     },
   });
   return data;

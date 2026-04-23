@@ -14,7 +14,7 @@ import { useLocalSearchParams } from "expo-router";
 import {
   useGeneratePresignedURL,
   useGetChatRoomInfo,
-  useSendMessaging,
+  useSendMessage,
 } from "@/hooks/useChat";
 import {
   RecordingPresets,
@@ -33,7 +33,7 @@ import Toast from "react-native-toast-message";
 export default function MessageInput() {
   const { id: roomId } = useLocalSearchParams();
   const { data: roomInfo } = useGetChatRoomInfo(String(roomId));
-  const sendMessagingMutation = useSendMessaging();
+  const sendMessageMutation = useSendMessage();
   const presignedURLMutation = useGeneratePresignedURL();
 
   const [textContent, setTextContent] = useState("");
@@ -42,15 +42,15 @@ export default function MessageInput() {
   const audioPlayer = useAudioPlayer();
   const playerState = useAudioPlayerStatus(audioPlayer);
 
-  const handleSendMessage = (contentType: string, content: string[]) => {
+  const handleSendMessage = (contentType: string, contents: string[]) => {
     const message = {
       toIdType: String(roomInfo?.type),
       toId: String(roomId),
       contentType: contentType,
-      content: content,
+      contents: contents,
     };
 
-    sendMessagingMutation.mutate(message, {
+    sendMessageMutation.mutate(message, {
       onSuccess: async () => {
         if (contentType === "text") {
           setTextContent("");
@@ -125,7 +125,7 @@ export default function MessageInput() {
     content: string[],
   ) => {
     presignedURLMutation.mutate(
-      { contentType: contentType, numberOfContent: content.length },
+      { contentType: contentType, n: content.length },
       {
         onSuccess: async (data) => {
           try {

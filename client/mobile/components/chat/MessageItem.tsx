@@ -5,7 +5,7 @@ import { useMyProfile } from "@/hooks/useMyProfile";
 import { colors } from "@/constants";
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import { useEffect } from "react";
-import { useGetSignedURL } from "@/hooks/useChat";
+import { useGetSignedURLs } from "@/hooks/useChat";
 
 interface MessageItemProps {
   message: Omit<Message, "roomId">;
@@ -13,16 +13,18 @@ interface MessageItemProps {
 
 export default function MessageItem({ message }: MessageItemProps) {
   const { profile } = useMyProfile();
-  const { data } = useGetSignedURL({
+  const datas = useGetSignedURLs({
     contentType: message.contentType,
-    filename: message.content,
+    contents: message.contents,
   });
   const audioPlayer = useAudioPlayer();
   const playerState = useAudioPlayerStatus(audioPlayer);
 
   useEffect(() => {
-    audioPlayer.replace(data?.url ?? "");
-  }, [audioPlayer, data]);
+    if (message.contentType === "audio") {
+      audioPlayer.replace(datas[0]?.url ?? "");
+    }
+  }, [audioPlayer, datas, message.contentType]);
 
   return (
     <View style={styles.container}>
@@ -46,7 +48,7 @@ export default function MessageItem({ message }: MessageItemProps) {
       >
         <View style={styles.messageContainer}>
           {message.contentType === "text" ? (
-            <Text style={styles.content}>{message.content}</Text>
+            <Text style={styles.content}>{message.contents[0]}</Text>
           ) : message.contentType === "voice" ? (
             <Pressable
               onPress={

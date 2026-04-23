@@ -3,7 +3,7 @@ export interface MessagingResponse {
   roomId: string;
   fromId: string;
   contentType: string;
-  content: string;
+  contents: string[];
 }
 
 export interface Message extends MessagingResponse {
@@ -21,7 +21,7 @@ export interface MessageEntity {
   room_id: Uint8Array;
   from_id: Uint8Array;
   content_type: string;
-  content: string;
+  contents: string; //TEXT type column is used with JSON.stringify
   created_at: string;
   is_day_first: number;
 }
@@ -30,7 +30,7 @@ export interface SendMessagingRequest {
   toIdType: string;
   toId: string;
   contentType: string;
-  content: string[];
+  contents: string[];
 }
 
 export interface GeneratePresignedURLResponse {

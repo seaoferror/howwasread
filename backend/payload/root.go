@@ -9,19 +9,19 @@ type OnlineConversationSignal struct {
 }
 
 type ChatMessage struct {
-	Id          []byte `json:"id"`
-	FromId      []byte `json:"fromId"`
-	ToIdType    string `json:"toIdType"`
-	ToId        []byte `json:"toId"`
-	ContentType string `json:"contentType"`
-	Content     string `json:"content"`
+	Id          []byte   `json:"id"`
+	FromId      []byte   `json:"fromId"`
+	ToIdType    string   `json:"toIdType"`
+	ToId        []byte   `json:"toId"`
+	ContentType string   `json:"contentType"`
+	Contents    []string `json:"contents"`
 }
 
 type PreparedMessage struct {
-	Id          []byte   `json:"id"`
+	Id          []byte   `json:"id,omitempty"`
 	ToIds       [][]byte `json:"toIds"`
 	RoomId      []byte   `json:"roomId"`
 	FromId      []byte   `json:"fromId"`
 	ContentType string   `json:"contentType"`
-	Content     string   `json:"content"`
+	Contents    []string `json:"contents"`
 }

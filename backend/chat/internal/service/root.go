@@ -18,6 +18,7 @@ type Service struct {
 	producer      *producer.Producer
 	presignClient *s3.PresignClient
 	signer        *sign.URLSigner
+	cloudfrontURL string
 }
 
 func NewService(r *repository.Repository, kp *producer.Producer) *Service {
@@ -38,6 +39,7 @@ func NewService(r *repository.Repository, kp *producer.Producer) *Service {
 		producer:      kp,
 		presignClient: presignClient,
 		signer:        signer,
+		cloudfrontURL: os.Getenv("AWS_CLOUD_FRONT_URL"),
 	}
 	return &s
 }

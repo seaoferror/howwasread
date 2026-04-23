@@ -97,7 +97,7 @@ func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (c *Controller) RelayMessaging(ctx context.Context, id uuid.UUID, toIds [][]byte, roomId, fromId uuid.UUID, contentType, content string) ([][]byte, error) {
+func (c *Controller) RelayMessaging(ctx context.Context, id uuid.UUID, toIds [][]byte, roomId, fromId uuid.UUID, contentType string, contents []string) ([][]byte, error) {
 	var wg sync.WaitGroup
 	var pushToIds [][]byte
 	var mu sync.Mutex
@@ -106,7 +106,7 @@ func (c *Controller) RelayMessaging(ctx context.Context, id uuid.UUID, toIds [][
 		RoomId:      roomId,
 		FromId:      fromId,
 		ContentType: contentType,
-		Content:     content,
+		Contents:    contents,
 	}
 	resRaw, _ := json.Marshal(res)
 	for _, toId := range toIds {

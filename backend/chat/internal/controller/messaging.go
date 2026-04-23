@@ -53,7 +53,7 @@ func (c *Controller) sendMessaging(w http.ResponseWriter, r *http.Request) {
 		handleError(w, errors.New("fail to parse"))
 		return
 	}
-	result, err := c.service.PublishMessaging(r.Context(), memberId, req.ToIdType, req.ToId, req.ContentType, req.Content)
+	result, err := c.service.PublishMessaging(r.Context(), memberId, req.ToIdType, req.ToId, req.ContentType, req.Contents)
 	if err != nil {
 		handleError(w, err)
 		return
@@ -108,7 +108,7 @@ func (c *Controller) generatePresignedURL(w http.ResponseWriter, r *http.Request
 		handleError(w, errors.New("bad request"))
 		return
 	}
-	result, err := c.service.GeneratePresignedURL(r.Context(), memberId, req.ContentType)
+	result, err := c.service.GeneratePresignedURL(r.Context(), memberId, req.ContentType, req.N)
 	if err != nil {
 		handleError(w, err)
 		return

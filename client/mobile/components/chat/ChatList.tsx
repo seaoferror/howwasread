@@ -17,7 +17,7 @@ export default function ChatList() {
               room_id,
               from_id,
               content_type,
-              content,
+              contents,
               created_at
        FROM message
        WHERE rowid = ?`,
@@ -31,7 +31,7 @@ export default function ChatList() {
       roomId: uuidStringify(newMessageRaw.room_id),
       fromId: uuidStringify(newMessageRaw.from_id),
       contentType: newMessageRaw.content_type,
-      content: newMessageRaw.content,
+      contents: JSON.parse(newMessageRaw.contents),
       createdAt: newMessageRaw.created_at,
     };
 
@@ -49,7 +49,7 @@ export default function ChatList() {
                 m.room_id,
                 m.from_id,
                 m.content_type,
-                m.content,
+                m.contents,
                 m.created_at
          FROM message m
                 INNER JOIN
@@ -65,7 +65,7 @@ export default function ChatList() {
         roomId: uuidStringify(row.room_id),
         fromId: uuidStringify(row.from_id),
         contentType: row.content_type,
-        content: row.content,
+        contents: JSON.parse(row.contents),
         createdAt: row.created_at,
       }));
       setPreview(p);

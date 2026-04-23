@@ -88,7 +88,7 @@ function RootNavigator() {
             roomId,
             uuidParse(m.fromId),
             m.contentType,
-            m.content,
+            JSON.stringify(m.contents),
             timestamp,
             await checkIfFirstOfDay(db, roomId, timestamp),
           );
@@ -118,7 +118,7 @@ function RootNavigator() {
           roomId,
           uuidParse(data.fromId),
           data.contentType,
-          data.content,
+          JSON.stringify(data.contents),
           timestamp,
           await checkIfFirstOfDay(db, roomId, timestamp),
         );

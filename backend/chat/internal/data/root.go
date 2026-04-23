@@ -9,5 +9,5 @@ type FindMessagesByToIdAndId struct {
 	RoomId      []byte
 	FromId      gocql.UUID
 	ContentType string
-	Content     string
+	Contents    []string
 }

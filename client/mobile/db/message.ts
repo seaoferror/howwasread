@@ -11,7 +11,7 @@ export async function initDB(db: SQLiteDatabase) {
         room_id BLOB NOT NULL,
         from_id BLOB NOT NULL,
         content_type TEXT NOT NULL,
-        content TEXT NOT NULL,
+        contents TEXT NOT NULL,
         created_at TEXT NOT NULL,
         is_day_first INTEGER DEFAULT 0
     );`);
@@ -26,7 +26,8 @@ export async function checkIfFirstOfDay(
 
   const existing = await db.getFirstAsync(
     `SELECT 1 FROM message WHERE room_id = ? AND created_at LIKE ? LIMIT 1`,
-    roomId, datePrefix,
+    roomId,
+    datePrefix,
   );
 
   return existing ? 0 : 1;
@@ -43,7 +44,7 @@ export async function findMessagesByRoomId(
     `SELECT id,
             from_id,
             content_type,
-            content,
+            contents,
             created_at,
             is_day_first
      FROM message
@@ -59,7 +60,7 @@ export async function findMessagesByRoomId(
     id: uuidStringify(row.id),
     fromId: uuidStringify(row.from_id),
     contentType: row.content_type,
-    content: row.content,
+    contents: JSON.parse(row.contents),
     createdAt: row.created_at,
     isDayFirst: Boolean(row.is_day_first),
   }));

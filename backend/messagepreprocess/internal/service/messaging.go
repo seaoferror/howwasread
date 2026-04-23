@@ -4,13 +4,15 @@ import (
 	"backend/payload"
 	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
+	"sync"
 
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
 	"github.com/google/uuid"
 )
 
-func (s *Service) ManageMessage(ctx context.Context, id uuid.UUID, fromId uuid.UUID, toIdType string, toId uuid.UUID, contentType string, content string) error {
+func (s *Service) ManageMessage(ctx context.Context, id uuid.UUID, fromId uuid.UUID, toIdType string, toId uuid.UUID, contentType string, contents []string) error {
 	var toIds [][]byte
 	roomId := toId
 	if toIdType == "personal" {
@@ -27,16 +29,34 @@ func (s *Service) ManageMessage(ctx context.Context, id uuid.UUID, fromId uuid.U
 		}
 	}
 	if contentType != "text" {
-		filename, err := uuid.Parse(content)
-		if err != nil {
-			slog.Error("fail to parse uuid from content", "err", err)
-			return err
+		var wg sync.WaitGroup
+		var em sync.Mutex
+		var es []error
+		for _, content := range contents {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				filename, err := uuid.Parse(content)
+				if err != nil {
+					slog.Error("fail to parse uuid from content", "err", err)
+					em.Lock()
+					es = append(es, err)
+					em.Lock()
+				}
+				var castedIds []gocql.UUID
+				for _, tid := range toIds {
+					castedIds = append(castedIds, gocql.UUID(tid))
+				}
+				err = s.repository.SaveIdsByFileName(ctx, castedIds, gocql.UUID(filename))
+				if err != nil {
+					em.Lock()
+					es = append(es, err)
+					em.Lock()
+				}
+			}()
 		}
-		var castedIds []gocql.UUID
-		for _, tid := range toIds {
-			castedIds = append(castedIds, gocql.UUID(tid))
-		}
-		err = s.repository.SaveIdsByFileName(ctx, castedIds, gocql.UUID(filename))
+		wg.Wait()
+		err := errors.Join(es...)
 		if err != nil {
 			return err
 		}
@@ -48,7 +68,7 @@ func (s *Service) ManageMessage(ctx context.Context, id uuid.UUID, fromId uuid.U
 		RoomId:      roomId[:],
 		FromId:      fromId[:],
 		ContentType: contentType,
-		Content:     content,
+		Contents:    contents,
 	})
 
 	err := s.producer.PushMessage("manage_message.prepared", nil, p)

@@ -1,16 +1,22 @@
-import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueries,
+  useQuery,
+} from "@tanstack/react-query";
 import {
   generatePresignedURL,
   getChatRoomInfo,
   getSignedURL,
   sendLike,
-  sendMessaging,
+  sendMessage,
 } from "@/api/chat";
 import { AxiosError } from "axios";
 import Toast from "react-native-toast-message";
 import { queryKey } from "@/constants";
 import { findMessagesByRoomId } from "@/db/message";
 import { SQLiteDatabase } from "expo-sqlite";
+import { data } from "browserslist";
 
 export function useSendLike() {
   return useMutation({
@@ -45,9 +51,9 @@ export function useGetChatRoomInfo(roomId: string) {
   return { data };
 }
 
-export function useSendMessaging() {
+export function useSendMessage() {
   return useMutation({
-    mutationFn: sendMessaging,
+    mutationFn: sendMessage,
     onError: (error: AxiosError) => {
       console.log(error?.response?.data);
       Toast.show({
@@ -71,23 +77,32 @@ export function useGeneratePresignedURL() {
   });
 }
 
-export function useGetSignedURL({
+export function useGetSignedURLs({
   contentType,
-  filename,
+  contents,
 }: {
   contentType: string;
-  filename: string;
+  contents: string[];
 }) {
-  const { data } = useQuery({
-    queryKey: [queryKey.CHAT, queryKey.GET_SIGNED_URL, filename],
-    queryFn: () =>
-      getSignedURL({
-        contentType: contentType,
-        filename: filename,
-      }),
-    enabled: contentType !== "text",
-    staleTime: 1000 * 60 * 60,
+  const queries = useQueries({
+    queries: contents.map((filename) => {
+      return {
+        queryKey: [
+          queryKey.CHAT,
+          queryKey.GET_SIGNED_URL,
+          contentType,
+          filename,
+        ],
+        queryFn: () =>
+          getSignedURL({
+            contentType,
+            filename: filename,
+          }),
+        enabled: contentType !== "text" && !!filename,
+        staleTime: 1000 * 60 * 60,
+      };
+    }),
   });
 
-  return { data };
+  return queries.map((result) => result.data)
 }

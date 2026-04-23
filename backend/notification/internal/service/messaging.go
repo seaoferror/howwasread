@@ -18,9 +18,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) NotifyMessaging(ctx context.Context,
-	toIds [][]byte, roomId, fromId uuid.UUID,
-	contentType, content string) error {
+func (s *Service) NotifyMessaging(ctx context.Context, toIds [][]byte, roomId, fromId uuid.UUID, contentType string, content []string) error {
 	var em sync.Mutex
 	var es []error
 	var wg sync.WaitGroup
@@ -60,8 +58,9 @@ func (s *Service) NotifyMessaging(ctx context.Context,
 		return err0
 	}
 
+	body := content[0]
 	if contentType != "text" {
-		content = fmt.Sprintf("(%s)", contentType)
+		body = fmt.Sprintf("(%s)", contentType)
 	}
 
 	senderName, err := s.repository.FindNameById(ctx, gocql.UUID(fromId))
@@ -99,7 +98,7 @@ func (s *Service) NotifyMessaging(ctx context.Context,
 		Aps Aps `json:"aps"`
 	}
 	alert := Alert{
-		Body: content,
+		Body: body,
 	}
 	alert.Title = senderName
 	if roomId != uuid.Nil {
@@ -165,7 +164,7 @@ func (s *Service) NotifyMessaging(ctx context.Context,
 	message := &messaging.MulticastMessage{
 		Notification: &messaging.Notification{
 			Title: senderName,
-			Body:  content,
+			Body:  body,
 		},
 		Tokens: fcmts,
 	}

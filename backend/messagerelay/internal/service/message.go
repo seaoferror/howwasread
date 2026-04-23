@@ -18,7 +18,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte, roomId uuid.UUID, fromId uuid.UUID, contentType string, content string) error {
+func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte, roomId uuid.UUID, fromId uuid.UUID, contentType string, contents []string) error {
 	var wg sync.WaitGroup
 	relayToIdsByIP := make(map[string][][]byte)
 	var rm sync.Mutex
@@ -52,7 +52,7 @@ func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte
 			RoomId:      roomId[:],
 			FromId:      fromId[:],
 			ContentType: contentType,
-			Content:     content,
+			Contents:    contents,
 		})
 		err := s.producer.PushMessage("notify_message", nil, p)
 		if err != nil {
@@ -92,7 +92,7 @@ func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte
 				RoomId:      roomId[:],
 				FromId:      fromId[:],
 				ContentType: contentType,
-				Content:     content,
+				Contents:    contents,
 			}
 			ctxt, cancel := context.WithTimeout(ctx, time.Second*5)
 			defer cancel()
@@ -172,7 +172,7 @@ func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte
 			RoomId:      roomId[:],
 			FromId:      fromId[:],
 			ContentType: contentType,
-			Content:     content,
+			Contents:    contents,
 		})
 		err := s.producer.PushMessage("notify_message", nil, p)
 		if err != nil {

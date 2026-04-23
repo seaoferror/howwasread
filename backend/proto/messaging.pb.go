@@ -28,7 +28,7 @@ type RelayMessagingRequest struct {
 	RoomId        []byte                 `protobuf:"bytes,3,opt,name=roomId,proto3" json:"roomId,omitempty"`
 	FromId        []byte                 `protobuf:"bytes,4,opt,name=fromId,proto3" json:"fromId,omitempty"`
 	ContentType   string                 `protobuf:"bytes,5,opt,name=contentType,proto3" json:"contentType,omitempty"`
-	Content       string                 `protobuf:"bytes,6,opt,name=content,proto3" json:"content,omitempty"`
+	Contents      []string               `protobuf:"bytes,6,rep,name=contents,proto3" json:"contents,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -98,11 +98,11 @@ func (x *RelayMessagingRequest) GetContentType() string {
 	return ""
 }
 
-func (x *RelayMessagingRequest) GetContent() string {
+func (x *RelayMessagingRequest) GetContents() []string {
 	if x != nil {
-		return x.Content
+		return x.Contents
 	}
-	return ""
+	return nil
 }
 
 type RelayMessagingResponse struct {
@@ -153,14 +153,14 @@ var File_proto_messaging_proto protoreflect.FileDescriptor
 
 const file_proto_messaging_proto_rawDesc = "" +
 	"\n" +
-	"\x15proto/messaging.proto\x12\x10messagingservice\"\xa9\x01\n" +
+	"\x15proto/messaging.proto\x12\x10messagingservice\"\xab\x01\n" +
 	"\x15RelayMessagingRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\fR\x02id\x12\x14\n" +
 	"\x05toIds\x18\x02 \x03(\fR\x05toIds\x12\x16\n" +
 	"\x06roomId\x18\x03 \x01(\fR\x06roomId\x12\x16\n" +
 	"\x06fromId\x18\x04 \x01(\fR\x06fromId\x12 \n" +
-	"\vcontentType\x18\x05 \x01(\tR\vcontentType\x12\x18\n" +
-	"\acontent\x18\x06 \x01(\tR\acontent\"6\n" +
+	"\vcontentType\x18\x05 \x01(\tR\vcontentType\x12\x1a\n" +
+	"\bcontents\x18\x06 \x03(\tR\bcontents\"6\n" +
 	"\x16RelayMessagingResponse\x12\x1c\n" +
 	"\tpushToIds\x18\x01 \x03(\fR\tpushToIds2w\n" +
 	"\x10MessagingService\x12c\n" +

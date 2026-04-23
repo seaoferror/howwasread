@@ -70,7 +70,7 @@ export default function ChatPreviewItem({ preview }: ChatPreviewItemProps) {
             ? ""
             : `${fromProfile?.name}: `}
           {preview.contentType === "text"
-            ? preview.content
+            ? preview.contents[0]
             : preview.contentType}
         </Text>
       </View>

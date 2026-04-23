@@ -41,7 +41,7 @@ func (s *Service) GetRecentMessages(ctx context.Context, id, cursor uuid.UUID) (
 			FromId:      uuid.UUID(m.FromId),
 			RoomId:      uuid.UUID(m.RoomId),
 			ContentType: m.ContentType,
-			Content:     m.Content,
+			Contents:    m.Contents,
 		}
 		if m.RoomId != nil {
 			r.RoomId = uuid.UUID(m.RoomId)
@@ -51,23 +51,20 @@ func (s *Service) GetRecentMessages(ctx context.Context, id, cursor uuid.UUID) (
 	return res, nil
 }
 
-func (s *Service) PublishMessaging(ctx context.Context, fromId uuid.UUID, toIdType string, toId uuid.UUID, contentType, content string) (map[string]uuid.UUID, error) {
+func (s *Service) PublishMessaging(ctx context.Context, fromId uuid.UUID, toIdType string, toId uuid.UUID, contentType string, contents []string) (map[string]uuid.UUID, error) {
 	id, err := uuid.NewV7()
 	if err != nil {
 		return nil, err
 	}
 	if contentType != "text" {
-		exists, err1 := s.repository.HasFilepath(ctx, string(fromId[:]), contentType+content)
+		exists, err1 := s.repository.HasFilepath(ctx, contentType+string(fromId[:]), contents)
 		if err1 != nil {
 			return nil, err1
 		}
 		if !exists {
 			return nil, errors.New("bad request")
 		}
-		err1 = s.repository.RemoveFilepath(ctx, string(fromId[:]), contentType+content)
-		if err1 != nil {
-			return nil, err1
-		}
+		defer s.repository.RemoveFilepath(ctx, contentType+string(fromId[:]), contents)
 	}
 	p, _ := json.Marshal(payload.ChatMessage{
 		Id:          id[:],
@@ -75,7 +72,7 @@ func (s *Service) PublishMessaging(ctx context.Context, fromId uuid.UUID, toIdTy
 		ToIdType:    toIdType,
 		ToId:        toId[:],
 		ContentType: contentType,
-		Content:     content,
+		Contents:    contents,
 	})
 	err = s.producer.PushMessage("chat.message", p)
 	if err != nil {
@@ -85,37 +82,41 @@ func (s *Service) PublishMessaging(ctx context.Context, fromId uuid.UUID, toIdTy
 	return map[string]uuid.UUID{"id": id}, nil
 }
 
-func (s *Service) GeneratePresignedURL(ctx context.Context, id uuid.UUID, contentType string) (*dto.GeneratePresignedURLResponse, error) {
-	filename, err := uuid.NewV7()
-	if err != nil {
-		slog.Error("fail to generate uuid v7", "err", err)
-		return nil, err
+func (s *Service) GeneratePresignedURL(ctx context.Context, id uuid.UUID, contentType string, n int) (res []dto.GeneratePresignedURLResponse, err error) {
+	var filenames []string
+	for range n {
+		filename, err1 := uuid.NewV7()
+		if err1 != nil {
+			slog.Error("fail to generate uuid v7", "err", err1)
+			return nil, err1
+		}
+		filenames = append(filenames, filename.String())
+		res = append(res, dto.GeneratePresignedURLResponse{Filename: filename})
 	}
-	err = s.repository.SetFilepath(ctx, string(id[:]), contentType+filename.String())
+	err = s.repository.SetFilepath(ctx, contentType+string(id[:]), filenames)
 	if err != nil {
 		slog.Error("fail to save filename", "err", err)
 		return nil, err
 	}
-	p, err := s.presignClient.PresignPostObject(ctx, &s3.PutObjectInput{
-		Bucket: aws.String("chat"),
-		Key:    aws.String(fmt.Sprintf("%s/%s", contentType, filename.String())),
-	}, func(opts *s3.PresignPostOptions) {
-		opts.Expires = 1 * time.Second
-		opts.Conditions = []any{
-			[]any{"content-length-range", 1, 1024 * 1024 * 1024},
-			[]any{"starts-with", "$Content-Type", contentType},
+	for i := range n {
+		p, err1 := s.presignClient.PresignPostObject(ctx, &s3.PutObjectInput{
+			Bucket: aws.String("chat"),
+			Key:    aws.String(fmt.Sprintf("%s/%s", contentType, filenames[i])),
+		}, func(opts *s3.PresignPostOptions) {
+			opts.Expires = 1 * time.Second
+			opts.Conditions = []any{
+				[]any{"content-length-range", 1, 1024 * 1024 * 1024},
+				[]any{"starts-with", "$Content-Type", contentType},
+			}
+		})
+		if err1 != nil {
+			slog.Error("fail to generate presigned URL", "err", err)
+			return nil, err
 		}
-	})
-	if err != nil {
-		slog.Error("fail to generate presigned URL", "err", err)
-		return nil, err
+		res[i].URL = p.URL
+		res[i].Fields = p.Values
 	}
-	res := dto.GeneratePresignedURLResponse{
-		Filename: filename,
-		URL:      p.URL,
-		Fields:   p.Values,
-	}
-	return &res, nil
+	return res, nil
 }
 
 func (s *Service) GenerateSignedURL(ctx context.Context, id uuid.UUID, contentType string, filename uuid.UUID) (map[string]string, error) {
@@ -128,8 +129,8 @@ func (s *Service) GenerateSignedURL(ctx context.Context, id uuid.UUID, contentTy
 		return nil, errors.New("unauthorized request")
 	}
 	signedURL, err := s.signer.Sign(
-		fmt.Sprintf("https://d111111abcdef8.cloudfront.net/%s/%s",
-			contentType, filename),
+		fmt.Sprintf("%s/%s/%s",
+			s.cloudfrontURL, contentType, filename),
 		time.Now().Add(1*time.Hour))
 	if err != nil {
 		slog.Error("fail to generate signed URL",

@@ -156,7 +156,7 @@ func (c *Consumer) distinguishMessage(ctx context.Context, message *sarama.Consu
 				"payload.Value", message.Value)
 			return err
 		}
-		err = c.service.NotifyMessaging(ctx, p.ToIds, uuid.UUID(p.RoomId), uuid.UUID(p.FromId), p.ContentType, p.Content)
+		err = c.service.NotifyMessaging(ctx, p.ToIds, uuid.UUID(p.RoomId), uuid.UUID(p.FromId), p.ContentType, p.Contents)
 		if err != nil {
 			return err
 		}

@@ -35,7 +35,7 @@ export default function MessageList() {
         id: uuidStringify(newMessageRaw.id),
         fromId: uuidStringify(newMessageRaw.from_id),
         contentType: newMessageRaw.content_type,
-        content: newMessageRaw.content,
+        contents: JSON.parse(newMessageRaw.contents),
         createdAt: newMessageRaw.created_at,
         isDayFirst: Boolean(newMessageRaw.is_day_first),
       },

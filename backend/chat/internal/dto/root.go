@@ -10,7 +10,7 @@ type SendMessagingRequest struct {
 	ToIdType    string    `json:"toIdType"`
 	ToId        uuid.UUID `json:"toId"`
 	ContentType string    `json:"contentType"`
-	Content     string    `json:"content"`
+	Contents    []string  `json:"contents"`
 }
 
 type MessagingResponse struct {
@@ -18,7 +18,7 @@ type MessagingResponse struct {
 	RoomId      uuid.UUID `json:"roomId"`
 	FromId      uuid.UUID `json:"fromId"`
 	ContentType string    `json:"contentType"`
-	Content     string    `json:"content"`
+	Contents    []string  `json:"contents"`
 }
 
 type GetChatRoomInfoResponse struct {
@@ -37,6 +37,7 @@ type GetProfileResponse struct {
 
 type GeneratePresignedURLRequest struct {
 	ContentType string `json:"contentType"`
+	N           int    `json:"n"`
 }
 
 type GeneratePresignedURLResponse struct {
