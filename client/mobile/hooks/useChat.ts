@@ -5,7 +5,6 @@ import {
   getSignedURL,
   sendLike,
   sendMessaging,
-  uploadToS3,
 } from "@/api/chat";
 import { AxiosError } from "axios";
 import Toast from "react-native-toast-message";
@@ -62,19 +61,6 @@ export function useSendMessaging() {
 export function useGeneratePresignedURL() {
   return useMutation({
     mutationFn: generatePresignedURL,
-    onError: (error: AxiosError) => {
-      console.log(error?.response?.data);
-      Toast.show({
-        type: "error",
-        text1: String(error?.response?.data),
-      });
-    },
-  });
-}
-
-export function useUploadToS3() {
-  return useMutation({
-    mutationFn: uploadToS3,
     onError: (error: AxiosError) => {
       console.log(error?.response?.data);
       Toast.show({

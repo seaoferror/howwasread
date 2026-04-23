@@ -1,14 +1,20 @@
-import { Keyboard, Pressable, StyleSheet, View } from "react-native";
+import {
+  Alert,
+  Keyboard,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+} from "react-native";
 import InputField from "@/components/InputField";
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { colors } from "@/constants";
-import { use, useState } from "react";
+import { useState } from "react";
 import { useLocalSearchParams } from "expo-router";
 import {
   useGeneratePresignedURL,
   useGetChatRoomInfo,
   useSendMessaging,
-  useUploadToS3,
 } from "@/hooks/useChat";
 import {
   RecordingPresets,
@@ -17,13 +23,18 @@ import {
   useAudioRecorder,
   useAudioRecorderState,
 } from "expo-audio";
+import {
+  launchImageLibraryAsync,
+  requestMediaLibraryPermissionsAsync,
+} from "expo-image-picker";
+import { uploadToS3 } from "@/api/chat";
+import Toast from "react-native-toast-message";
 
 export default function MessageInput() {
   const { id: roomId } = useLocalSearchParams();
   const { data: roomInfo } = useGetChatRoomInfo(String(roomId));
   const sendMessagingMutation = useSendMessaging();
   const presignedURLMutation = useGeneratePresignedURL();
-  const uploadToS3Mutation = useUploadToS3();
 
   const [textContent, setTextContent] = useState("");
   const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
@@ -31,7 +42,7 @@ export default function MessageInput() {
   const audioPlayer = useAudioPlayer();
   const playerState = useAudioPlayerStatus(audioPlayer);
 
-  const handleSendMessage = (contentType: string, content: string) => {
+  const handleSendMessage = (contentType: string, content: string[]) => {
     const message = {
       toIdType: String(roomInfo?.type),
       toId: String(roomId),
@@ -54,32 +65,93 @@ export default function MessageInput() {
     });
   };
 
-  function handleMoreButton() {
+  const handleImagePickerButton = async () => {
     Keyboard.dismiss();
-  }
+    const permissionResult = await requestMediaLibraryPermissionsAsync();
+
+    if (!permissionResult.granted) {
+      Alert.alert(
+        "Permission required",
+        "Permission to access the media library is required.",
+      );
+      return;
+    }
+
+    const result = await launchImageLibraryAsync({
+      mediaTypes: ["images", "videos"],
+      allowsEditing: false,
+      allowsMultipleSelection: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    console.log(result);
+
+    if (result.canceled) {
+      return;
+    }
+    const videoAssets = result.assets.filter((asset) => asset.type === "video");
+    const imageAssets = result.assets.filter((asset) => asset.type === "image");
+    const uploadTasks = [];
+    if (videoAssets.length > 0) {
+      uploadTasks.push(
+        handleFileMessage(
+          "video",
+          videoAssets[0].mimeType ?? "video/mp4",
+          videoAssets.map((asset) => {
+            return asset.uri;
+          }),
+        ),
+      );
+    }
+    if (imageAssets.length > 0) {
+      uploadTasks.push(
+        handleFileMessage(
+          "image",
+          imageAssets[0].mimeType ??
+            (Platform.OS === "android" ? "image/jpg" : "image/heic"),
+          imageAssets.map((asset) => {
+            return asset.uri;
+          }),
+        ),
+      );
+    }
+    await Promise.all(uploadTasks);
+  };
 
   const handleFileMessage = async (
     contentType: string,
     mimeType: string,
-    content: string,
+    content: string[],
   ) => {
     presignedURLMutation.mutate(
-      { contentType },
+      { contentType: contentType, numberOfContent: content.length },
       {
-        onSuccess: (data) => {
-          uploadToS3Mutation.mutate(
-            {
-              awsFields: data.fields,
-              awsPresignedURL: data.url,
-              localFileURI: content,
-              mimeType: mimeType,
-            },
-            {
-              onSuccess: () => {
-                handleSendMessage(contentType, data.filename);
-              },
-            },
-          );
+        onSuccess: async (data) => {
+          try {
+            const tasks: Promise<void>[] = data.map((res, idx) => {
+              const task = uploadToS3({
+                awsFields: res.fields,
+                awsPresignedURL: res.url,
+                localFileURI: content[idx],
+                mimeType: mimeType,
+                filename: res.filename,
+              });
+              return task;
+            });
+            await Promise.all(tasks);
+            handleSendMessage(
+              contentType,
+              data.map((res) => res.filename),
+            );
+          } catch (error) {
+            console.log(error);
+            Toast.show({
+              type: "error",
+              text1: String(error),
+            });
+            //TODO: remove all file via redis by X-User-Id, so it is transaction rollback
+          }
         },
       },
     );
@@ -110,10 +182,10 @@ export default function MessageInput() {
         }
         submitBehavior="newline"
         leftChild={
-          recorderState.durationMillis !== 0 && !audioPlayer.isLoaded ? (
+          !audioPlayer.isLoaded ? (
             <Pressable
               style={styles.buttonContainer}
-              onPress={() => handleMoreButton()}
+              onPress={() => handleImagePickerButton()}
             >
               <Feather name="plus" size={20} color={colors.WHITE} />
             </Pressable>
@@ -133,7 +205,7 @@ export default function MessageInput() {
           textContent.trim() ? (
             <Pressable
               style={styles.buttonContainer}
-              onPress={() => handleSendMessage("text", textContent)}
+              onPress={() => handleSendMessage("text", [textContent])}
             >
               <Ionicons name="send-sharp" size={20} color={colors.WHITE} />
             </Pressable>
@@ -142,11 +214,9 @@ export default function MessageInput() {
               style={styles.buttonContainer}
               onPress={async () => {
                 if (!audioRecorder.uri) return;
-                await handleFileMessage(
-                  "voice",
-                  "audio/mp4",
+                await handleFileMessage("voice", "audio/mp4", [
                   audioRecorder.uri,
-                );
+                ]);
               }}
             >
               <Ionicons name="send-outline" size={20} color={colors.WHITE} />

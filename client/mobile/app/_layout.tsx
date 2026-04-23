@@ -56,7 +56,7 @@ function RootNavigator() {
 
   useEffect(() => {
     const connectMessaging = async () => {
-      let deviceId = await getSecureAsync("deviceId")
+      let deviceId = await getSecureAsync("deviceId");
       if (!deviceId) {
         deviceId = randomUUID();
         await setSecure("deviceId", deviceId);
@@ -73,16 +73,15 @@ function RootNavigator() {
       let cursor = "00000000-0000-7000-8000-000000000000";
       if (row) {
         cursor = uuidStringify(row.id);
-        console.log("The very last inserted ID is:", cursor);
+        console.log("last inserted ID:", cursor);
       }
       const messages = await getRecentMessages(cursor);
       console.log(messages);
       if (messages && messages.length > 0) {
-        for (const m of messages) {
+        const insertionTasks = messages.map(async (m) => {
           const timestamp = getTimestamp(m.id);
-          console.log(m.roomId);
           const roomId = uuidParse(m.roomId);
-          await db.runAsync(
+          return db.runAsync(
             `INSERT OR IGNORE INTO message (id, room_id, from_id, content_type, content, created_at, is_day_first)
                VALUES (?, ?, ?, ?, ?, ?, ?);`,
             uuidParse(m.id),
@@ -93,7 +92,8 @@ function RootNavigator() {
             timestamp,
             await checkIfFirstOfDay(db, roomId, timestamp),
           );
-        }
+        });
+        await Promise.all(insertionTasks);
       }
 
       ws.current = new WebSocket(
@@ -124,12 +124,11 @@ function RootNavigator() {
         );
       };
     };
-    // if (id)//just for development, this should be non commented when production
-    connectMessaging();
+    if (id) connectMessaging();
     return () => {
       ws.current?.close();
     };
-  }, [db, id]);
+  }, [db, id, registerNotificationMutation]);
   return (
     <Stack>
       <Stack.Screen name="(init)" options={{ headerShown: false }} />

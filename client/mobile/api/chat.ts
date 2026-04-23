@@ -6,6 +6,7 @@ import {
   SendMessagingRequest,
   UploadToS3Request,
 } from "@/types/chat";
+import { File } from "expo-file-system";
 import axios from "axios";
 
 export async function sendLike(body: { toId: string }) {
@@ -39,7 +40,8 @@ export async function sendMessaging(
 
 export async function generatePresignedURL(body: {
   contentType: string;
-}): Promise<GeneratePresignedURLResponse> {
+  numberOfContent: number;
+}): Promise<GeneratePresignedURLResponse[]> {
   const { data } = await axiosInstance.post(`/chat/messaging/presigned`, body);
   return data;
 }
@@ -49,16 +51,14 @@ export async function uploadToS3({
   awsFields,
   localFileURI,
   mimeType,
-}: UploadToS3Request) {
+  filename
+}: UploadToS3Request): Promise<void> {
   const formData = new FormData();
   Object.keys(awsFields).forEach((key) => {
     formData.append(key, awsFields[key]);
   });
-  formData.append("file", {
-    uri: localFileURI,
-    name: "lol",
-    type: mimeType,
-  } as any);
+  formData.append("Content-type", mimeType)
+  formData.append("file", new File(localFileURI), filename);
   const { data } = await axios.post(awsPresignedURL, formData, {
     headers: {
       "Content-Type": "multipart/form-data",

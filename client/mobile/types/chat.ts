@@ -30,7 +30,7 @@ export interface SendMessagingRequest {
   toIdType: string;
   toId: string;
   contentType: string;
-  content: string;
+  content: string[];
 }
 
 export interface GeneratePresignedURLResponse {
@@ -44,4 +44,5 @@ export interface UploadToS3Request {
   awsFields: Record<string, string>;
   mimeType: string;
   localFileURI: string;
+  filename: string;
 }
