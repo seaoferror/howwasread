@@ -104,5 +104,5 @@ export function useGetSignedURLs({
     }),
   });
 
-  return queries.map((result) => result.data)
+  return { data: queries.map((result) => result.data) };
 }

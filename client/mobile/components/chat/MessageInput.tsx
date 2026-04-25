@@ -95,13 +95,9 @@ export default function MessageInput() {
     const uploadTasks = [];
     if (videoAssets.length > 0) {
       uploadTasks.push(
-        handleFileMessage(
-          "video",
-          videoAssets[0].mimeType ?? "video/mp4",
-          videoAssets.map((asset) => {
-            return asset.uri;
-          }),
-        ),
+        videoAssets.map((asset) => {
+          handleFileMessage("video", videoAssets[0].mimeType ?? "video/mp4", [asset.uri])
+        })
       );
     }
     if (imageAssets.length > 0) {

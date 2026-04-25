@@ -1,11 +1,14 @@
-import { StyleSheet, View, Text, Pressable } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Message } from "@/types/chat";
 import { getHourMinute, getLongDate } from "@/util/time";
 import { useMyProfile } from "@/hooks/useMyProfile";
 import { colors } from "@/constants";
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
-import { useEffect } from "react";
+import { useState } from "react";
 import { useGetSignedURLs } from "@/hooks/useChat";
+import { Image } from "expo-image";
+import { useVideoPlayer, VideoThumbnail, VideoView } from "expo-video";
+import { useFocusEffect } from "expo-router";
 
 interface MessageItemProps {
   message: Omit<Message, "roomId">;
@@ -13,18 +16,32 @@ interface MessageItemProps {
 
 export default function MessageItem({ message }: MessageItemProps) {
   const { profile } = useMyProfile();
-  const datas = useGetSignedURLs({
+  const { data } = useGetSignedURLs({
     contentType: message.contentType,
     contents: message.contents,
   });
   const audioPlayer = useAudioPlayer();
   const playerState = useAudioPlayerStatus(audioPlayer);
+  const [image, setImage] = useState<string[] | VideoThumbnail>();
+  const videoPlayer = useVideoPlayer("");
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
 
-  useEffect(() => {
-    if (message.contentType === "audio") {
-      audioPlayer.replace(datas[0]?.url ?? "");
-    }
-  }, [audioPlayer, datas, message.contentType]);
+  useFocusEffect(() => {
+    const wrapper = async () => {
+      if (message.contentType === "audio") {
+        audioPlayer.replace(data[0]?.url ?? "");
+      }
+      if (message.contentType === "image") {
+        setImage(data.map((res) => res?.url ?? ""));
+      }
+      if (message.contentType === "video") {
+        videoPlayer.replace(data[0]?.url ?? "");
+        const thumbnails = await videoPlayer.generateThumbnailsAsync(0);
+        setImage(thumbnails[0]);
+      }
+    };
+    wrapper();
+  });
 
   return (
     <View style={styles.container}>
@@ -69,6 +86,16 @@ export default function MessageItem({ message }: MessageItemProps) {
                     : `▷ play ${playerState.duration}`
                   : ``}
               </Text>
+            </Pressable>
+          ) : message.contentType === "image" ? (
+            <Image source={image} cachePolicy="memory-disk" />
+          ) : message.contentType === "video" ? (
+            <Pressable onPress={() => setIsPlaying(!isPlaying)}>
+              {isPlaying ? (
+                <VideoView player={videoPlayer} />
+              ) : (
+                <Image source={image} cachePolicy="memory-disk"/>
+              )}
             </Pressable>
           ) : (
             <></>
