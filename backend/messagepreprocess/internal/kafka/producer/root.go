@@ -36,7 +36,7 @@ func createProducer() (sarama.AsyncProducer, error) {
 		return nil, err
 	}
 
-	cfg.ClientID = "relay_messaging.producer." + id.String()
+	cfg.ClientID = "preprocess.producer." + id.String()
 	//cfg.Net.SASL.Enable = true
 	//cfg.Net.SASL.Version = 1
 	//cfg.Net.SASL.Mechanism = sarama.SASLTypePlaintext
@@ -58,12 +58,11 @@ func createProducer() (sarama.AsyncProducer, error) {
 	return sarama.NewAsyncProducer([]string{os.Getenv("KAFKA_URL")}, cfg)
 }
 
-func (p *Producer) PushMessage(topic string, header []sarama.RecordHeader, value []byte) error {
+func (p *Producer) PushMessage(topic string, value []byte) error {
 
 	msg := sarama.ProducerMessage{
-		Topic:   topic,
-		Headers: header,
-		Value:   sarama.ByteEncoder(value),
+		Topic: topic,
+		Value: sarama.ByteEncoder(value),
 	}
 
 	p.asyncProducer.Input() <- &msg
@@ -85,12 +84,12 @@ func (p *Producer) Close() error {
 }
 
 func (p *Producer) PushDeadLetter(reason error, originalTopic string, value []byte) error {
-	headers := []sarama.RecordHeader{
+	_ = []sarama.RecordHeader{
 		{Key: []byte("x-error-message"), Value: []byte(reason.Error())},
 		{Key: []byte("x-original-topic"), Value: []byte(originalTopic)},
 		{Key: []byte("x-failed-at"), Value: []byte(time.Now().Format(time.RFC3339))},
 	}
-	err := p.PushMessage("dlq", headers, value)
+	err := p.PushMessage("dlq", value)
 	if err != nil {
 		slog.Error("fail to publish dead letter", "err", err)
 		return err

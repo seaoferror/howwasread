@@ -19,9 +19,9 @@ func (r *Repository) FindNameById(ctx context.Context, id gocql.UUID) (name stri
 }
 
 func (r *Repository) FindRoomNameById(ctx context.Context, id gocql.UUID) (name string, err error) {
-	err = r.session.Query("SELECT name FROM room_by_id", id).ScanContext(ctx, name)
+	err = r.session.Query("SELECT name FROM chat_room_by_id", id).ScanContext(ctx, name)
 	if err != nil {
-		slog.Error("fail to select name from room_by_id",
+		slog.Error("fail to select name from chat_room_by_id",
 			"err", err,
 			"id", id.String())
 		return "", err

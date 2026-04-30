@@ -25,7 +25,7 @@ func NewServer() {
 	controller.SetController(s, mux)
 
 	go func() {
-		err := http.ListenAndServe(":8080", mux)
+		err := http.ListenAndServe(":8078", mux)
 		if err != nil {
 			slog.Error("fail to listen and serve http",
 				"err", err)

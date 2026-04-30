@@ -30,17 +30,13 @@ func NewRepository() *Repository {
 	if err != nil {
 		log.Panicf("fail to create session from cassandra cluster: %v", err)
 	}
-	err = session.Query(`CREATE TABLE IF NOT EXISTS message_by_to_id (
-    id uuid,
-    to_id uuid,
-    from_id uuid,
-    room_id uuid,
-    content_type text,
-    content text,
-    PRIMARY KEY ((to_id), id)
-    ) WITH CLUSTERING ORDER BY (id DESC);`).Exec()
+	err = session.Query(`CREATE TABLE IF NOT EXISTS ids_by_filename (
+    filename uuid,
+    ids set<uuid>,
+    PRIMARY KEY (filename)
+    );`).Exec()
 	if err != nil {
-		log.Panicf("fail to create table payload: %v", err)
+		log.Panicf("fail to create table ids_by_filename: %v", err)
 	}
 
 	log.Print("success to connect cassandra")

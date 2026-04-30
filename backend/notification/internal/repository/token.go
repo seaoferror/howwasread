@@ -9,7 +9,7 @@ import (
 )
 
 func (r *Repository) SaveNotificationInfoById(ctx context.Context, id, deviceId gocql.UUID, os, token string) error {
-	err := r.session.Query(`INSERT INTO device_push_token_by_id (id, deviceId, os, token) VALUES (?, ?, ?, ?)`,
+	err := r.session.Query(`INSERT INTO device_push_token_by_id (id, device_id, os, device_push_token) VALUES (?, ?, ?, ?)`,
 		id, deviceId, os, token).ExecContext(ctx)
 	if err != nil {
 		slog.Error("fail to set device push token",
@@ -20,7 +20,7 @@ func (r *Repository) SaveNotificationInfoById(ctx context.Context, id, deviceId 
 }
 
 func (r *Repository) FindPushTokensById(ctx context.Context, id gocql.UUID) (result []data.FindPushTokensById, err error) {
-	iter := r.session.Query(`SELECT device_id, os, token FROM device_push_token_by_id WHERE id = ?`,
+	iter := r.session.Query(`SELECT device_id, os, device_push_token FROM device_push_token_by_id WHERE id = ?`,
 		id).IterContext(ctx)
 	var deviceId gocql.UUID
 	var os, token string

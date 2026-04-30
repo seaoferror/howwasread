@@ -41,7 +41,7 @@ func (s *Service) ManageMessage(ctx context.Context, id uuid.UUID, fromId uuid.U
 					slog.Error("fail to parse uuid from content", "err", err)
 					em.Lock()
 					es = append(es, err)
-					em.Lock()
+					em.Unlock()
 				}
 				var castedIds []gocql.UUID
 				for _, tid := range toIds {
@@ -51,7 +51,7 @@ func (s *Service) ManageMessage(ctx context.Context, id uuid.UUID, fromId uuid.U
 				if err != nil {
 					em.Lock()
 					es = append(es, err)
-					em.Lock()
+					em.Unlock()
 				}
 			}()
 		}
@@ -71,7 +71,7 @@ func (s *Service) ManageMessage(ctx context.Context, id uuid.UUID, fromId uuid.U
 		Contents:    contents,
 	})
 
-	err := s.producer.PushMessage("manage_message.prepared", nil, p)
+	err := s.producer.PushMessage("manage_message.prepared", p)
 	if err != nil {
 		return err
 	}

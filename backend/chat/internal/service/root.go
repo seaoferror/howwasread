@@ -18,11 +18,12 @@ type Service struct {
 	producer      *producer.Producer
 	presignClient *s3.PresignClient
 	signer        *sign.URLSigner
+	bucketName    string
 	cloudfrontURL string
 }
 
 func NewService(r *repository.Repository, kp *producer.Producer) *Service {
-	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(os.Getenv("S3_REGION")))
+	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(os.Getenv("AWS_S3_REGIONS")))
 	if err != nil {
 		log.Panicf("fail to config for presigned client: %v", err)
 	}
@@ -39,6 +40,7 @@ func NewService(r *repository.Repository, kp *producer.Producer) *Service {
 		producer:      kp,
 		presignClient: presignClient,
 		signer:        signer,
+		bucketName:    os.Getenv("AWS_S3_BUCKET_NAME"),
 		cloudfrontURL: os.Getenv("AWS_CLOUD_FRONT_URL"),
 	}
 	return &s

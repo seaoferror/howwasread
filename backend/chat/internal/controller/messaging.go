@@ -129,12 +129,14 @@ func (c *Controller) getSignedURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	contentType := r.URL.Query().Get("contentType")
-	if contentType != "audio" && contentType != "photo" && contentType != "video" {
+	if contentType != "audio" && contentType != "image" && contentType != "video" {
 		handleError(w, errors.New("bad request"))
+		return
 	}
 	filename, err := uuid.Parse(r.URL.Query().Get("filename"))
 	if err != nil {
 		handleError(w, errors.New("bad request"))
+		return
 	}
 	result, err := c.service.GenerateSignedURL(r.Context(), memberId, contentType, filename)
 	if err != nil {

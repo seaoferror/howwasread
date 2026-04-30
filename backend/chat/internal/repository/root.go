@@ -30,6 +30,30 @@ func NewRepository() *Repository {
 	if err != nil {
 		log.Panicf("fail to create session from cassandra cluster: %v", err)
 	}
+	err = session.Query(`CREATE TABLE IF NOT EXISTS profile_by_id (
+    id uuid,
+    name text,
+    PRIMARY KEY (id)
+    );`).Exec()
+	if err != nil {
+		log.Panicf("fail to create table profile_by_id: %v", err)
+	}
+	err = session.Query(`INSERT INTO profile_by_id (id, name) 
+	VALUES (
+		019e0e84-f358-71a2-8b3c-d4e5f6012345, 
+		'yuan'
+	);`).Exec()
+	if err != nil {
+		log.Panicf("fail to insert dummy profile_by_id data: %v", err)
+	}
+	err = session.Query(`INSERT INTO profile_by_id (id, name) 
+	VALUES (
+		019e0e84-f358-7d8e-9fa0-b1c2d3e4f506, 
+		'yen'
+	);`).Exec()
+	if err != nil {
+		log.Panicf("fail to insert dummy profile_by_id data: %v", err)
+	}
 
 	log.Print("success to connect cassandra")
 

@@ -6,10 +6,9 @@ import (
 	"log/slog"
 
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
-	"github.com/google/uuid"
 )
 
-func (r *Repository) FindMessagesByToIdAndId(ctx context.Context, id, cursor gocql.UUID) (result []data.FindMessagesByToIdAndId, err error) {
+func (r *Repository) FindRecentMessagesByToId(ctx context.Context, id, cursor gocql.UUID) (result []data.FindMessagesByToIdAndId, err error) {
 	iter := r.session.Query(`SELECT id, room_id, from_id, content_type, contents FROM message_by_to_id 
                                                    WHERE to_id = ? AND id > ?`,
 		id, cursor).IterContext(ctx)
@@ -72,7 +71,7 @@ func (r *Repository) RemoveFilepath(ctx context.Context, id string, filenames []
 	return nil
 }
 
-func (r *Repository) FindIdsByFilename(ctx context.Context, filename uuid.UUID) (ids []gocql.UUID, err error) {
+func (r *Repository) FindIdsByFilename(ctx context.Context, filename gocql.UUID) (ids []gocql.UUID, err error) {
 	err = r.session.Query("SELECT ids FROM ids_by_filename WHERE filename = ?", filename).ScanContext(ctx, &ids)
 	if err != nil {
 		slog.Error("fail to find ids by filename",

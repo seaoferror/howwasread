@@ -25,7 +25,7 @@ type Consumer struct {
 }
 
 func NewConsumer(s *service.Service) *Consumer {
-	consumerGroup, err := connectConsumer("online_conversation")
+	consumerGroup, err := connectConsumer("preprocess_message")
 	if err != nil {
 		log.Panicf("fail to create consumer group client: %v", err)
 	}
@@ -42,7 +42,7 @@ func connectConsumer(groupID string) (sarama.ConsumerGroup, error) {
 		slog.Error("fail to create uuid for kafka client uuid")
 		return nil, err
 	}
-	cfg.ClientID = "message.consumer." + id.String()
+	cfg.ClientID = "preprocess_message." + id.String()
 	//cfg.Net.SASL.Enable = true
 	//cfg.Net.SASL.Version = 1
 	//cfg.Net.SASL.Mechanism = sarama.SASLTypePlaintext

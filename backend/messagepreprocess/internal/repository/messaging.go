@@ -8,7 +8,7 @@ import (
 )
 
 func (r *Repository) FindParticipantIds(ctx context.Context, roomId gocql.UUID) (participantIds []gocql.UUID, err error) {
-	err = r.session.Query(`SELECT participant_ids FROM room_by_id WHERE id = ?`,
+	err = r.session.Query(`SELECT participant_ids FROM chat_room_by_id WHERE id = ?`,
 		roomId).ScanContext(ctx, &participantIds)
 	if err != nil {
 		slog.Error("fail to find participant ids by room id", "err", err)

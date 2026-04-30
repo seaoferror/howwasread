@@ -18,9 +18,9 @@ func NewServer() {
 
 	r := repository.NewRepository()
 
-	kp := producer.NewProducer()
+	p := producer.NewProducer()
 
-	s := service.NewService(r, kp)
+	s := service.NewService(r, p)
 
 	c := consumer.NewConsumer(s)
 

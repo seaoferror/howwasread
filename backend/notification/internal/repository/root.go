@@ -32,7 +32,7 @@ func NewRepository() *Repository {
     id uuid,
     device_id uuid,
     os text,
-    token text,
+    device_push_token text,
     PRIMARY KEY (id, device_id));`).Exec()
 	if err != nil {
 		panic(err)

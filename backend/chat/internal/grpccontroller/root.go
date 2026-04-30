@@ -4,6 +4,7 @@ import (
 	"backend/chat/internal/controller"
 	pb "backend/proto"
 	"context"
+	"log/slog"
 
 	"github.com/google/uuid"
 )
@@ -20,9 +21,9 @@ func NewGRPCController(controller *controller.Controller) *GRPCController {
 }
 
 func (gc *GRPCController) RelayMessaging(ctx context.Context, in *pb.RelayMessagingRequest) (*pb.RelayMessagingResponse, error) {
-	pushToIds, err := gc.controller.RelayMessaging(ctx, uuid.UUID(in.Id), in.ToIds, uuid.UUID(in.RoomId), uuid.UUID(in.FromId), in.ContentType, in.Contents)
+	slog.Info("relay message GRPC request incoming...")
+	pushToIds, _ := gc.controller.RelayMessaging(ctx, uuid.UUID(in.Id), in.ToIds, uuid.UUID(in.RoomId), uuid.UUID(in.FromId), in.ContentType, in.Contents)
 	return &pb.RelayMessagingResponse{
 		PushToIds: pushToIds,
-	}, err
-
+	}, nil
 }

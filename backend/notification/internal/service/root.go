@@ -24,13 +24,13 @@ type Service struct {
 }
 
 func NewService(r *repository.Repository) *Service {
-	opt := option.WithCredentialsFile("backend/holiday2-3d1c4-firebase-adminsdk-fbsvc-7d8ad6c905.json")
+	opt := option.WithCredentialsFile("holiday2-3d1c4-firebase-adminsdk-fbsvc-7d8ad6c905.json")
 	app, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {
 		panic(err)
 	}
 
-	keyRaw, err := os.ReadFile("backend/AuthKey_6ZYM46U7FP.p8")
+	keyRaw, err := os.ReadFile("AuthKey_6ZYM46U7FP.p8")
 	if err != nil {
 		log.Panicf("Failed to read apn private key file: %v", err)
 	}

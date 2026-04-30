@@ -31,7 +31,7 @@ func (s *Service) SendLike(ctx context.Context, fromId, toId uuid.UUID) error {
 }
 
 func (s *Service) GetRecentMessages(ctx context.Context, id, cursor uuid.UUID) (res []dto.MessagingResponse, err error) {
-	result, err := s.repository.FindMessagesByToIdAndId(ctx, gocql.UUID(id), gocql.UUID(cursor))
+	result, err := s.repository.FindRecentMessagesByToId(ctx, gocql.UUID(id), gocql.UUID(cursor))
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,10 @@ func (s *Service) PublishMessaging(ctx context.Context, fromId uuid.UUID, toIdTy
 		if !exists {
 			return nil, errors.New("bad request")
 		}
-		defer s.repository.RemoveFilepath(ctx, contentType+string(fromId[:]), contents)
+		err = s.repository.RemoveFilepath(ctx, contentType+string(fromId[:]), contents)
+		if err != nil {
+			return nil, err
+		}
 	}
 	p, _ := json.Marshal(payload.ChatMessage{
 		Id:          id[:],
@@ -100,10 +103,10 @@ func (s *Service) GeneratePresignedURL(ctx context.Context, id uuid.UUID, conten
 	}
 	for i := range n {
 		p, err1 := s.presignClient.PresignPostObject(ctx, &s3.PutObjectInput{
-			Bucket: aws.String("chat"),
+			Bucket: aws.String(s.bucketName),
 			Key:    aws.String(fmt.Sprintf("%s/%s", contentType, filenames[i])),
 		}, func(opts *s3.PresignPostOptions) {
-			opts.Expires = 1 * time.Second
+			opts.Expires = 1 * time.Hour
 			opts.Conditions = []any{
 				[]any{"content-length-range", 1, 1024 * 1024 * 1024},
 				[]any{"starts-with", "$Content-Type", contentType},
@@ -120,7 +123,7 @@ func (s *Service) GeneratePresignedURL(ctx context.Context, id uuid.UUID, conten
 }
 
 func (s *Service) GenerateSignedURL(ctx context.Context, id uuid.UUID, contentType string, filename uuid.UUID) (map[string]string, error) {
-	ids, err := s.repository.FindIdsByFilename(ctx, filename)
+	ids, err := s.repository.FindIdsByFilename(ctx, gocql.UUID(filename))
 	if err != nil {
 		return nil, err
 	}
@@ -137,5 +140,6 @@ func (s *Service) GenerateSignedURL(ctx context.Context, id uuid.UUID, contentTy
 			"err", err)
 		return nil, err
 	}
+	slog.Info("success to sign url", "signedURL", signedURL)
 	return map[string]string{"url": signedURL}, nil
 }
