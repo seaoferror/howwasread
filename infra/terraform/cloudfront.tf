@@ -57,4 +57,10 @@ resource "aws_cloudfront_distribution" "cloudfront_distribution" {
   viewer_certificate {
     cloudfront_default_certificate = true
   }
+
+  lifecycle {
+    ignore_changes = [
+      web_acl_id
+    ]
+  }
 }
