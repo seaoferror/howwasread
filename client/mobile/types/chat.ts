@@ -8,7 +8,6 @@ export interface MessagingResponse {
 
 export interface Message extends MessagingResponse {
   createdAt: string;
-  isDayFirst: boolean;
 }
 
 export interface GetChatRoomInfoResponse {
@@ -23,7 +22,6 @@ export interface MessageEntity {
   content_type: string;
   contents: string; //TEXT type column is used with JSON.stringify
   created_at: string;
-  is_day_first: number;
 }
 
 export interface SendMessagingRequest {
