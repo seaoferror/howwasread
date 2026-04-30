@@ -1,36 +1,38 @@
-import { Message, MessageEntity } from "@/types/chat";
+import { Message, MessageEntity, MessagingResponse } from "@/types/chat";
 import { parse as uuidParse, stringify as uuidStringify } from "uuid";
 import { type SQLiteDatabase } from "expo-sqlite";
 
 export async function initDB(db: SQLiteDatabase) {
+  console.log("init db");
   await db.execAsync(`
     PRAGMA journal_mode = 'wal';
-    DROP TABLE message;
+    DROP TABLE IF EXISTS message;
     CREATE TABLE IF NOT EXISTS message (
         id BLOB PRIMARY KEY NOT NULL,
         room_id BLOB NOT NULL,
         from_id BLOB NOT NULL,
         content_type TEXT NOT NULL,
         contents TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        is_day_first INTEGER DEFAULT 0
+        created_at TEXT NOT NULL
     );`);
 }
 
-export async function checkIfFirstOfDay(
-  db: SQLiteDatabase,
-  roomId: Uint8Array,
-  timestamp: string,
-): Promise<number> {
-  const datePrefix = timestamp.substring(0, 10) + "%";
-
-  const existing = await db.getFirstAsync(
-    `SELECT 1 FROM message WHERE room_id = ? AND created_at LIKE ? LIMIT 1`,
-    roomId,
-    datePrefix,
+export async function findPreview(db: SQLiteDatabase) {
+  return db.getAllAsync<MessageEntity>(
+    `SELECT m.id,
+            m.room_id,
+            m.from_id,
+            m.content_type,
+            m.contents,
+            m.created_at
+     FROM message m
+            INNER JOIN
+          (SELECT room_id, MAX(id) AS id
+           FROM message
+           GROUP BY room_id) latest
+          ON m.room_id = latest.room_id AND m.id = latest.id
+     ORDER BY m.id DESC;`,
   );
-
-  return existing ? 0 : 1;
 }
 
 export async function findMessagesByRoomId(
@@ -45,11 +47,10 @@ export async function findMessagesByRoomId(
             from_id,
             content_type,
             contents,
-            created_at,
-            is_day_first
+            created_at
      FROM message
      WHERE room_id = ?
-     ORDER BY rowid DESC LIMIT ?
+     ORDER BY id DESC LIMIT ?
      OFFSET ?`,
     uuidParse(String(roomId)),
     size,
@@ -62,6 +63,33 @@ export async function findMessagesByRoomId(
     contentType: row.content_type,
     contents: JSON.parse(row.contents),
     createdAt: row.created_at,
-    isDayFirst: Boolean(row.is_day_first),
   }));
+}
+
+export async function findNewMessage(db: SQLiteDatabase, rowId: number) {
+  return db.getFirstAsync<MessageEntity>(
+    `SELECT *
+         FROM message
+         WHERE rowid = ?`,
+    rowId,
+  );
+}
+
+export async function saveRecentMessage(
+  db: SQLiteDatabase,
+  m: MessagingResponse,
+  roomId: Uint8Array<ArrayBufferLike>,
+  timestamp: string,
+) {
+  return db.runAsync(
+    `INSERT
+        OR IGNORE INTO message (id, room_id, from_id, content_type, contents, created_at)
+               VALUES (?, ?, ?, ?, ?, ?);`,
+    uuidParse(m.id),
+    roomId,
+    uuidParse(m.fromId),
+    m.contentType,
+    JSON.stringify(m.contents),
+    timestamp,
+  );
 }
