@@ -131,6 +131,9 @@ func (s *Service) GenerateSignedURL(ctx context.Context, id uuid.UUID, contentTy
 		slog.Warn("this member id don't have authority to see file")
 		return nil, errors.New("unauthorized request")
 	}
+	if contentType == "image" {
+		contentType = "resized-image"
+	}
 	signedURL, err := s.signer.Sign(
 		fmt.Sprintf("%s/%s/%s",
 			s.cloudfrontURL, contentType, filename),
