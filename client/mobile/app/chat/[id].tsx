@@ -1,13 +1,12 @@
-import {
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useLocalSearchParams, useNavigation } from "expo-router";
+import {
+  useFocusEffect,
+  useLocalSearchParams,
+  useNavigation,
+} from "expo-router";
 import { useGetChatRoomInfo } from "@/hooks/useChat";
 import MessageList from "@/components/chat/MessageList";
-import { useEffect } from "react";
 import { colors } from "@/constants";
 import MessageInput from "@/components/chat/MessageInput";
 
@@ -16,11 +15,11 @@ export default function ChatScreen() {
   const { data: roomInfo } = useGetChatRoomInfo(String(roomId));
   const navigation = useNavigation();
 
-  useEffect(() => {
+  useFocusEffect(() => {
     navigation.setOptions({
       title: roomInfo?.name,
     });
-  }, [navigation, roomInfo]);
+  });
 
   return (
     <SafeAreaView style={styles.container} edges={["bottom"]}>
