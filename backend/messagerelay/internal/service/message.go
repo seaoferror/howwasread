@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"log"
 	"log/slog"
 	"slices"
 	"sync"
@@ -13,9 +14,7 @@ import (
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/status"
 )
 
 func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte, roomId uuid.UUID, fromId uuid.UUID, contentType string, contents []string) error {
@@ -39,12 +38,14 @@ func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte
 			}
 			rm.Lock()
 			for _, ip := range ips {
+				log.Printf("ip: %v", ip)
 				relayToIdsByIP[ip] = append(relayToIdsByIP[ip], tid)
 			}
 			rm.Unlock()
 		}()
 	}
 	wg.Wait()
+	log.Printf("pushToId: %v, relayToId: %v", pushToIds, relayToIdsByIP)
 
 	if pushToIds != nil {
 		p, _ := json.Marshal(payload.PreparedMessage{
@@ -65,11 +66,13 @@ func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			log.Printf("relay start ip: %v, tids: %v", ip, tids)
 			s.ccsMutex.RLock()
 			cc, ok := s.clientConns[ip]
 			s.ccsMutex.RUnlock()
 			var err error
 			if !ok {
+				log.Printf("try to make connection...")
 				var opts []grpc.DialOption
 				opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
 				cc, err = grpc.NewClient(ip+":50051", opts...)
@@ -97,8 +100,13 @@ func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte
 			ctxt, cancel := context.WithTimeout(ctx, time.Second*5)
 			defer cancel()
 			res, err := client.RelayMessaging(ctxt, &req)
-			st, ok := status.FromError(err)
-			if ok && (st.Code() == codes.Unavailable || st.Code() == codes.DeadlineExceeded) {
+			if err != nil {
+				slog.Error("fail to relay messaging", "err", err)
+				pm.Lock()
+				pushToIds = append(pushToIds, tids...)
+				pm.Unlock()
+				//st, ok := status.FromError(err)
+				//if ok && (st.Code() == codes.Unavailable || st.Code() == codes.DeadlineExceeded) {
 				s.ccsMutex.Lock()
 				err = s.clientConns[ip].Close()
 				if err != nil {
@@ -126,15 +134,16 @@ func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte
 					}()
 				}
 				wg1.Wait()
-			}
-			if err != nil {
-				slog.Error("fail to relay messaging", "err", err)
-				pm.Lock()
-				pushToIds = append(pushToIds, tids...)
-				pm.Unlock()
+				//}
 				return
 			}
+
+			if res == nil || len(res.PushToIds) == 0 {
+				return
+			}
+			pm.Lock()
 			pushToIds = append(pushToIds, res.PushToIds...)
+			pm.Unlock()
 			var wg1 sync.WaitGroup
 			for _, tid := range res.PushToIds {
 				wg1.Add(1)
