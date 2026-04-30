@@ -1,12 +1,13 @@
 import { FlatList, StyleSheet } from "react-native";
 import { useGetInfiniteMessages } from "@/hooks/useChat";
+import * as SQLite from "expo-sqlite";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useState } from "react";
-import { Message, MessageEntity } from "@/types/chat";
-import * as SQLite from "expo-sqlite";
+import { Message } from "@/types/chat";
 import { stringify as uuidStringify } from "uuid";
 import MessageItem from "@/components/chat/MessageItem";
 import { useLocalSearchParams } from "expo-router";
+import { findNewMessage } from "@/db/message";
 
 export default function MessageList() {
   const db = useSQLiteContext();
@@ -19,29 +20,28 @@ export default function MessageList() {
     if (data?.pages) {
       setMessages(data.pages.flat());
     }
-  }, [data]);
+    const subscription = SQLite.addDatabaseChangeListener(async (event) => {
+      const newMessageRaw = await findNewMessage(db, event.rowId);
+      if (!newMessageRaw) return;
+      if (roomId !== uuidStringify(newMessageRaw.room_id)) {
+        return;
+      }
+      setMessages((prev) => [
+        {
+          id: uuidStringify(newMessageRaw.id),
+          fromId: uuidStringify(newMessageRaw.from_id),
+          contentType: newMessageRaw.content_type,
+          contents: JSON.parse(newMessageRaw.contents),
+          createdAt: newMessageRaw.created_at,
+        },
+        ...prev,
+      ]);
+    });
 
-  SQLite.addDatabaseChangeListener(async (event) => {
-    const newMessageRaw = await db.getFirstAsync<MessageEntity>(
-      `SELECT * FROM message WHERE rowid = ?`,
-      event.rowId,
-    );
-    if (!newMessageRaw) return;
-    if (roomId !== uuidStringify(newMessageRaw.room_id)) {
-      return;
-    }
-    setMessages([
-      {
-        id: uuidStringify(newMessageRaw.id),
-        fromId: uuidStringify(newMessageRaw.from_id),
-        contentType: newMessageRaw.content_type,
-        contents: JSON.parse(newMessageRaw.contents),
-        createdAt: newMessageRaw.created_at,
-        isDayFirst: Boolean(newMessageRaw.is_day_first),
-      },
-      ...messages,
-    ]);
-  });
+    return () => {
+      subscription.remove();
+    };
+  }, [data?.pages, db, roomId]);
 
   const handleEndReached = () => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -52,8 +52,16 @@ export default function MessageList() {
   return (
     <FlatList
       data={messages}
-      renderItem={({ item }) => <MessageItem message={item} />}
-      keyExtractor={(item) => String(item.id)}
+      renderItem={({ item, index }) => {
+        const olderMessage = messages[index + 1];
+        const currentMsgDate = new Date(item.createdAt).toLocaleDateString();
+        const olderMsgDate = olderMessage
+          ? new Date(olderMessage.createdAt).toLocaleDateString()
+          : null;
+        const isDayFirst = currentMsgDate !== olderMsgDate;
+        return <MessageItem message={item} isDayFirst={isDayFirst} />;
+      }}
+      keyExtractor={(item, index) => `${item.id}-${index}`}
       contentContainerStyle={{ ...styles.contentContainer }}
       onEndReached={handleEndReached}
       onEndReachedThreshold={0.5}
