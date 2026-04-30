@@ -1,4 +1,5 @@
 import { axiosInstance } from "@/api/axios";
+import { fetch } from "expo/fetch";
 import {
   GeneratePresignedURLResponse,
   GetChatRoomInfoResponse,
@@ -7,7 +8,6 @@ import {
   UploadToS3Request,
 } from "@/types/chat";
 import { File } from "expo-file-system";
-import axios from "axios";
 
 export async function sendLike(body: { toId: string }) {
   const { data } = await axiosInstance.post("/chat/like", body);
@@ -52,18 +52,21 @@ export async function uploadToS3({
   localFileURI,
   mimeType,
   filename,
-}: UploadToS3Request): Promise<void> {
+}: UploadToS3Request) {
   const formData = new FormData();
   Object.keys(awsFields).forEach((key) => {
     formData.append(key, awsFields[key]);
   });
   formData.append("Content-type", mimeType);
   formData.append("file", new File(localFileURI), filename);
-  const { data } = await axios.post(awsPresignedURL, formData, {
+  const data = await fetch(awsPresignedURL, {
+    method: "POST",
+    body: formData,
     headers: {
       "Content-Type": "multipart/form-data",
     },
   });
+  console.log(data.status)
   return data;
 }
 

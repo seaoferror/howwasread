@@ -23,7 +23,7 @@ export const axiosInstance = axios.create({
 
 export const localDevInstance = axios.create({
   adapter: "fetch",
-  baseURL: `http://${Platform.OS === "ios" ? baseUrl.ios : baseUrl.android}:8081`,
+  baseURL: `http://${Platform.OS === "ios" ? baseUrl.ios : baseUrl.android}:8078`,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
