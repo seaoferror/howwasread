@@ -28,3 +28,43 @@ export function getHourMinute(isoString: string): string {
     hour12: false,
   });
 }
+
+export function formatPreviewDate(createdAt: string) {
+  const date = new Date(createdAt);
+  const now = new Date();
+
+  const isToday =
+    date.getFullYear() === now.getFullYear() &&
+    date.getMonth() === now.getMonth() &&
+    date.getDate() === now.getDate();
+
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+
+  const isYesterday =
+    date.getFullYear() === yesterday.getFullYear() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getDate() === yesterday.getDate();
+
+  if (isToday) {
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+  if (isYesterday) {
+    return "yesterday";
+  }
+  return date.toLocaleDateString(undefined, {
+    month: "numeric",
+    day: "numeric",
+  });
+}
+
+export function formatToMinuteSecond(seconds: number) {
+  if (isNaN(seconds) || seconds < 0) return "00:00";
+  const m = Math.floor(seconds / 60)
+    .toString()
+    .padStart(2, "0");
+  const s = Math.floor(seconds % 60)
+    .toString()
+    .padStart(2, "0");
+  return `${m}:${s}`;
+}

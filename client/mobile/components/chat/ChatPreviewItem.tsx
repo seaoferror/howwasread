@@ -4,38 +4,10 @@ import { colors } from "@/constants";
 import { router } from "expo-router";
 import { useGetChatRoomInfo } from "@/hooks/useChat";
 import { useGetProfile, useMyProfile } from "@/hooks/useMyProfile";
+import { formatPreviewDate } from "@/util/time";
 
 interface ChatPreviewItemProps {
-  preview: Omit<Message, "isDayFirst">;
-}
-
-function formatPreviewDate(createdAt: string) {
-  const date = new Date(createdAt);
-  const now = new Date();
-
-  const isToday =
-    date.getFullYear() === now.getFullYear() &&
-    date.getMonth() === now.getMonth() &&
-    date.getDate() === now.getDate();
-
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-
-  const isYesterday =
-    date.getFullYear() === yesterday.getFullYear() &&
-    date.getMonth() === yesterday.getMonth() &&
-    date.getDate() === yesterday.getDate();
-
-  if (isToday) {
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  }
-  if (isYesterday) {
-    return "yesterday";
-  }
-  return date.toLocaleDateString(undefined, {
-    month: "numeric",
-    day: "numeric",
-  });
+  preview: Message;
 }
 
 export default function ChatPreviewItem({ preview }: ChatPreviewItemProps) {
@@ -57,7 +29,7 @@ export default function ChatPreviewItem({ preview }: ChatPreviewItemProps) {
     >
       <View style={styles.avatar}>
         <Text style={styles.avatarText}>
-          {(roomInfo?.name ?? "?").charAt(0)}
+          {(roomInfo?.name ?? "").charAt(0)}
         </Text>
       </View>
 

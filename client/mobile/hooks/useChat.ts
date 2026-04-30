@@ -14,9 +14,16 @@ import {
 import { AxiosError } from "axios";
 import Toast from "react-native-toast-message";
 import { queryKey } from "@/constants";
-import { findMessagesByRoomId } from "@/db/message";
-import { SQLiteDatabase } from "expo-sqlite";
-import { data } from "browserslist";
+import {
+  findMessagesByRoomId,
+  findNewMessage,
+  findPreview,
+} from "@/db/message";
+import * as SQLite from "expo-sqlite";
+import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
+import { stringify as uuidStringify } from "uuid";
+import { useEffect, useState } from "react";
+import { Message } from "@/types/chat";
 
 export function useSendLike() {
   return useMutation({
@@ -104,5 +111,52 @@ export function useGetSignedURLs({
     }),
   });
 
-  return { data: queries.map((result) => result.data) };
+  return {
+    urls: queries.map((result) => result.data?.url ?? ""),
+  };
+}
+
+export function usePreview() {
+  const db = useSQLiteContext();
+  const [preview, setPreview] = useState<Message[]>([]);
+
+  useEffect(() => {
+    const wrapper = async () => {
+      const previewRaw = await findPreview(db);
+
+      const p = previewRaw.map((row) => ({
+        id: uuidStringify(row.id),
+        roomId: uuidStringify(row.room_id),
+        fromId: uuidStringify(row.from_id),
+        contentType: row.content_type,
+        contents: JSON.parse(row.contents),
+        createdAt: row.created_at,
+      }));
+      setPreview(p);
+
+      SQLite.addDatabaseChangeListener(async (event) => {
+        const newMessageRaw = await findNewMessage(db, event.rowId);
+
+        if (!newMessageRaw) return;
+
+        const newPreviewItem: Message = {
+          id: uuidStringify(newMessageRaw.id),
+          roomId: uuidStringify(newMessageRaw.room_id),
+          fromId: uuidStringify(newMessageRaw.from_id),
+          contentType: newMessageRaw.content_type,
+          contents: JSON.parse(newMessageRaw.contents),
+          createdAt: newMessageRaw.created_at,
+        };
+
+        setPreview((prev) => {
+          const filtered = prev.filter(
+            (item) => item.roomId !== newPreviewItem.roomId,
+          );
+          return [newPreviewItem, ...filtered];
+        });
+      });
+    };
+    wrapper();
+  }, [db, preview.length]); //check this work
+  return preview;
 }
