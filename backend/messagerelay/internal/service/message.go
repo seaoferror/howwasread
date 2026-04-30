@@ -26,9 +26,9 @@ func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte
 	for _, tid := range toIds {
 		wg.Add(1)
 		go func() {
+			defer wg.Done()
 			ctxr, cancel := context.WithTimeout(ctx, 1*time.Second)
 			defer cancel()
-			defer wg.Done()
 			ips, err := s.repository.GetServerIPs(ctxr, string(tid))
 			if (err != nil || ips == nil) && !bytes.Equal(tid, fromId[:]) {
 				pm.Lock()
@@ -119,18 +119,7 @@ func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte
 					wg1.Add(1)
 					go func() {
 						defer wg1.Done()
-						ctxr, cancel1 := context.WithTimeout(context.Background(), 1*time.Second)
-						defer cancel1()
-						currentIPs, err1 := s.repository.GetServerIPs(ctxr, string(tid))
-						if err1 != nil {
-							return
-						}
-						if slices.Contains(currentIPs, ip) {
-							err1 = s.repository.RemoveServerIP(ctxr, string(tid), ip)
-							if err1 != nil {
-								return
-							}
-						}
+						s.checkAndRemoveStaleIP(tid, ip)
 					}()
 				}
 				wg1.Wait()
@@ -149,18 +138,7 @@ func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte
 				wg1.Add(1)
 				go func() {
 					defer wg1.Done()
-					ctxr, cancel1 := context.WithTimeout(context.Background(), 1*time.Second)
-					defer cancel1()
-					currentIPs, err1 := s.repository.GetServerIPs(ctxr, string(tid))
-					if err1 != nil {
-						return
-					}
-					if slices.Contains(currentIPs, ip) {
-						err1 = s.repository.RemoveServerIP(ctxr, string(tid), ip)
-						if err1 != nil {
-							return
-						}
-					}
+					s.checkAndRemoveStaleIP(tid, ip)
 				}()
 			}
 			wg1.Wait()
@@ -188,6 +166,20 @@ func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte
 			return err
 		}
 	}
-
 	return nil
+}
+
+func (s *Service) checkAndRemoveStaleIP(tid []byte, ip string) {
+	ctxr, cancel1 := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel1()
+	currentIPs, err1 := s.repository.GetServerIPs(ctxr, string(tid))
+	if err1 != nil {
+		return
+	}
+	if slices.Contains(currentIPs, ip) {
+		err1 = s.repository.RemoveServerIP(ctxr, string(tid), ip)
+		if err1 != nil {
+			return
+		}
+	}
 }
