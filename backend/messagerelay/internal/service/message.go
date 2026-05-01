@@ -23,6 +23,9 @@ func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte
 	var rm sync.Mutex
 	var pushToIds [][]byte
 	var pm sync.Mutex
+	log.Printf("toIds: %v", toIds)
+	log.Printf("roomId: %v", roomId[:])
+	log.Printf("fromId: %v", fromId[:])
 	for _, tid := range toIds {
 		wg.Add(1)
 		go func() {
@@ -30,7 +33,7 @@ func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte
 			ctxr, cancel := context.WithTimeout(ctx, 1*time.Second)
 			defer cancel()
 			ips, err := s.repository.GetServerIPs(ctxr, string(tid))
-			if (err != nil || ips == nil) && !bytes.Equal(tid, fromId[:]) {
+			if (err != nil || len(ips) == 0) && !bytes.Equal(tid, fromId[:]) {
 				pm.Lock()
 				pushToIds = append(pushToIds, tid)
 				pm.Unlock()

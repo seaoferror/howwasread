@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -19,6 +20,7 @@ import (
 )
 
 func (s *Service) NotifyMessaging(ctx context.Context, toIds [][]byte, roomId, fromId uuid.UUID, contentType string, content []string) error {
+	log.Print("start notify message...")
 	var em sync.Mutex
 	var es []error
 	var wg sync.WaitGroup
@@ -68,7 +70,7 @@ func (s *Service) NotifyMessaging(ctx context.Context, toIds [][]byte, roomId, f
 		return err
 	}
 	var roomName string
-	if roomId != uuid.Nil {
+	if !bytes.Equal(toIds[0], roomId[:]) {
 		roomName, err = s.repository.FindRoomNameById(ctx, gocql.UUID(roomId))
 	}
 	if err != nil {
@@ -101,7 +103,7 @@ func (s *Service) NotifyMessaging(ctx context.Context, toIds [][]byte, roomId, f
 		Body: body,
 	}
 	alert.Title = senderName
-	if roomId != uuid.Nil {
+	if roomName != "" {
 		alert.Title = roomName
 		alert.Subtitle = senderName
 	}
@@ -129,16 +131,16 @@ func (s *Service) NotifyMessaging(ctx context.Context, toIds [][]byte, roomId, f
 			req.Header.Set("Content-Type", "application/json")
 			client := &http.Client{}
 			res, err1 := client.Do(req)
+			defer res.Body.Close()
+			if res.StatusCode == http.StatusOK {
+				slog.Info("success to notify message to apn")
+				return
+			}
 			if err1 != nil {
 				slog.Error("fail to send request", "err1", err1)
 				em.Lock()
 				es = append(es, err1)
 				em.Unlock()
-				return
-			}
-			defer res.Body.Close()
-			if res.StatusCode == http.StatusOK {
-				return
 			}
 			mu.Lock()
 			slog.Error("fail to send apn notification",
@@ -149,35 +151,37 @@ func (s *Service) NotifyMessaging(ctx context.Context, toIds [][]byte, roomId, f
 	}
 	wg.Wait()
 
-	client, err := s.app.Messaging(ctx)
-	if err != nil {
-		slog.Error("fail to create fcm messaging client",
-			"err", err)
-		return err
-	}
-
 	var fcmts []string
 	for t := range fcmtm {
 		fcmts = append(fcmts, t)
 	}
 
-	message := &messaging.MulticastMessage{
-		Notification: &messaging.Notification{
-			Title: senderName,
-			Body:  body,
-		},
-		Tokens: fcmts,
-	}
-	br, err := client.SendEachForMulticast(ctx, message)
-	if err != nil {
-		return err
-	}
-	if br.FailureCount > 0 {
-		for i, resp := range br.Responses {
-			if !resp.Success {
-				slog.Info("fail to send fcm notification",
-					"failedId", fcmtm[fcmts[i]])
-				failedIds = append(failedIds, fcmtm[fcmts[i]])
+	if len(fcmts) > 0 {
+		client, err := s.app.Messaging(ctx)
+		if err != nil {
+			slog.Error("fail to create fcm messaging client",
+				"err", err)
+			return err
+		}
+
+		message := &messaging.MulticastMessage{
+			Notification: &messaging.Notification{
+				Title: senderName,
+				Body:  body,
+			},
+			Tokens: fcmts,
+		}
+		br, err := client.SendEachForMulticast(ctx, message)
+		if err != nil {
+			return err
+		}
+		if br.FailureCount > 0 {
+			for i, resp := range br.Responses {
+				if !resp.Success {
+					slog.Info("fail to send fcm notification",
+						"failedId", fcmtm[fcmts[i]])
+					failedIds = append(failedIds, fcmtm[fcmts[i]])
+				}
 			}
 		}
 	}
@@ -185,7 +189,8 @@ func (s *Service) NotifyMessaging(ctx context.Context, toIds [][]byte, roomId, f
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			err2 := s.repository.RemovePushTokenByIdAndDeviceId(ctx, gocql.UUID(failedId[0]), gocql.UUID(failedId[1]))
+			err2 := s.repository.RemovePushTokenByIdAndDeviceId(
+				ctx, gocql.UUID(failedId[0]), gocql.UUID(failedId[1]))
 			if err2 != nil {
 				em.Lock()
 				es = append(es, err2)
