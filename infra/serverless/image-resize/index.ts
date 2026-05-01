@@ -1,5 +1,5 @@
 import type { S3Event } from "aws-lambda";
-import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import sharp from "sharp";
 
 const S3 = new S3Client({});
@@ -53,10 +53,14 @@ export const handler = async (event: S3Event) => {
     let image = await Body.transformToByteArray();
 
     if (ContentType !== "image/heic") {
-      image = await sharp(image).resize({
-        width: RESIZED_WIDTH,
-        withoutEnlargement: true
-      }).toBuffer();
+      image = await sharp(image)
+        .resize({
+          width: RESIZED_WIDTH,
+          withoutEnlargement: true,
+        })
+        .rotate()
+        .jpeg({ progressive: true })
+        .toBuffer();
     }
 
     await S3.send(
@@ -64,11 +68,20 @@ export const handler = async (event: S3Event) => {
         Bucket: DESC_BUCKET,
         Key: destKey,
         Body: image,
-        ContentType: ContentType
+        ContentType: ContentType === "image/heic" ? "image/heic" : "image/jpeg"
       })
     );
 
-    console.log(`Successfully resized and uploaded to ${destKey}`);
+    console.log(`Successfully resize, upload to ${destKey}`);
+
+    await S3.send(
+      new DeleteObjectCommand({
+        Bucket: src,
+        Key: key,
+      }),
+    );
+
+    console.log(`Successfully clean up to ${key}`);
 
     return {
       statusCode: 200,
