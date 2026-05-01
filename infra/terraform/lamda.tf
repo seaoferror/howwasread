@@ -49,7 +49,7 @@ resource "aws_lambda_function" "image_resizer" {
   function_name    = "image-resize-function"
   role             = aws_iam_role.lambda_exec_role.arn
   handler          = "index.handler"
-  runtime          = "nodejs20.x"
+  runtime          = "nodejs22.x"
   filename         = "function.zip"
   source_code_hash = filebase64sha256("function.zip")
   timeout          = 15
