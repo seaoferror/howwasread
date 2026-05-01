@@ -87,7 +87,6 @@ function RootNavigator() {
           console.log("last inserted ID:", cursor);
         }
         const messages = await getRecentMessages(cursor);
-        console.log(messages);
         if (messages && messages.length > 0) {
           await Promise.all(
             messages.map((m) => {

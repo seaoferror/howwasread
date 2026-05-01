@@ -67,9 +67,7 @@ export default function MessageInput() {
       mediaTypes: ["images"],
       allowsEditing: false,
       allowsMultipleSelection: true,
-      aspect: [4, 3],
-      quality: 0.8,
-      videoMaxDuration: 120,
+      quality: 1,
     });
 
     console.log(result);
@@ -96,12 +94,13 @@ export default function MessageInput() {
         handleFileMessage(
           "image",
           imageAssets[0].mimeType ??
-            (Platform.OS === "android" ? "image/jpg" : "image/heic"),
+            (Platform.OS === "ios" ? "image/heic" : "image/jpg"),
           imageAssets.map((asset) => {
             return asset.uri;
           }),
         ),
       );
+      console.log(imageAssets[0].mimeType);
     }
     await Promise.all(uploadTasks);
   };
