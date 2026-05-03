@@ -1,8 +1,8 @@
 package internal
 
 import (
-	"backend/messagerelay/internal/kafka/consumer"
-	"backend/messagerelay/internal/kafka/producer"
+	"backend/common/producer"
+	"backend/messagerelay/internal/consumer"
 	"backend/messagerelay/internal/repository"
 	"backend/messagerelay/internal/service"
 	"log/slog"
@@ -18,7 +18,7 @@ func NewServer() {
 
 	r := repository.NewRepository()
 
-	p := producer.NewProducer()
+	p := producer.NewProducer("producer_message_notification")
 
 	s := service.NewService(r, p)
 

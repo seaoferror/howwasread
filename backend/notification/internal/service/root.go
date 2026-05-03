@@ -1,7 +1,7 @@
 package service
 
 import (
-	"backend/notification/internal/kafka/producer"
+	"backend/common/producer"
 	"backend/notification/internal/repository"
 	"log"
 	"os"

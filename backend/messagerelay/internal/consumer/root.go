@@ -1,8 +1,8 @@
 package consumer
 
 import (
-	"backend/fcmnotification/internal/service"
-	"backend/payload"
+	"backend/common/payload"
+	"backend/messagerelay/internal/service"
 	"context"
 	"encoding/json"
 	"errors"
@@ -25,7 +25,7 @@ type Consumer struct {
 }
 
 func NewConsumer(s *service.Service) *Consumer {
-	consumerGroup, err := connectConsumer("fcm_notification")
+	consumerGroup, err := connectConsumer("relay_message")
 	if err != nil {
 		log.Panicf("fail to create consumer group client: %v", err)
 	}
@@ -42,7 +42,7 @@ func connectConsumer(groupID string) (sarama.ConsumerGroup, error) {
 		slog.Error("fail to create uuid for kafka client uuid")
 		return nil, err
 	}
-	cfg.ClientID = "consumer.fcm_notification." + id.String()
+	cfg.ClientID = "relay_message.consumer." + id.String()
 	//cfg.Net.SASL.Enable = true
 	//cfg.Net.SASL.Version = 1
 	//cfg.Net.SASL.Mechanism = sarama.SASLTypePlaintext
@@ -147,8 +147,8 @@ func toggleConsumptionFlow(client sarama.ConsumerGroup, isPaused *bool) {
 }
 
 func (c *Consumer) distinguishMessage(ctx context.Context, message *sarama.ConsumerMessage) error {
-	if message.Topic == "fcm_notification" {
-		var p payload.NotificationMessage
+	if message.Topic == "manage_message.prepared" {
+		var p payload.PreparedMessage
 		err := json.Unmarshal(message.Value, &p)
 		if err != nil {
 			slog.Error("fail to unmarshal payload value",
@@ -156,7 +156,7 @@ func (c *Consumer) distinguishMessage(ctx context.Context, message *sarama.Consu
 				"payload.Value", message.Value)
 			return err
 		}
-		err = c.service.SendNotification(ctx, p.TokenMap, p.RoomName, p.SenderName, p.Text, p.ImageURL)
+		err = c.service.RelayMessage(ctx, uuid.UUID(p.Id), p.ToIds, uuid.UUID(p.RoomId), uuid.UUID(p.FromId), p.ContentType, p.Contents)
 		if err != nil {
 			return err
 		}

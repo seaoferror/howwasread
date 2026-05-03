@@ -1,12 +1,12 @@
 package internal
 
 import (
+	"backend/common/producer"
+	pb "backend/common/proto"
 	"backend/onlineconversation/internal/controller"
 	"backend/onlineconversation/internal/grpccontroller"
-	"backend/onlineconversation/internal/kafka/producer"
 	"backend/onlineconversation/internal/repository"
 	"backend/onlineconversation/internal/service"
-	pb "backend/proto"
 	"log"
 	"log/slog"
 	"net"
@@ -22,7 +22,7 @@ func NewServer() {
 	}))
 	slog.SetDefault(logger)
 
-	kp := producer.NewKafkaProducer()
+	kp := producer.NewProducer("producer_online_conversation")
 
 	r := repository.NewRepository()
 

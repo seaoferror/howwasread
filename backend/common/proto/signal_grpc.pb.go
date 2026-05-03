@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             v6.33.0
-// source: proto/signal.proto
+// source: common/proto/signal.proto
 
 package proto
 
@@ -117,5 +117,5 @@ var SignalService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/signal.proto",
+	Metadata: "common/proto/signal.proto",
 }

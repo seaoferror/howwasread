@@ -3,10 +3,10 @@ package internal
 import (
 	"backend/chat/internal/controller"
 	"backend/chat/internal/grpccontroller"
-	"backend/chat/internal/kafka/producer"
 	"backend/chat/internal/repository"
 	"backend/chat/internal/service"
-	pb "backend/proto"
+	"backend/common/producer"
+	pb "backend/common/proto"
 	"log"
 	"log/slog"
 	"net"
@@ -22,7 +22,7 @@ func NewServer() {
 	}))
 	slog.SetDefault(logger)
 
-	p := producer.NewProducer()
+	p := producer.NewProducer("producer_chat")
 
 	r := repository.NewRepository()
 

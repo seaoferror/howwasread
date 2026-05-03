@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"backend/messagepersist/internal/kafka/consumer"
+	"backend/messagepersist/internal/consumer"
 	"backend/messagepersist/internal/repository"
 	"backend/messagepersist/internal/service"
 	"log/slog"

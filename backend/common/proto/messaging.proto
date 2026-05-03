@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "backend/proto";
+option go_package = "backend/common/proto";
 
 package messagingservice;
 

@@ -1,7 +1,7 @@
 package service
 
 import (
-	"backend/messagerelay/internal/kafka/producer"
+	"backend/common/producer"
 	"backend/messagerelay/internal/repository"
 	"sync"
 

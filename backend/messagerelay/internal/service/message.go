@@ -1,8 +1,8 @@
 package service
 
 import (
-	"backend/payload"
-	pb "backend/proto"
+	"backend/common/payload"
+	"backend/common/proto"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -58,7 +58,7 @@ func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte
 			ContentType: contentType,
 			Contents:    contents,
 		})
-		err := s.producer.PushMessage("preprocess_notification", nil, p)
+		err := s.producer.PushMessage("preprocess_notification", p)
 		if err != nil {
 			return err
 		}
@@ -91,8 +91,8 @@ func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte
 				s.clientConns[ip] = cc
 				s.ccsMutex.Unlock()
 			}
-			client := pb.NewMessagingServiceClient(cc)
-			req := pb.RelayMessagingRequest{
+			client := proto.NewMessagingServiceClient(cc)
+			req := proto.RelayMessagingRequest{
 				Id:          id[:],
 				ToIds:       tids,
 				RoomId:      roomId[:],
@@ -164,7 +164,7 @@ func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte
 			ContentType: contentType,
 			Contents:    contents,
 		})
-		err := s.producer.PushMessage("preprocess_notification", nil, p)
+		err := s.producer.PushMessage("preprocess_notification", p)
 		if err != nil {
 			return err
 		}

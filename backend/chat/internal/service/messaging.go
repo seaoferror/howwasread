@@ -2,7 +2,7 @@ package service
 
 import (
 	"backend/chat/internal/dto"
-	"backend/payload"
+	"backend/common/payload"
 	"context"
 	"encoding/json"
 	"errors"

@@ -1,7 +1,7 @@
 package service
 
 import (
-	pb "backend/proto"
+	"backend/common/proto"
 	"context"
 	"encoding/json"
 	"log/slog"
@@ -53,8 +53,8 @@ func (s *Service) PropagateSignal(ctx context.Context, toIds [][]byte, fromId []
 				s.clientConns[ip] = cc
 				s.ccsMutex.Unlock()
 			}
-			client := pb.NewSignalServiceClient(cc)
-			req := pb.RelaySignalRequest{
+			client := proto.NewSignalServiceClient(cc)
+			req := proto.RelaySignalRequest{
 				ToIds:  ids,
 				FromId: fromId,
 				Signal: signal,

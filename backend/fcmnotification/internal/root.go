@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"backend/fcmnotification/internal/kafka/consumer"
+	"backend/fcmnotification/internal/consumer"
 	"backend/fcmnotification/internal/repository"
 	"backend/fcmnotification/internal/service"
 	"log/slog"

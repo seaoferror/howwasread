@@ -1,9 +1,9 @@
 package internal
 
 import (
+	"backend/common/producer"
+	"backend/notification/internal/consumer"
 	"backend/notification/internal/controller"
-	"backend/notification/internal/kafka/consumer"
-	"backend/notification/internal/kafka/producer"
 	"backend/notification/internal/repository"
 	"backend/notification/internal/service"
 	"log/slog"
@@ -19,7 +19,7 @@ func NewServer() {
 
 	r := repository.NewRepository()
 
-	p := producer.NewProducer()
+	p := producer.NewProducer("producer.preprocess_notification")
 
 	s := service.NewService(r, p)
 

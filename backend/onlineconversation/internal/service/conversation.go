@@ -1,8 +1,8 @@
 package service
 
 import (
+	"backend/common/payload"
 	"backend/onlineconversation/internal/dto"
-	"backend/payload"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -151,7 +151,7 @@ func (s *Service) PublishConversationSignal(fromId uuid.UUID, toIds [][]byte, si
 		ToIds:  toIds,
 		Signal: signal,
 	})
-	err := s.kafkaProducer.PushMessage("conversation.signal", value)
+	err := s.producer.PushMessage("conversation.signal", value)
 	if err != nil {
 		return err
 	}

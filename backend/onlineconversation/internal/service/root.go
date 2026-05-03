@@ -1,19 +1,19 @@
 package service
 
 import (
-	"backend/onlineconversation/internal/kafka/producer"
+	"backend/common/producer"
 	"backend/onlineconversation/internal/repository"
 )
 
 type Service struct {
-	repository    *repository.Repository
-	kafkaProducer *producer.KafkaProducer
+	repository *repository.Repository
+	producer   *producer.Producer
 }
 
-func NewService(r *repository.Repository, kp *producer.KafkaProducer) *Service {
+func NewService(r *repository.Repository, p *producer.Producer) *Service {
 	s := &Service{
-		repository:    r,
-		kafkaProducer: kp,
+		repository: r,
+		producer:   p,
 	}
 	return s
 }

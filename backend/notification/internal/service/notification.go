@@ -1,7 +1,7 @@
 package service
 
 import (
-	"backend/payload"
+	"backend/common/payload"
 	"bytes"
 	"context"
 	"errors"

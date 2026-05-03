@@ -1,8 +1,8 @@
 package service
 
 import (
-	"backend/chat/internal/kafka/producer"
 	"backend/chat/internal/repository"
+	"backend/common/producer"
 	"context"
 	"log"
 	"os"

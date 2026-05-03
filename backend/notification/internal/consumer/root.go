@@ -1,8 +1,8 @@
 package consumer
 
 import (
-	"backend/payload"
-	"backend/signalrelay/internal/service"
+	"backend/common/payload"
+	"backend/notification/internal/service"
 	"context"
 	"encoding/json"
 	"errors"
@@ -19,19 +19,19 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 )
 
-type KafkaConsumer struct {
-	consumer sarama.ConsumerGroup
-	service  *service.Service
+type Consumer struct {
+	consumerGroup sarama.ConsumerGroup
+	service       *service.Service
 }
 
-func NewKafkaConsumer(s *service.Service) *KafkaConsumer {
-	consumer, err := connectConsumer("relay_signal")
+func NewConsumer(s *service.Service) *Consumer {
+	consumerGroup, err := connectConsumer("preprocess_notification")
 	if err != nil {
 		log.Panicf("fail to create consumer group client: %v", err)
 	}
-	return &KafkaConsumer{
-		consumer: consumer,
-		service:  s,
+	return &Consumer{
+		consumerGroup: consumerGroup,
+		service:       s,
 	}
 }
 
@@ -42,7 +42,7 @@ func connectConsumer(groupID string) (sarama.ConsumerGroup, error) {
 		slog.Error("fail to create uuid for kafka client uuid")
 		return nil, err
 	}
-	cfg.ClientID = "relay_signal.consumer." + id.String()
+	cfg.ClientID = "consumer.preprocess_notification" + id.String()
 	//cfg.Net.SASL.Enable = true
 	//cfg.Net.SASL.Version = 1
 	//cfg.Net.SASL.Mechanism = sarama.SASLTypePlaintext
@@ -60,24 +60,24 @@ func connectConsumer(groupID string) (sarama.ConsumerGroup, error) {
 	return sarama.NewConsumerGroup([]string{os.Getenv("KAFKA_URL")}, groupID, cfg)
 }
 
-func (ks *KafkaConsumer) Setup(_ sarama.ConsumerGroupSession) error {
+func (c *Consumer) Setup(_ sarama.ConsumerGroupSession) error {
 	return nil
 }
 
-func (ks *KafkaConsumer) Cleanup(_ sarama.ConsumerGroupSession) error {
+func (c *Consumer) Cleanup(_ sarama.ConsumerGroupSession) error {
 	return nil
 }
 
-func (ks *KafkaConsumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
+func (c *Consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim sarama.ConsumerGroupClaim) error {
 	for {
 		select {
 		case msg := <-claim.Messages():
-			session.MarkMessage(msg, "")
-			err := ks.distinguishMessage(session.Context(), msg)
+			err := c.distinguishMessage(session.Context(), msg)
 			if err != nil {
 				log.Printf("Fail to manage message: %v", err)
 				return err
 			}
+			session.MarkMessage(msg, "")
 			continue
 		case <-session.Context().Done():
 			return nil
@@ -85,7 +85,7 @@ func (ks *KafkaConsumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim
 	}
 }
 
-func (ks *KafkaConsumer) GetMessage(topics []string) error {
+func (c *Consumer) GetMessage(topics []string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	wg := &sync.WaitGroup{}
@@ -93,10 +93,10 @@ func (ks *KafkaConsumer) GetMessage(topics []string) error {
 	go func() {
 		defer wg.Done()
 		for {
-			if err := ks.consumer.Consume(ctx, topics, ks); err != nil {
+			if ctx.Err() != nil {
 				return
 			}
-			if ctx.Err() != nil {
+			if err := c.consumerGroup.Consume(ctx, topics, c); err != nil {
 				return
 			}
 		}
@@ -121,42 +121,45 @@ func (ks *KafkaConsumer) GetMessage(topics []string) error {
 			log.Println("terminating: via signal")
 			keepRunning = false
 		case <-sigusr1:
-			toggleConsumptionFlow(ks.consumer, &consumptionIsPaused)
+			toggleConsumptionFlow(c.consumerGroup, &consumptionIsPaused)
 		}
 	}
 	cancel()
 	wg.Wait()
 
-	if err := ks.consumer.Close(); err != nil {
+	if err := c.consumerGroup.Close(); err != nil {
 		log.Printf("Error closing client: %v", err)
 		return err
 	}
 	return nil
 }
 
-func toggleConsumptionFlow(client sarama.ConsumerGroup, isPaused *bool) {
+func toggleConsumptionFlow(consumerGroup sarama.ConsumerGroup, isPaused *bool) {
 	if *isPaused {
-		client.ResumeAll()
+		consumerGroup.ResumeAll()
 		log.Println("Resuming consumption")
 	} else {
-		client.PauseAll()
+		consumerGroup.PauseAll()
 		log.Println("Pausing consumption")
 	}
 
 	*isPaused = !*isPaused
 }
 
-func (ks *KafkaConsumer) distinguishMessage(ctx context.Context, message *sarama.ConsumerMessage) error {
-	if message.Topic == "conversation.signal" {
-		var m payload.OnlineConversationSignal
-		err := json.Unmarshal(message.Value, &m)
+func (c *Consumer) distinguishMessage(ctx context.Context, message *sarama.ConsumerMessage) error {
+	if message.Topic == "preprocess_notification" {
+		var p payload.PreparedMessage
+		err := json.Unmarshal(message.Value, &p)
 		if err != nil {
 			slog.Error("fail to unmarshal payload value",
 				"err", err,
 				"payload.Value", message.Value)
 			return err
 		}
-		ks.service.PropagateSignal(ctx, m.ToIds, m.FromId, m.Signal)
+		err = c.service.PreprocessNotification(ctx, p.ToIds, uuid.UUID(p.RoomId), uuid.UUID(p.FromId), p.ContentType, p.Contents)
+		if err != nil {
+			return err
+		}
 		return nil
 	}
 	return errors.New("this topic does not exist")

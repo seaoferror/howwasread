@@ -1,8 +1,8 @@
 package consumer
 
 import (
+	"backend/common/payload"
 	"backend/messagepersist/internal/service"
-	"backend/payload"
 	"context"
 	"encoding/json"
 	"errors"

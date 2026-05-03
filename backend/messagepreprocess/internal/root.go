@@ -1,8 +1,8 @@
 package internal
 
 import (
-	"backend/messagepreprocess/internal/kafka/consumer"
-	"backend/messagepreprocess/internal/kafka/producer"
+	"backend/common/producer"
+	"backend/messagepreprocess/internal/consumer"
 	"backend/messagepreprocess/internal/repository"
 	"backend/messagepreprocess/internal/service"
 	"log/slog"
@@ -18,7 +18,7 @@ func NewServer() {
 
 	r := repository.NewRepository()
 
-	p := producer.NewProducer()
+	p := producer.NewProducer("message_preprocess")
 
 	s := service.NewService(r, p)
 
