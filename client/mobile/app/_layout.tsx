@@ -15,7 +15,11 @@ import { getTimestamp } from "@/util/time";
 import { getRecentMessages } from "@/api/chat";
 import { initDB, saveRecentMessage } from "@/db/message";
 import { randomUUID } from "expo-crypto";
-import { getDevicePushTokenAsync } from "expo-notifications";
+import {
+  getDevicePushTokenAsync,
+  getExpoPushTokenAsync,
+  requestPermissionsAsync,
+} from "expo-notifications";
 import { registerNotification } from "@/api/notification";
 import { setAudioModeAsync } from "expo-audio";
 
@@ -68,13 +72,23 @@ function RootNavigator() {
           await setSecure("deviceId", deviceId);
         }
         try {
+          await requestPermissionsAsync({
+            ios: {
+              allowAlert: true,
+              allowBadge: true,
+              allowSound: true,
+            },
+          });
           await registerNotification({
             deviceId: deviceId,
             os: Platform.OS,
-            devicePushToken: (await getDevicePushTokenAsync()).data,
+            devicePushToken:
+              Platform.OS === "android"
+                ? (await getDevicePushTokenAsync()).data
+                : (await getExpoPushTokenAsync()).data,
           });
         } catch (error) {
-          console.log(error)
+          console.log(error);
         }
 
         const row = await db.getFirstAsync<{ id: Uint8Array }>(
