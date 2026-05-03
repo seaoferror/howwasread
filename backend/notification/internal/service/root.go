@@ -42,9 +42,9 @@ func NewService(r *repository.Repository) *Service {
 	s := Service{
 		repository:       r,
 		app:              app,
-		teamId:           os.Getenv("TEAM_ID"),
+		teamId:           os.Getenv("APPLE_TEAM_ID"),
 		BundleIdentifier: os.Getenv("BUNDLE_IDENTIFIER"),
-		keyId:            os.Getenv("KEY_ID"),
+		keyId:            os.Getenv("APN_KEY_ID"),
 		privateKey:       privateKey,
 	}
 	return &s

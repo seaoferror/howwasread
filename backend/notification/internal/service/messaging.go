@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"log/slog"
 	"net/http"
@@ -127,13 +128,19 @@ func (s *Service) NotifyMessaging(ctx context.Context, toIds [][]byte, roomId, f
 				return
 			}
 			req.Header.Set("apns-topic", s.BundleIdentifier)
-			req.Header.Set("authorization", authorization)
+			req.Header.Set("authorization", "bearer "+authorization)
 			req.Header.Set("Content-Type", "application/json")
 			client := &http.Client{}
 			res, err1 := client.Do(req)
 			defer res.Body.Close()
+			bodyRaw, err2 := io.ReadAll(res.Body)
+			if err2 != nil {
+				slog.Error("fail to read body", "err", err2)
+			}
+			log.Printf("apn status code: %v", res.StatusCode)
 			if res.StatusCode == http.StatusOK {
-				slog.Info("success to notify message to apn")
+				slog.Info("success to notify message to apn",
+					"body", string(bodyRaw))
 				return
 			}
 			if err1 != nil {
@@ -142,6 +149,7 @@ func (s *Service) NotifyMessaging(ctx context.Context, toIds [][]byte, roomId, f
 				es = append(es, err1)
 				em.Unlock()
 			}
+			log.Printf("failed apn body: %v", string(bodyRaw))
 			mu.Lock()
 			slog.Error("fail to send apn notification",
 				"failedId", apntm[t])
