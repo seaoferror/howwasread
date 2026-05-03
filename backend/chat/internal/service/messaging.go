@@ -122,12 +122,12 @@ func (s *Service) GeneratePresignedURL(ctx context.Context, id uuid.UUID, conten
 	return res, nil
 }
 
-func (s *Service) GenerateSignedURL(ctx context.Context, id uuid.UUID, contentType string, filename uuid.UUID) (map[string]string, error) {
+func (s *Service) GenerateSignedURL(ctx context.Context, memberId uuid.UUID, contentType string, filename uuid.UUID) (map[string]string, error) {
 	ids, err := s.repository.FindIdsByFilename(ctx, gocql.UUID(filename))
 	if err != nil {
 		return nil, err
 	}
-	if !slices.Contains(ids, gocql.UUID(id)) {
+	if !slices.Contains(ids, gocql.UUID(memberId)) {
 		slog.Warn("this member id don't have authority to see file")
 		return nil, errors.New("unauthorized request")
 	}

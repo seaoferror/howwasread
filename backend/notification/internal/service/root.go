@@ -1,51 +1,34 @@
 package service
 
 import (
+	"backend/notification/internal/kafka/producer"
 	"backend/notification/internal/repository"
-	"context"
-	"crypto/ecdsa"
 	"log"
 	"os"
 
-	firebase "firebase.google.com/go/v4"
-	"github.com/golang-jwt/jwt/v5"
-	"google.golang.org/api/option"
-
+	"github.com/aws/aws-sdk-go-v2/feature/cloudfront/sign"
 	_ "github.com/joho/godotenv/autoload"
 )
 
 type Service struct {
-	repository       *repository.Repository
-	app              *firebase.App
-	teamId           string
-	BundleIdentifier string
-	keyId            string
-	privateKey       *ecdsa.PrivateKey
+	repository    *repository.Repository
+	producer      *producer.Producer
+	signer        *sign.URLSigner
+	cloudfrontURL string
 }
 
-func NewService(r *repository.Repository) *Service {
-	opt := option.WithCredentialsFile("holiday2-3d1c4-firebase-adminsdk-fbsvc-7d8ad6c905.json")
-	app, err := firebase.NewApp(context.Background(), nil, opt)
+func NewService(r *repository.Repository, p *producer.Producer) *Service {
+	pk, err := sign.LoadPEMPrivKeyFile("aws_cloudfront_private_key.pem")
 	if err != nil {
-		panic(err)
+		log.Panicf("fail to make cloud front private key: %v", err)
 	}
-
-	keyRaw, err := os.ReadFile("AuthKey_6ZYM46U7FP.p8")
-	if err != nil {
-		log.Panicf("Failed to read apn private key file: %v", err)
-	}
-	privateKey, err := jwt.ParseECPrivateKeyFromPEM(keyRaw)
-	if err != nil {
-		log.Panicf("Fail to parse apn private key form bytes: %v", err)
-	}
+	signer := sign.NewURLSigner(os.Getenv("AWS_CLOUDFRONT_KEY_PAIR_ID"), pk)
 
 	s := Service{
-		repository:       r,
-		app:              app,
-		teamId:           os.Getenv("APPLE_TEAM_ID"),
-		BundleIdentifier: os.Getenv("BUNDLE_IDENTIFIER"),
-		keyId:            os.Getenv("APN_KEY_ID"),
-		privateKey:       privateKey,
+		repository:    r,
+		producer:      p,
+		signer:        signer,
+		cloudfrontURL: os.Getenv("AWS_CLOUD_FRONT_URL"),
 	}
 	return &s
 }

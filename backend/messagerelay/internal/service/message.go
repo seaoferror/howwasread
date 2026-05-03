@@ -58,7 +58,7 @@ func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte
 			ContentType: contentType,
 			Contents:    contents,
 		})
-		err := s.producer.PushMessage("notify_message", nil, p)
+		err := s.producer.PushMessage("preprocess_notification", nil, p)
 		if err != nil {
 			return err
 		}
@@ -164,7 +164,7 @@ func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte
 			ContentType: contentType,
 			Contents:    contents,
 		})
-		err := s.producer.PushMessage("notify_message", nil, p)
+		err := s.producer.PushMessage("preprocess_notification", nil, p)
 		if err != nil {
 			return err
 		}

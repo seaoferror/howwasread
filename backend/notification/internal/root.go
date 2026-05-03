@@ -3,6 +3,7 @@ package internal
 import (
 	"backend/notification/internal/controller"
 	"backend/notification/internal/kafka/consumer"
+	"backend/notification/internal/kafka/producer"
 	"backend/notification/internal/repository"
 	"backend/notification/internal/service"
 	"log/slog"
@@ -18,7 +19,9 @@ func NewServer() {
 
 	r := repository.NewRepository()
 
-	s := service.NewService(r)
+	p := producer.NewProducer()
+
+	s := service.NewService(r, p)
 
 	mux := http.NewServeMux()
 
@@ -35,7 +38,7 @@ func NewServer() {
 
 	c := consumer.NewConsumer(s)
 
-	err := c.GetMessage([]string{"notify_message"})
+	err := c.GetMessage([]string{"preprocess_notification"})
 	if err != nil {
 		panic(err)
 	}
