@@ -23,12 +23,13 @@ type ChatMessage struct {
 }
 
 type PreparedMessage struct {
-	Id          []byte   `json:"id,omitempty"`
-	ToIds       [][]byte `json:"toIds"`
-	RoomId      []byte   `json:"roomId"`
-	FromId      []byte   `json:"fromId"`
-	ContentType string   `json:"contentType"`
-	Contents    []string `json:"contents"`
+	NotificationId uint8    `json:"notificationId,omitempty"`
+	Id             []byte   `json:"id"`
+	ToIds          [][]byte `json:"toIds"`
+	RoomId         []byte   `json:"roomId"`
+	FromId         []byte   `json:"fromId"`
+	ContentType    string   `json:"contentType"`
+	Contents       []string `json:"contents"`
 }
 
 type NotificationMessage struct {

@@ -143,10 +143,10 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if msgType != websocket.MessageText {
-			slog.Error("incorrect payload type",
+			slog.Error("incorrect payload types",
 				"msgType", msgType,
 				"data", data)
-			handleWebsocketError(ctx, conn, errors.New("incorrect payload type"))
+			handleWebsocketError(ctx, conn, errors.New("incorrect payload types"))
 			return
 		}
 		if err != nil {

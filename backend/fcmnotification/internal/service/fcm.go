@@ -6,13 +6,21 @@ import (
 	"fmt"
 	"log/slog"
 	"sync"
+	"time"
 
 	"firebase.google.com/go/v4/messaging"
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
 	"github.com/google/uuid"
 )
 
-func (s *Service) SendNotification(ctx context.Context, tokenMap map[string]uuid.UUIDs, roomName, senderName, text, imageURL string) error {
+func (s *Service) SendNotification(ctx context.Context, messageId uuid.UUID, notificationId uint8, tokenMap map[string]uuid.UUIDs, roomName, senderName, text, imageURL string) error {
+	did, err := s.repository.DidNotification(ctx, string(messageId[:]), string(notificationId))
+	if err != nil {
+		return err
+	}
+	if did {
+		return nil
+	}
 	var wg sync.WaitGroup
 	var em sync.Mutex
 	var es []error
@@ -34,7 +42,13 @@ func (s *Service) SendNotification(ctx context.Context, tokenMap map[string]uuid
 		},
 		Tokens: ts,
 	}
-	br, err := s.fcmClient.SendEachForMulticast(ctx, message)
+	ctxf, cancel := context.WithTimeout(ctx, 4*time.Second)
+	defer cancel()
+	br, err := s.fcmClient.SendEachForMulticast(ctxf, message)
+	if err != nil {
+		return err
+	}
+	err = s.repository.MarkNotification(ctx, string(messageId[:]), string(notificationId))
 	if err != nil {
 		return err
 	}
@@ -47,7 +61,6 @@ func (s *Service) SendNotification(ctx context.Context, tokenMap map[string]uuid
 			}
 		}
 	}
-
 	for _, failedId := range failedIds {
 		wg.Add(1)
 		go func() {

@@ -37,7 +37,7 @@ type Conversation struct {
 	BanIds         []bson.Binary `bson:"b_ids"`
 }
 
-//type Org struct {
+//types Org struct {
 //	Id          bson.ObjectID `bson:"_id"`
 //	Name        string        `bson:"name"`
 //	Description string        `bson:"description"`
@@ -53,7 +53,7 @@ type Conversation struct {
 
 // QNA is meeting subset so it seemed good to embedding,
 // but embedding make query writing difficult, so we will ref it
-//type QNA struct {
+//types QNA struct {
 //	Id       bson.ObjectID `bson:"_id"`
 //	Question string        `bson:"question"`
 //
@@ -61,7 +61,7 @@ type Conversation struct {
 //	AnswerIds []bson.ObjectID `bson:"answer_ids"`
 //}
 //
-//type Answer struct {
+//types Answer struct {
 //	Id      bson.ObjectID `bson:"_id"`
 //	Content string        `bson:"content"`
 //}

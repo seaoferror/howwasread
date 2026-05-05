@@ -58,10 +58,11 @@ func createProducer(clientIdPrefix string) (sarama.AsyncProducer, error) {
 	return sarama.NewAsyncProducer([]string{os.Getenv("KAFKA_URL")}, cfg)
 }
 
-func (p *Producer) PushMessage(topic string, value []byte) error {
+func (p *Producer) PushMessage(topic string, key, value []byte) error {
 
 	msg := sarama.ProducerMessage{
 		Topic: topic,
+		Key:   sarama.ByteEncoder(key),
 		Value: sarama.ByteEncoder(value),
 	}
 
@@ -89,7 +90,7 @@ func (p *Producer) PushDeadLetter(reason error, originalTopic string, value []by
 		{Key: []byte("x-original-topic"), Value: []byte(originalTopic)},
 		{Key: []byte("x-failed-at"), Value: []byte(time.Now().Format(time.RFC3339))},
 	}
-	err := p.PushMessage("dlq", value)
+	err := p.PushMessage("dlq", nil, value)
 	if err != nil {
 		slog.Error("fail to publish dead letter", "err", err)
 		return err

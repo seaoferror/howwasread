@@ -77,7 +77,7 @@ func (s *Service) PublishMessaging(ctx context.Context, fromId uuid.UUID, toIdTy
 		ContentType: contentType,
 		Contents:    contents,
 	})
-	err = s.producer.PushMessage("chat.message", p)
+	err = s.producer.PushMessage("chat.message", nil, p)
 	if err != nil {
 		slog.Error("fail to publish message", "err", err)
 		return nil, err

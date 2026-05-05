@@ -7,10 +7,12 @@ import (
 
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
 	"github.com/apache/cassandra-gocql-driver/v2/lz4"
+	"github.com/redis/rueidis"
 )
 
 type Repository struct {
 	session *gocql.Session
+	client  rueidis.Client
 }
 
 func NewRepository() *Repository {
@@ -37,10 +39,20 @@ func NewRepository() *Repository {
 	if err != nil {
 		panic(err)
 	}
-
 	log.Print("success to connect cassandra")
+
+	clientOption := rueidis.ClientOption{
+		InitAddress: []string{os.Getenv("REDIS_URL")},
+	}
+	client, err := rueidis.NewClient(clientOption)
+	if err != nil {
+		log.Panicf("Fail to connect to redis: %v", err)
+	}
+	log.Print("success to connect redis")
+
 	r := &Repository{
 		session: session,
+		client:  client,
 	}
 
 	return r

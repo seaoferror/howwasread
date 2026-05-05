@@ -51,14 +51,16 @@ func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte
 	log.Printf("pushToId: %v, relayToId: %v", pushToIds, relayToIdsByIP)
 
 	if pushToIds != nil {
-		p, _ := json.Marshal(payload.PreparedMessage{
-			ToIds:       pushToIds,
-			RoomId:      roomId[:],
-			FromId:      fromId[:],
-			ContentType: contentType,
-			Contents:    contents,
+		p := payload.Marshal(payload.PreparedMessage{
+			NotificationId: 0,
+			Id:             id[:],
+			ToIds:          pushToIds,
+			RoomId:         roomId[:],
+			FromId:         fromId[:],
+			ContentType:    contentType,
+			Contents:       contents,
 		})
-		err := s.producer.PushMessage("preprocess_notification", p)
+		err := s.producer.PushMessage("preprocess_notification", nil, p)
 		if err != nil {
 			return err
 		}
@@ -158,13 +160,15 @@ func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte
 
 	if filteredIds != nil {
 		p, _ := json.Marshal(payload.PreparedMessage{
-			ToIds:       filteredIds,
-			RoomId:      roomId[:],
-			FromId:      fromId[:],
-			ContentType: contentType,
-			Contents:    contents,
+			NotificationId: 1,
+			Id:             id[:],
+			ToIds:          filteredIds,
+			RoomId:         roomId[:],
+			FromId:         fromId[:],
+			ContentType:    contentType,
+			Contents:       contents,
 		})
-		err := s.producer.PushMessage("preprocess_notification", p)
+		err := s.producer.PushMessage("preprocess_notification", nil, p)
 		if err != nil {
 			return err
 		}

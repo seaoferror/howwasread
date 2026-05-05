@@ -15,7 +15,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) PreprocessNotification(ctx context.Context, toIds [][]byte, roomId, fromId uuid.UUID, contentType string, content []string) error {
+func (s *Service) PreprocessNotification(ctx context.Context, notificationId uint8, messageId uuid.UUID, toIds [][]byte, roomId, fromId uuid.UUID, contentType string, content []string) error {
 	log.Print("start notify message...")
 	var em sync.Mutex
 	var es []error
@@ -87,16 +87,17 @@ func (s *Service) PreprocessNotification(ctx context.Context, toIds [][]byte, ro
 		p.Text = fmt.Sprintf("(%v)", contentType)
 	}
 
+	kafkaKey := append(messageId[:], notificationId)
 	if len(fcmtm) > 0 {
 		p.TokenMap = fcmtm
-		err = s.producer.PushMessage("fcm_notification", payload.Marshal(p))
+		err = s.producer.PushMessage("fcm_notification", kafkaKey, payload.Marshal(p))
 		if err != nil {
 			return err
 		}
 	}
 	if len(apntm) > 0 {
 		p.TokenMap = apntm
-		err = s.producer.PushMessage("apn_notification", payload.Marshal(p))
+		err = s.producer.PushMessage("apn_notification", kafkaKey, payload.Marshal(p))
 		if err != nil {
 			return err
 		}
