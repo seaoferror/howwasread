@@ -4,7 +4,7 @@ import {
   createRedisClient,
 } from "./config";
 import { extractData } from "./util";
-import { sendPushNotification } from "./service/notification";
+import { sendPushNotification } from "./service";
 import Expo from "expo-server-sdk";
 import { removePushTokenByIdAndDeviceId } from "./db";
 

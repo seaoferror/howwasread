@@ -1,12 +1,13 @@
 import { APN_NOTIFICATION } from "../constants";
 import { createClient } from "@redis/client";
-const { Kafka, ErrorCodes } = KafkaJS;
 import {
   KafkaJS,
   LibrdKafkaError,
   type TopicPartition,
 } from "@confluentinc/kafka-javascript";
 import cassandra from "cassandra-driver";
+
+const { Kafka, ErrorCodes } = KafkaJS;
 
 export async function createRedisClient() {
   const redis = createClient({
