@@ -1,0 +1,34 @@
+import { KafkaMessage } from "@confluentinc/kafka-javascript/types/kafkajs";
+import { NotificationMessage } from "../types/notification";
+import type { ExpoPushMessage } from "expo-server-sdk";
+
+export function extractData(message: KafkaMessage) {
+  const value: NotificationMessage = JSON.parse(
+    message?.value?.toString() ?? "",
+  );
+  const redisKey = Buffer.concat([
+    Buffer.from("apn"),
+    message?.key?.subarray(0, 16) ?? Buffer.from(""),
+  ]);
+  const redisMember = message?.key?.subarray(16, 17) ?? Buffer.from("");
+  return { value, redisKey, redisMember };
+}
+
+export function makeMessage(
+  senderName: string,
+  text: string,
+  imageURL: string | undefined,
+  roomName: string | undefined,
+) {
+  const message: ExpoPushMessage = {
+    to: "",
+    title: senderName,
+    body: text,
+    richContent: { image: imageURL },
+  };
+  if (roomName) {
+    message.title = roomName;
+    message.subtitle = senderName;
+  }
+  return message;
+}
