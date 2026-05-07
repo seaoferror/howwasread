@@ -20,6 +20,7 @@ export async function getRecentMessages(
   const { data } = await axiosInstance.get(
     `/chat/messaging/recent?cursor=${cursor}`,
   );
+  console.log(data)
   return data;
 }
 

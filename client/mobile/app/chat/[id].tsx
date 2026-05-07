@@ -1,5 +1,8 @@
 import { KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import {
   useFocusEffect,
   useLocalSearchParams,
@@ -9,11 +12,15 @@ import { useGetChatRoomInfo } from "@/hooks/useChat";
 import MessageList from "@/components/chat/MessageList";
 import { colors } from "@/constants";
 import MessageInput from "@/components/chat/MessageInput";
+import useKeyboard from "@/hooks/useKeyboard";
 
 export default function ChatScreen() {
   const { id: roomId } = useLocalSearchParams();
   const { data: roomInfo } = useGetChatRoomInfo(String(roomId));
+  const { isKeyboardVisible } = useKeyboard();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
+
 
   useFocusEffect(() => {
     navigation.setOptions({
@@ -26,7 +33,9 @@ export default function ChatScreen() {
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 160 : 0}
+        keyboardVerticalOffset={
+          Platform.OS === "ios" || isKeyboardVisible ? 100 : insets.bottom
+        }
       >
         <MessageList />
         <MessageInput />
