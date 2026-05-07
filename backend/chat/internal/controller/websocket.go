@@ -2,9 +2,9 @@ package controller
 
 import (
 	"backend/chat/internal/dto"
+	"backend/common/payload"
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"log/slog"
 	"net"
@@ -108,13 +108,13 @@ func (c *Controller) RelayMessaging(ctx context.Context, id uuid.UUID, toIds [][
 		ContentType: contentType,
 		Contents:    contents,
 	}
-	resRaw, _ := json.Marshal(res)
+	resRaw := payload.Marshal(res)
 	for _, toId := range toIds {
 		r := resRaw
 		if bytes.Equal(toId, roomId[:]) {
 			res1 := res
 			res1.RoomId = fromId
-			resRaw1, _ := json.Marshal(res1)
+			resRaw1 := payload.Marshal(res1)
 			r = resRaw1
 		}
 		wg.Add(1)

@@ -5,7 +5,6 @@ import (
 	"backend/common/proto"
 	"bytes"
 	"context"
-	"encoding/json"
 	"log"
 	"log/slog"
 	"slices"
@@ -159,7 +158,7 @@ func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte
 	}
 
 	if filteredIds != nil {
-		p, _ := json.Marshal(payload.PreparedMessage{
+		p := payload.Marshal(payload.PreparedMessage{
 			NotificationId: 1,
 			Id:             id[:],
 			ToIds:          filteredIds,

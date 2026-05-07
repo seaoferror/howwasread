@@ -1,7 +1,7 @@
 package service
 
 import (
-	"backend/messagepreprocess/internal/kafka/producer"
+	"backend/common/producer"
 	"backend/messagepreprocess/internal/repository"
 )
 

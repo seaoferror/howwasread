@@ -3,7 +3,6 @@ package service
 import (
 	"backend/common/payload"
 	"context"
-	"encoding/json"
 	"errors"
 	"log/slog"
 	"sync"
@@ -62,7 +61,7 @@ func (s *Service) ManageMessage(ctx context.Context, id uuid.UUID, fromId uuid.U
 		}
 	}
 
-	p, _ := json.Marshal(payload.PreparedMessage{
+	p := payload.Marshal(payload.PreparedMessage{
 		Id:          id[:],
 		ToIds:       toIds,
 		RoomId:      roomId[:],
@@ -71,7 +70,7 @@ func (s *Service) ManageMessage(ctx context.Context, id uuid.UUID, fromId uuid.U
 		Contents:    contents,
 	})
 
-	err := s.producer.PushMessage("manage_message.prepared", p)
+	err := s.producer.PushMessage("manage_message.prepared", nil, p)
 	if err != nil {
 		return err
 	}

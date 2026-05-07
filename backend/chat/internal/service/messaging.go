@@ -4,7 +4,6 @@ import (
 	"backend/chat/internal/dto"
 	"backend/common/payload"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -69,7 +68,7 @@ func (s *Service) PublishMessaging(ctx context.Context, fromId uuid.UUID, toIdTy
 			return nil, err
 		}
 	}
-	p, _ := json.Marshal(payload.ChatMessage{
+	p := payload.Marshal(payload.ChatMessage{
 		Id:          id[:],
 		FromId:      fromId[:],
 		ToIdType:    toIdType,

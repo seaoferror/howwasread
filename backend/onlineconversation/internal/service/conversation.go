@@ -5,7 +5,6 @@ import (
 	"backend/onlineconversation/internal/dto"
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"log/slog"
 	"time"
@@ -146,7 +145,7 @@ func (s *Service) RemoveParticipant(ctx context.Context, conversationId bson.Obj
 }
 
 func (s *Service) PublishConversationSignal(fromId uuid.UUID, toIds [][]byte, signal []byte) error {
-	value, _ := json.Marshal(payload.OnlineConversationSignal{
+	value := payload.Marshal(payload.OnlineConversationSignal{
 		FromId: fromId[:],
 		ToIds:  toIds,
 		Signal: signal,
