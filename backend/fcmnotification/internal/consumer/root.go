@@ -72,6 +72,7 @@ func (c *Consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 	for {
 		select {
 		case msg := <-claim.Messages():
+			log.Print("Kafka message incoming...")
 			err := c.distinguishMessage(session.Context(), msg)
 			if err != nil {
 				log.Printf("Fail to manage message: %v", err)
@@ -93,7 +94,8 @@ func (c *Consumer) GetMessage(topics []string) error {
 	go func() {
 		defer wg.Done()
 		for {
-			if err := c.consumerGroup.Consume(ctx, topics, c); err != nil {
+			err := c.consumerGroup.Consume(ctx, topics, c)
+			if err != nil {
 				return
 			}
 			if ctx.Err() != nil {

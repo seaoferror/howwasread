@@ -72,6 +72,7 @@ func (ks *KafkaConsumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim
 	for {
 		select {
 		case msg := <-claim.Messages():
+			log.Print("Kafka message incoming...")
 			session.MarkMessage(msg, "")
 			err := ks.distinguishMessage(session.Context(), msg)
 			if err != nil {

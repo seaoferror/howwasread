@@ -59,11 +59,12 @@ func createProducer(clientIdPrefix string) (sarama.AsyncProducer, error) {
 }
 
 func (p *Producer) PushMessage(topic string, key, value []byte) error {
-
 	msg := sarama.ProducerMessage{
 		Topic: topic,
-		Key:   sarama.ByteEncoder(key),
 		Value: sarama.ByteEncoder(value),
+	}
+	if key != nil {
+		msg.Key = sarama.ByteEncoder(key)
 	}
 
 	p.asyncProducer.Input() <- &msg
