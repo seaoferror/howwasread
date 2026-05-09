@@ -1,5 +1,5 @@
 import { KafkaMessage } from "@confluentinc/kafka-javascript/types/kafkajs";
-import { NotificationMessage } from "../types";
+import { NotificationMessage } from "@/types";
 import type { ExpoPushMessage } from "expo-server-sdk";
 
 export function extractData(message: KafkaMessage) {

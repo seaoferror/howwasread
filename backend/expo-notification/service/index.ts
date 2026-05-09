@@ -1,5 +1,5 @@
 import type Expo from "expo-server-sdk";
-import { makeMessage } from "../util";
+import { makeMessage } from "@/util";
 
 export async function sendPushNotification(
   expo: Expo,

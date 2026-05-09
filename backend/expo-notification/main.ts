@@ -2,11 +2,11 @@ import {
   createCassandraClient,
   createKafkaConsumer,
   createRedisClient,
-} from "./config";
-import { extractData } from "./util";
-import { sendPushNotification } from "./service";
+} from "@/config";
+import { extractData } from "@/util";
+import { sendPushNotification } from "@/service";
 import Expo from "expo-server-sdk";
-import { removePushTokenByIdAndDeviceId } from "./db";
+import { removePushTokenByIdAndDeviceId } from "@/db";
 
 async function main() {
   const expo = new Expo();
@@ -45,17 +45,18 @@ async function main() {
         value.imageURL,
       );
       if (failedIdPairs.length > 0) {
-        await Promise.all(failedIdPairs.map((failedIdPair) => {
-          return removePushTokenByIdAndDeviceId(
-            cassandra,
-            failedIdPair[0],
-            failedIdPair[1],
-          );
-        }))
+        await Promise.all(
+          failedIdPairs.map((failedIdPair) => {
+            return removePushTokenByIdAndDeviceId(
+              cassandra,
+              failedIdPair[0],
+              failedIdPair[1],
+            );
+          }),
+        );
       }
     },
   });
 }
 
 main();
-

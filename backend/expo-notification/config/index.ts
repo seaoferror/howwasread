@@ -1,4 +1,4 @@
-import { APN_NOTIFICATION } from "../constants";
+import { APN_NOTIFICATION } from "@/constants";
 import { createClient } from "@redis/client";
 import {
   KafkaJS,
