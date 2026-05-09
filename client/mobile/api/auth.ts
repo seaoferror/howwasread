@@ -1,10 +1,10 @@
-import { axiosInstance, localDevInstance } from "@/api/axios";
+import { localDevInstance } from "@/api/axios";
 import {
   LoginWithEmailResponse,
+  SendSMSOTPRequest,
   SignInWithAppleRequest,
   SignInWithAppleResponse,
   SignInWithEmailRequest,
-  SendSMSOTPRequest,
   VerifyEmailOTPRequest,
   VerifyEmailOTPResponse,
   VerifySMSOTPRequest,
@@ -64,5 +64,10 @@ export async function signInWithApple(
 
 export async function getMyId(): Promise<{ id: string }> {
   const { data } = await localDevInstance.get("/auth/my-id");
+  return data;
+}
+
+export async function deleteAccount() {
+  const { data } = await localDevInstance.post("/auth/delete");
   return data;
 }

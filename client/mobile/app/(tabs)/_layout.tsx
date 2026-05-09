@@ -1,11 +1,6 @@
 import { Tabs } from "expo-router";
 import React from "react";
-import {
-  FontAwesome,
-  Ionicons,
-  MaterialIcons,
-  Octicons,
-} from "@expo/vector-icons";
+import { FontAwesome, Ionicons, MaterialIcons } from "@expo/vector-icons";
 
 export default function TabLayout() {
   return (

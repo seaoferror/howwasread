@@ -1,17 +1,18 @@
+import { queryKey } from "@/constants";
+import { deleteSecure, getSecureAsync, setSecure } from "@/util/storage";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 import Toast from "react-native-toast-message";
-import { getSecureAsync, setSecure } from "@/util/storage";
 import {
+  deleteAccount,
   getMyId,
   loginInWithEmail,
-  signUpWithEmail,
   requestSMSOTP,
   signInWithApple,
+  signUpWithEmail,
   verifyEmailOTP,
   verifySMSOTP,
 } from "@/api/auth";
-import { queryKey } from "@/constants";
-import { AxiosError } from "axios";
 
 function useGetMyId() {
   const { data } = useQuery({
@@ -117,10 +118,29 @@ function useSignInWithApple() {
     mutationFn: signInWithApple,
     onSuccess: async (data) => {
       if (!data.phoneNumberVerified) {
-        setSecure("sessionId", data?.sessionId ?? "");
+        await setSecure("sessionId", data?.sessionId ?? "");
         return;
       }
-      setSecure("accessToken", data?.accessToken ?? "");
+      await setSecure("accessToken", data?.accessToken ?? "");
+    },
+    onError: (error: AxiosError) => {
+      Toast.show({
+        type: "error",
+        text1: String(error?.response?.data),
+      });
+    },
+  });
+}
+
+function useDeleteAccount() {
+  return useMutation({
+    mutationFn: deleteAccount,
+    onSuccess: async () => {
+      Toast.show({
+        type: "success",
+        text1: `Bye, see you.`,
+      });
+      await deleteSecure("accessToken");
     },
     onError: (error: AxiosError) => {
       Toast.show({
@@ -139,6 +159,7 @@ export function useAuth() {
   const requestSMSOTPMutation = useRequestSMSOTP();
   const verifySMSOTPMutation = useVerifySMSOTP();
   const signInWithAppleMutation = useSignInWithApple();
+  const deleteAccountMutation = useDeleteAccount();
 
   return {
     id: data?.id,
@@ -148,5 +169,6 @@ export function useAuth() {
     requestSMSOTPMutation,
     verifySMSOTPMutation,
     signInWithAppleMutation,
+    deleteAccountMutation,
   };
 }

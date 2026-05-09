@@ -3,48 +3,44 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "@/constants";
 import FixedBottomCTA from "@/components/FixedBottomCTA";
 import { FormProvider, useForm } from "react-hook-form";
-import NameInput from "@/components/profile/NameInput";
+import BirthYearBox from "@/components/profile/BirthYearBox";
 import { useMyProfile } from "@/hooks/useMyProfile";
-import { router } from "expo-router";
 
 interface FormValue {
-  name: string;
+  birthYear: number;
 }
 
-export default function NameScreen() {
-  const nameForm = useForm<FormValue>({
-    defaultValues: {
-      name: "",
-    },
+export default function BirthYearScreen() {
+  const birthYearForm = useForm<FormValue>({
+    defaultValues: { birthYear: 2000 },
   });
-  const { setNameMutation } = useMyProfile();
+  const { setBirthYearMutation } = useMyProfile();
 
   const onSubmit = async (formValue: FormValue) => {
-    const { name } = formValue;
+    const { birthYear } = formValue;
 
-    setNameMutation.mutate(
-      { name: name },
+    setBirthYearMutation.mutate(
+      { birthYear },
       {
         onSuccess: () => {
-          router.push("/conversations");
+          // router.push("/newcomer/ethnicity");
         },
       },
     );
   };
 
   return (
-    <FormProvider {...nameForm}>
+    <FormProvider {...birthYearForm}>
       <SafeAreaView style={styles.container}>
         <Text style={styles.guideLine}>
-          We strongly recommend to set a name which is convenient to be called
-          by others
+          When were you born? This is non-modifiable
         </Text>
         <View style={styles.content}>
-          <NameInput />
+          <BirthYearBox />
         </View>
         <FixedBottomCTA
-          label="Set this name"
-          onPress={nameForm.handleSubmit(onSubmit)}
+          label="Set birth year"
+          onPress={birthYearForm.handleSubmit(onSubmit)}
         />
       </SafeAreaView>
     </FormProvider>

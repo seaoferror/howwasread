@@ -10,6 +10,7 @@ import {
 import { Controller, useFormContext } from "react-hook-form";
 import { CountryCode, getCountryCallingCode } from "libphonenumber-js";
 import { colors } from "@/constants";
+import countries from "i18n-iso-countries";
 
 type CountryItem = {
   cca2: string;
@@ -18,7 +19,6 @@ type CountryItem = {
 };
 
 function buildCountryItems(): CountryItem[] {
-  const countries = require("i18n-iso-countries");
   countries.registerLocale(require("i18n-iso-countries/langs/en.json"));
 
   const names = countries.getNames("en", { select: "official" });

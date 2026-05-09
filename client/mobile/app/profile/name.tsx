@@ -1,47 +1,55 @@
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { colors } from "@/constants";
-import FixedBottomCTA from "@/components/FixedBottomCTA";
 import { FormProvider, useForm } from "react-hook-form";
-import BirthYearBox from "@/components/profile/BirthYearBox";
+import { router, useLocalSearchParams } from "expo-router";
 import { useMyProfile } from "@/hooks/useMyProfile";
-import { router } from "expo-router";
+import NameInput from "@/components/profile/NameInput";
+import FixedBottomCTA from "@/components/FixedBottomCTA";
+import { colors } from "@/constants";
 
 interface FormValue {
-  birthYear: number;
+  name: string;
 }
 
-export default function BirthYearScreen() {
-  const birthYearForm = useForm<FormValue>({
-    defaultValues: { birthYear: 2000 },
+export default function NameScreen() {
+  const { newcomer } = useLocalSearchParams();
+  const nameForm = useForm<FormValue>({
+    defaultValues: {
+      name: "",
+    },
   });
-  const { setBirthYearMutation } = useMyProfile();
+  const { setNameMutation } = useMyProfile();
 
   const onSubmit = async (formValue: FormValue) => {
-    const { birthYear } = formValue;
+    const { name } = formValue;
 
-    setBirthYearMutation.mutate(
-      { birthYear },
+    setNameMutation.mutate(
+      { name: name },
       {
         onSuccess: () => {
-          // router.push("/newcomer/ethnicity");
+          if (newcomer) {
+            router.push("/conversations");
+            return;
+          }
+          router.push("/account");
         },
       },
     );
   };
 
   return (
-    <FormProvider {...birthYearForm}>
+    <FormProvider {...nameForm}>
       <SafeAreaView style={styles.container}>
         <Text style={styles.guideLine}>
-          When were you born? This is non-modifiable
+          We strongly recommend to set a name which is convenient to be called
+          by others
         </Text>
         <View style={styles.content}>
-          <BirthYearBox />
+          <NameInput />
         </View>
         <FixedBottomCTA
-          label="Set birth year"
-          onPress={birthYearForm.handleSubmit(onSubmit)}
+          label="Set this name"
+          onPress={nameForm.handleSubmit(onSubmit)}
         />
       </SafeAreaView>
     </FormProvider>

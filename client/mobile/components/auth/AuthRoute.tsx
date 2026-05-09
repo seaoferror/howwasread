@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { router, useFocusEffect } from "expo-router";
 import { useAuth } from "@/hooks/useAuth";
+import { useMyProfile } from "@/hooks/useMyProfile";
 
 interface AuthRouteProps {
   children: ReactNode;
@@ -8,11 +9,12 @@ interface AuthRouteProps {
 
 export default function AuthRoute({ children }: AuthRouteProps) {
   const { id } = useAuth();
+  const { profile } = useMyProfile();
 
   useFocusEffect(() => {
     // !id && router.replace("/auth");
+    // !profile.name && router.replace("/profile/name?newcomer=true")
     !id && router.replace("/conversations");
-
   });
   return <>{children}</>;
 }
