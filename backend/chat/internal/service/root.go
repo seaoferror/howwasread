@@ -3,7 +3,9 @@ package service
 import (
 	"backend/chat/internal/repository"
 	"backend/common/producer"
+	"bytes"
 	"context"
+	"encoding/base64"
 	"log"
 	"os"
 
@@ -29,7 +31,13 @@ func NewService(r *repository.Repository, kp *producer.Producer) *Service {
 	}
 	presignClient := s3.NewPresignClient(s3.NewFromConfig(cfg))
 
-	pk, err := sign.LoadPEMPrivKeyFile("aws_cloudfront_private_key.pem")
+	pemRaw, err := base64.StdEncoding.DecodeString(
+		os.Getenv("AWS_CLOUDFRONT_PRIVATE_KEY_PEM_BASE64"))
+	if err != nil {
+		log.Panicf("failed to decode base64 PEM: %v", err)
+	}
+	pemReader := bytes.NewReader(pemRaw)
+	pk, err := sign.LoadPEMPrivKey(pemReader)
 	if err != nil {
 		log.Panicf("fail to make cloud front private key: %v", err)
 	}

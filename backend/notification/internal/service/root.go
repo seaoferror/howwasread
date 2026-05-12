@@ -3,6 +3,8 @@ package service
 import (
 	"backend/common/producer"
 	"backend/notification/internal/repository"
+	"bytes"
+	"encoding/base64"
 	"log"
 	"os"
 
@@ -18,7 +20,13 @@ type Service struct {
 }
 
 func NewService(r *repository.Repository, p *producer.Producer) *Service {
-	pk, err := sign.LoadPEMPrivKeyFile("aws_cloudfront_private_key.pem")
+	pemRaw, err := base64.StdEncoding.DecodeString(
+		os.Getenv("AWS_CLOUDFRONT_PRIVATE_KEY_PEM_BASE64"))
+	if err != nil {
+		log.Panicf("failed to decode base64 PEM: %v", err)
+	}
+	pemReader := bytes.NewReader(pemRaw)
+	pk, err := sign.LoadPEMPrivKey(pemReader)
 	if err != nil {
 		log.Panicf("fail to make cloud front private key: %v", err)
 	}
