@@ -2,10 +2,16 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = "~> 6.28"
     }
   }
 }
 provider "aws" {
-  region = "ap-northeast-2"
+  region = local.region
+}
+
+locals {
+  cluster_name = "cluster0"
+  region       = "ap-northeast-2"
+  azs          = ["ap-northeast-2a", "ap-northeast-2b"]
 }

@@ -1,4 +1,3 @@
-# CloudFront Key Pair ID and PEM File
 output "cloudfront_key_pair_id" {
   value       = aws_cloudfront_public_key.signer_public_key.id
   description = "The ID of the CloudFront Public Key (Key Pair ID)"
@@ -10,3 +9,17 @@ output "cloudfront_private_pem_key" {
   sensitive   = true
 }
 
+output "route53_name_servers" {
+  description = "The Name Servers for the Route53 Zone"
+  value       = aws_route53_zone.main.name_servers
+}
+
+# output "ecr_repository_urls" {
+#   description = "A map of repository names to their URLs"
+#   value       = { for key, repo in aws_ecr_repository.repos : key => repo.repository_url }
+# }
+
+output "configure_kubectl" {
+  description = "Run this command to configure kubectl"
+  value       = "aws eks update-kubeconfig --region ${local.region} --name ${module.eks.cluster_name}"
+}
