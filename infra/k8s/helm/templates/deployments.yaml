@@ -1,0 +1,58 @@
+{{- range $name, $app := .Values.apps }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ $name }}
+spec:
+  # HPA
+  # replicas: 1
+  selector:
+    matchLabels:
+      app: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app: {{ $name }}
+    spec:
+      containers:
+        - name: {{ $name }}
+          image: {{ $app.image }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: {{ $app.port }}
+          env:
+            - name: KAFKA_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: configs
+                  key: KAFKA_URL
+            - name: KAFKA_USERNAME
+              value: ""
+            - name: KAFKA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ""
+                  key: password
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Values.namespace }}
+  labels:
+    app: {{ $name }}
+spec:
+  selector:
+    app: {{ $name }}
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: {{ $app.port }}
+
+{{- end }}
+

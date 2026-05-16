@@ -23,18 +23,3 @@ output "configure_kubectl" {
   description = "Run this command to configure kubectl"
   value       = "aws eks update-kubeconfig --region ${local.region} --name ${local.cluster_name}"
 }
-
-data "kubernetes_secret" "argocd_admin_pwd" {
-  metadata {
-    name      = "argocd-initial-admin-secret"
-    namespace = "argocd"
-  }
-
-  # This ensures Terraform doesn't try to read the secret before the helm chart creates it
-  depends_on = [helm_release.argocd]
-}
-
-output "argocd_password" {
-  value     = data.kubernetes_secret.argocd_admin_pwd.data["password"]
-  sensitive = true
-}

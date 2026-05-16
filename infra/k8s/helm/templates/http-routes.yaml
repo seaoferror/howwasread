@@ -1,0 +1,85 @@
+{{- range $name, $app := .Values.apps }}
+---
+{{if not $app.isWorker}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ $name }}-route
+  namespace: {{ $.Values.namespace }}
+  labels:
+    app: {{ $name }}
+spec:
+  parentRefs:
+    - name: cluster-gateway
+  hostnames:
+    - "server.mikekim1032.shop"
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: {{ $app.routePath }}
+      backendRefs:
+        - name: {{ $name }}
+          port: 80
+{{- end}}
+
+---
+
+{{- if $app.requireAuth  }}
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: {{ $name }}-jwt-auth
+  namespace: {{ $.Values.namespace }}
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: {{ $name }}-route
+  jwt:
+    providers:
+      - name: jwt-provider
+        issuer: {{ $.Values.auth.issuer | quote }}
+        claimToHeaders:
+          - claim: sub
+            header: X-User-Id
+        localJWKS:
+          inline: |
+            {
+              "keys": [
+                {
+                  "kty": "oct",
+                  "alg": "HS256",
+                  "k": {{ $.Values.auth.base64UrlSecret | quote }}
+                }
+              ]
+            }
+{{- end }}
+
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: BackendTrafficPolicy
+metadata:
+  name: {{ $name }}-circuit-breaker
+  namespace: {{ .Values.namespace }}
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: HTTPRoute
+    name: {{ $name }}-route
+  circuitBreaker:
+    maxConnections: {{ .Values.circuitBreaker.maxConnections }}
+    maxPendingRequests: {{.Values.circuitBreaker.maxPendingRequests}}
+    maxParallelRequests: {{.Values.circuitBreaker.maxParallelRequests}}
+  rateLimit:
+    type: Global
+    global:
+      rules:
+        - clientSelectors:
+            - headers:
+                - type: Distinct
+                  name: X-User-Id
+          limit:
+            requests: 10
+            unit: Second
+{{- end}}

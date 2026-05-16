@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: configs
+  namespace: {{.Values.namespace}}
+data:
+  KAFKA_URL: "kafka0-kafka-bootstrap.{{.Values.namespace}}.svc.cluster.local:9093"
