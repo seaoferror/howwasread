@@ -34,29 +34,43 @@ metadata:
   name: cluster-gateway
   namespace: envoy-gateway-system
   annotations:
-    cert-manager.io/cluster-issuer: my-issuer
+    cert-manager.io/cluster-issuer: letsencrypt
 spec:
   gatewayClassName: eg
   listeners:
-    - name: backend
+    - name: backend-http
       hostname: "backend.mikekim1032.shop"
       port: 80
       protocol: HTTP
-      #      tls:
-      #        mode: Terminate
-      #        certificateRefs:
-      #          - name: server-mikekim1032-tls
       allowedRoutes:
         namespaces:
           from: All
-    - name: argocd
+    - name: backend-https
+      hostname: "backend.mikekim1032.shop"
+      port: 443
+      protocol: HTTPS
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: backend-mikekim1032-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: argocd-http
       hostname: "argocd.mikekim1032.shop"
       port: 80
       protocol: HTTP
-      #      tls:
-      #        mode: Terminate
-      #        certificateRefs:
-      #          - name: argo-mikekim1032-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: argocd-https
+      hostname: "argocd.mikekim1032.shop"
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: argocd-mikekim1032-tls
       allowedRoutes:
         namespaces:
           from: All
