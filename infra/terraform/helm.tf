@@ -26,7 +26,10 @@ resource "helm_release" "external_dns" {
       registry = "txt"
 
       source = [
-        "crd"
+        "gateway-httproute",
+        "gateway-grpcroute",
+        "gateway-tcproute",
+        "gateway-tlsroute"
       ]
 
       txtOwnerId = module.cluster1.cluster_name
@@ -199,5 +202,11 @@ resource "helm_release" "aws_load_balancer_controller" {
   depends_on = [module.cluster1.cluster_addons, aws_iam_role_policy_attachment.lbc_attach]
 }
 
+resource "helm_release" "sealed_secrets" {
+  name       = "sealed-secrets-controller"
+  repository = "https://bitnami-labs.github.io/sealed-secrets"
+  chart      = "sealed-secrets"
+  namespace  = "kube-system"
+}
 
 

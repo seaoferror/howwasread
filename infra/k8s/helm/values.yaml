@@ -22,13 +22,17 @@ apps:
     image: "auth-service:latest"
     port: 8080
     routePath: /auth
+    requireAuth: false
+    isWorker: false
   chat:
     image: "chat-service:latest"
     port: 8080
     routePath: /chat
     requireAuth: true
+    isWorker: false
   expo-notification:
     image: "expo-notification-service:latest"
     port: 8080
     routePath: /notification
+    requireAuth: true
     isWorker: true

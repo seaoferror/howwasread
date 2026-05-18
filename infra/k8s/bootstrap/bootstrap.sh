@@ -3,7 +3,7 @@ kubectl get secret -n argocd argocd-initial-admin-secret -o jsonpath="{.data.pas
 # for off-charging aws
 terraform destroy -target="module.cluster1"
 
-terraform apply -target="module.vpc"
+terraform apply -target="module.vpc" # remove nat gateway
 
 # ariadne thread
 terraform apply -target="module.vpc"

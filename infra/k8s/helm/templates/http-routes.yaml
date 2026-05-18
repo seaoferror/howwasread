@@ -12,7 +12,7 @@ spec:
   parentRefs:
     - name: cluster-gateway
   hostnames:
-    - "server.mikekim1032.shop"
+    - "backend.mikekim1032.shop"
   rules:
     - matches:
         - path:

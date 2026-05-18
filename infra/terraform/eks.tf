@@ -40,4 +40,15 @@ module "cluster1" {
       desired_size   = 2
     }
   }
+
+  node_security_group_additional_rules = {
+    ingress_cluster_8080 = {
+      description                   = "Allow Control Plane to talk to 8080 port where Sealed Secrets Controller locate in order to use kubeseal"
+      protocol                      = "tcp"
+      from_port                     = 8080
+      to_port                       = 8080
+      type                          = "ingress" //ingress  egress
+      source_cluster_security_group = true
+    }
+  }
 }

@@ -62,7 +62,8 @@ resource "aws_iam_role_policy_attachment" "external_dns_attach" {
 }
 
 data "aws_lb" "envoy_gateway_nlb" {
-  name = "k8s-envoygat-envoyenv-b904f39fc7"
+  # check kubectl get gateway -A and change the suffix number every time redeploy the gateway
+  name = "k8s-envoygat-envoyenv-77d0517ea2"
 }
 
 resource "aws_route53_record" "backend_alias" {
@@ -76,7 +77,6 @@ resource "aws_route53_record" "backend_alias" {
   }
 }
 
-# 4. Create the ALIAS record for argocd.mikekim1032.shop
 resource "aws_route53_record" "argocd_alias" {
   zone_id = aws_route53_zone.main.id
   name    = "argocd.mikekim1032.shop"
