@@ -20,6 +20,10 @@ module "cluster1" {
     vpc-cni = {
       before_compute = true
     }
+    aws-ebs-csi-driver = {
+      most_recent              = true
+      service_account_role_arn = aws_iam_role.ebs_csi_role.arn
+    }
   }
 
   vpc_id                   = module.vpc.vpc_id
@@ -51,4 +55,40 @@ module "cluster1" {
       source_cluster_security_group = true
     }
   }
+}
+
+data "aws_iam_policy_document" "ebs_csi_trust_policy" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    effect  = "Allow"
+
+    principals {
+      type        = "Federated"
+      identifiers = [module.cluster1.oidc_provider_arn]
+    }
+
+    # Restrict the role to ONLY the specific namespace and service account used by the driver
+    condition {
+      test     = "StringEquals"
+      # Note: We use module.eks.oidc_provider here (the URL), NOT the ARN
+      variable = "${module.cluster1.oidc_provider}:sub"
+      values   = ["system:serviceaccount:kube-system:ebs-csi-controller-sa"]
+    }
+
+    condition {
+      test     = "StringEquals"
+      variable = "${module.cluster1.oidc_provider}:aud"
+      values   = ["sts.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "ebs_csi_role" {
+  name               = "ebs-csi-driver-role"
+  assume_role_policy = data.aws_iam_policy_document.ebs_csi_trust_policy.json
+}
+
+resource "aws_iam_role_policy_attachment" "ebs_csi_policy_attachment" {
+  role       = aws_iam_role.ebs_csi_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
 }

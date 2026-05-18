@@ -209,4 +209,11 @@ resource "helm_release" "sealed_secrets" {
   namespace  = "kube-system"
 }
 
+resource "helm_release" "reflector" {
+  name       = "reflector-controller"
+  repository = "oci://ghcr.io/emberstack/helm-charts"
+  chart      = "reflector"
+  namespace  = "kube-system"
+}
+
 

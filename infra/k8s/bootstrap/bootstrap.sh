@@ -1,6 +1,10 @@
 kubectl get secret -n argocd argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
 
 # for off-charging aws
+kubectl get secret -n kube-system \
+  -l sealedsecrets.bitnami.com/sealed-secrets-key \
+  -o yaml > sealed-secrets-key.yaml
+
 terraform destroy -target="module.cluster1"
 
 terraform apply -target="module.vpc" # remove nat gateway
