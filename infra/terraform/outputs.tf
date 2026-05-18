@@ -14,10 +14,10 @@ output "route53_name_servers" {
   value       = aws_route53_zone.main.name_servers
 }
 
-# output "ecr_repository_urls" {
-#   description = "A map of repository names to their URLs"
-#   value       = { for key, repo in aws_ecr_repository.repos : key => repo.repository_url }
-# }
+output "ecr_repository_urls" {
+  description = "A map of repository names to their URLs"
+  value       = { for key, repo in aws_ecr_repository.repos : key => repo.repository_url }
+}
 
 output "configure_kubectl" {
   description = "Run this command to configure kubectl"

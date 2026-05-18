@@ -24,7 +24,6 @@ module "vpc" {
   }
 }
 
-# The S3 Endpoint (Can live right below the module)
 resource "aws_vpc_endpoint" "s3" {
   vpc_id            = module.vpc.vpc_id
   service_name      = "com.amazonaws.${local.region}.s3"
