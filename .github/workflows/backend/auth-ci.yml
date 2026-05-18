@@ -1,0 +1,38 @@
+name: auth-ci
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/auth/**'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout github
+        uses: actions/checkout@v4
+
+      - name: configure aws
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET }}
+          aws-region: ap-northeast-2
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: build and push auth
+        env:
+          REGISTRY: 565319458549.dkr.ecr.ap-northeast-2.amazonaws.com
+          REPOSITORY: backend/auth
+          IMAGE_TAG: latest
+        run:
+          docker buildx build --platform linux/amd64 \
+          -t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
+          -f ./backend/auth/Dockerfile ./backend --push
+
