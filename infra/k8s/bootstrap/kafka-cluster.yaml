@@ -1,4 +1,4 @@
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/v1
 kind: Kafka
 metadata:
   name: kafka-cluster
@@ -10,6 +10,8 @@ spec:
   kafka:
 #    version: 4.2.0
 #    metadataVersion: 4.2.0
+    authorization:
+      type: simple
     config:
       log.retention.hours: 48
       offsets.topic.replication.factor: 2
