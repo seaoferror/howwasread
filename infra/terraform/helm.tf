@@ -4,6 +4,10 @@ resource "helm_release" "envoy_gateway" {
   chart            = "gateway-helm"
   namespace        = "envoy-gateway-system"
   create_namespace = true
+
+  depends_on = [
+    module.cluster1.eks_managed_node_groups
+  ]
 }
 
 resource "helm_release" "strimzi" {
@@ -12,6 +16,10 @@ resource "helm_release" "strimzi" {
   chart            = "strimzi-kafka-operator"
   namespace        = "kafka-system"
   create_namespace = true
+
+  depends_on = [
+    module.cluster1.eks_managed_node_groups
+  ]
 }
 
 resource "helm_release" "external_dns" {
@@ -45,7 +53,7 @@ resource "helm_release" "external_dns" {
     })
   ]
 
-  depends_on = [aws_iam_role_policy_attachment.external_dns_attach]
+  depends_on = [aws_iam_role_policy_attachment.external_dns_attach,  module.cluster1.eks_managed_node_groups]
 }
 
 resource "helm_release" "cert_manager" {
@@ -74,6 +82,10 @@ resource "helm_release" "cert_manager" {
     name  = "config.enableGatewayAPI"
     value = "true"
   }
+
+  depends_on = [
+    module.cluster1.eks_managed_node_groups
+  ]
 }
 
 resource "helm_release" "argocd" {
@@ -110,6 +122,10 @@ resource "helm_release" "argocd" {
         enabled = false
       }
     })
+  ]
+
+  depends_on = [
+    module.cluster1.eks_managed_node_groups
   ]
 }
 
@@ -199,7 +215,7 @@ resource "helm_release" "aws_load_balancer_controller" {
     value = local.region
   }
 
-  depends_on = [module.cluster1.cluster_addons, aws_iam_role_policy_attachment.lbc_attach]
+  depends_on = [module.cluster1.eks_managed_node_groups, module.cluster1.cluster_addons, aws_iam_role_policy_attachment.lbc_attach]
 }
 
 resource "helm_release" "sealed_secrets" {
@@ -207,6 +223,10 @@ resource "helm_release" "sealed_secrets" {
   repository = "https://bitnami-labs.github.io/sealed-secrets"
   chart      = "sealed-secrets"
   namespace  = "kube-system"
+
+  depends_on = [
+    module.cluster1.eks_managed_node_groups
+  ]
 }
 
 resource "helm_release" "reflector" {
@@ -214,6 +234,10 @@ resource "helm_release" "reflector" {
   repository = "oci://ghcr.io/emberstack/helm-charts"
   chart      = "reflector"
   namespace  = "kube-system"
+
+  depends_on = [
+    module.cluster1.eks_managed_node_groups
+  ]
 }
 
 

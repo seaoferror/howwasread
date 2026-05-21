@@ -6,6 +6,9 @@ module "cluster1" {
   region             = local.region
   kubernetes_version = "1.35"
 
+  create_cloudwatch_log_group = false
+  enabled_log_types           = []
+
   compute_config = {
     enabled    = false
     node_pools = []
