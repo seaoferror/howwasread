@@ -41,14 +41,11 @@ export default function MessageInput() {
     };
     console.log(message);
 
-    sendMessageMutation.mutate(message, {
-      onSuccess: async () => {
-        if (contentType === "text") {
-          setTextContent("");
-          return;
-        }
-      },
-    });
+    if (contentType === "text") {
+      setTextContent("");
+    }
+
+    sendMessageMutation.mutate(message);
   };
 
   const handleImagePickerButton = async () => {

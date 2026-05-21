@@ -34,7 +34,7 @@ export default function ChatScreen() {
         style={styles.keyboardAvoidingView}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         keyboardVerticalOffset={
-          Platform.OS === "ios" || isKeyboardVisible ? 100 : insets.bottom
+          Platform.OS === "ios" || isKeyboardVisible ? 100 : insets.bottom //TODO: this need adjust in both platform
         }
       >
         <MessageList />
