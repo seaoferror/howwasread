@@ -22,12 +22,13 @@ type Repository struct {
 
 func NewRepository() *Repository {
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
-	opts := options.Client().ApplyURI(os.Getenv("MONGODB_URI")).SetServerAPIOptions(serverAPI)
+	opts := options.Client().
+		ApplyURI(os.Getenv("MONGODB_URI")).
+		SetServerAPIOptions(serverAPI)
 	mongoClient, err := mongo.Connect(opts)
 	if err != nil {
 		log.Panicf("fail to connect mongodb: %v", err)
 	}
-
 	err = mongoClient.Ping(context.Background(), readpref.Primary())
 	if err != nil {
 		log.Panicf("fail to ping mongodb: %v", err)
@@ -35,7 +36,7 @@ func NewRepository() *Repository {
 	slog.Info("success to connect mongodb")
 
 	clientOption := rueidis.ClientOption{
-		InitAddress: []string{os.Getenv("REDIS_URL")},
+		InitAddress: []string{os.Getenv("REDIS_ADDRESS")},
 	}
 	redisClient, err := rueidis.NewClient(clientOption)
 	if err != nil {

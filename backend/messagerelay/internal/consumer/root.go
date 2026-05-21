@@ -2,6 +2,7 @@ package consumer
 
 import (
 	"backend/common/payload"
+	"backend/common/tlsconfig"
 	"backend/messagerelay/internal/service"
 	"context"
 	"encoding/json"
@@ -43,12 +44,17 @@ func connectConsumer(groupID string) (sarama.ConsumerGroup, error) {
 		return nil, err
 	}
 	cfg.ClientID = "relay_message.consumer." + id.String()
+	tlsConfig, err := tlsconfig.Create(
+		"kafka-user.crt",
+		"kafka-user.key",
+		"kafka-ca.crt")
+	cfg.Net.TLS.Enable = true
+	cfg.Net.TLS.Config = tlsConfig
 	//cfg.Net.SASL.Enable = true
 	//cfg.Net.SASL.Version = 1
 	//cfg.Net.SASL.Mechanism = sarama.SASLTypePlaintext
 	//cfg.Net.SASL.User = <api-key>
 	//cfg.Net.SASL.Password = <secret>
-	//cfg.Net.TLS.Enable = true
 	//cfg.Net.SASL.Handshake = true
 
 	cfg.Consumer.Return.Errors = true
@@ -57,7 +63,7 @@ func connectConsumer(groupID string) (sarama.ConsumerGroup, error) {
 	cfg.Consumer.Offsets.Initial = sarama.OffsetOldest
 	//this setting make possible to consume payload which is stored but not consumed for certain reason like worker internal down
 
-	return sarama.NewConsumerGroup([]string{os.Getenv("KAFKA_URL")}, groupID, cfg)
+	return sarama.NewConsumerGroup([]string{os.Getenv("KAFKA_ADDRESS")}, groupID, cfg)
 }
 
 func (c *Consumer) Setup(_ sarama.ConsumerGroupSession) error {

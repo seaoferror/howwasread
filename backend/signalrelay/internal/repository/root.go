@@ -14,7 +14,7 @@ type Repository struct {
 
 func NewRepository() *Repository {
 	clientOption := rueidis.ClientOption{
-		InitAddress: []string{os.Getenv("REDIS_URL")},
+		InitAddress: []string{os.Getenv("REDIS_ADDRESS")},
 	}
 	client, err := rueidis.NewClient(clientOption)
 	if err != nil {

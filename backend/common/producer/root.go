@@ -1,6 +1,7 @@
 package producer
 
 import (
+	"backend/common/tlsconfig"
 	"log"
 	"log/slog"
 	"os"
@@ -36,14 +37,16 @@ func createProducer(clientIdPrefix string) (sarama.AsyncProducer, error) {
 		return nil, err
 	}
 
+	tlsConfig, err := tlsconfig.Create("kafka-user.crt", "kafka-user.key", "kafka-ca.crt")
+
 	cfg.ClientID = clientIdPrefix + id.String()
 	//cfg.Net.SASL.Enable = true
 	//cfg.Net.SASL.Version = 1
 	//cfg.Net.SASL.Mechanism = sarama.SASLTypePlaintext
 	//cfg.Net.SASL.User = <api-key>
 	//cfg.Net.SASL.Password = <secret>
-	//cfg.Net.TLS.Enable = true
-	//cfg.Net.SASL.Handshake = true
+	cfg.Net.TLS.Enable = true
+	cfg.Net.TLS.Config = tlsConfig
 
 	cfg.Producer.Return.Successes = true
 	cfg.Producer.Return.Errors = true
@@ -55,7 +58,7 @@ func createProducer(clientIdPrefix string) (sarama.AsyncProducer, error) {
 	//cfg.Producer.RequiredAcks = sarama.WaitForAll
 	//cfg.Net.MaxOpenRequests = 1
 
-	return sarama.NewAsyncProducer([]string{os.Getenv("KAFKA_URL")}, cfg)
+	return sarama.NewAsyncProducer([]string{os.Getenv("KAFKA_ADDRESS")}, cfg)
 }
 
 func (p *Producer) PushMessage(topic string, key, value []byte) error {

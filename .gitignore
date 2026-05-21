@@ -146,7 +146,7 @@ coverage.out
 # Firebase
 google-services.json
 GoogleService-Info.plist
-*firebase-adminsdk-*.json
+*firebase-adminsdk*.json
 *serviceAccount*.json
 
 # apn
@@ -185,3 +185,11 @@ override.tf.json
 .terraformrc
 terraform.rc
 
+
+*.crt
+
+*secure*.zip
+
+raw-secret*.yaml
+
+*key.yaml

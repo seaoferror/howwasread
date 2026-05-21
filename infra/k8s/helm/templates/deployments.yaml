@@ -4,11 +4,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ $name }}
-  namespace: {{ .Values.namespace }}
+  namespace: {{ $.Values.namespace }}
   labels:
     app: {{ $name }}
 spec:
-  # HPA
   # replicas: 1
   selector:
     matchLabels:
@@ -24,19 +23,98 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: {{ $app.port }}
-          env:
-            - name: KAFKA_URL
-              valueFrom:
-                configMapKeyRef:
-                  name: configs
-                  key: KAFKA_URL
-            - name: KAFKA_USERNAME
-              value: ""
-            - name: KAFKA_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: ""
-                  key: password
+
+          {{- if or $app.astradb $app.aws $app.backendKeys $app.mongodb $app.smtp $app.twilio }}
+          envFrom:
+            {{- if $app.astradb }}
+            - secretRef:
+                name: astradb
+            {{- end }}
+            {{- if $app.aws }}
+            - secretRef:
+                name: aws
+            {{- end }}
+            {{- if $app.mongodb }}
+            - secretRef:
+                name: mongodb
+            {{- end }}
+            {{- if $app.smtp }}
+            - secretRef:
+                name: smtp
+            {{- end }}
+            {{- if $app.twilio }}
+            - secretRef:
+                name: twilio
+            {{- end }}
+          {{- end }}
+
+          {{- if or $app.kafka $app.astradb $app.aws $app.firebase $app.mongodb }}
+          volumeMounts:
+            {{- if $app.authentication}}
+            - name: authentication-volume
+              mountPath: "/authentication"
+              readOnly: true
+            {{- end}}
+            {{- if $app.kafka }}
+            - name: kafka-user
+              mountPath: "/kafka"
+              readOnly: true
+            {{- end }}
+            {{- if $app.astradb }}
+            - name: astradb-volume
+              mountPath: "/astradb"
+              readOnly: true
+            {{- end }}
+            {{- if $app.aws }}
+            - name: aws-volume
+              mountPath: "/aws"
+              readOnly: true
+            {{- end }}
+            {{- if $app.firebase }}
+            - name: firebase-volume
+              mountPath: "/firebase"
+              readOnly: true
+            {{- end }}
+            {{- if $app.mongodb }}
+            - name: mongodb-volume
+              mountPath: "/mongodb"
+              readOnly: true
+            {{- end }}
+          {{- end }}
+
+      {{- if or $app.kafka $app.astradb $app.aws $app.firebase $app.mongodb }}
+      volumes:
+        {{- if $app.kafka }}
+        - name: kafka-user
+          secret:
+            secretName: kafka-user
+        {{- end }}
+        {{- if $app.authentication}}
+        - name: authentication-volume
+          secret:
+            secretName: authentication-volume
+        {{- end}}
+        {{- if $app.astradb }}
+        - name: astradb-volume
+          secret:
+            secretName: astradb-volume
+        {{- end }}
+        {{- if $app.aws }}
+        - name: aws-volume
+          secret:
+            secretName: aws-volume
+        {{- end }}
+        {{- if $app.firebase }}
+        - name: firebase-volume
+          secret:
+            secretName: firebase-volume
+        {{- end }}
+        {{- if $app.mongodb }}
+        - name: mongodb-volume
+          secret:
+            secretName: mongodb-volume
+        {{- end }}
+      {{- end }}
 
 ---
 apiVersion: v1
@@ -53,6 +131,4 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: {{ $app.port }}
-
 {{- end }}
-

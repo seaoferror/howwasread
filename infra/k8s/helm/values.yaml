@@ -19,20 +19,26 @@ circuitBreaker:
 
 apps:
   auth:
-    image: "auth-service:latest"
+    image: "backend/auth:latest"
     port: 8080
     routePath: /auth
     requireAuth: false
-    isWorker: false
+    kafka: false
   chat:
-    image: "chat-service:latest"
+    image: "backend/chat:latest"
     port: 8080
     routePath: /chat
     requireAuth: true
-    isWorker: false
+    kafka: true
   expo-notification:
-    image: "expo-notification-service:latest"
+    image: "backend/expo-notification:latest"
     port: 8080
-    routePath: /notification
-    requireAuth: true
-    isWorker: true
+    routePath: false
+    requireAuth: false
+  fcmnotification:
+    image: "backend/fcmnotification:latest"
+    port: 8080
+    routePath: false
+    requireAuth: false
+
+

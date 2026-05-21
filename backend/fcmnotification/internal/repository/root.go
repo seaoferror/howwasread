@@ -7,6 +7,7 @@ import (
 
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
 	"github.com/apache/cassandra-gocql-driver/v2/lz4"
+	gocqlastra "github.com/datastax/gocql-astra/v2"
 	"github.com/redis/rueidis"
 )
 
@@ -16,7 +17,8 @@ type Repository struct {
 }
 
 func NewRepository() *Repository {
-	cluster := gocql.NewCluster(os.Getenv("CASSANDRA_URL"))
+	cluster, err := gocqlastra.NewClusterFromBundle("/astradb/astradb-secure-connect.zip",
+		"token", os.Getenv("ASTRA_DB_TOKEN"), 10*time.Second)
 	cluster.Keyspace = "default"
 	cluster.Timeout = 1 * time.Minute
 	cluster.Consistency = gocql.Quorum
@@ -42,7 +44,7 @@ func NewRepository() *Repository {
 	log.Print("success to connect cassandra")
 
 	clientOption := rueidis.ClientOption{
-		InitAddress: []string{os.Getenv("REDIS_URL")},
+		InitAddress: []string{os.Getenv("REDIS_ADDRESS")},
 	}
 	client, err := rueidis.NewClient(clientOption)
 	if err != nil {

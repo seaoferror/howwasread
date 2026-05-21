@@ -1,6 +1,6 @@
 {{- range $name, $app := .Values.apps }}
 ---
-{{if not $app.isWorker}}
+{{if $app.routePath}}
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -39,21 +39,42 @@ spec:
   jwt:
     providers:
       - name: jwt-provider
-        issuer: {{ $.Values.auth.issuer | quote }}
+{{/*        issuer: {{ $.Values.auth.issuer | quote }}*/}}
+{{/*        claims:*/}}
+{{/*          - name: role*/}}
+{{/*            valueType: String*/}}
+{{/*            values:*/}}
+{{/*              - "user"*/}}
         claimToHeaders:
           - claim: sub
             header: X-User-Id
         localJWKS:
-          inline: |
-            {
-              "keys": [
-                {
-                  "kty": "oct",
-                  "alg": "HS256",
-                  "k": {{ $.Values.auth.base64UrlSecret | quote }}
-                }
-              ]
-            }
+          type: ValueRef
+          valueRef:
+            group: ""
+            kind: ConfigMap
+            name: public-key-at
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: public-key-at
+  namespace: backend
+data:
+  jwks: |
+    {
+      "keys": [
+        {
+          "alg": "RS256",
+          "kty": "RSA",
+          "use": "sig",
+          "kid": "jwt-rt-key-v1",
+          "n": "wYQ4ZgOXrNO9uwb1DEOr0rlEn68kZg9s-WbYY0N3_AxfiU4lp1xGx5fqZHasCqzuEe52-zhj_cEpqiCRgvxMFzy_8JZoyCREr6oA8qrmPV5ZLeanvdKbtDhsvYj5Rd62XqlJkQrVYlRf2U3yIlrYSzyE1AmrehQC3jWAWnZJLJPXs_MCy3uZ2RJSizXA7cD1vvGB5_XFuTD5aUaUODHGFVPq7qB0CeuSwNDy9tEXMe5C_6G88NBoju7MDB_N89Tq9SvuEKA2UnPfrT6MfZlBPQwzesxuIGlWjDVIpXAgv__19F6xTeWln0NTqyjscjFpn6AP8hBUe-xznDLtMQDYcw",
+          "e": "AQAB"
+        }
+      ]
+    }
 {{- end }}
 
 ---

@@ -7,6 +7,7 @@ import (
 
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
 	"github.com/apache/cassandra-gocql-driver/v2/lz4"
+	gocqlastra "github.com/datastax/gocql-astra/v2"
 )
 
 type Repository struct {
@@ -14,7 +15,8 @@ type Repository struct {
 }
 
 func NewRepository() *Repository {
-	cluster := gocql.NewCluster(os.Getenv("CASSANDRA_URL"))
+	cluster, err := gocqlastra.NewClusterFromBundle("/astradb/astradb-secure-connect.zip",
+		"token", os.Getenv("ASTRA_DB_TOKEN"), 10*time.Second)
 	cluster.Keyspace = "default"
 	cluster.Timeout = 1 * time.Minute
 	cluster.Consistency = gocql.Quorum

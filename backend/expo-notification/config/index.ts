@@ -11,8 +11,8 @@ const { Kafka, ErrorCodes } = KafkaJS;
 
 export async function createRedisClient() {
   const redis = createClient({
-    url: process.env.REDIS_URL
-      ? "redis://" + process.env.REDIS_URL
+    url: process.env.REDIS_ADDRESS
+      ? "redis://" + process.env.REDIS_ADDRESS
       : "redis://127.0.0.1:6379",
   });
 
@@ -24,7 +24,14 @@ export async function createRedisClient() {
 
 export async function createKafkaConsumer() {
   const consumer = new Kafka().consumer({
-    "bootstrap.servers": process.env.KAFKA_URL || "127.0.0.1:9092",
+    "bootstrap.servers":
+      process.env.KAFKA_ADDRESS ||
+      "kafka-cluster-kafka-bootstrap.kafka-system.svc.cluster.local:9093",
+    "security.protocol": "ssl",
+    "ssl.ca.location": "kafka-ca.crt",
+    "ssl.certificate.location": "kafka-user.crt",
+    "ssl.key.location": "kafka-user.key",
+
     "group.id": APN_NOTIFICATION,
     "auto.offset.reset": "earliest",
     "group.protocol": "consumer",
@@ -67,8 +74,14 @@ export async function createKafkaConsumer() {
 }
 
 export async function createCassandraClient() {
+  const cloud = { secureConnectBundle: "/astradb/astradb-secure-connect.zip" };
+  const authProvider = new cassandra.auth.PlainTextAuthProvider(
+    "token",
+    process.env["ASTRA_DB_TOKEN"] || "",
+  );
   const client = new cassandra.Client({
-    contactPoints: [process.env.CASSANDRA_URL || "127.0.0.1"],
+    cloud: cloud,
+    authProvider: authProvider,
     localDataCenter: process.env.CASSANDRA_DATACENTER || "datacenter1",
     keyspace: "default",
     queryOptions: {

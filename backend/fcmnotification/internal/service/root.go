@@ -3,9 +3,6 @@ package service
 import (
 	"backend/fcmnotification/internal/repository"
 	"context"
-	"encoding/base64"
-	"fmt"
-	"os"
 
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/messaging"
@@ -18,12 +15,7 @@ type Service struct {
 }
 
 func NewService(r *repository.Repository) *Service {
-	jsonRaw, err := base64.StdEncoding.DecodeString(
-		os.Getenv("FIREBASE_ADMINSDK_FBSVC_JSON_BASE64"))
-	if err != nil {
-		panic(fmt.Errorf("failed to decode base64 secret: %w", err))
-	}
-	opt := option.WithCredentialsJSON(jsonRaw)
+	opt := option.WithCredentialsFile("firebase-adminsdk.json")
 	app, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {
 		panic(err)
