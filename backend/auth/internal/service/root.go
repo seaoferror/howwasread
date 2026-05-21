@@ -2,6 +2,10 @@ package service
 
 import (
 	"backend/auth/internal/repository"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
+	"log"
 	"os"
 
 	_ "github.com/joho/godotenv/autoload"
@@ -10,8 +14,9 @@ import (
 
 type Service struct {
 	repository   *repository.Repository
-	secretKeyAT  []byte
-	secretKeyRT  []byte
+	privateKeyAT *rsa.PrivateKey
+	privateKeyRT *rsa.PrivateKey
+	publicKeyRT  *rsa.PublicKey
 	issuer       string
 	audience     string
 	twilioClient *twilio.RestClient
@@ -30,10 +35,53 @@ func NewService(r *repository.Repository) *Service {
 
 	return &Service{
 		repository:   r,
-		secretKeyAT:  []byte(os.Getenv("SECRET_KEY_AT")),
-		secretKeyRT:  []byte(os.Getenv("SECRET_KEY_RT")),
+		privateKeyAT: loadRSAPrivateKey("/authentication/private-key-at.pem"),
+		privateKeyRT: loadRSAPrivateKey("/authentication/private-key-rt.pem"),
+		publicKeyRT:  loadRSAPublicKey("/authentication/public-key-rt.pem"),
 		issuer:       os.Getenv("ISSUER"),
 		audience:     os.Getenv("BUNDLE_IDENTIFIER"),
 		twilioClient: client,
 	}
+}
+
+func loadRSAPrivateKey(filepath string) *rsa.PrivateKey {
+	keyBytes, err := os.ReadFile(filepath)
+	if err != nil {
+		log.Panicf("failed to read private key file: %v", err)
+	}
+
+	block, _ := pem.Decode(keyBytes)
+	if block == nil {
+		log.Panic("failed to decode PEM block from file")
+	}
+
+	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	if err != nil {
+		log.Panicf("failed to parse RSA private key: %v", err)
+	}
+
+	return privateKey
+}
+
+func loadRSAPublicKey(filepath string) *rsa.PublicKey {
+	keyBytes, err := os.ReadFile(filepath)
+	if err != nil {
+		log.Panicf("failed to read public key file: %v", err)
+	}
+
+	block, _ := pem.Decode(keyBytes)
+	if block == nil {
+		log.Panic("failed to decode PEM block from file")
+	}
+
+	pubInterface, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		log.Panicf("failed to parse RSA public key: %v", err)
+	}
+
+	publicKey, ok := pubInterface.(*rsa.PublicKey)
+	if !ok {
+		log.Panic("key is not an RSA public key")
+	}
+	return publicKey
 }

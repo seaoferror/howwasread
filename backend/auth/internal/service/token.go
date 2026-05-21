@@ -2,6 +2,7 @@ package service
 
 import (
 	"backend/auth/internal/constant"
+	"crypto/rsa"
 	"log/slog"
 	"time"
 
@@ -11,11 +12,11 @@ import (
 
 func (s *Service) GenerateAccessToken(refreshToken string) (map[string]string, error) {
 	rt, err := jwt.Parse(refreshToken, func(token *jwt.Token) (any, error) {
-		if token.Method.Alg() != jwt.SigningMethodHS256.Alg() {
+		if token.Method.Alg() != jwt.SigningMethodRS256.Alg() {
 			slog.Info("unexpected signing method")
 			return nil, ErrGenerateToken
 		}
-		return s.secretKeyRT, nil
+		return s.publicKeyRT, nil
 	})
 	if err != nil {
 		slog.Info("fail to parse token",
@@ -62,7 +63,7 @@ func (s *Service) GenerateAccessToken(refreshToken string) (map[string]string, e
 		slog.Info("fail to get role")
 		return nil, ErrGenerateToken
 	}
-	at, err := createToken(rawId, role, s.secretKeyAT, constant.AccessTokenTTL)
+	at, err := createToken(rawId, role, s.privateKeyAT, constant.AccessTokenTTL)
 	if err != nil {
 		return nil, ErrInternalServer
 	}
@@ -72,7 +73,7 @@ func (s *Service) GenerateAccessToken(refreshToken string) (map[string]string, e
 }
 
 func (s *Service) createLoginTokens(id, jti, role string) (accessToken, refreshToken string, err error) {
-	at, err := createToken(id, role, s.secretKeyAT, constant.AccessTokenTTL)
+	at, err := createToken(id, role, s.privateKeyAT, constant.AccessTokenTTL)
 	if err != nil {
 		slog.Error("fail to create access token",
 			"err", err,
@@ -80,7 +81,7 @@ func (s *Service) createLoginTokens(id, jti, role string) (accessToken, refreshT
 		)
 		return "", "", err
 	}
-	rt, err := createTokenWithJTI(id, jti, role, s.secretKeyRT, constant.RefreshTokenTTL)
+	rt, err := createTokenWithJTI(id, jti, role, s.privateKeyRT, constant.RefreshTokenTTL)
 	if err != nil {
 		slog.Error("fail to create refresh token",
 			"err", err,
@@ -91,7 +92,7 @@ func (s *Service) createLoginTokens(id, jti, role string) (accessToken, refreshT
 	return at, rt, nil
 }
 
-func createToken(id, role string, secretKey []byte, ttl int64) (token string, err error) {
+func createToken(id, role string, privateKey *rsa.PrivateKey, ttl int64) (token string, err error) {
 	claims := jwt.MapClaims{
 		"sub":  id,
 		"role": role,
@@ -99,17 +100,15 @@ func createToken(id, role string, secretKey []byte, ttl int64) (token string, er
 		"exp":  time.Now().Add(time.Second * time.Duration(ttl)).Unix(),
 	}
 
-	token, err = jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(secretKey)
+	token, err = jwt.NewWithClaims(jwt.SigningMethodRS256, claims).SignedString(privateKey)
 	if err != nil {
-		slog.Error("fail to make token",
-			"err", err,
-		)
+		slog.Error("fail to make token", "err", err)
 		return "", err
 	}
 	return token, nil
 }
 
-func createTokenWithJTI(id, jti, role string, secretKey []byte, ttl int64) (token string, err error) {
+func createTokenWithJTI(id, jti, role string, secretKey *rsa.PrivateKey, ttl int64) (token string, err error) {
 	claims := jwt.MapClaims{
 		"sub":  id,
 		"jti":  jti,
