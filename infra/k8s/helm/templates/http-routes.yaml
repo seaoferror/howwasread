@@ -25,7 +25,7 @@ spec:
 
 ---
 
-{{- if $app.requireAuth  }}
+{{- if not $app.authentication  }}
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: SecurityPolicy
 metadata:

@@ -22,23 +22,89 @@ apps:
     image: "backend/auth:latest"
     port: 8080
     routePath: /auth
-    requireAuth: false
+    authentication: true
+    aws: false
     kafka: false
+    astradb: true
+    mongodb: false
+    smtp: true
+    twilio: true
+    firebase: false
   chat:
     image: "backend/chat:latest"
     port: 8080
     routePath: /chat
-    requireAuth: true
+    authentication: false
     kafka: true
+    astradb: true
+    mongodb: false
+    smtp: false
+    twilio: false
+    firebase: false
   expo-notification:
     image: "backend/expo-notification:latest"
     port: 8080
     routePath: false
-    requireAuth: false
+    authentication: false
+    astradb: true
+    mongodb: false
+    firebase: false
   fcmnotification:
     image: "backend/fcmnotification:latest"
     port: 8080
     routePath: false
-    requireAuth: false
+    authentication: false
+    astradb: true
+    mongodb: false
+    firebase: true
+  messagepersist:
+    image: "backend/messagepersist:latest"
+    port: 8080
+    routePath: false
+    authentication: false
+    astradb: true
+    mongodb: false
+    firebase: false
+  messagepreprocess:
+    image: "backend/messagepreprocess:latest"
+    port: 8080
+    routePath: false
+    authentication: false
+    astradb: true
+    mongodb: false
+    firebase: false
+  messagerelay:
+    image: "backend/messagerelay:latest"
+    port: 8080
+    routePath: true
+    authentication: false
+    astradb: true
+    mongodb: false
+    firebase: false
+  notification:
+    image: "backend/notification:latest"
+    port: 8080
+    routePath: true
+    authentication: false
+    astradb: true
+    mongodb: false
+    firebase: false
+  onlineconversation:
+    image: "backend/onlineconversation:latest"
+    port: 8080
+    routePath: true
+    authentication: false
+    astradb: false
+    mongodb: true
+    firebase: false
+  signalrelay:
+    image: "backend/signalrelay:latest"
+    port: 8080
+    routePath: false
+    authentication: false
+    astradb: false
+    mongodb: false
+    firebase: false
+
 
 

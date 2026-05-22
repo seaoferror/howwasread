@@ -24,7 +24,7 @@ spec:
           ports:
             - containerPort: {{ $app.port }}
 
-          {{- if or $app.astradb $app.aws $app.backendKeys $app.mongodb $app.smtp $app.twilio }}
+          {{- if or $app.astradb $app.aws $app.mongodb $app.smtp $app.twilio }}
           envFrom:
             {{- if $app.astradb }}
             - secretRef:
@@ -48,7 +48,7 @@ spec:
             {{- end }}
           {{- end }}
 
-          {{- if or $app.kafka $app.astradb $app.aws $app.firebase $app.mongodb }}
+          {{- if or $app.authentication $app.kafka $app.astradb $app.aws $app.firebase $app.mongodb }}
           volumeMounts:
             {{- if $app.authentication}}
             - name: authentication-volume
