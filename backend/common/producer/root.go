@@ -37,8 +37,7 @@ func createProducer(clientIdPrefix string) (sarama.AsyncProducer, error) {
 		return nil, err
 	}
 
-	tlsConfig, err := tlsconfig.Create("kafka-user.crt", "kafka-user.key", "kafka-ca.crt")
-
+	tlsConfig, err := tlsconfig.Create("/kafka/user.crt", "/kafka/user.key", "/kafka/ca.crt")
 	cfg.ClientID = clientIdPrefix + id.String()
 	//cfg.Net.SASL.Enable = true
 	//cfg.Net.SASL.Version = 1

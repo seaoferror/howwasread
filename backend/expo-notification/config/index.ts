@@ -36,9 +36,9 @@ export async function createKafkaConsumer() {
       process.env.KAFKA_ADDRESS ||
       "kafka-cluster-kafka-bootstrap.kafka-system.svc.cluster.local:9093",
     "security.protocol": "ssl",
-    "ssl.ca.location": "kafka-ca.crt",
-    "ssl.certificate.location": "kafka-user.crt",
-    "ssl.key.location": "kafka-user.key",
+    "ssl.ca.location": "/kafka/ca.crt",
+    "ssl.certificate.location": "/kafka/user.crt",
+    "ssl.key.location": "/kafka/user.key",
 
     "group.id": APN_NOTIFICATION,
     "auto.offset.reset": "earliest",
