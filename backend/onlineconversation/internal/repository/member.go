@@ -6,7 +6,7 @@ import (
 )
 
 func (r *Repository) SetServerIP(ctx context.Context, memberId, ip string) error {
-	result := r.redisClient.Do(ctx, r.redisClient.B().Set().Key("conversation"+memberId).Value(ip).Build())
+	result := r.valkeyClient.Do(ctx, r.valkeyClient.B().Set().Key("conversation"+memberId).Value(ip).Build())
 	if result.Error() != nil {
 		slog.Error("fail to save member ip", "err", result.Error())
 		return result.Error()
@@ -15,7 +15,7 @@ func (r *Repository) SetServerIP(ctx context.Context, memberId, ip string) error
 }
 
 func (r *Repository) RemoveServerIP(ctx context.Context, memberId string) error {
-	result := r.redisClient.Do(ctx, r.redisClient.B().Del().Key("conversation"+memberId).Build())
+	result := r.valkeyClient.Do(ctx, r.valkeyClient.B().Del().Key("conversation"+memberId).Build())
 	if result.Error() != nil {
 		slog.Error("fail to remove member ip", "err", result.Error())
 		return result.Error()

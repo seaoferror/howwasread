@@ -4,18 +4,20 @@ import (
 	"log"
 	"os"
 
-	"github.com/redis/rueidis"
+	"github.com/valkey-io/valkey-go"
 )
 
 type Repository struct {
-	client rueidis.Client
+	client valkey.Client
 }
 
 func NewRepository() *Repository {
-	clientOption := rueidis.ClientOption{
-		InitAddress: []string{os.Getenv("REDIS_ADDRESS")},
+	clientOption := valkey.ClientOption{
+		Username:    os.Getenv("VALKEY_USERNAME"),
+		Password:    os.Getenv("VALKEY_PASSWORD"),
+		InitAddress: []string{os.Getenv("VALKEY_ADDRESS")},
 	}
-	client, err := rueidis.NewClient(clientOption)
+	client, err := valkey.NewClient(clientOption)
 	if err != nil {
 		log.Panicf("Fail to connect to redis: %v", err)
 	}

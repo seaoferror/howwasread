@@ -1,5 +1,5 @@
 import { APN_NOTIFICATION } from "@/constants";
-import { createClient } from "@redis/client";
+import { GlideClusterClient } from "@valkey/valkey-glide";
 import {
   KafkaJS,
   LibrdKafkaError,
@@ -9,17 +9,25 @@ import cassandra from "cassandra-driver";
 
 const { Kafka, ErrorCodes } = KafkaJS;
 
-export async function createRedisClient() {
-  const redis = createClient({
-    url: process.env.REDIS_ADDRESS
-      ? "redis://" + process.env.REDIS_ADDRESS
-      : "redis://127.0.0.1:6379",
+export async function createValkeyClient() {
+  return GlideClusterClient.createClient({
+    addresses: [
+      {
+        host:
+          process.env.VALKEY_HOST ||
+          "valkey-cluster.valkey-system.svc.cluster.local",
+        port: 6379,
+      },
+    ],
+    credentials: {
+      username: process.env.VALKEY_USERNAME,
+      password: process.env.VALKEY_PASSWORD || "",
+    },
+    useTLS: true,
+    compression: {
+      enabled: true,
+    },
   });
-
-  await redis.connect();
-  console.log("connect to redis");
-
-  return redis;
 }
 
 export async function createKafkaConsumer() {

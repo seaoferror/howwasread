@@ -1,7 +1,7 @@
 import {
   createCassandraClient,
   createKafkaConsumer,
-  createRedisClient,
+  createValkeyClient,
 } from "@/config";
 import { extractData } from "@/util";
 import { sendPushNotification } from "@/service";
@@ -11,7 +11,7 @@ import { removePushTokenByIdAndDeviceId } from "@/db";
 async function main() {
   const expo = new Expo();
   const consumer = await createKafkaConsumer();
-  const redis = await createRedisClient();
+  const valkey = await createValkeyClient();
   const cassandra = await createCassandraClient();
 
   const disconnect = () => {
@@ -20,7 +20,7 @@ async function main() {
     consumer
       .commitOffsets()
       .finally(() => consumer.disconnect())
-      .finally(() => redis.destroy())
+      .finally(() => valkey.close())
       .finally(() => cassandra.shutdown())
       .finally(() => console.log("Disconnected successfully"));
   };
@@ -30,14 +30,14 @@ async function main() {
   consumer.run({
     partitionsConsumedConcurrently: 6,
     eachMessage: async ({ message }) => {
-      const { value, redisKey, redisMember } = extractData(message);
-      const did = await redis.sIsMember(redisKey, redisMember);
+      const { value, key, member } = extractData(message);
+      const did = await valkey.sismember(key, member);
       if (did) {
         return;
       }
       const failedIdPairs = await sendPushNotification(
         expo,
-        () => redis.sAdd(redisKey, redisMember),
+        () => valkey.sadd(key, [member]),
         value.tokenMap,
         value.roomName,
         value.senderName,

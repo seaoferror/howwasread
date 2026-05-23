@@ -6,12 +6,12 @@ export function extractData(message: KafkaMessage) {
   const value: NotificationMessage = JSON.parse(
     message?.value?.toString() ?? "",
   );
-  const redisKey = Buffer.concat([
+  const key = Buffer.concat([
     Buffer.from("apn"),
     message?.key?.subarray(0, 16) ?? Buffer.from(""),
   ]);
-  const redisMember = message?.key?.subarray(16, 17) ?? Buffer.from("");
-  return { value, redisKey, redisMember };
+  const member = message?.key?.subarray(16, 17) ?? Buffer.from("");
+  return { value, key, member};
 }
 
 export function makeMessage(

@@ -2,11 +2,12 @@ package repository
 
 import (
 	"context"
+	"crypto/tls"
 	"log"
 	"log/slog"
 	"os"
 
-	"github.com/redis/rueidis"
+	"github.com/valkey-io/valkey-go"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
@@ -15,9 +16,9 @@ import (
 )
 
 type Repository struct {
-	mongoClient *mongo.Client
-	db          *mongo.Database
-	redisClient rueidis.Client
+	mongoClient  *mongo.Client
+	db           *mongo.Database
+	valkeyClient valkey.Client
 }
 
 func NewRepository() *Repository {
@@ -35,18 +36,23 @@ func NewRepository() *Repository {
 	}
 	slog.Info("success to connect mongodb")
 
-	clientOption := rueidis.ClientOption{
-		InitAddress: []string{os.Getenv("REDIS_ADDRESS")},
+	clientOption := valkey.ClientOption{
+		Username:    os.Getenv("VALKEY_USERNAME"),
+		Password:    os.Getenv("VALKEY_PASSWORD"),
+		InitAddress: []string{os.Getenv("VALKEY_ADDRESS")},
+		TLSConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
 	}
-	redisClient, err := rueidis.NewClient(clientOption)
+	v, err := valkey.NewClient(clientOption)
 	if err != nil {
 		log.Panicf("Fail to connect to redis: %v", err)
 	}
 
 	r := &Repository{
-		mongoClient: mongoClient,
-		db:          mongoClient.Database("db"),
-		redisClient: redisClient,
+		mongoClient:  mongoClient,
+		db:           mongoClient.Database("db"),
+		valkeyClient: v,
 	}
 
 	return r

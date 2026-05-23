@@ -192,4 +192,4 @@ terraform.rc
 
 raw-secret*.yaml
 
-*key.yaml
+*-key.yaml

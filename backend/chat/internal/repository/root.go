@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"crypto/tls"
 	"log"
 	"os"
 	"time"
@@ -9,12 +10,12 @@ import (
 	"github.com/apache/cassandra-gocql-driver/v2/lz4"
 	gocqlastra "github.com/datastax/gocql-astra/v2"
 	_ "github.com/joho/godotenv/autoload"
-	"github.com/redis/rueidis"
+	"github.com/valkey-io/valkey-go"
 )
 
 type Repository struct {
 	session *gocql.Session
-	client  rueidis.Client
+	client  valkey.Client
 }
 
 func NewRepository() *Repository {
@@ -129,10 +130,15 @@ func NewRepository() *Repository {
 	}
 	log.Print("success to connect cassandra")
 
-	clientOption := rueidis.ClientOption{
-		InitAddress: []string{os.Getenv("REDIS_ADDRESS")},
+	clientOption := valkey.ClientOption{
+		Username:    os.Getenv("VALKEY_USERNAME"),
+		Password:    os.Getenv("VALKEY_PASSWORD"),
+		InitAddress: []string{os.Getenv("VALKEY_ADDRESS")},
+		TLSConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
 	}
-	client, err := rueidis.NewClient(clientOption)
+	client, err := valkey.NewClient(clientOption)
 	if err != nil {
 		log.Panicf("Fail to connect to redis: %v", err)
 	}

@@ -23,6 +23,7 @@
   "dependencies": {
     "@confluentinc/kafka-javascript": "^1.9.0",
     "@redis/client": "^5.12.1",
+    "@valkey/valkey-glide": "^2.4.0",
     "cassandra-driver": "^4.8.0",
     "expo-server-sdk": "^6.1.0"
   }

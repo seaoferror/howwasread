@@ -63,7 +63,7 @@ resource "aws_iam_role_policy_attachment" "external_dns_attach" {
 
 data "aws_lb" "envoy_gateway_nlb" {
   # check kubectl get gateway -A and change the suffix number every time redeploy the gateway
-  name = "k8s-envoygat-envoyenv-702ac151d3"
+  name = "k8s-envoygat-envoyenv-0e0166594b"
 }
 
 resource "aws_route53_record" "backend_alias" {

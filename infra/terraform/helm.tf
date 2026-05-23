@@ -240,4 +240,14 @@ resource "helm_release" "reflector" {
   ]
 }
 
+resource "helm_release" "valkey_operator" {
+  name             = "valkey-operator"
+  repository       = "https://valkey.io/valkey-helm"
+  chart            = "valkey-operator"
+  namespace        = "valkey-system"
+  create_namespace = true
 
+  depends_on = [
+    module.cluster1.eks_managed_node_groups
+  ]
+}
