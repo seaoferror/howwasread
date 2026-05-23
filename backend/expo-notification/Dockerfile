@@ -2,7 +2,10 @@
 FROM node:25-alpine AS stage1
 WORKDIR /app
 
-# Copy package files and install ALL dependencies (including dev tools like typescript, tsc-alias)
+# 1. Install build tools for native modules
+RUN apk add --no-cache python3 make g++
+
+# Copy package files and install ALL dependencies
 COPY package*.json ./
 RUN npm ci
 
@@ -13,6 +16,10 @@ RUN npm run build
 FROM node:25-alpine
 WORKDIR /app
 ENV NODE_ENV=production
+
+# 2. Install build tools here as well, because npm ci --omit=dev
+# still has to compile the Kafka production dependency
+RUN apk add --no-cache python3 make g++
 
 # Copy package files and install ONLY production dependencies
 COPY package*.json ./
