@@ -32,7 +32,7 @@ jobs:
           REGISTRY: 565319458549.dkr.ecr.ap-northeast-2.amazonaws.com
           REPOSITORY: backend/messagepersist
           IMAGE_TAG: latest
-        run:
+        run: |
           docker buildx build --platform linux/amd64 \
           -t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
           -f ./backend/messagepersist/Dockerfile ./backend --push
