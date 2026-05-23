@@ -17,7 +17,7 @@ variable "ecr_repos" {
 resource "aws_ecr_repository" "repos" {
   for_each             = var.ecr_repos
   name                 = each.value
-  image_tag_mutability = "IMMUTABLE"
+  image_tag_mutability = "MUTABLE"
 }
 
 resource "aws_ecr_lifecycle_policy" "repo_cleanup" {
