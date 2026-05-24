@@ -8,7 +8,7 @@ variable "ecr_repos" {
     "backend/messagepersist",
     "backend/messagepreprocess",
     "backend/messagerelay",
-    "backend/notifcation",
+    "backend/notification",
     "backend/onlineconversation",
     "backend/signalrelay"
   ]

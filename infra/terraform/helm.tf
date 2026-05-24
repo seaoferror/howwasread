@@ -33,21 +33,25 @@ resource "helm_release" "external_dns" {
     yamlencode({
       registry = "txt"
 
-      source = [
+      sources = [
         "gateway-httproute",
-        "gateway-grpcroute",
-        "gateway-tcproute",
-        "gateway-tlsroute"
       ]
 
       txtOwnerId = module.cluster1.cluster_name
 
       serviceAccount = {
-        create = true
         annotations = {
           "eks.amazonaws.com/role-arn" = aws_iam_role.external_dns_role.arn
         }
       }
+
+      provider = {
+        name = "aws" //aws is default but in case of migration to other vendor
+      }
+
+      managedRecordTypes = [
+        "A"
+      ]
 
       policy = "sync"
     })

@@ -60,31 +60,3 @@ resource "aws_iam_role_policy_attachment" "external_dns_attach" {
   role       = aws_iam_role.external_dns_role.name
   policy_arn = aws_iam_policy.external_dns.arn
 }
-
-data "aws_lb" "envoy_gateway_nlb" {
-  # check kubectl get gateway -A and change the suffix number every time redeploy the gateway
-  name = "k8s-envoygat-envoyenv-0e0166594b"
-}
-
-resource "aws_route53_record" "backend_alias" {
-  zone_id = aws_route53_zone.main.id
-  name    = "backend.mikekim1032.shop"
-  type    = "A"
-  alias {
-    name                   = data.aws_lb.envoy_gateway_nlb.dns_name
-    zone_id                = data.aws_lb.envoy_gateway_nlb.zone_id
-    evaluate_target_health = true
-  }
-}
-
-resource "aws_route53_record" "argocd_alias" {
-  zone_id = aws_route53_zone.main.id
-  name    = "argocd.mikekim1032.shop"
-  type    = "A"
-
-  alias {
-    name                   = data.aws_lb.envoy_gateway_nlb.dns_name
-    zone_id                = data.aws_lb.envoy_gateway_nlb.zone_id
-    evaluate_target_health = true
-  }
-}
