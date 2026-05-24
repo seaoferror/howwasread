@@ -20,12 +20,20 @@ spec:
       containers:
         - name: {{ $name }}
           image: {{ $app.image }}
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: {{ $app.port }}
-
-          {{- if or $app.astradb $app.aws $app.mongodb $app.smtp $app.twilio }}
+          {{- if $app.valkey }}
+          env:
+            - name: VALKEY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: valkey
+                  key: lule
+          {{- end}}
           envFrom:
+            - configMapRef:
+                name: config-map
             {{- if $app.astradb }}
             - secretRef:
                 name: astradb
@@ -46,8 +54,6 @@ spec:
             - secretRef:
                 name: twilio
             {{- end }}
-          {{- end }}
-
           {{- if or $app.authentication $app.kafka $app.astradb $app.aws $app.firebase $app.mongodb }}
           volumeMounts:
             {{- if $app.authentication}}
@@ -57,7 +63,10 @@ spec:
             {{- end}}
             {{- if $app.kafka }}
             - name: kafka-user
-              mountPath: "/kafka"
+              mountPath: "/kafka/user"
+              readOnly: true
+            - name: kafka-cluster-ca
+              mountPath: "/kafka/cluster"
               readOnly: true
             {{- end }}
             {{- if $app.astradb }}
@@ -88,6 +97,9 @@ spec:
         - name: kafka-user
           secret:
             secretName: kafka-user
+        - name: kafka-cluster-ca
+          secret:
+            secretName: kafka-cluster-cluster-ca-cert
         {{- end }}
         {{- if $app.authentication}}
         - name: authentication-volume

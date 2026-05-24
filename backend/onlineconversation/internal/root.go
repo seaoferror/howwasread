@@ -50,6 +50,6 @@ func NewServer() {
 	pb.RegisterSignalServiceServer(g, gc)
 	err = g.Serve(lis)
 	if err != nil {
-		log.Fatalf("fail to serve: %v", err)
+		log.Panicf("fail to serve: %v", err)
 	}
 }

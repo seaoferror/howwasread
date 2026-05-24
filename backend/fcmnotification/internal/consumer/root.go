@@ -44,7 +44,7 @@ func connectConsumer(groupID string) (sarama.ConsumerGroup, error) {
 		return nil, err
 	}
 
-	tlsConfig, err := tlsconfig.Create("/kafka/user.crt", "/kafka/user.key", "/kafka/ca.crt")
+	tlsConfig, err := tlsconfig.Create("/kafka/user/user.crt", "/kafka/user/user.key", "/kafka/cluster/ca.crt")
 	if err != nil {
 		return nil, err
 	}

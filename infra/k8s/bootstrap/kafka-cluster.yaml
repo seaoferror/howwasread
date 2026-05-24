@@ -28,6 +28,14 @@ spec:
         tls: true
         authentication:
           type: tls
+    template:
+      clusterCaCert:
+        metadata:
+          annotations:
+            reflector.v1.k8s.emberstack.com/reflection-allowed: "true"
+            reflector.v1.k8s.emberstack.com/reflection-allowed-namespaces: "backend"
+            reflector.v1.k8s.emberstack.com/reflection-auto-enabled: "true"
+            reflector.v1.k8s.emberstack.com/reflection-auto-namespaces: "backend"
   entityOperator:
     topicOperator: {}
     userOperator: {}
