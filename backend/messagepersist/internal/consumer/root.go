@@ -45,6 +45,9 @@ func connectConsumer(groupID string) (sarama.ConsumerGroup, error) {
 	}
 	cfg.ClientID = "persist_message." + id.String()
 	tlsConfig, err := tlsconfig.Create("/kafka/user.crt", "/kafka/user.key", "/kafka/ca.crt")
+	if err != nil {
+		return nil, err
+	}
 
 	//cfg.Net.SASL.Enable = true
 	//cfg.Net.SASL.Version = 1

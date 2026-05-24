@@ -16,5 +16,3 @@ RUN cd signalrelay && CGO_ENABLED=0 GOOS=linux go build -o /signalrelay .
 FROM scratch
 COPY --from=stage1 /signalrelay /signalrelay
 CMD ["/signalrelay"]
-
-#docker build -f backend/chat/Dockerfile backend

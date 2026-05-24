@@ -45,6 +45,9 @@ func connectConsumer(groupID string) (sarama.ConsumerGroup, error) {
 	}
 
 	tlsConfig, err := tlsconfig.Create("/kafka/user.crt", "/kafka/user.key", "/kafka/ca.crt")
+	if err != nil {
+		return nil, err
+	}
 	cfg.ClientID = "consumer.fcm_notification." + id.String()
 	//cfg.Net.SASL.Enable = true
 	//cfg.Net.SASL.Version = 1

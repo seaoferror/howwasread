@@ -45,6 +45,9 @@ func connectConsumer(groupID string) (sarama.ConsumerGroup, error) {
 	}
 	cfg.ClientID = "relay_message.consumer." + id.String()
 	tlsConfig, err := tlsconfig.Create("/kafka/user.crt", "/kafka/user.key", "/kafka/ca.crt")
+	if err != nil {
+		return nil, err
+	}
 	cfg.Net.TLS.Enable = true
 	cfg.Net.TLS.Config = tlsConfig
 	//cfg.Net.SASL.Enable = true
