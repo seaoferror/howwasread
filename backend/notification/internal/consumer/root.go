@@ -44,12 +44,14 @@ func connectConsumer(groupID string) (sarama.ConsumerGroup, error) {
 		return nil, err
 	}
 	cfg.ClientID = "consumer.preprocess_notification" + id.String()
-	tlsConfig, err := tlsconfig.Create("/kafka/user/user.crt", "/kafka/user/user.key", "/kafka/cluster/ca.crt")
-	if err != nil {
-		return nil, err
+	if os.Getenv("PROFILE") == "production" {
+		tlsConfig, err1 := tlsconfig.Create("kafka/user/user.crt", "kafka/user/user.key", "kafka/cluster/ca.crt")
+		if err1 != nil {
+			return nil, err1
+		}
+		cfg.Net.TLS.Enable = true
+		cfg.Net.TLS.Config = tlsConfig
 	}
-	cfg.Net.TLS.Enable = true
-	cfg.Net.TLS.Config = tlsConfig
 	//cfg.Net.SASL.Enable = true
 	//cfg.Net.SASL.Version = 1
 	//cfg.Net.SASL.Mechanism = sarama.SASLTypePlaintext

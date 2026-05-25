@@ -17,4 +17,3 @@ FROM scratch
 COPY --from=stage1 /fcmnotification /fcmnotification
 CMD ["/fcmnotification"]
 
-#docker build -f backend/chat/Dockerfile backend

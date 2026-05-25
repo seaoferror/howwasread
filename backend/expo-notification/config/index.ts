@@ -13,17 +13,18 @@ export async function createValkeyClient() {
   return GlideClusterClient.createClient({
     addresses: [
       {
-        host:
-          process.env.VALKEY_HOST ||
-          "valkey-cluster.valkey-system.svc.cluster.local",
+        host: process.env.VALKEY_HOST || "localhost",
         port: 6379,
       },
     ],
-    credentials: {
-      username: process.env.VALKEY_USERNAME,
-      password: process.env.VALKEY_PASSWORD || "",
-    },
-    useTLS: true,
+    credentials:
+      process.env.PROFILE === "production"
+        ? {
+            username: process.env.VALKEY_USERNAME,
+            password: process.env.VALKEY_PASSWORD || "",
+          }
+        : undefined,
+    useTLS: process.env.PROFILE === "production" ? true : undefined,
     compression: {
       enabled: true,
     },
@@ -32,13 +33,15 @@ export async function createValkeyClient() {
 
 export async function createKafkaConsumer() {
   const consumer = new Kafka().consumer({
-    "bootstrap.servers":
-      process.env.KAFKA_ADDRESS ||
-      "kafka-cluster-kafka-bootstrap.kafka-system.svc.cluster.local:9093",
-    "security.protocol": "ssl",
-    "ssl.ca.location": "/kafka/ca.crt",
-    "ssl.certificate.location": "/kafka/user.crt",
-    "ssl.key.location": "/kafka/user.key",
+    "bootstrap.servers": process.env.KAFKA_ADDRESS || "localhost:9092",
+    "security.protocol":
+      process.env.PROFILE === "production" ? "ssl" : undefined,
+    "ssl.ca.location":
+      process.env.PROFILE === "production" ? "/cert/kafka/ca.crt" : undefined,
+    "ssl.certificate.location":
+      process.env.PROFILE === "production" ? "/cert/kafka/user.crt" : undefined,
+    "ssl.key.location":
+      process.env.PROFILE === "production" ? "/cert/kafka/user.key" : undefined,
 
     "group.id": APN_NOTIFICATION,
     "auto.offset.reset": "earliest",
@@ -82,16 +85,17 @@ export async function createKafkaConsumer() {
 }
 
 export async function createCassandraClient() {
-  const cloud = { secureConnectBundle: "/astradb/astradb-secure-connect.zip" };
   const authProvider = new cassandra.auth.PlainTextAuthProvider(
     "token",
-    process.env["ASTRA_DB_TOKEN"] || "",
+    process.env.ASTRADB_TOKEN || "",
   );
   const client = new cassandra.Client({
-    cloud: cloud,
+    cloud: {
+      secureConnectBundle: "../cert/astradb/astradb-secure-connect.zip",
+    },
     authProvider: authProvider,
-    localDataCenter: process.env.CASSANDRA_DATACENTER || "datacenter1",
-    keyspace: "default",
+    localDataCenter: process.env.PROFILE ? undefined : "datacenter1",
+    keyspace: process.env.PROFILE,
     queryOptions: {
       consistency: cassandra.types.consistencies.quorum,
     },

@@ -23,9 +23,21 @@ type Repository struct {
 
 func NewRepository() *Repository {
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
+
+	certPath := "cert/mongodb/mongodb-cert.pem"
+	certs, err := tls.LoadX509KeyPair(certPath, certPath)
+	if err != nil {
+		log.Panicf("fail to load mongodb client certificate: %v", err)
+	}
 	opts := options.Client().
 		ApplyURI(os.Getenv("MONGODB_URI")).
-		SetServerAPIOptions(serverAPI)
+		SetServerAPIOptions(serverAPI).
+		SetAuth(options.Credential{
+			AuthMechanism: "MONGODB-X509",
+		}).
+		SetTLSConfig(&tls.Config{
+			Certificates: []tls.Certificate{certs},
+		})
 	mongoClient, err := mongo.Connect(opts)
 	if err != nil {
 		log.Panicf("fail to connect mongodb: %v", err)
@@ -37,12 +49,14 @@ func NewRepository() *Repository {
 	slog.Info("success to connect mongodb")
 
 	clientOption := valkey.ClientOption{
-		Username:    os.Getenv("VALKEY_USERNAME"),
-		Password:    os.Getenv("VALKEY_PASSWORD"),
 		InitAddress: []string{os.Getenv("VALKEY_ADDRESS")},
-		TLSConfig: &tls.Config{
+	}
+	if os.Getenv("PROFILE") == "production" {
+		clientOption.Username = os.Getenv("VALKEY_USERNAME")
+		clientOption.Password = os.Getenv("VALKEY_PASSWORD")
+		clientOption.TLSConfig = &tls.Config{
 			InsecureSkipVerify: true,
-		},
+		}
 	}
 	v, err := valkey.NewClient(clientOption)
 	if err != nil {
@@ -51,7 +65,7 @@ func NewRepository() *Repository {
 
 	r := &Repository{
 		mongoClient:  mongoClient,
-		db:           mongoClient.Database("db"),
+		db:           mongoClient.Database(os.Getenv("PROFILE")),
 		valkeyClient: v,
 	}
 

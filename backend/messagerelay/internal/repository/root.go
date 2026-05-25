@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"crypto/tls"
 	"log"
 	"os"
 
@@ -13,9 +14,14 @@ type Repository struct {
 
 func NewRepository() *Repository {
 	clientOption := valkey.ClientOption{
-		Username:    os.Getenv("VALKEY_USERNAME"),
-		Password:    os.Getenv("VALKEY_PASSWORD"),
 		InitAddress: []string{os.Getenv("VALKEY_ADDRESS")},
+	}
+	if os.Getenv("PROFILE") == "production" {
+		clientOption.Username = os.Getenv("VALKEY_USERNAME")
+		clientOption.Password = os.Getenv("VALKEY_PASSWORD")
+		clientOption.TLSConfig = &tls.Config{
+			InsecureSkipVerify: true,
+		}
 	}
 	client, err := valkey.NewClient(clientOption)
 	if err != nil {

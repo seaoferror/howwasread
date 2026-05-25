@@ -19,9 +19,9 @@ type Repository struct {
 }
 
 func NewRepository() *Repository {
-	cluster, err := gocqlastra.NewClusterFromBundle("/astradb/astradb-secure-connect.zip",
-		"token", os.Getenv("ASTRA_DB_TOKEN"), 10*time.Second)
-	cluster.Keyspace = "default"
+	cluster, err := gocqlastra.NewClusterFromBundle("cert/astradb/astradb-secure-connect.zip",
+		"token", os.Getenv("ASTRADB_TOKEN"), 10*time.Second)
+	cluster.Keyspace = os.Getenv("PROFILE")
 	cluster.Timeout = 1 * time.Minute
 	cluster.Consistency = gocql.Quorum
 	cluster.Compressor = &lz4.LZ4Compressor{}
@@ -131,18 +131,20 @@ func NewRepository() *Repository {
 	log.Print("success to connect cassandra")
 
 	clientOption := valkey.ClientOption{
-		Username:    os.Getenv("VALKEY_USERNAME"),
-		Password:    os.Getenv("VALKEY_PASSWORD"),
 		InitAddress: []string{os.Getenv("VALKEY_ADDRESS")},
-		TLSConfig: &tls.Config{
+	}
+	if os.Getenv("PROFILE") == "production" {
+		clientOption.Username = os.Getenv("VALKEY_USERNAME")
+		clientOption.Password = os.Getenv("VALKEY_PASSWORD")
+		clientOption.TLSConfig = &tls.Config{
 			InsecureSkipVerify: true,
-		},
+		}
 	}
 	client, err := valkey.NewClient(clientOption)
 	if err != nil {
-		log.Panicf("Fail to connect to redis: %v", err)
+		log.Panicf("Fail to connect to valkey: %v", err)
 	}
-	log.Print("success to connect redis")
+	log.Print("success to connect valkey")
 
 	r := &Repository{
 		session: session,

@@ -18,7 +18,7 @@ type Service struct {
 }
 
 func NewService(r *repository.Repository, p *producer.Producer) *Service {
-	pk, err := sign.LoadPEMPrivKeyFile("aws-cloudfront-private-key.pem")
+	pk, err := sign.LoadPEMPrivKeyFile("cert/aws/aws-cloudfront-private-key.pem")
 	if err != nil {
 		log.Panicf("fail to make cloud front private key: %v", err)
 	}

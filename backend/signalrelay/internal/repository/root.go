@@ -15,17 +15,20 @@ type Repository struct {
 
 func NewRepository() *Repository {
 	clientOption := valkey.ClientOption{
-		Username:    os.Getenv("VALKEY_USERNAME"),
-		Password:    os.Getenv("VALKEY_PASSWORD"),
 		InitAddress: []string{os.Getenv("VALKEY_ADDRESS")},
-		TLSConfig: &tls.Config{
+	}
+	if os.Getenv("PROFILE") == "production" {
+		clientOption.Username = os.Getenv("VALKEY_USERNAME")
+		clientOption.Password = os.Getenv("VALKEY_PASSWORD")
+		clientOption.TLSConfig = &tls.Config{
 			InsecureSkipVerify: true,
-		},
+		}
 	}
 	client, err := valkey.NewClient(clientOption)
 	if err != nil {
-		log.Panicf("Fail to connect to redis: %v", err)
+		log.Panicf("Fail to connect to valkey: %v", err)
 	}
+	log.Print("success to connect valkey")
 
 	r := Repository{client: client}
 

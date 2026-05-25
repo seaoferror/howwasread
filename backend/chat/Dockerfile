@@ -16,5 +16,3 @@ RUN cd chat && CGO_ENABLED=0 GOOS=linux go build -o /chat .
 FROM scratch
 COPY --from=stage1 /chat /chat
 CMD ["/chat"]
-
-#docker build -f backend/chat/Dockerfile backend

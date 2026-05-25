@@ -37,18 +37,21 @@ func createProducer(clientIdPrefix string) (sarama.AsyncProducer, error) {
 		return nil, err
 	}
 
-	tlsConfig, err := tlsconfig.Create("/kafka/user/user.crt", "/kafka/user/user.key", "/kafka/cluster/ca.crt")
-	if err != nil {
-		return nil, err
+	if os.Getenv("PROFILE") == "production" {
+		tlsConfig, err1 := tlsconfig.Create("kafka/user/user.crt", "kafka/user/user.key", "kafka/cluster/ca.crt")
+		if err1 != nil {
+			return nil, err1
+		}
+		cfg.Net.TLS.Enable = true
+		cfg.Net.TLS.Config = tlsConfig
 	}
+
 	cfg.ClientID = clientIdPrefix + id.String()
 	//cfg.Net.SASL.Enable = true
 	//cfg.Net.SASL.Version = 1
 	//cfg.Net.SASL.Mechanism = sarama.SASLTypePlaintext
 	//cfg.Net.SASL.User = <api-key>
 	//cfg.Net.SASL.Password = <secret>
-	cfg.Net.TLS.Enable = true
-	cfg.Net.TLS.Config = tlsConfig
 
 	cfg.Producer.Return.Successes = true
 	cfg.Producer.Return.Errors = true

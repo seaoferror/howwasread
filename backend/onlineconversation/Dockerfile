@@ -17,4 +17,3 @@ FROM scratch
 COPY --from=stage1 /onlineconversation /onlineconversation
 CMD ["/onlineconversation"]
 
-#docker build -f backend/chat/Dockerfile backend

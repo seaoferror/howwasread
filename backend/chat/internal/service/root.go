@@ -31,7 +31,7 @@ func NewService(r *repository.Repository, kp *producer.Producer) *Service {
 	}
 	presignClient := s3.NewPresignClient(s3.NewFromConfig(cfg))
 
-	pk, err := sign.LoadPEMPrivKeyFile("aws-cloudfront-private-key.pem")
+	pk, err := sign.LoadPEMPrivKeyFile("cert/aws/aws-cloudfront-private-key.pem")
 	if err != nil {
 		log.Panicf("fail to make cloud front private key: %v", err)
 	}

@@ -1,14 +1,5 @@
-namespace: default
-domain: server.mikekim1032.shop
+namespace: backend
 email: ""
-
-gateway:
-  issuer: my-issuer
-  tlsSecret: server-mikekim1032-com-tls
-
-auth:
-  issuer: "https://your-issuer.com"
-  base64UrlSecret: ""
 
 circuitBreaker:
   maxConnections: 100
@@ -19,7 +10,7 @@ circuitBreaker:
 
 apps:
   auth:
-    image: "backend/auth:latest"
+    image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/auth:latest"
     port: 8080
     routePath: /auth
     authentication: true
@@ -31,10 +22,11 @@ apps:
     twilio: true
     firebase: false
   chat:
-    image: "backend/chat:latest"
+    image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/chat:latest"
     port: 8080
     routePath: /chat
     authentication: false
+    aws: true
     kafka: true
     astradb: true
     mongodb: false
@@ -42,69 +34,86 @@ apps:
     twilio: false
     firebase: false
   expo-notification:
-    image: "backend/expo-notification:latest"
+    image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/expo-notification:latest"
     port: 8080
     routePath: false
     authentication: false
+    aws: false
+    kafka: true
     astradb: true
     mongodb: false
     firebase: false
   fcmnotification:
-    image: "backend/fcmnotification:latest"
+    image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/fcmnotification:latest"
     port: 8080
     routePath: false
     authentication: false
+    aws: false
+    kafka: true
     astradb: true
     mongodb: false
     firebase: true
   messagepersist:
-    image: "backend/messagepersist:latest"
+    image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/messagepersist:latest"
     port: 8080
     routePath: false
     authentication: false
+    aws: false
+    kafka: true
     astradb: true
     mongodb: false
     firebase: false
   messagepreprocess:
-    image: "backend/messagepreprocess:latest"
+    image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/messagepreprocess:latest"
     port: 8080
     routePath: false
     authentication: false
+    aws: false
+    kafka: true
     astradb: true
     mongodb: false
     firebase: false
   messagerelay:
-    image: "backend/messagerelay:latest"
+    image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/messagerelay:latest"
     port: 8080
-    routePath: true
+    routePath: false
     authentication: false
+    aws: false
+    kafka: true
     astradb: true
     mongodb: false
     firebase: false
   notification:
-    image: "backend/notification:latest"
+    image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/notification:latest"
     port: 8080
-    routePath: true
+    routePath: /notification
     authentication: false
+    aws: true
+    kafka: true
     astradb: true
     mongodb: false
     firebase: false
   onlineconversation:
-    image: "backend/onlineconversation:latest"
+    image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/onlineconversation:latest"
     port: 8080
-    routePath: true
+    routePath: /onlineconversation
     authentication: false
+    aws: false
+    kafka: true
     astradb: false
     mongodb: true
     firebase: false
   signalrelay:
-    image: "backend/signalrelay:latest"
+    image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/signalrelay:latest"
     port: 8080
     routePath: false
     authentication: false
+    aws: false
+    kafka: true
     astradb: false
     mongodb: false
     firebase: false
+    valkey: true
 
 
 

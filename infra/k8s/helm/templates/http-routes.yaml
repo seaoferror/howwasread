@@ -25,7 +25,7 @@ spec:
 
 ---
 
-{{- if not $app.authentication  }}
+{{- if eq $name "auth" }}
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: SecurityPolicy
 metadata:
@@ -82,16 +82,16 @@ apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: BackendTrafficPolicy
 metadata:
   name: {{ $name }}-circuit-breaker
-  namespace: {{ .Values.namespace }}
+  namespace: {{ $.Values.namespace }}
 spec:
   targetRef:
     group: gateway.networking.k8s.io
     kind: HTTPRoute
     name: {{ $name }}-route
   circuitBreaker:
-    maxConnections: {{ .Values.circuitBreaker.maxConnections }}
-    maxPendingRequests: {{.Values.circuitBreaker.maxPendingRequests}}
-    maxParallelRequests: {{.Values.circuitBreaker.maxParallelRequests}}
+    maxConnections: {{ $.Values.circuitBreaker.maxConnections }}
+    maxPendingRequests: {{$.Values.circuitBreaker.maxPendingRequests}}
+    maxParallelRequests: {{$.Values.circuitBreaker.maxParallelRequests}}
   rateLimit:
     type: Global
     global:

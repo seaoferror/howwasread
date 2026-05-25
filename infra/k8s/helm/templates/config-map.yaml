@@ -4,7 +4,11 @@ metadata:
   name: config-map
   namespace: {{.Values.namespace}}
 data:
+  PROFILE: "production"
   KAFKA_ADDRESS: "kafka-cluster-kafka-bootstrap.kafka-system.svc.cluster.local:9093"
+  VALKEY_ADDRESS: "valkey-cluster.valkey-system.svc:6379"
+  VALKEY_HOST: "valkey-cluster.valkey-system.svc"
+  VALKEY_USERNAME: "lule"
   AWS_S3_REGION: "ap-northeast-2"
   AWS_S3_BUCKET_NAME: "chat-bucket-14129"
   AWS_CLOUDFRONT_URL: "https://djxowwus2kgwo.cloudfront.net"

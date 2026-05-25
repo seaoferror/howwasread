@@ -58,35 +58,35 @@ spec:
           volumeMounts:
             {{- if $app.authentication}}
             - name: authentication-volume
-              mountPath: "/authentication"
+              mountPath: "/cert/authentication"
               readOnly: true
             {{- end}}
             {{- if $app.kafka }}
             - name: kafka-user
-              mountPath: "/kafka/user"
+              mountPath: "/cert/kafka/user"
               readOnly: true
             - name: kafka-cluster-ca
-              mountPath: "/kafka/cluster"
+              mountPath: "/cert/kafka/cluster"
               readOnly: true
             {{- end }}
             {{- if $app.astradb }}
             - name: astradb-volume
-              mountPath: "/astradb"
+              mountPath: "/cert/astradb"
               readOnly: true
             {{- end }}
             {{- if $app.aws }}
             - name: aws-volume
-              mountPath: "/aws"
+              mountPath: "/cert/aws"
               readOnly: true
             {{- end }}
             {{- if $app.firebase }}
             - name: firebase-volume
-              mountPath: "/firebase"
+              mountPath: "/cert/firebase"
               readOnly: true
             {{- end }}
             {{- if $app.mongodb }}
             - name: mongodb-volume
-              mountPath: "/mongodb"
+              mountPath: "/cert/mongodb"
               readOnly: true
             {{- end }}
           {{- end }}

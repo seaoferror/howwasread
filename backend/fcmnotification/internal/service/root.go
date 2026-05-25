@@ -15,7 +15,7 @@ type Service struct {
 }
 
 func NewService(r *repository.Repository) *Service {
-	opt := option.WithCredentialsFile("firebase-adminsdk.json")
+	opt := option.WithCredentialsFile("cert/firebase/firebase-adminsdk.json")
 	app, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {
 		panic(err)

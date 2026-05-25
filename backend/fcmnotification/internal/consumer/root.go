@@ -44,9 +44,13 @@ func connectConsumer(groupID string) (sarama.ConsumerGroup, error) {
 		return nil, err
 	}
 
-	tlsConfig, err := tlsconfig.Create("/kafka/user/user.crt", "/kafka/user/user.key", "/kafka/cluster/ca.crt")
-	if err != nil {
-		return nil, err
+	if os.Getenv("PROFILE") == "production" {
+		tlsConfig, err1 := tlsconfig.Create("kafka/user/user.crt", "kafka/user/user.key", "kafka/cluster/ca.crt")
+		if err1 != nil {
+			return nil, err1
+		}
+		cfg.Net.TLS.Enable = true
+		cfg.Net.TLS.Config = tlsConfig
 	}
 	cfg.ClientID = "consumer.fcm_notification." + id.String()
 	//cfg.Net.SASL.Enable = true
@@ -55,8 +59,6 @@ func connectConsumer(groupID string) (sarama.ConsumerGroup, error) {
 	//cfg.Net.SASL.User = <api-key>
 	//cfg.Net.SASL.Password = <secret>
 	//cfg.Net.SASL.Handshake = true
-	cfg.Net.TLS.Enable = true
-	cfg.Net.TLS.Config = tlsConfig
 
 	cfg.Consumer.Return.Errors = true
 	cfg.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{sarama.NewBalanceStrategySticky()}

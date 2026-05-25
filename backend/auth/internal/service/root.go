@@ -35,9 +35,9 @@ func NewService(r *repository.Repository) *Service {
 
 	return &Service{
 		repository:   r,
-		privateKeyAT: loadRSAPrivateKey("/authentication/private-key-at.pem"),
-		privateKeyRT: loadRSAPrivateKey("/authentication/private-key-rt.pem"),
-		publicKeyRT:  loadRSAPublicKey("/authentication/public-key-rt.pem"),
+		privateKeyAT: loadRSAPrivateKey("cert/authentication/private-key-at.pem"),
+		privateKeyRT: loadRSAPrivateKey("cert/authentication/private-key-rt.pem"),
+		publicKeyRT:  loadRSAPublicKey("cert/authentication/public-key-rt.pem"),
 		issuer:       os.Getenv("ISSUER"),
 		audience:     os.Getenv("BUNDLE_IDENTIFIER"),
 		twilioClient: client,

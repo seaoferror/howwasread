@@ -17,4 +17,3 @@ FROM scratch
 COPY --from=stage1 /messagepreprocess /messagepreprocess
 CMD ["/messagepreprocess"]
 
-#docker build -f backend/chat/Dockerfile backend

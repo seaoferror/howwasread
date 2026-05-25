@@ -10,7 +10,8 @@ spec:
     certificate:
       secretName: valkey-cert
   users:
-    - name: admin
+      # this name is VALKEY_USERNAME
+    - name: lule
       enabled: true
       passwordSecret:
         name: valkey

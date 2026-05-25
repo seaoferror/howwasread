@@ -15,9 +15,9 @@ type Repository struct {
 }
 
 func NewRepository() *Repository {
-	cluster, err := gocqlastra.NewClusterFromBundle("/astradb/astradb-secure-connect.zip",
-		"token", os.Getenv("ASTRA_DB_TOKEN"), 10*time.Second)
-	cluster.Keyspace = "default"
+	cluster, err := gocqlastra.NewClusterFromBundle("cert/astradb/astradb-secure-connect.zip",
+		"token", os.Getenv("ASTRADB_TOKEN"), 10*time.Second)
+	cluster.Keyspace = os.Getenv("PROFILE")
 	cluster.Timeout = 1 * time.Minute
 	cluster.Consistency = gocql.Quorum
 	cluster.Compressor = &lz4.LZ4Compressor{}
