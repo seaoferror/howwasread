@@ -20,7 +20,6 @@ import java.util.UUID;
     }
 )
 public class OfflineConversation {
-
   @Id
   @UuidGenerator(style = UuidGenerator.Style.VERSION_7)
   private UUID id;
@@ -36,6 +35,15 @@ public class OfflineConversation {
 
   @Column(length = 15, nullable = false)
   private String h3Index;
+
+  @ElementCollection(fetch = FetchType.LAZY)
+  @CollectionTable(
+      joinColumns = @JoinColumn(
+          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
+      )
+  )
+  @Column(name = "moderator_id", nullable = false)
+  private Set<UUID> moderators = new HashSet<>();
 
   @ElementCollection(fetch = FetchType.LAZY)
   @CollectionTable(

@@ -16,8 +16,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Getter
 public class OfflineConversationParticipant {
-
-    @Id
-    @UuidGenerator(style = UuidGenerator.Style.VERSION_7)
-    private UUID id;
+  @Id
+  @UuidGenerator(style = UuidGenerator.Style.VERSION_7)
+  private UUID id;
 }
