@@ -27,7 +27,7 @@ type ConversationFeedResponse struct {
 	Poem         string    `json:"poem,omitempty"`
 	Play         string    `json:"play,omitempty"`
 	Film         string    `json:"film,omitempty"`
-	By           string    `json:"by,omitempty"`
+	By           string    `json:"by"`
 	Rule         string    `json:"rule,omitempty"`
 	Capacity     int       `json:"capacity"`
 	When         time.Time `json:"when"`
@@ -54,7 +54,7 @@ type GetConversationResponse struct {
 	Poem       string    `json:"poem,omitempty"`
 	Play       string    `json:"play,omitempty"`
 	Film       string    `json:"film,omitempty"`
-	By         string    `json:"by,omitempty"`
+	By         string    `json:"by"`
 	Rule       string    `json:"rule,omitempty"`
 	When       time.Time `json:"when"`
 	Length     string    `json:"length"`

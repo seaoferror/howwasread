@@ -1,4 +1,4 @@
-package data
+package projection
 
 import (
 	gocql "github.com/apache/cassandra-gocql-driver/v2"

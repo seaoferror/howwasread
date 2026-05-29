@@ -1,14 +1,14 @@
 package repository
 
 import (
-	"backend/chat/internal/data"
+	"backend/chat/internal/projection"
 	"context"
 	"log/slog"
 
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
 )
 
-func (r *Repository) FindRecentMessagesByToId(ctx context.Context, id, cursor gocql.UUID) (result []data.FindMessagesByToIdAndId, err error) {
+func (r *Repository) FindRecentMessagesByToId(ctx context.Context, id, cursor gocql.UUID) (result []projection.FindMessagesByToIdAndId, err error) {
 	iter := r.session.Query(`SELECT id, room_id, from_id, content_type, contents FROM message_by_to_id 
                                                    WHERE to_id = ? AND id > ?`,
 		id, cursor).IterContext(ctx)
@@ -17,7 +17,7 @@ func (r *Repository) FindRecentMessagesByToId(ctx context.Context, id, cursor go
 	var contentType string
 	var contents []string
 	for iter.Scan(&messageId, &roomId, &fromId, &contentType, &contents) {
-		result = append(result, data.FindMessagesByToIdAndId{
+		result = append(result, projection.FindMessagesByToIdAndId{
 			Id:          messageId,
 			RoomId:      roomId,
 			FromId:      fromId,

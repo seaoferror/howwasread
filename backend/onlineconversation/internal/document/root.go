@@ -24,7 +24,7 @@ type Conversation struct {
 	Poem       string        `bson:"poem,omitempty"`
 	Play       string        `bson:"play,omitempty"`
 	Film       string        `bson:"film,omitempty"`
-	By         string        `bson:"by,omitempty"`
+	By         string        `bson:"by"`
 	Rule       string        `bson:"rule,omitempty"`
 	Capacity   int           `bson:"capacity"`
 	When       time.Time     `bson:"when"`
