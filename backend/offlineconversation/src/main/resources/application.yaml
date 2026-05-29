@@ -17,6 +17,9 @@ spring:
     hibernate:
       ddl-auto: create
     show_sql: true
+    properties:
+      hibernate:
+        default_batch_fetch_size: 1000
 logging:
   level:
     org.springframework.web.socket: DEBUG

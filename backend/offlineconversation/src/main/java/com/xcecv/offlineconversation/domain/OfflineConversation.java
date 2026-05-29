@@ -2,8 +2,11 @@ package com.xcecv.offlineconversation.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.type.SqlTypes;
 
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -16,7 +19,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Table(
     indexes = {
-        @Index(name = "idx_h3_index", columnList = "h3_index")
+        @Index(name = "h3_res7", columnList = "h3_res7")
     }
 )
 public class OfflineConversation {
@@ -24,8 +27,35 @@ public class OfflineConversation {
   @UuidGenerator(style = UuidGenerator.Style.VERSION_7)
   private UUID id;
 
+  @Column(columnDefinition = "TEXT")
+  private String novel;
+
+  @Column(columnDefinition = "TEXT")
+  private String poem;
+
+  @Column(columnDefinition = "TEXT")
+  private String shortStory;
+
+  @Column(columnDefinition = "TEXT")
+  private String play;
+
+  @Column(columnDefinition = "TEXT")
+  private String film;
+
+  @Column(columnDefinition = "TEXT", nullable = false)
+  private String by;
+
+  @Column(columnDefinition = "TEXT")
+  private String rule;
+
   @Column(nullable = false)
-  private String name;
+  private int capacity;
+
+  @Column(nullable = false)
+  private Instant when;
+
+  @Column(nullable = false)
+  private String where;
 
   @Column(nullable = false)
   private double latitude;
@@ -33,20 +63,18 @@ public class OfflineConversation {
   @Column(nullable = false)
   private double longitude;
 
+  private String city;
+
   @Column(length = 15, nullable = false)
-  private String h3Index;
+  private String h3Res7;
+
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(columnDefinition = "JSON")
+  private Set<UUID> moderatorIds = new HashSet<>();
 
   @ElementCollection(fetch = FetchType.LAZY)
   @CollectionTable(
-      joinColumns = @JoinColumn(
-          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
-      )
-  )
-  @Column(name = "moderator_id", nullable = false)
-  private Set<UUID> moderators = new HashSet<>();
-
-  @ElementCollection(fetch = FetchType.LAZY)
-  @CollectionTable(
+      name = "offline_conversation_participants",
       joinColumns = @JoinColumn(
           foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
       )

@@ -3,11 +3,12 @@ package com.xcecv.offlineconversation.controller;
 import com.xcecv.offlineconversation.dto.CreateOfflineConversationRequest;
 import com.xcecv.offlineconversation.dto.JoinOfflineConversationRequest;
 import com.xcecv.offlineconversation.service.OfflineConversationService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 import java.util.UUID;
@@ -21,43 +22,31 @@ public class OfflineConversationController {
 
   @PostMapping("/create")
   public ResponseEntity<?> create(
-      @RequestBody CreateOfflineConversationRequest request,
-      @RequestHeader("X-User-Id") UUID memberId) {
-    Map<String, UUID> response = offlineConversationService.create(
-        memberId,
-        request.name(),
-        request.lat(),
-        request.lng()
-    );
+      @Valid @RequestBody CreateOfflineConversationRequest request,
+      @NotNull @RequestHeader("X-User-Id") UUID memberId) {
+    Map<String, UUID> response = offlineConversationService.create(request, memberId);
     return ResponseEntity.ok(response);
   }
 
   @PutMapping("/join")
   public ResponseEntity<?> join(
-      @RequestBody JoinOfflineConversationRequest request,
-      @RequestHeader("X-User-Id") UUID memberId
+      @Valid @RequestBody JoinOfflineConversationRequest request,
+      @NotNull @RequestHeader("X-User-Id") UUID memberId
   ) {
     offlineConversationService.join(
-        request.conversationId(),
+        request,
         memberId
     );
     return ResponseEntity.ok("ok");
   }
 
-  @GetMapping("/find/nearby")
-  public ResponseEntity<?> findNearby(
-      @RequestParam double latitude,
-      @RequestParam double longitude,
-      @RequestParam int resolution
+  @GetMapping("/show")
+  public ResponseEntity<?> showConvos(
+      @NotBlank @RequestParam String h3Index,
+      @NotNull @RequestHeader("X-User-Id") UUID memberId
   ) {
-    if(resolution < 0 || resolution > 15){
-      throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST,
-          "not acceptable resolution"
-      );
-    }
-    offlineConversationService.findNearBy(latitude, longitude);
+    var response = offlineConversationService.showConvos(h3Index, memberId);
 
-    return ResponseEntity.ok("ok");
+    return ResponseEntity.ok(response);
   }
 }

@@ -1,6 +1,7 @@
 package com.xcecv.offlineconversation.repository;
 
 import com.xcecv.offlineconversation.domain.OfflineConversation;
+import com.xcecv.offlineconversation.projection.FindByH3Res7Result;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -9,5 +10,5 @@ import java.util.UUID;
 
 @Repository
 public interface OfflineConversationRepository extends JpaRepository<OfflineConversation, UUID> {
-  List<OfflineConversation> findByH3IndexIn(List<String> h3Indexes);
+  List<FindByH3Res7Result> findByH3Res7(String h3Res7);
 }
