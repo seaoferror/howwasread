@@ -11,11 +11,11 @@ public interface FindByH3Res7Result {
   String getShortStory();
   String getPlay();
   String getFilm();
-  String getBy();
+  String getWrittenBy();
   String getRule();
   int getCapacity();
-  Instant getWhen();
-  String getWhere();
+  Instant getTime();
+  String getLocation();
   double getLatitude();
   double getLongitude();
   Set<UUID> getModeratorIds();

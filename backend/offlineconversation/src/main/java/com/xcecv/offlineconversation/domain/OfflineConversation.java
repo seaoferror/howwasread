@@ -43,7 +43,7 @@ public class OfflineConversation {
   private String film;
 
   @Column(columnDefinition = "TEXT", nullable = false)
-  private String by;
+  private String writtenBy;
 
   @Column(columnDefinition = "TEXT")
   private String rule;
@@ -52,10 +52,10 @@ public class OfflineConversation {
   private int capacity;
 
   @Column(nullable = false)
-  private Instant when;
+  private Instant time;
 
   @Column(nullable = false)
-  private String where;
+  private String location;
 
   @Column(nullable = false)
   private double latitude;

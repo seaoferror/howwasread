@@ -7,7 +7,7 @@ spring:
     import: optional:file:.env
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://gateway01.ap-northeast-1.prod.aws.tidbcloud.com:4000/sys?sslMode=VERIFY_IDENTITY
+    url: jdbc:mysql://gateway01.ap-northeast-1.prod.aws.tidbcloud.com:4000/development?sslMode=VERIFY_IDENTITY
     username: 3aeV1qGntiqNDfJ.root
     password: ${DB_PASSWORD}
   jpa:
@@ -15,7 +15,7 @@ spring:
     database-platform: org.hibernate.dialect.MySQLDialect
     generate-ddl: true
     hibernate:
-      ddl-auto: create
+      ddl-auto: create-drop
     show_sql: true
     properties:
       hibernate:

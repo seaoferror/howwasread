@@ -12,13 +12,14 @@ public record CreateOfflineConversationRequest(
     String shortStory,
     String play,
     String film,
-    @NotBlank String by,
+    @NotBlank String writtenBy,
     @NotBlank String rule,
     @Min(value = 1) int capacity,
-    @NotBlank Instant when,
-    @NotBlank String where,
+    @NotBlank Instant time,
+    @NotBlank String location,
     String city,
     @Min(value = -90) @Max(value = 90) double lat,
     @Min(value = -180) @Max(value = 180) double lng,
     @NotBlank String h3Index
-) {}
+) {
+}
