@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/")
+@RequestMapping("/offlineconversation")
 @RequiredArgsConstructor
 public class OfflineConversationController {
 
@@ -40,13 +40,19 @@ public class OfflineConversationController {
     return ResponseEntity.ok("ok");
   }
 
-  @GetMapping("/show")
-  public ResponseEntity<?> showConvos(
-      @NotBlank @RequestParam String h3Index,
-      @NotNull @RequestHeader("X-User-Id") UUID memberId
+  @GetMapping("/map/far")
+  public ResponseEntity<?> mapFarConvos(
+      @NotBlank @RequestParam String h3Res5
   ) {
-    var response = offlineConversationService.showConvos(h3Index, memberId);
+    var response = offlineConversationService.mapFarConvos(h3Res5);
+    return ResponseEntity.ok(response);
+  }
 
+  @GetMapping("/map/close")
+  public ResponseEntity<?> mapCloseConvos(
+      @NotBlank @RequestParam String h3Res7
+  ) {
+    var response = offlineConversationService.mapCloseConvos(h3Res7);
     return ResponseEntity.ok(response);
   }
 }

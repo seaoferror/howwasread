@@ -3,7 +3,8 @@ package com.xcecv.offlineconversation.service;
 import com.xcecv.offlineconversation.domain.OfflineConversation;
 import com.xcecv.offlineconversation.dto.CreateOfflineConversationRequest;
 import com.xcecv.offlineconversation.dto.JoinOfflineConversationRequest;
-import com.xcecv.offlineconversation.dto.ShowOfflineConversationResponse;
+import com.xcecv.offlineconversation.dto.OfflineConversationMapResponse;
+import com.xcecv.offlineconversation.projection.FindByH3Result;
 import com.xcecv.offlineconversation.repository.OfflineConversationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,7 +19,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class OfflineConversationService {
 
-  private final OfflineConversationRepository repository;
+  private final OfflineConversationRepository offlineConversationRepository;
 
   @Transactional
   public Map<String, UUID> create(
@@ -33,23 +34,23 @@ public class OfflineConversationService {
         .film(request.film())
         .writtenBy(request.writtenBy())
         .rule(request.rule())
-        .capacity(request.capacity())
         .time(request.time())
         .location(request.location())
         .latitude(request.lat())
         .longitude(request.lng())
         .city(request.city())
-        .h3Res7(request.h3Index())
+        .h3Res5(request.h3Res5())
+        .h3Res7(request.h3Res7())
         .moderatorIds(new HashSet<>(Set.of(memberId)))
         .participants(new HashSet<>(Set.of(memberId)))
         .build();
 
-    return Map.of("id", repository.save(convo).getId());
+    return Map.of("id", offlineConversationRepository.save(convo).getId());
   }
 
   @Transactional
   public void join(JoinOfflineConversationRequest request, UUID memberId) {
-    var convo = repository.findById(request.conversationId())
+    var convo = offlineConversationRepository.findById(request.conversationId())
         .orElseThrow(() -> new ResponseStatusException(
             HttpStatus.NOT_FOUND,
             "Conversation not found"
@@ -58,28 +59,26 @@ public class OfflineConversationService {
     convo.getParticipants().add(memberId);
   }
 
-  public List<ShowOfflineConversationResponse> showConvos(
-      String h3Index,
-      UUID memberId) {
-    var convos = repository.findByH3Res7(h3Index);
-    List<ShowOfflineConversationResponse> response = new ArrayList<>();
+  public List<OfflineConversationMapResponse> mapCloseConvos(
+      String h3Res7) {
+    var convos = offlineConversationRepository.findByH3Res7(h3Res7);
+    return buildOfflineConversationMapResponse(convos);
+  }
+
+  public List<OfflineConversationMapResponse> mapFarConvos(
+      String h3Res5) {
+    var convos = offlineConversationRepository.findTop2ByH3Res5(h3Res5);
+    return buildOfflineConversationMapResponse(convos);
+  }
+
+  private List<OfflineConversationMapResponse> buildOfflineConversationMapResponse(List<FindByH3Result> convos) {
+    List<OfflineConversationMapResponse> response = new ArrayList<>();
     for (var convo : convos) {
-      response.add(ShowOfflineConversationResponse.builder()
+      response.add(OfflineConversationMapResponse.builder()
           .id(convo.getId())
-          .novel(convo.getNovel())
-          .poem(convo.getPoem())
-          .shortStory(convo.getShortStory())
-          .play(convo.getPlay())
-          .film(convo.getFilm())
           .writtenBy(convo.getWrittenBy())
-          .rule(convo.getRule())
-          .capacity(convo.getCapacity())
-          .time(convo.getTime())
-          .location(convo.getLocation())
           .lat(convo.getLatitude())
           .lng(convo.getLongitude())
-          .isModerator(convo.getModeratorIds().contains(memberId))
-          .isParticipant(convo.getParticipants().contains(memberId))
           .build());
     }
     return response;

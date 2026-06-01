@@ -19,6 +19,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Table(
     indexes = {
+        @Index(name = "h3_res5", columnList = "h3_res5"),
         @Index(name = "h3_res7", columnList = "h3_res7")
     }
 )
@@ -49,9 +50,6 @@ public class OfflineConversation {
   private String rule;
 
   @Column(nullable = false)
-  private int capacity;
-
-  @Column(nullable = false)
   private Instant time;
 
   @Column(nullable = false)
@@ -64,6 +62,9 @@ public class OfflineConversation {
   private double longitude;
 
   private String city;
+
+  @Column(length = 15, nullable = false)
+  private String h3Res5;
 
   @Column(length = 15, nullable = false)
   private String h3Res7;

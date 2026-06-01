@@ -14,12 +14,12 @@ public record CreateOfflineConversationRequest(
     String film,
     @NotBlank String writtenBy,
     @NotBlank String rule,
-    @Min(value = 1) int capacity,
     @NotBlank Instant time,
     @NotBlank String location,
     String city,
     @Min(value = -90) @Max(value = 90) double lat,
     @Min(value = -180) @Max(value = 180) double lng,
-    @NotBlank String h3Index
+    @NotBlank String h3Res5,
+    @NotBlank String h3Res7
 ) {
 }

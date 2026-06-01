@@ -6,13 +6,18 @@ require (
 	firebase.google.com/go/v4 v4.19.0
 	github.com/IBM/sarama v1.47.0
 	github.com/apache/cassandra-gocql-driver/v2 v2.1.1
+	github.com/aws/aws-sdk-go-v2 v1.41.5
+	github.com/aws/aws-sdk-go-v2/config v1.32.14
+	github.com/aws/aws-sdk-go-v2/feature/cloudfront/sign v1.9.21
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.99.0
 	github.com/coder/websocket v1.8.14
+	github.com/datastax/gocql-astra/v2 v2.0.0
 	github.com/gin-gonic/gin v1.12.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
-	github.com/redis/rueidis v1.0.73
 	github.com/twilio/twilio-go v1.30.2
+	github.com/valkey-io/valkey-go v1.0.75
 	go.mongodb.org/mongo-driver/v2 v2.5.0
 	golang.org/x/crypto v0.50.0
 	google.golang.org/api v0.231.0
@@ -37,11 +42,8 @@ require (
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/internal/resourcemapping v0.51.0 // indirect
 	github.com/MicahParks/keyfunc v1.9.0 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.41.5 // indirect
 	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.8 // indirect
-	github.com/aws/aws-sdk-go-v2/config v1.32.14 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.14 // indirect
-	github.com/aws/aws-sdk-go-v2/feature/cloudfront/sign v1.9.21 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.21 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.21 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.21 // indirect
@@ -51,7 +53,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.9.13 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.21 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.21 // indirect
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.99.0 // indirect
 	github.com/aws/aws-sdk-go-v2/service/signin v1.0.9 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.30.15 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.35.19 // indirect
@@ -66,7 +67,6 @@ require (
 	github.com/datastax/astra-client-go/v2 v2.2.54 // indirect
 	github.com/datastax/cql-proxy v0.1.6 // indirect
 	github.com/datastax/go-cassandra-native-protocol v0.0.0-20220706104457-5e8aad05cf90 // indirect
-	github.com/datastax/gocql-astra/v2 v2.0.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/deepmap/oapi-codegen v1.12.4 // indirect
 	github.com/eapache/go-resiliency v1.7.0 // indirect
@@ -113,7 +113,6 @@ require (
 	github.com/spiffe/go-spiffe/v2 v2.6.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.1 // indirect
-	github.com/valkey-io/valkey-go v1.0.75 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.2.0 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect

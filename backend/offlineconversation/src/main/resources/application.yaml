@@ -4,7 +4,7 @@ spring:
   application:
     name: offlineconversation
   config:
-    import: optional:file:.env
+    import: optional:file:env.properties
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://gateway01.ap-northeast-1.prod.aws.tidbcloud.com:4000/development?sslMode=VERIFY_IDENTITY
