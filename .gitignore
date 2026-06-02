@@ -94,6 +94,7 @@ bundle/
 # Env
 .env
 .env.*.local
+env.properties
 
 # ------------------------
 # React Native - Android (bare/ejected)

@@ -61,3 +61,10 @@ export interface SeatAssignment {
   left: number;
   top: number;
 }
+
+export interface OfflineConversationMapResponse {
+  id: string;
+  writtenBy: string;
+  lat: number;
+  lng: number;
+}

@@ -1,17 +1,46 @@
-import { Platform, Pressable, StyleSheet } from "react-native";
+import { Platform, Pressable, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { colors } from "@/constants";
 import OnlineConversationList from "@/components/conversation/OnlineConversationList";
+import OfflineConversationMap from "@/components/conversation/OfflineConversationMap";
+import PagerView from "react-native-pager-view";
+import { useRef, useState } from "react";
+import Tab from "@/components/Tab";
 
 export default function ConversationsScreen() {
+  const [currentTab, setCurrentTab] = useState(0);
+  const pagerRef = useRef<PagerView | null>(null);
+
+  const handlePressTab = (index: number) => {
+    pagerRef.current?.setPage(index);
+    setCurrentTab(index);
+  };
   return (
     <SafeAreaView style={styles.container}>
-      <OnlineConversationList />
+      <View style={styles.tabContainer}>
+        <Tab isActive={currentTab === 0} onPress={() => handlePressTab(0)}>
+          Offline
+        </Tab>
+        <Tab isActive={currentTab === 1} onPress={() => handlePressTab(1)}>
+          Online
+        </Tab>
+      </View>
+      <PagerView
+        ref={pagerRef}
+        initialPage={0}
+        style={{ flex: 1 }}
+        onPageSelected={(e) => setCurrentTab(e.nativeEvent.position)}
+      >
+        <OfflineConversationMap key="1" />
+        <OnlineConversationList key="2" />
+      </PagerView>
       <Pressable
         style={styles.createButton}
-        onPress={() => router.push("/online/create")}
+        onPress={() =>
+          router.push(`/${currentTab === 0 ? "offline" : "online"}/create`)
+        }
       >
         <Feather name="plus" size={32} color="black" />
       </Pressable>
@@ -39,5 +68,8 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     shadowOpacity: 0.5,
     elevation: 2,
+  },
+  tabContainer: {
+    flexDirection: "row",
   },
 });

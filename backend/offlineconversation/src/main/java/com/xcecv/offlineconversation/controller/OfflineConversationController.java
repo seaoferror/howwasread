@@ -2,6 +2,7 @@ package com.xcecv.offlineconversation.controller;
 
 import com.xcecv.offlineconversation.dto.CreateOfflineConversationRequest;
 import com.xcecv.offlineconversation.dto.JoinOfflineConversationRequest;
+import com.xcecv.offlineconversation.dto.OfflineConversationMapResponse;
 import com.xcecv.offlineconversation.service.OfflineConversationService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -40,19 +42,18 @@ public class OfflineConversationController {
     return ResponseEntity.ok("ok");
   }
 
-  @GetMapping("/map/far")
+  @GetMapping("/map/{resolution}")
   public ResponseEntity<?> mapFarConvos(
-      @NotBlank @RequestParam String h3Res5
+      @PathVariable @NotBlank String resolution,
+      @NotBlank @RequestParam String h3Index
   ) {
-    var response = offlineConversationService.mapFarConvos(h3Res5);
-    return ResponseEntity.ok(response);
-  }
-
-  @GetMapping("/map/close")
-  public ResponseEntity<?> mapCloseConvos(
-      @NotBlank @RequestParam String h3Res7
-  ) {
-    var response = offlineConversationService.mapCloseConvos(h3Res7);
+    List<OfflineConversationMapResponse> response = null;
+    if (resolution.equals("5")) {
+      response = offlineConversationService.mapRes5Convos(h3Index);
+    }
+    if (resolution.equals("7")) {
+      response = offlineConversationService.mapRes7Convos(h3Index);
+    }
     return ResponseEntity.ok(response);
   }
 }

@@ -43,7 +43,8 @@ export const queryKey = {
   GET_CHAT_ROOM_INFO: "getChatRoomInfo",
   GET_PROFILE: "getProfile",
   FIND_MESSAGES_BY_ROOM_ID: "findMessagesByRoomId",
-  GET_SIGNED_URL: "getSignedURL"
+  GET_SIGNED_URL: "getSignedURL",
+  MAP_OFFLINE_CONVERSATION: "mapOfflineConversation"
 };
 
 export const time = {

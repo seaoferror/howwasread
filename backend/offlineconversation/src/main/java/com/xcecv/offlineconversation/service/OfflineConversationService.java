@@ -59,13 +59,13 @@ public class OfflineConversationService {
     convo.getParticipants().add(memberId);
   }
 
-  public List<OfflineConversationMapResponse> mapCloseConvos(
+  public List<OfflineConversationMapResponse> mapRes7Convos(
       String h3Res7) {
     var convos = offlineConversationRepository.findByH3Res7(h3Res7);
     return buildOfflineConversationMapResponse(convos);
   }
 
-  public List<OfflineConversationMapResponse> mapFarConvos(
+  public List<OfflineConversationMapResponse> mapRes5Convos(
       String h3Res5) {
     var convos = offlineConversationRepository.findTop2ByH3Res5(h3Res5);
     return buildOfflineConversationMapResponse(convos);

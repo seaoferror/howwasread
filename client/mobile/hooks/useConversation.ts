@@ -1,13 +1,20 @@
-import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueries,
+  useQuery,
+} from "@tanstack/react-query";
 import {
   getOnlineConversations,
   createOnlineConversation,
   banParticipant,
+  mapOfflineConversation,
 } from "@/api/conversation";
 import { queryKey } from "@/constants";
 import { AxiosError } from "axios";
 import Toast from "react-native-toast-message";
 import queryClient from "@/api/queryClient";
+import { OfflineConversationMapResponse } from "@/types/conversation";
 
 export function useGetInfiniteOnlineConversations() {
   return useInfiniteQuery({
@@ -49,5 +56,33 @@ export function useBanParticipant() {
         text1: String(error?.response?.data),
       });
     },
+  });
+}
+
+export function useMapOfflineConversations({
+  resolution,
+  h3Indexes,
+}: {
+  resolution: number;
+  h3Indexes: string[];
+}): OfflineConversationMapResponse[] {
+  const queries = useQueries({
+    queries: h3Indexes.map((h3Index) => {
+      return {
+        queryKey: [
+          queryKey.CONVERSATION,
+          queryKey.MAP_OFFLINE_CONVERSATION,
+          h3Index,
+        ],
+        queryFn: () => mapOfflineConversation({ resolution, h3Index }),
+      };
+    }),
+  });
+
+  return queries.flatMap((query) => {
+    if (query.data) {
+      return query.data;
+    }
+    return [];
   });
 }
