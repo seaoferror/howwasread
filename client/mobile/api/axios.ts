@@ -1,4 +1,4 @@
-import axios from "axios";
+import { create } from "axios";
 import { Platform } from "react-native";
 
 export const baseUrl = {
@@ -11,7 +11,7 @@ export const localDevId = {
   ios: "019e0e84-f358-7d8e-9fa0-b1c2d3e4f506",
 };
 
-export const axiosInstance = axios.create({
+export const axiosInstance = create({
   adapter: "fetch",
   baseURL: `http://${Platform.OS === "ios" ? baseUrl.ios : baseUrl.android}:8080`,
   withCredentials: true,
@@ -21,7 +21,7 @@ export const axiosInstance = axios.create({
   },
 });
 
-export const localDevInstance = axios.create({
+export const localDevInstance = create({
   adapter: "fetch",
   baseURL: `http://${Platform.OS === "ios" ? baseUrl.ios : baseUrl.android}:8078`,
   withCredentials: true,

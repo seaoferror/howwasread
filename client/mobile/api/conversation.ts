@@ -1,9 +1,14 @@
 import { axiosInstance } from "@/api/axios";
 import {
   BanParticipantRequest,
-  CreateOnlineConversationRequest, OfflineConversationMapResponse,
+  CreateOfflineConversationRequest,
+  CreateOnlineConversationRequest,
+  OfflineConversationMapResponse,
   OnlineConversationFeedResponse,
 } from "@/types/conversation";
+import axios from "axios";
+import { fetch } from "expo/fetch";
+
 
 export async function getOnlineConversations(
   page = 1,
@@ -37,8 +42,34 @@ export async function mapOfflineConversation({
   resolution: number;
   h3Index: string;
 }): Promise<OfflineConversationMapResponse[]> {
-  const { data } = await axiosInstance.get(
-    `/offlineconversation/map/${resolution}?h3Index=${h3Index}`,
-  );
+  const { data } = await axiosInstance.get(`/offlineconversation/map`, {
+    params: {
+      resolution,
+      h3Index,
+    },
+  });
   return data;
+}
+
+export async function createOfflineConversation(
+  body: CreateOfflineConversationRequest,
+) {
+  const { data } = await axiosInstance.post("offlineconversation/create", body);
+  return data;
+}
+
+export async function getLongGoogleMapsURL(shortURL: string): Promise<string> {
+  const response = await axios.get(shortURL, {
+    maxRedirects: 0,
+    validateStatus: (status) => status >= 200 && status < 400,
+  });
+  return response.headers["location"];
+}
+
+async function resolveGoogleMapsURL(shortUrl: string): Promise<string> {
+  const response = await fetch(shortUrl, {
+    method: "GET",
+    redirect: "follow",
+  });
+  return response.url;
 }

@@ -23,7 +23,7 @@ public class OfflineConversationController {
   private final OfflineConversationService offlineConversationService;
 
   @PostMapping("/create")
-  public ResponseEntity<?> create(
+  public ResponseEntity<Map<String, UUID>> create(
       @Valid @RequestBody CreateOfflineConversationRequest request,
       @NotNull @RequestHeader("X-User-Id") UUID memberId) {
     Map<String, UUID> response = offlineConversationService.create(request, memberId);
@@ -31,7 +31,7 @@ public class OfflineConversationController {
   }
 
   @PutMapping("/join")
-  public ResponseEntity<?> join(
+  public ResponseEntity<String> join(
       @Valid @RequestBody JoinOfflineConversationRequest request,
       @NotNull @RequestHeader("X-User-Id") UUID memberId
   ) {
@@ -42,9 +42,9 @@ public class OfflineConversationController {
     return ResponseEntity.ok("ok");
   }
 
-  @GetMapping("/map/{resolution}")
-  public ResponseEntity<?> mapFarConvos(
-      @PathVariable @NotBlank String resolution,
+  @GetMapping("/map")
+  public ResponseEntity<List<OfflineConversationMapResponse>> mapFarConvos(
+      @NotBlank @RequestParam String resolution,
       @NotBlank @RequestParam String h3Index
   ) {
     List<OfflineConversationMapResponse> response = null;
@@ -55,5 +55,13 @@ public class OfflineConversationController {
       response = offlineConversationService.mapRes7Convos(h3Index);
     }
     return ResponseEntity.ok(response);
+  }
+
+  @GetMapping("/map/detail")
+  public ResponseEntity<?> mapDetail(
+      @NotBlank @RequestParam String id,
+      @NotBlank @RequestHeader("X-User-Id") String memberId
+  ) {
+
   }
 }

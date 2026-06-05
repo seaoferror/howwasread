@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.Duration;
 import java.util.*;
 
 @Service
@@ -35,6 +36,8 @@ public class OfflineConversationService {
         .writtenBy(request.writtenBy())
         .rule(request.rule())
         .time(request.time())
+        .length(Duration.ofMinutes(request.length()))
+        .googleMapsLink(request.googleMapsLink())
         .location(request.location())
         .latitude(request.lat())
         .longitude(request.lng())

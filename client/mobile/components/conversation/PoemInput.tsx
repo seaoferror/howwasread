@@ -10,7 +10,7 @@ export default function PoemInput() {
       render={({ field: { onChange, value } }) => (
         <InputField
           variant="standard"
-          label="Poem"
+          label="Poem(optional)"
           placeholder="The Waste Land Sonnet 18 If -"
           inputMode="text"
           returnKeyType="next"

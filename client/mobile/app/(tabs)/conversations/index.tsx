@@ -32,6 +32,7 @@ export default function ConversationsScreen() {
         initialPage={0}
         style={{ flex: 1 }}
         onPageSelected={(e) => setCurrentTab(e.nativeEvent.position)}
+        scrollEnabled={false}
       >
         <OfflineConversationMap key="1" />
         <OnlineConversationList key="2" />

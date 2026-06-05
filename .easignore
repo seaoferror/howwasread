@@ -6,6 +6,10 @@ node_modules/
 
 backend/
 
+infra/
+
+.github/
+
 # Expo
 
 .expo/

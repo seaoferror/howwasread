@@ -6,6 +6,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.type.SqlTypes;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
@@ -53,6 +54,11 @@ public class OfflineConversation {
   private Instant time;
 
   @Column(nullable = false)
+  private Duration length;
+
+  @Column(nullable = false)
+  private String googleMapsLink;
+
   private String location;
 
   @Column(nullable = false)

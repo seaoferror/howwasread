@@ -1,19 +1,17 @@
-import React from "react";
 import { Controller, useFormContext } from "react-hook-form";
 import InputField from "@/components/InputField";
 
-export default function NovelInput() {
+export default function LocationInput() {
   const { control } = useFormContext();
-
   return (
     <Controller
-      name="novel"
+      name="location"
       control={control}
       render={({ field: { onChange, value } }) => (
         <InputField
           variant="standard"
-          label="Novel(optional)"
-          placeholder="The Castle The Stranger Norwegian Wood"
+          label="location(optional)"
+          placeholder="Starbucks"
           inputMode="text"
           returnKeyType="done"
           submitBehavior="blurAndSubmit"

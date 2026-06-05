@@ -26,6 +26,7 @@ import MinuteInput from "@/components/conversation/MinuteInput";
 import LengthInput from "@/components/conversation/LengthInput";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import useKeyboard from "@/hooks/useKeyboard";
+import { makeTime } from "@/util/time";
 
 interface FormValue {
   novel?: string;
@@ -81,16 +82,7 @@ export default function OnlineConversationCreateScreen() {
       minute,
       length,
     } = formValues;
-    const monthDayParts = monthDay.split(".");
-    const month = monthDayParts[0] ?? String(now.getMonth() + 1);
-    const day = monthDayParts[1] ?? String(now.getDate());
-    const when = new Date(
-      Number(year),
-      Number(month) - 1,
-      Number(day),
-      Number(hour),
-      Number(minute),
-    ).toISOString();
+    const when = makeTime(now, year, monthDay, hour, minute)
     createOnlineConversationMutation.mutate(
       {
         novel: novel,

@@ -57,6 +57,7 @@ function RootNavigator() {
   const { id } = useAuth();
   const ws = useRef<WebSocket>(null);
 
+
   useFocusEffect(
     useCallback(() => {
       const connectMessaging = async () => {

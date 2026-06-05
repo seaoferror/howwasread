@@ -54,6 +54,12 @@ interface RTCIceCandidate {
 
 export type SeatCoordinate = { left: number; top: number };
 
+
+export interface GeoCoordinates {
+  lat: number;
+  lng: number;
+}
+
 export interface SeatAssignment {
   id?: string;
   name?: string;
@@ -67,4 +73,23 @@ export interface OfflineConversationMapResponse {
   writtenBy: string;
   lat: number;
   lng: number;
+}
+
+export interface CreateOfflineConversationRequest {
+  novel?: string;
+  shortStory?: string;
+  poem?: string;
+  play?: string;
+  film?: string;
+  writtenBy: string;
+  rule?: string;
+  time: string;
+  length: number;
+  googleMapsLink: string;
+  location: string;
+  city?: string;
+  lat: number;
+  lng: number;
+  h3Res5: string;
+  h3Res7: string;
 }

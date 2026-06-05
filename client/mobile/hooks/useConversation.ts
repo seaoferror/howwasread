@@ -2,12 +2,12 @@ import {
   useInfiniteQuery,
   useMutation,
   useQueries,
-  useQuery,
 } from "@tanstack/react-query";
 import {
-  getOnlineConversations,
-  createOnlineConversation,
   banParticipant,
+  createOfflineConversation,
+  createOnlineConversation,
+  getOnlineConversations,
   mapOfflineConversation,
 } from "@/api/conversation";
 import { queryKey } from "@/constants";
@@ -84,5 +84,27 @@ export function useMapOfflineConversations({
       return query.data;
     }
     return [];
+  });
+}
+
+export function useCreateOfflineConversation() {
+  return useMutation({
+    mutationFn: createOfflineConversation,
+    onSuccess: async (data, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: [
+          queryKey.CONVERSATION,
+          queryKey.MAP_OFFLINE_CONVERSATION,
+          variables?.h3Res5,
+        ],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: [
+          queryKey.CONVERSATION,
+          queryKey.MAP_OFFLINE_CONVERSATION,
+          variables?.h3Res7,
+        ],
+      });
+    },
   });
 }

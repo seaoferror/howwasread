@@ -10,7 +10,7 @@ export default function ByInput() {
       render={({ field: { onChange, value } }) => (
         <InputField
           variant="standard"
-          label="By"
+          label="written by(required)"
           placeholder="Shakespeare Soseki Pound"
           inputMode="text"
           returnKeyType="done"

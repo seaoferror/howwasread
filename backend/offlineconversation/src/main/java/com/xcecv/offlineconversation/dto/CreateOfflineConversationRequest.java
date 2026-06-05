@@ -3,7 +3,9 @@ package com.xcecv.offlineconversation.dto;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
+import java.time.Duration;
 import java.time.Instant;
 
 public record CreateOfflineConversationRequest(
@@ -13,8 +15,10 @@ public record CreateOfflineConversationRequest(
     String play,
     String film,
     @NotBlank String writtenBy,
-    @NotBlank String rule,
-    @NotBlank Instant time,
+    String rule,
+    @NotNull Instant time,
+    @Min(value = 0) int length,
+    @NotBlank String googleMapsLink,
     @NotBlank String location,
     String city,
     @Min(value = -90) @Max(value = 90) double lat,

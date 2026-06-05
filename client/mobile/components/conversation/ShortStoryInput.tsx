@@ -11,7 +11,7 @@ export default function ShortStoryInput() {
       render={({ field: { onChange, value } }) => (
         <InputField
           variant="standard"
-          label="ShortStory"
+          label="ShortStory(optional)"
           placeholder={"Cathedral Barn Burning Araby"}
           inputMode="text"
           value={value}

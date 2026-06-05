@@ -10,7 +10,7 @@ export default function FilmInput() {
       render={({ field: { onChange, value } }) => (
         <InputField
           variant="standard"
-          label="Film"
+          label="Film(optional)"
           placeholder="Cure The Godfather Seven"
           inputMode="text"
           returnKeyType="done"

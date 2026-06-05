@@ -68,3 +68,23 @@ export function formatToMinuteSecond(seconds: number) {
     .padStart(2, "0");
   return `${m}:${s}`;
 }
+
+export function makeTime(
+  now: Date,
+  monthDay: string,
+  year: string,
+  hour: string,
+  minute: string,
+) {
+  const monthDayParts = monthDay.split(".");
+  const month = monthDayParts[0] ?? String(now.getMonth() + 1);
+  const day = monthDayParts[1] ?? String(now.getDate());
+  const time = new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+    Number(hour),
+    Number(minute),
+  ).toISOString();
+  return time;
+}

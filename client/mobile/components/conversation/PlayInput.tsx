@@ -10,7 +10,7 @@ export default function PlayInput() {
       render={({ field: { onChange, value } }) => (
         <InputField
           variant="standard"
-          label="Play"
+          label="Play(optional)"
           placeholder="Hamlet The Seagull The Glass Menagerie"
           inputMode="text"
           returnKeyType="done"

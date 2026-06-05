@@ -10,7 +10,7 @@ export default function RuleInput() {
       render={({ field: { onChange, value } }) => (
         <InputField
           variant="standard"
-          label="Rule"
+          label="Rule(optional)"
           placeholder={
             "1. Respect each other\n2. Try to speak more\n3. Try to yield and listen"
           }
