@@ -54,12 +54,6 @@ interface RTCIceCandidate {
 
 export type SeatCoordinate = { left: number; top: number };
 
-
-export interface GeoCoordinates {
-  lat: number;
-  lng: number;
-}
-
 export interface SeatAssignment {
   id?: string;
   name?: string;

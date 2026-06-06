@@ -7,7 +7,6 @@ import {
   View,
 } from "react-native";
 import { FormProvider, useForm } from "react-hook-form";
-import { router } from "expo-router";
 import { colors } from "@/constants";
 import FixedBottomCTA from "@/components/FixedBottomCTA";
 import NovelInput from "@/components/conversation/NovelInput";
@@ -29,12 +28,12 @@ import { useCreateOfflineConversation } from "@/hooks/useConversation";
 import CustomButton from "@/components/CustomButton";
 import GoogleMapsLinkInput from "@/components/conversation/GoogleMapsLinkInput";
 import LocationInput from "@/components/conversation/LocationInput";
-import { getLongGoogleMapsURL } from "@/api/conversation";
-import { extractCoords, extractPlaceName } from "@/util/location";
+import { resolveLocation } from "@/api/conversation";
 import { reverseGeocodeAsync } from "expo-location";
-import Toast from "react-native-toast-message";
-import { latLngToCell } from "h3-js";
 import { makeTime } from "@/util/time";
+import Toast from "react-native-toast-message";
+import { router } from "expo-router";
+import { latLngToCell } from "h3-js";
 
 interface FormValue {
   novel?: string;
@@ -95,22 +94,18 @@ export default function OfflineConversationScreen() {
       location,
     } = formValues;
     const time = makeTime(now, monthDay, year, hour, minute);
-    const longURL = await getLongGoogleMapsURL(googleMapsLink);
-    const coords = extractCoords(longURL);
-    if (!coords) {
-      Toast.show({
-        type: "error",
-        text1: "Invalid URL",
-      });
-      return;
-    }
+    const { lat, lng, placeName } = await resolveLocation(googleMapsLink);
     if (!location) {
-      location = extractPlaceName(longURL);
+      location = placeName;
     }
     const geoInfo = await reverseGeocodeAsync({
-      latitude: coords.lat,
-      longitude: coords.lng,
+      latitude: lat,
+      longitude: lng,
     });
+    console.log(geoInfo);
+    console.log(lat);
+    console.log(lng);
+    console.log(location);
 
     createOfflineConversationMutation.mutate(
       {
@@ -126,10 +121,10 @@ export default function OfflineConversationScreen() {
         googleMapsLink: googleMapsLink,
         location: location,
         city: geoInfo[0].city ?? "",
-        lat: coords.lat,
-        lng: coords.lng,
-        h3Res5: latLngToCell(coords.lat, coords.lng, 5),
-        h3Res7: latLngToCell(coords.lat, coords.lng, 7),
+        lat: lat,
+        lng: lng,
+        h3Res5: latLngToCell(lat, lng, 5),
+        h3Res7: latLngToCell(lat, lng, 7),
       },
       {
         onSuccess: () => {
