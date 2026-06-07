@@ -2,7 +2,7 @@ package com.xcecv.offlineconversation.projection;
 
 import java.util.UUID;
 
-public interface FindByH3Result {
+public interface OfflineConversationMapProjection {
   UUID getId();
 
   String getWrittenBy();

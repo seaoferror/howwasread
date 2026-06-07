@@ -56,9 +56,10 @@ public class OfflineConversation {
   @Column(nullable = false)
   private Duration length;
 
-  @Column(nullable = false)
+  @Column(columnDefinition = "TEXT", nullable = false)
   private String googleMapsLink;
 
+  @Column(columnDefinition = "TEXT")
   private String location;
 
   @Column(nullable = false)
@@ -67,6 +68,7 @@ public class OfflineConversation {
   @Column(nullable = false)
   private double longitude;
 
+  @Column(columnDefinition = "TEXT")
   private String city;
 
   @Column(length = 15, nullable = false)

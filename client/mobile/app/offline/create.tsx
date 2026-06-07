@@ -130,7 +130,8 @@ export default function OfflineConversationScreen() {
         onSuccess: () => {
           router.replace("/conversations");
         },
-        onError: () => {
+        onError: (error) => {
+          console.log(error)
           Toast.show({
             type: "error",
             text1: "Invalid Google Maps URL",

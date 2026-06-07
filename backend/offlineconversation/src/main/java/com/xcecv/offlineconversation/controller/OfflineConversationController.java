@@ -23,7 +23,7 @@ public class OfflineConversationController {
   private final OfflineConversationService offlineConversationService;
 
   @PostMapping("/create")
-  public ResponseEntity<Map<String, UUID>> create(
+  public ResponseEntity<?> create(
       @Valid @RequestBody CreateOfflineConversationRequest request,
       @NotNull @RequestHeader("X-User-Id") UUID memberId) {
     Map<String, UUID> response = offlineConversationService.create(request, memberId);
@@ -31,7 +31,7 @@ public class OfflineConversationController {
   }
 
   @PutMapping("/join")
-  public ResponseEntity<String> join(
+  public ResponseEntity<?> join(
       @Valid @RequestBody JoinOfflineConversationRequest request,
       @NotNull @RequestHeader("X-User-Id") UUID memberId
   ) {
@@ -43,7 +43,7 @@ public class OfflineConversationController {
   }
 
   @GetMapping("/map")
-  public ResponseEntity<List<OfflineConversationMapResponse>> mapFarConvos(
+  public ResponseEntity<?> mapFarConvos(
       @NotBlank @RequestParam String resolution,
       @NotBlank @RequestParam String h3Index
   ) {
@@ -59,9 +59,16 @@ public class OfflineConversationController {
 
   @GetMapping("/map/detail")
   public ResponseEntity<?> mapDetail(
-      @NotBlank @RequestParam String id,
-      @NotBlank @RequestHeader("X-User-Id") String memberId
+      @NotBlank @RequestParam UUID conversationId,
+      @NotBlank @RequestHeader("X-User-Id") UUID memberId
   ) {
+    var response = offlineConversationService.mapDetail(conversationId, memberId);
+    return ResponseEntity.ok(response);
+  }
 
+  @GetMapping("/map/resolve/google-maps-link")
+  public ResponseEntity<?> resolveGoogleMapsLink(@RequestParam String url) {
+    var response = offlineConversationService.resolveGoogleMapsLink(url);
+    return ResponseEntity.ok(response);
   }
 }

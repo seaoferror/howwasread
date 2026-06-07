@@ -1,6 +1,9 @@
 server:
   port: 8080
 spring:
+  threads:
+    virtual:
+      enabled: true
   application:
     name: offlineconversation
   config:
@@ -22,5 +25,5 @@ spring:
         default_batch_fetch_size: 1000
 logging:
   level:
-    org.springframework.web.socket: DEBUG
-    org.springframework.messaging: DEBUG
+    org.springframework.web.socket: INFO
+    org.springframework.messaging: INFO

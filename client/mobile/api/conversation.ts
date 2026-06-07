@@ -6,7 +6,11 @@ import {
   OfflineConversationMapResponse,
   OnlineConversationFeedResponse,
 } from "@/types/conversation";
-import { fetch } from "expo/fetch";
+import {
+  extractCoordsFromURL,
+  extractPlaceNameFromPathVariable,
+  extractPlaceNameFromQueryParam,
+} from "@/util/url";
 
 export async function getOnlineConversations(
   page = 1,
@@ -52,7 +56,10 @@ export async function mapOfflineConversation({
 export async function createOfflineConversation(
   body: CreateOfflineConversationRequest,
 ) {
-  const { data } = await axiosInstance.post("offlineconversation/create", body);
+  const { data } = await axiosInstance.post(
+    "/offlineconversation/create",
+    body,
+  );
   return data;
 }
 
@@ -63,8 +70,8 @@ export async function resolveLocation(
     googleMapsLink,
   );
   if (isLongURL) {
-    const coords = extractCoords(googleMapsLink);
     const placeName = extractPlaceNameFromPathVariable(googleMapsLink);
+    const coords = extractCoordsFromURL(googleMapsLink);
     if (!coords) {
       throw new Error("invalid URL");
     }
@@ -74,78 +81,23 @@ export async function resolveLocation(
       placeName: placeName,
     };
   }
-
   const response = await fetch(googleMapsLink, {
     method: "GET",
-    redirect: "follow",
+    redirect: "manual",
   });
   console.log(response.url);
   const placeName = extractPlaceNameFromQueryParam(response.url);
-  const htmlText = await response.text();
-  const coords = parseCoordsFromHTMLText(htmlText);
-  if(!coords) {
-    throw new Error("invalid URL")
+  const gu = new URL(googleMapsLink);
+  if (gu.searchParams.get("g_st") === "ic") {
+    const coords = await captureCoordinatesFromNetwork(googleMapsLink);
+    if (!coords) {
+      throw new Error("invalid URL");
+    }
+    return { lat: coords.lat, lng: coords.lng, placeName: placeName };
+  }
+  const coords = extractCoordsFromURL(response.url);
+  if (!coords) {
+    throw new Error("invalid URL");
   }
   return { lat: coords.lat, lng: coords.lng, placeName: placeName };
-}
-
-function extractPlaceNameFromQueryParam(longUrl: string): string {
-  const match = longUrl.match(/[?&]q=([^&]+)/i);
-  if (match && match[1]) {
-    const withSpaces = match[1].replace(/\+/g, " ");
-    const cleanString = decodeURIComponent(withSpaces);
-    const isRawCoordinateString = /^[-]?\d+\.\d+,\s*[-]?\d+\.\d+$/.test(
-      cleanString,
-    );
-    if (isRawCoordinateString) {
-      return "Dropped Pin";
-    }
-    return cleanString.split(",")[0].trim();
-  }
-  return "";
-}
-
-function extractPlaceNameFromPathVariable(longURL: string): string {
-  const namePattern = /\/maps\/(?:place|search)\/([^/@]+)/;
-  const match = longURL.match(namePattern);
-  if (match && match[1]) {
-    const spaceCleaned = match[1].replace(/\+/g, " ");
-    const decodedName = decodeURIComponent(spaceCleaned);
-    const isRawCoordinateString = /^[-]?\d+\.\d+,\s*[-]?\d+\.\d+$/.test(
-      decodedName,
-    );
-    if (isRawCoordinateString) {
-      return "Dropped Pin";
-    }
-    return decodedName;
-  }
-  return "";
-}
-
-function extractCoords(longURL: string): { lat: number; lng: number } | null {
-  const atPattern = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
-  const atMatch = longURL.match(atPattern);
-
-  if (atMatch && atMatch[1] && atMatch[2]) {
-    return {
-      lat: parseFloat(atMatch[1]),
-      lng: parseFloat(atMatch[2]),
-    };
-  }
-  return null;
-}
-
-function parseCoordsFromHTMLText(htmlText: string): {
-  lat: number;
-  lng: number;
-} | null {
-  const stateMatch = htmlText.match(
-    /\[\[\[[0-9.]+,\s*(-?\d+\.\d+),\s*(-?\d+\.\d+)/,
-  );
-  if (stateMatch) {
-    const lat = parseFloat(stateMatch[2]);
-    const lng = parseFloat(stateMatch[1]);
-    return { lat, lng };
-  }
-  return null
 }
