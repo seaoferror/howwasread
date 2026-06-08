@@ -3,7 +3,6 @@ package com.xcecv.offlineconversation.dto;
 
 import lombok.Builder;
 
-import java.time.Instant;
 import java.util.UUID;
 
 @Builder

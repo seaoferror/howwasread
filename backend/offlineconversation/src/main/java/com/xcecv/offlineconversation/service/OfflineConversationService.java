@@ -1,6 +1,9 @@
 package com.xcecv.offlineconversation.service;
 
-import com.microsoft.playwright.*;
+import com.microsoft.playwright.BrowserType;
+import com.microsoft.playwright.Page;
+import com.microsoft.playwright.Playwright;
+import com.microsoft.playwright.Route;
 import com.microsoft.playwright.options.WaitUntilState;
 import com.xcecv.offlineconversation.domain.OfflineConversation;
 import com.xcecv.offlineconversation.dto.CreateOfflineConversationRequest;
@@ -119,13 +122,16 @@ public class OfflineConversationService {
 
   public String resolveGoogleMapsLink(String googleMapsLink) {
     log.info("start creating resource...");
-    try (Playwright playwright = Playwright.create();
-         Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-         Page page = browser.newPage()) {
-      log.info("resource created, start resolve...");
-      page.navigate(googleMapsLink, new Page.NavigateOptions().setWaitUntil(WaitUntilState.NETWORKIDLE));
-      page.reload(new Page.ReloadOptions().setWaitUntil(WaitUntilState.COMMIT));
-      return page.url();
+    try (var playwright = Playwright.create();
+         var browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
+         var context = browser.newContext()) {
+      context.route("**/*.{png,jpg,jpeg,webp,gif,css,woff2,woff,ttf,svg}", Route::abort);
+      try (var page = context.newPage()) {
+        log.info("resource created, start resolving...");
+        page.navigate(googleMapsLink, new Page.NavigateOptions().setWaitUntil(WaitUntilState.NETWORKIDLE));
+        page.reload(new Page.ReloadOptions().setWaitUntil(WaitUntilState.COMMIT));
+        return page.url();
+      }
     }
   }
 }
