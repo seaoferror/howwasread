@@ -6,11 +6,6 @@ import {
   OfflineConversationMapResponse,
   OnlineConversationFeedResponse,
 } from "@/types/conversation";
-import {
-  extractCoordsFromURL,
-  extractPlaceNameFromPathVariable,
-  extractPlaceNameFromQueryParam,
-} from "@/util/url";
 
 export async function getOnlineConversations(
   page = 1,
@@ -61,43 +56,4 @@ export async function createOfflineConversation(
     body,
   );
   return data;
-}
-
-export async function resolveLocation(
-  googleMapsLink: string,
-): Promise<{ lat: number; lng: number; placeName: string }> {
-  const isLongURL = /https?:\/\/(www\.)?google\.[a-z.]+\/maps/i.test(
-    googleMapsLink,
-  );
-  if (isLongURL) {
-    const placeName = extractPlaceNameFromPathVariable(googleMapsLink);
-    const coords = extractCoordsFromURL(googleMapsLink);
-    if (!coords) {
-      throw new Error("invalid URL");
-    }
-    return {
-      lat: coords.lat,
-      lng: coords.lng,
-      placeName: placeName,
-    };
-  }
-  const response = await fetch(googleMapsLink, {
-    method: "GET",
-    redirect: "manual",
-  });
-  console.log(response.url);
-  const placeName = extractPlaceNameFromQueryParam(response.url);
-  const gu = new URL(googleMapsLink);
-  if (gu.searchParams.get("g_st") === "ic") {
-    const coords = await captureCoordinatesFromNetwork(googleMapsLink);
-    if (!coords) {
-      throw new Error("invalid URL");
-    }
-    return { lat: coords.lat, lng: coords.lng, placeName: placeName };
-  }
-  const coords = extractCoordsFromURL(response.url);
-  if (!coords) {
-    throw new Error("invalid URL");
-  }
-  return { lat: coords.lat, lng: coords.lng, placeName: placeName };
 }

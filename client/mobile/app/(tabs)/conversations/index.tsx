@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   },
   createButton: {
     position: "absolute",
-    bottom: Platform.OS === "ios" ? 16 : 60,
+    bottom: 160,
     right: 16,
     backgroundColor: colors.WHITE,
     width: 64,

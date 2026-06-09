@@ -26,14 +26,16 @@ import useKeyboard from "@/hooks/useKeyboard";
 import { openBrowserAsync } from "expo-web-browser";
 import { useCreateOfflineConversation } from "@/hooks/useConversation";
 import CustomButton from "@/components/CustomButton";
-import GoogleMapsLinkInput from "@/components/conversation/GoogleMapsLinkInput";
+import MapsLinkInput from "@/components/conversation/MapsLinkInput";
 import LocationInput from "@/components/conversation/LocationInput";
-import { resolveLocation } from "@/api/conversation";
 import { reverseGeocodeAsync } from "expo-location";
 import { makeTime } from "@/util/time";
 import Toast from "react-native-toast-message";
 import { router } from "expo-router";
 import { latLngToCell } from "h3-js";
+import { extractAppleMapInfo } from "@/util/url";
+import GoogleMapsResolver from "@/components/conversation/GoogleMapsResolver";
+import { useEffect, useState } from "react";
 
 interface FormValue {
   novel?: string;
@@ -48,7 +50,7 @@ interface FormValue {
   hour: string;
   minute: string;
   length: string;
-  googleMapsLink: string;
+  mapsLink: string;
   location?: string;
 }
 
@@ -57,7 +59,11 @@ export default function OfflineConversationScreen() {
   const { isKeyboardVisible } = useKeyboard();
   const insets = useSafeAreaInsets();
   const now = new Date();
-  const onlineConversationForm = useForm<FormValue>({
+  const [resolvedCoords, setResolvedCoords] = useState<{
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const offlineConversationForm = useForm<FormValue>({
     defaultValues: {
       novel: "",
       shortStory: "",
@@ -71,10 +77,14 @@ export default function OfflineConversationScreen() {
       hour: String(now.getHours()),
       minute: String(now.getMinutes()),
       length: "100",
-      googleMapsLink: "",
+      mapsLink: "",
       location: "",
     },
   });
+  const mapsLinkValue = offlineConversationForm.watch("mapsLink");
+  useEffect(() => {
+    setResolvedCoords(null);
+  }, [mapsLinkValue]);
 
   const onSubmit = async (formValues: FormValue) => {
     let {
@@ -90,11 +100,23 @@ export default function OfflineConversationScreen() {
       hour,
       minute,
       length,
-      googleMapsLink,
+      mapsLink,
       location,
     } = formValues;
     const time = makeTime(now, monthDay, year, hour, minute);
-    const { lat, lng, placeName } = await resolveLocation(googleMapsLink);
+    let lat = 0;
+    let lng = 0;
+    let placeName = "";
+    if (Platform.OS === "ios") {
+      const data = extractAppleMapInfo(mapsLink);
+      lat = data.lat;
+      lng = data.lng;
+      placeName = data.placeName;
+    }
+    if (Platform.OS === "android" && resolvedCoords !== null) {
+      lat = resolvedCoords.lat
+      lng = resolvedCoords.lng
+    }
     if (!location) {
       location = placeName;
     }
@@ -118,7 +140,7 @@ export default function OfflineConversationScreen() {
         rule: rule,
         time: time,
         length: Number(length),
-        googleMapsLink: googleMapsLink,
+        mapsLink: mapsLink,
         location: location,
         city: geoInfo[0].city ?? "",
         lat: lat,
@@ -131,18 +153,18 @@ export default function OfflineConversationScreen() {
           router.replace("/conversations");
         },
         onError: (error) => {
-          console.log(error)
+          console.log(error);
           Toast.show({
             type: "error",
             text1: "Invalid Google Maps URL",
           });
-        }
+        },
       },
     );
   };
 
   return (
-    <FormProvider {...onlineConversationForm}>
+    <FormProvider {...offlineConversationForm}>
       <View style={styles.container}>
         <KeyboardAvoidingView
           contentContainerStyle={styles.awareScrollViewContainer}
@@ -169,17 +191,38 @@ export default function OfflineConversationScreen() {
                 <MinuteInput />
               </View>
               <LengthInput />
-              <CustomButton
-                label="Go and get Google Maps share link"
-                onPress={() => openBrowserAsync("https://google.com/maps")}
-              />
-              <GoogleMapsLinkInput />
+              {Platform.OS === "ios" ? (
+                <CustomButton
+                  label="Go and get Apple Maps share link"
+                  onPress={() => openBrowserAsync("https://maps.apple.com")}
+                />
+              ) : (
+                <CustomButton
+                  label="Go and get Google Maps share link"
+                  onPress={() =>
+                    openBrowserAsync("https://www.google.com/maps")
+                  }
+                />
+              )}
+              <MapsLinkInput />
+              {mapsLinkValue &&
+                !resolvedCoords &&
+                Platform.OS === "android" && (
+                  <GoogleMapsResolver
+                    shortUrl={mapsLinkValue}
+                    onCoordinatesResolved={(coords) => {
+                      setResolvedCoords(coords);
+                      console.log("Headless Resolution Success:", coords);
+                    }}
+                  />
+                )}
               <LocationInput />
             </View>
           </ScrollView>
           <FixedBottomCTA
             label="Create"
-            onPress={onlineConversationForm.handleSubmit(onSubmit)}
+            onPress={offlineConversationForm.handleSubmit(onSubmit)}
+            disabled={Platform.OS === "android" && resolvedCoords === null}
           />
         </KeyboardAvoidingView>
       </View>

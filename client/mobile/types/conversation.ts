@@ -79,7 +79,7 @@ export interface CreateOfflineConversationRequest {
   rule?: string;
   time: string;
   length: number;
-  googleMapsLink: string;
+  mapsLink: string;
   location: string;
   city?: string;
   lat: number;
