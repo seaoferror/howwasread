@@ -65,10 +65,4 @@ public class OfflineConversationController {
     var response = offlineConversationService.mapDetail(conversationId, memberId);
     return ResponseEntity.ok(response);
   }
-
-  @GetMapping("/map/resolve/google-maps-link")
-  public ResponseEntity<?> resolveGoogleMapsLink(@RequestParam String url) {
-    var response = offlineConversationService.resolveGoogleMapsLink(url);
-    return ResponseEntity.ok(response);
-  }
 }

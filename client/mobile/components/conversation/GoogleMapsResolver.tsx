@@ -4,29 +4,36 @@ import { WebView, type WebViewNavigation } from "react-native-webview";
 
 interface GoogleMapsResolverProps {
   shortUrl: string;
-  onCoordinatesResolved: (coords: { lat: number; lng: number }) => void;
+  onGeoInfoResolved: (coords: { lat: number; lng: number; placeName: string }) => void;
 }
 
 export default function GoogleMapsResolver({
   shortUrl,
-  onCoordinatesResolved,
+  onGeoInfoResolved,
 }: GoogleMapsResolverProps) {
   const [isResolving, setIsResolving] = useState(true);
 
   const handleNavigationStateChange = (navState: WebViewNavigation) => {
     const currentUrl = navState.url;
-    const pinPattern = /!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/;
-    const match = currentUrl.match(pinPattern);
+    const coordsMatch = currentUrl.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+    const placeNameMatch = currentUrl.match(/\/maps\/place\/([^/@]+)/);
 
-    if (match) {
-      setIsResolving(false); // Stop loading the WebView
-      const lat = parseFloat(match[1]);
-      const lng = parseFloat(match[2]);
-      onCoordinatesResolved({ lat, lng });
+    if (coordsMatch && placeNameMatch) {
+      setIsResolving(false);
+      const lat = parseFloat(coordsMatch[1]);
+      const lng = parseFloat(coordsMatch[2]);
+
+      const spaceCleaned = placeNameMatch[1].replace(/\+/g, " ");
+      const decodedPlaceName = decodeURIComponent(spaceCleaned);
+      const isCoords = /^[-]?\d+\.\d+,\s*[-]?\d+\.\d+$/.test(
+        decodedPlaceName,
+      );
+      const placeName = isCoords ? "Dropped Pin" : decodedPlaceName;
+      onGeoInfoResolved({ lat, lng, placeName });
     }
   };
 
-  if (!isResolving) return <></>;
+  if (!isResolving) return null;
 
   return (
     <View style={styles.hiddenContainer}>

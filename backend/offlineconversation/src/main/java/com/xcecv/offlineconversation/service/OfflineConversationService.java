@@ -1,10 +1,5 @@
 package com.xcecv.offlineconversation.service;
 
-import com.microsoft.playwright.BrowserType;
-import com.microsoft.playwright.Page;
-import com.microsoft.playwright.Playwright;
-import com.microsoft.playwright.Route;
-import com.microsoft.playwright.options.WaitUntilState;
 import com.xcecv.offlineconversation.domain.OfflineConversation;
 import com.xcecv.offlineconversation.dto.CreateOfflineConversationRequest;
 import com.xcecv.offlineconversation.dto.JoinOfflineConversationRequest;
@@ -118,20 +113,5 @@ public class OfflineConversationService {
         .isParticipant(convo.getParticipants().contains(memberId))
         .numberOfParticipants(convo.getParticipants().size())
         .build();
-  }
-
-  public String resolveGoogleMapsLink(String googleMapsLink) {
-    log.info("start creating resource...");
-    try (var playwright = Playwright.create();
-         var browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-         var context = browser.newContext()) {
-      context.route("**/*.{png,jpg,jpeg,webp,gif,css,woff2,woff,ttf,svg}", Route::abort);
-      try (var page = context.newPage()) {
-        log.info("resource created, start resolving...");
-        page.navigate(googleMapsLink, new Page.NavigateOptions().setWaitUntil(WaitUntilState.NETWORKIDLE));
-        page.reload(new Page.ReloadOptions().setWaitUntil(WaitUntilState.COMMIT));
-        return page.url();
-      }
-    }
   }
 }

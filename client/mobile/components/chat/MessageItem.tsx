@@ -66,9 +66,7 @@ export default function MessageItem({ message, isDayFirst }: MessageItemProps) {
                   (url, idx) => url && <VideoMessage key={idx} url={url} />,
                 )}
               </>
-            ) : (
-              <></>
-            )}
+            ) : null}
           </View>
           <Text style={styles.time}>{getHourMinute(message.createdAt)}</Text>
         </View>

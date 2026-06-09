@@ -33,7 +33,6 @@ import { makeTime } from "@/util/time";
 import Toast from "react-native-toast-message";
 import { router } from "expo-router";
 import { latLngToCell } from "h3-js";
-import { extractAppleMapInfo } from "@/util/url";
 import GoogleMapsResolver from "@/components/conversation/GoogleMapsResolver";
 import { useEffect, useState } from "react";
 
@@ -59,9 +58,10 @@ export default function OfflineConversationScreen() {
   const { isKeyboardVisible } = useKeyboard();
   const insets = useSafeAreaInsets();
   const now = new Date();
-  const [resolvedCoords, setResolvedCoords] = useState<{
+  const [resolvedGeoInfo, setResolvedGeoInfo] = useState<{
     lat: number;
     lng: number;
+    placeName: string;
   } | null>(null);
   const offlineConversationForm = useForm<FormValue>({
     defaultValues: {
@@ -83,7 +83,7 @@ export default function OfflineConversationScreen() {
   });
   const mapsLinkValue = offlineConversationForm.watch("mapsLink");
   useEffect(() => {
-    setResolvedCoords(null);
+    setResolvedGeoInfo(null);
   }, [mapsLinkValue]);
 
   const onSubmit = async (formValues: FormValue) => {
@@ -104,27 +104,21 @@ export default function OfflineConversationScreen() {
       location,
     } = formValues;
     const time = makeTime(now, monthDay, year, hour, minute);
-    let lat = 0;
-    let lng = 0;
-    let placeName = "";
-    if (Platform.OS === "ios") {
-      const data = extractAppleMapInfo(mapsLink);
-      lat = data.lat;
-      lng = data.lng;
-      placeName = data.placeName;
+    if (resolvedGeoInfo === null) {
+      Toast.show({
+        type: "error",
+        text1: "fail to resolve coords",
+      });
+      return
     }
-    if (Platform.OS === "android" && resolvedCoords !== null) {
-      lat = resolvedCoords.lat
-      lng = resolvedCoords.lng
-    }
-    if (!location) {
-      location = placeName;
-    }
-    const geoInfo = await reverseGeocodeAsync({
+    const lat = resolvedGeoInfo.lat;
+    const lng = resolvedGeoInfo.lng;
+    location = location ? location : resolvedGeoInfo.placeName;
+    const city = (await reverseGeocodeAsync({
       latitude: lat,
       longitude: lng,
-    });
-    console.log(geoInfo);
+    }))[0].city;
+    console.log(city);
     console.log(lat);
     console.log(lng);
     console.log(location);
@@ -142,7 +136,7 @@ export default function OfflineConversationScreen() {
         length: Number(length),
         mapsLink: mapsLink,
         location: location,
-        city: geoInfo[0].city ?? "",
+        city: city ?? "",
         lat: lat,
         lng: lng,
         h3Res5: latLngToCell(lat, lng, 5),
@@ -191,38 +185,27 @@ export default function OfflineConversationScreen() {
                 <MinuteInput />
               </View>
               <LengthInput />
-              {Platform.OS === "ios" ? (
-                <CustomButton
-                  label="Go and get Apple Maps share link"
-                  onPress={() => openBrowserAsync("https://maps.apple.com")}
-                />
-              ) : (
-                <CustomButton
-                  label="Go and get Google Maps share link"
-                  onPress={() =>
-                    openBrowserAsync("https://www.google.com/maps")
-                  }
+              <CustomButton
+                label="Go and get Google Maps share link"
+                onPress={() => openBrowserAsync("https://www.google.com/maps")}
+              />
+              <MapsLinkInput />
+              {mapsLinkValue && !resolvedGeoInfo && (
+                <GoogleMapsResolver
+                  shortUrl={mapsLinkValue}
+                  onGeoInfoResolved={(geoInfo) => {
+                    setResolvedGeoInfo(geoInfo);
+                    console.log("Headless Resolution Success:", geoInfo);
+                  }}
                 />
               )}
-              <MapsLinkInput />
-              {mapsLinkValue &&
-                !resolvedCoords &&
-                Platform.OS === "android" && (
-                  <GoogleMapsResolver
-                    shortUrl={mapsLinkValue}
-                    onCoordinatesResolved={(coords) => {
-                      setResolvedCoords(coords);
-                      console.log("Headless Resolution Success:", coords);
-                    }}
-                  />
-                )}
               <LocationInput />
             </View>
           </ScrollView>
           <FixedBottomCTA
             label="Create"
             onPress={offlineConversationForm.handleSubmit(onSubmit)}
-            disabled={Platform.OS === "android" && resolvedCoords === null}
+            disabled={resolvedGeoInfo === null}
           />
         </KeyboardAvoidingView>
       </View>

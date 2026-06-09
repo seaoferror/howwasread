@@ -11,7 +11,7 @@ export default function LocationInput() {
         <InputField
           variant="standard"
           label="location(optional)"
-          placeholder="Starbucks"
+          placeholder="Starbucks texas houston"
           inputMode="text"
           returnKeyType="done"
           submitBehavior="blurAndSubmit"

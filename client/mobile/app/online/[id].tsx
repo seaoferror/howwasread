@@ -400,9 +400,7 @@ export default function OnlineConversationScreen() {
                 <>
                   {seat.mute ? (
                     <Feather name="mic-off" size={10} color="black" />
-                  ) : (
-                    <></>
-                  )}
+                  ) : null}
                   <Ionicons
                     name="person-circle-outline"
                     size={24}
