@@ -1,13 +1,17 @@
-import { Platform, StyleSheet, View } from "react-native";
+import { Platform, ScrollView, StyleSheet, View } from "react-native";
 import { AppleMaps, type CameraMoveEvent, GoogleMaps } from "expo-maps";
 import { useEffect, useMemo, useState } from "react";
 import { gridDisk, latLngToCell } from "h3-js";
-import { useMapOfflineConversations } from "@/hooks/useConversation";
+import {
+  useGetOfflineConversationDetail,
+  useMapOfflineConversations,
+} from "@/hooks/useConversation";
 import {
   getCurrentPositionAsync,
   PermissionStatus,
   requestForegroundPermissionsAsync,
 } from "expo-location";
+import OfflineConversationDetail from "@/components/conversation/OfflineConversationDetail";
 
 export default function OfflineConversationMap() {
   const [h3Res5, setH3Res5] = useState<string[]>([]);
@@ -26,6 +30,11 @@ export default function OfflineConversationMap() {
     resolution: 7,
     h3Indexes: h3Res7,
   });
+  const [clickedMarkerId, setClickedMarkerId] = useState<string>("");
+  console.log(clickedMarkerId);
+  const { data: clickedMarkerData } =
+    useGetOfflineConversationDetail(clickedMarkerId);
+  console.log(clickedMarkerData);
   useEffect(() => {
     async function wrapper() {
       const { status } = await requestForegroundPermissionsAsync();
@@ -100,7 +109,11 @@ export default function OfflineConversationMap() {
           }}
           markers={markers}
           onMarkerClick={(event) => {
-            event.id;
+            console.log("marker clicked");
+            setClickedMarkerId(event.id ?? "");
+          }}
+          onMapClick={() => {
+            setClickedMarkerId("");
           }}
         />
       ) : (
@@ -117,6 +130,31 @@ export default function OfflineConversationMap() {
             handleCameraMove(event);
           }}
           markers={markers}
+          onMarkerClick={(event) => {
+            setClickedMarkerId(event.id ?? "");
+          }}
+          onMapClick={() => {
+            setClickedMarkerId("");
+          }}
+        />
+      )}
+      {clickedMarkerData && (
+        <OfflineConversationDetail
+          id={clickedMarkerId}
+          novel={clickedMarkerData.novel}
+          poem={clickedMarkerData.poem}
+          shortStory={clickedMarkerData.shortStory}
+          play={clickedMarkerData.play}
+          film={clickedMarkerData.film}
+          writtenBy={clickedMarkerData.writtenBy}
+          rule={clickedMarkerData.rule}
+          time={clickedMarkerData.time}
+          length={clickedMarkerData.length}
+          mapsLink={clickedMarkerData.mapsLink}
+          location={clickedMarkerData.location}
+          isModerator={clickedMarkerData.isModerator}
+          isParticipant={clickedMarkerData.isParticipant}
+          numberOfParticipants={clickedMarkerData.numberOfParticipants}
         />
       )}
     </View>

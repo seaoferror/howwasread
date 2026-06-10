@@ -87,3 +87,20 @@ export interface CreateOfflineConversationRequest {
   h3Res5: string;
   h3Res7: string;
 }
+
+export interface OfflineConversationDetailResponse {
+  novel: string;
+  poem: string;
+  shortStory: string;
+  play: string;
+  film: string;
+  writtenBy: string;
+  rule: string;
+  time: string;
+  length: number;
+  mapsLink: string;
+  location: string;
+  isModerator: boolean;
+  isParticipant: boolean;
+  numberOfParticipants: number;
+}

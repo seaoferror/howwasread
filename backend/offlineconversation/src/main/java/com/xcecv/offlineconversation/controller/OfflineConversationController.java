@@ -42,6 +42,18 @@ public class OfflineConversationController {
     return ResponseEntity.ok("ok");
   }
 
+  @DeleteMapping("/quit")
+  public ResponseEntity<?> quit(
+      @Valid @RequestBody JoinOfflineConversationRequest request,
+      @NotNull @RequestHeader("X-User-Id") UUID memberId
+  ) {
+    offlineConversationService.quit(
+        request,
+        memberId
+    );
+    return ResponseEntity.ok("ok");
+  }
+
   @GetMapping("/map")
   public ResponseEntity<?> mapFarConvos(
       @NotBlank @RequestParam String resolution,
@@ -57,12 +69,12 @@ public class OfflineConversationController {
     return ResponseEntity.ok(response);
   }
 
-  @GetMapping("/map/detail")
-  public ResponseEntity<?> mapDetail(
-      @NotBlank @RequestParam UUID conversationId,
-      @NotBlank @RequestHeader("X-User-Id") UUID memberId
+  @GetMapping("/detail")
+  public ResponseEntity<?> detail(
+      @NotNull @RequestParam UUID conversationId,
+      @NotNull @RequestHeader("X-User-Id") UUID memberId
   ) {
-    var response = offlineConversationService.mapDetail(conversationId, memberId);
+    var response = offlineConversationService.detail(conversationId, memberId);
     return ResponseEntity.ok(response);
   }
 }

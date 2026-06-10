@@ -66,6 +66,16 @@ public class OfflineConversationService {
     convo.getParticipants().add(memberId);
   }
 
+  @Transactional
+  public void quit(JoinOfflineConversationRequest request, UUID memberId) {
+    var convo = offlineConversationRepository.findById(request.conversationId())
+        .orElseThrow(() -> new ResponseStatusException(
+            HttpStatus.NOT_FOUND,
+            "Conversation not found"
+        ));
+    convo.getParticipants().remove(memberId);
+  }
+
   public List<OfflineConversationMapResponse> mapRes7Convos(
       String h3Res7) {
     var convos = offlineConversationRepository.findByH3Res7(h3Res7);
@@ -91,7 +101,7 @@ public class OfflineConversationService {
     return response;
   }
 
-  public OfflineConversationDetailResponse mapDetail(UUID conversationId, UUID memberId) {
+  public OfflineConversationDetailResponse detail(UUID conversationId, UUID memberId) {
     var convo = offlineConversationRepository.findById(conversationId, OfflineConversationDetailProjection.class)
         .orElseThrow(() -> new ResponseStatusException(
             HttpStatus.NOT_FOUND,
@@ -107,7 +117,7 @@ public class OfflineConversationService {
         .rule(convo.getRule())
         .time(convo.getTime())
         .length((int) convo.getLength().toMinutes())
-        .googleMapsLink(convo.getGoogleMapsLink())
+        .mapsLink(convo.getMapsLink())
         .location(convo.getLocation())
         .isModerator(convo.getModeratorIds().contains(memberId))
         .isParticipant(convo.getParticipants().contains(memberId))

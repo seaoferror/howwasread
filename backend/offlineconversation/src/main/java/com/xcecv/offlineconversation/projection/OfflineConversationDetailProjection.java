@@ -24,7 +24,7 @@ public interface OfflineConversationDetailProjection {
 
   Duration getLength();
 
-  String getGoogleMapsLink();
+  String getMapsLink();
 
   String getLocation();
 

@@ -2,13 +2,17 @@ import {
   useInfiniteQuery,
   useMutation,
   useQueries,
+  useQuery,
 } from "@tanstack/react-query";
 import {
   banParticipant,
   createOfflineConversation,
   createOnlineConversation,
+  getOfflineConversationDetail,
   getOnlineConversations,
+  joinOfflineConversation,
   mapOfflineConversation,
+  quitOfflineConversation,
 } from "@/api/conversation";
 import { queryKey } from "@/constants";
 import { AxiosError } from "axios";
@@ -103,6 +107,49 @@ export function useCreateOfflineConversation() {
           queryKey.CONVERSATION,
           queryKey.MAP_OFFLINE_CONVERSATION,
           variables?.h3Res7,
+        ],
+      });
+    },
+  });
+}
+
+export function useGetOfflineConversationDetail(id: string) {
+  const { data } = useQuery({
+    queryFn: () => getOfflineConversationDetail(id),
+    queryKey: [
+      queryKey.CONVERSATION,
+      queryKey.GET_OFFLINE_CONVERSATION_DETAIL,
+      id,
+    ],
+    enabled: !!id
+  });
+  return { data };
+}
+
+export function useJoinOfflineConversation() {
+  return useMutation({
+    mutationFn: joinOfflineConversation,
+    onSuccess: async (data, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: [
+          queryKey.CONVERSATION,
+          queryKey.GET_OFFLINE_CONVERSATION_DETAIL,
+          variables.conversationId,
+        ],
+      });
+    },
+  });
+}
+
+export function useQuitOfflineConversation() {
+  return useMutation({
+    mutationFn: quitOfflineConversation,
+    onSuccess: async (data, variables) => {
+      await queryClient.invalidateQueries({
+        queryKey: [
+          queryKey.CONVERSATION,
+          queryKey.GET_OFFLINE_CONVERSATION_DETAIL,
+          variables.conversationId,
         ],
       });
     },

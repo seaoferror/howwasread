@@ -27,6 +27,7 @@ export const colors = {
   ORANGE_100: "#FFE0B2",
   ORANGE_150: "#FFD8A8",
   ORANGE_200: "#FFCC80",
+  BLUE_500: "#2196F3"
 };
 
 export const queryKey = {
@@ -45,6 +46,7 @@ export const queryKey = {
   FIND_MESSAGES_BY_ROOM_ID: "findMessagesByRoomId",
   GET_SIGNED_URL: "getSignedURL",
   MAP_OFFLINE_CONVERSATION: "mapOfflineConversation",
+  GET_OFFLINE_CONVERSATION_DETAIL: "getOfflineConversationDetail"
 };
 
 export const time = {

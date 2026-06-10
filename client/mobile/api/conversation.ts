@@ -3,6 +3,7 @@ import {
   BanParticipantRequest,
   CreateOfflineConversationRequest,
   CreateOnlineConversationRequest,
+  OfflineConversationDetailResponse,
   OfflineConversationMapResponse,
   OnlineConversationFeedResponse,
 } from "@/types/conversation";
@@ -55,5 +56,24 @@ export async function createOfflineConversation(
     "/offlineconversation/create",
     body,
   );
+  return data;
+}
+
+export async function getOfflineConversationDetail(
+  id: string,
+): Promise<OfflineConversationDetailResponse> {
+  const { data } = await axiosInstance.get(
+    `/offlineconversation/detail?conversationId=${id}`,
+  );
+  return data;
+}
+
+export async function joinOfflineConversation(body: { conversationId: string }) {
+  const { data } = await axiosInstance.post("/offlineconversation/join", body);
+  return data;
+}
+
+export async function quitOfflineConversation(body: { conversationId: string }) {
+  const { data } = await axiosInstance.post("/offlineconversation/quit", body);
   return data;
 }

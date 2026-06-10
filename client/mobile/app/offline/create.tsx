@@ -109,20 +109,25 @@ export default function OfflineConversationScreen() {
         type: "error",
         text1: "fail to resolve coords",
       });
-      return
+      return;
     }
     const lat = resolvedGeoInfo.lat;
     const lng = resolvedGeoInfo.lng;
     location = location ? location : resolvedGeoInfo.placeName;
-    const city = (await reverseGeocodeAsync({
-      latitude: lat,
-      longitude: lng,
-    }))[0].city;
+    const city = (
+      await reverseGeocodeAsync({
+        latitude: lat,
+        longitude: lng,
+      })
+    )[0].city;
+    const h3Res5 = latLngToCell(lat, lng, 5);
+    const h3Res7 = latLngToCell(lat, lng, 7);
     console.log(city);
     console.log(lat);
     console.log(lng);
     console.log(location);
-
+    console.log(h3Res5);
+    console.log(h3Res7);
     createOfflineConversationMutation.mutate(
       {
         novel: novel,
@@ -139,8 +144,8 @@ export default function OfflineConversationScreen() {
         city: city ?? "",
         lat: lat,
         lng: lng,
-        h3Res5: latLngToCell(lat, lng, 5),
-        h3Res7: latLngToCell(lat, lng, 7),
+        h3Res5: h3Res5,
+        h3Res7: h3Res7,
       },
       {
         onSuccess: () => {

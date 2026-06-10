@@ -15,7 +15,7 @@ public record OfflineConversationDetailResponse(
     String rule,
     Instant time,
     int length,
-    String googleMapsLink,
+    String mapsLink,
     String location,
     boolean isModerator,
     boolean isParticipant,
