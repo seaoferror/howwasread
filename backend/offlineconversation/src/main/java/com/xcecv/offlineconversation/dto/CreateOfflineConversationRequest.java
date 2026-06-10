@@ -17,7 +17,7 @@ public record CreateOfflineConversationRequest(
     String rule,
     @NotNull Instant time,
     @Min(value = 0) int length,
-    @NotBlank String googleMapsLink,
+    @NotBlank String mapsLink,
     @NotBlank String location,
     String city,
     @Min(value = -90) @Max(value = 90) double lat,

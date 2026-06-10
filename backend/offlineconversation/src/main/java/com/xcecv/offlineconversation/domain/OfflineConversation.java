@@ -57,7 +57,7 @@ public class OfflineConversation {
   private Duration length;
 
   @Column(columnDefinition = "TEXT", nullable = false)
-  private String googleMapsLink;
+  private String mapsLink;
 
   @Column(columnDefinition = "TEXT")
   private String location;

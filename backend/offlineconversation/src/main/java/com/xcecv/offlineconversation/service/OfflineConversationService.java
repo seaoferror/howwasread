@@ -41,7 +41,7 @@ public class OfflineConversationService {
         .rule(request.rule())
         .time(request.time())
         .length(Duration.ofMinutes(request.length()))
-        .googleMapsLink(request.googleMapsLink())
+        .mapsLink(request.mapsLink())
         .location(request.location())
         .latitude(request.lat())
         .longitude(request.lng())
