@@ -1,11 +1,8 @@
-import { Platform, ScrollView, StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { AppleMaps, type CameraMoveEvent, GoogleMaps } from "expo-maps";
 import { useEffect, useMemo, useState } from "react";
 import { gridDisk, latLngToCell } from "h3-js";
-import {
-  useGetOfflineConversationDetail,
-  useMapOfflineConversations,
-} from "@/hooks/useConversation";
+import { useMapOfflineConversations } from "@/hooks/useConversation";
 import {
   getCurrentPositionAsync,
   PermissionStatus,
@@ -32,9 +29,6 @@ export default function OfflineConversationMap() {
   });
   const [clickedMarkerId, setClickedMarkerId] = useState<string>("");
   console.log(clickedMarkerId);
-  const { data: clickedMarkerData } =
-    useGetOfflineConversationDetail(clickedMarkerId);
-  console.log(clickedMarkerData);
   useEffect(() => {
     async function wrapper() {
       const { status } = await requestForegroundPermissionsAsync();
@@ -138,25 +132,7 @@ export default function OfflineConversationMap() {
           }}
         />
       )}
-      {clickedMarkerData && (
-        <OfflineConversationDetail
-          id={clickedMarkerId}
-          novel={clickedMarkerData.novel}
-          poem={clickedMarkerData.poem}
-          shortStory={clickedMarkerData.shortStory}
-          play={clickedMarkerData.play}
-          film={clickedMarkerData.film}
-          writtenBy={clickedMarkerData.writtenBy}
-          rule={clickedMarkerData.rule}
-          time={clickedMarkerData.time}
-          length={clickedMarkerData.length}
-          mapsLink={clickedMarkerData.mapsLink}
-          location={clickedMarkerData.location}
-          isModerator={clickedMarkerData.isModerator}
-          isParticipant={clickedMarkerData.isParticipant}
-          numberOfParticipants={clickedMarkerData.numberOfParticipants}
-        />
-      )}
+      {clickedMarkerId && <OfflineConversationDetail id={clickedMarkerId} />}
     </View>
   );
 }

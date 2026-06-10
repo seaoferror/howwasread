@@ -69,11 +69,11 @@ export async function getOfflineConversationDetail(
 }
 
 export async function joinOfflineConversation(body: { conversationId: string }) {
-  const { data } = await axiosInstance.post("/offlineconversation/join", body);
+  const { data } = await axiosInstance.patch("/offlineconversation/join", body);
   return data;
 }
 
 export async function quitOfflineConversation(body: { conversationId: string }) {
-  const { data } = await axiosInstance.post("/offlineconversation/quit", body);
+  const { data } = await axiosInstance.patch("/offlineconversation/quit", body);
   return data;
 }

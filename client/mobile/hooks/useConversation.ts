@@ -121,7 +121,7 @@ export function useGetOfflineConversationDetail(id: string) {
       queryKey.GET_OFFLINE_CONVERSATION_DETAIL,
       id,
     ],
-    enabled: !!id
+    enabled: !!id,
   });
   return { data };
 }

@@ -30,7 +30,7 @@ public class OfflineConversationController {
     return ResponseEntity.ok(response);
   }
 
-  @PutMapping("/join")
+  @PatchMapping("/join")
   public ResponseEntity<?> join(
       @Valid @RequestBody JoinOfflineConversationRequest request,
       @NotNull @RequestHeader("X-User-Id") UUID memberId
@@ -42,7 +42,7 @@ public class OfflineConversationController {
     return ResponseEntity.ok("ok");
   }
 
-  @DeleteMapping("/quit")
+  @PatchMapping("/quit")
   public ResponseEntity<?> quit(
       @Valid @RequestBody JoinOfflineConversationRequest request,
       @NotNull @RequestHeader("X-User-Id") UUID memberId
