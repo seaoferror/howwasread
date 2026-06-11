@@ -5,7 +5,7 @@ import lombok.Builder;
 
 import java.util.UUID;
 
-@Builder
+@Builder(toBuilder = true)
 public record OfflineConversationMapResponse(
     UUID id,
     String writtenBy,

@@ -4,6 +4,8 @@ metadata:
   name: valkey-cluster
   namespace: valkey-system
 spec:
+  config:
+    maxmemory-policy: "allkeys-lfu"
   shards: 1
   replicas: 0
   tls:

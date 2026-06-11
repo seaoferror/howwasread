@@ -1,5 +1,7 @@
 package com.xcecv.offlineconversation.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.xcecv.offlineconversation.domain.OfflineConversation;
 import com.xcecv.offlineconversation.domain.OfflineConversationParticipant;
 import com.xcecv.offlineconversation.domain.ParticipantCompositeKey;
@@ -9,8 +11,10 @@ import com.xcecv.offlineconversation.dto.OfflineConversationDetailResponse;
 import com.xcecv.offlineconversation.dto.OfflineConversationMapResponse;
 import com.xcecv.offlineconversation.projection.OfflineConversationDetailProjection;
 import com.xcecv.offlineconversation.projection.OfflineConversationMapProjection;
+import com.xcecv.offlineconversation.projection.OfflineConversationPinProjection;
 import com.xcecv.offlineconversation.repository.OfflineConversationParticipantRepository;
 import com.xcecv.offlineconversation.repository.OfflineConversationRepository;
+import glide.api.GlideClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -20,6 +24,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
@@ -29,6 +34,8 @@ public class OfflineConversationService {
 
   private final OfflineConversationRepository offlineConversationRepository;
   private final OfflineConversationParticipantRepository offlineConversationParticipantRepository;
+  private final GlideClient glideClient;
+  private final ObjectMapper objectMapper;
 
   @Transactional
   public Map<String, UUID> create(
@@ -60,6 +67,27 @@ public class OfflineConversationService {
         .participantId(memberId)
         .build();
     offlineConversationParticipantRepository.save(new OfflineConversationParticipant(key, convo));
+    try {
+      Map<String, String> hashEntry = Map.of(conversationId.toString(),
+          objectMapper.writeValueAsString(
+              OfflineConversationPinProjection.builder()
+                  .writtenBy(request.writtenBy())
+                  .latitude(request.lat())
+                  .longitude(request.lng())
+                  .build()));
+      List<CompletableFuture<?>> tasks = new ArrayList<>();
+      if (glideClient.exists(new String[]{request.h3Res5()}).join() > 0) {
+        tasks.add(glideClient.hset(request.h3Res5(), hashEntry));
+      }
+      if (glideClient.exists(new String[]{request.h3Res7()}).join() > 0) {
+        tasks.add(glideClient.hset(request.h3Res7(), hashEntry));
+      }
+      if(!tasks.isEmpty()) {
+        CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])).join();
+      }
+    } catch (Exception e) {
+      log.error("Failed to push conversation {} to Valkey H3 cache", conversationId, e);
+    }
     return Map.of("id", conversationId);
   }
 
@@ -84,15 +112,79 @@ public class OfflineConversationService {
 
   public List<OfflineConversationMapResponse> mapRes7Convos(
       String h3Res7) {
-    var convos = offlineConversationRepository.findByH3Res7(h3Res7);
-    return buildOfflineConversationMapResponse(convos);
+    try {
+      Map<String, String> cache = glideClient.hgetall(h3Res7).join();
+      if (cache != null && !cache.isEmpty()) {
+        return unmarshalH3Cache(cache);
+      }
+      var convos = offlineConversationRepository.findByH3Res7(h3Res7);
+      var response = buildOfflineConversationMapResponse(convos);
+      if (!response.isEmpty()) {
+        setH3Cache(h3Res7, response);
+      }
+      return response;
+    } catch (Exception e) {
+      log.error("Failed to read from cache for h3Index {}. Falling back to DB.", h3Res7, e);
+      var convos = offlineConversationRepository.findByH3Res7(h3Res7);
+      return buildOfflineConversationMapResponse(convos);
+    }
   }
 
   public List<OfflineConversationMapResponse> mapRes5Convos(
       String h3Res5) {
-    var convos = offlineConversationRepository.findTop2ByH3Res5(h3Res5);
-    return buildOfflineConversationMapResponse(convos);
+    try {
+      Map<String, String> cacheRaw = glideClient.hgetall(h3Res5).join();
+      if (cacheRaw != null && !cacheRaw.isEmpty()) {
+        return unmarshalH3Cache(cacheRaw);
+      }
+      var convos = offlineConversationRepository.findTop2ByH3Res5(h3Res5);
+      var response = buildOfflineConversationMapResponse(convos);
+      if (!response.isEmpty()) {
+        setH3Cache(h3Res5, response);
+      }
+      return response;
+    } catch (Exception e) {
+      log.error("Failed to read from cache for h3Index {}. Falling back to DB.", h3Res5, e);
+      var convos = offlineConversationRepository.findTop2ByH3Res5(h3Res5);
+      return buildOfflineConversationMapResponse(convos);
+    }
   }
+
+
+  private List<OfflineConversationMapResponse> unmarshalH3Cache(Map<String, String> cacheRaw) throws JsonProcessingException {
+    log.info("cache hit");
+    List<OfflineConversationMapResponse> response = new ArrayList<>();
+    for (Map.Entry<String, String> entry : cacheRaw.entrySet()) {
+      UUID conversationId = UUID.fromString(entry.getKey());
+      OfflineConversationPinProjection pinValue = objectMapper.readValue(
+          entry.getValue(),
+          OfflineConversationPinProjection.class
+      );
+      response.add(OfflineConversationMapResponse.builder()
+          .id(conversationId)
+          .writtenBy(pinValue.writtenBy())
+          .lat(pinValue.latitude())
+          .lng(pinValue.longitude())
+          .build());
+    }
+    return response;
+  }
+
+  private void setH3Cache(String h3Index, List<OfflineConversationMapResponse> response) throws JsonProcessingException {
+    Map<String, String> values = new HashMap<>();
+    for (var item : response) {
+      values.put(item.id().toString(),
+          objectMapper.writeValueAsString(
+              OfflineConversationPinProjection.builder()
+                  .writtenBy(item.writtenBy())
+                  .latitude(item.lat())
+                  .longitude(item.lng())
+                  .build()
+          ));
+    }
+    glideClient.hset(h3Index, values).join();
+  }
+
 
   private List<OfflineConversationMapResponse> buildOfflineConversationMapResponse(List<OfflineConversationMapProjection> convos) {
     List<OfflineConversationMapResponse> response = new ArrayList<>();
