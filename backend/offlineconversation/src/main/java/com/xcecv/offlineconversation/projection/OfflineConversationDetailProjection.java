@@ -29,6 +29,4 @@ public interface OfflineConversationDetailProjection {
   String getLocation();
 
   Set<UUID> getModeratorIds();
-
-  Set<UUID> getParticipants();
 }

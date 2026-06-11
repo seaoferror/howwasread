@@ -1,12 +1,15 @@
 package com.xcecv.offlineconversation.service;
 
 import com.xcecv.offlineconversation.domain.OfflineConversation;
+import com.xcecv.offlineconversation.domain.OfflineConversationParticipant;
+import com.xcecv.offlineconversation.domain.ParticipantCompositeKey;
 import com.xcecv.offlineconversation.dto.CreateOfflineConversationRequest;
 import com.xcecv.offlineconversation.dto.JoinOfflineConversationRequest;
 import com.xcecv.offlineconversation.dto.OfflineConversationDetailResponse;
 import com.xcecv.offlineconversation.dto.OfflineConversationMapResponse;
 import com.xcecv.offlineconversation.projection.OfflineConversationDetailProjection;
 import com.xcecv.offlineconversation.projection.OfflineConversationMapProjection;
+import com.xcecv.offlineconversation.repository.OfflineConversationParticipantRepository;
 import com.xcecv.offlineconversation.repository.OfflineConversationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +28,7 @@ import java.util.*;
 public class OfflineConversationService {
 
   private final OfflineConversationRepository offlineConversationRepository;
+  private final OfflineConversationParticipantRepository offlineConversationParticipantRepository;
 
   @Transactional
   public Map<String, UUID> create(
@@ -49,31 +53,33 @@ public class OfflineConversationService {
         .h3Res5(request.h3Res5())
         .h3Res7(request.h3Res7())
         .moderatorIds(new HashSet<>(Set.of(memberId)))
-        .participants(new HashSet<>(Set.of(memberId)))
         .build();
-
-    return Map.of("id", offlineConversationRepository.save(convo).getId());
+    var conversationId = offlineConversationRepository.save(convo).getId();
+    var key = ParticipantCompositeKey.builder()
+        .conversationId(conversationId)
+        .participantId(memberId)
+        .build();
+    offlineConversationParticipantRepository.save(new OfflineConversationParticipant(key, convo));
+    return Map.of("id", conversationId);
   }
 
   @Transactional
   public void join(JoinOfflineConversationRequest request, UUID memberId) {
-    var convo = offlineConversationRepository.findById(request.conversationId())
-        .orElseThrow(() -> new ResponseStatusException(
-            HttpStatus.NOT_FOUND,
-            "Conversation not found"
-        ));
-
-    convo.getParticipants().add(memberId);
+    var conversationProxy = offlineConversationRepository.getReferenceById(request.conversationId());
+    var key = ParticipantCompositeKey.builder()
+        .conversationId(request.conversationId())
+        .participantId(memberId)
+        .build();
+    offlineConversationParticipantRepository.save(new OfflineConversationParticipant(key, conversationProxy));
   }
 
   @Transactional
   public void quit(JoinOfflineConversationRequest request, UUID memberId) {
-    var convo = offlineConversationRepository.findById(request.conversationId())
-        .orElseThrow(() -> new ResponseStatusException(
-            HttpStatus.NOT_FOUND,
-            "Conversation not found"
-        ));
-    convo.getParticipants().remove(memberId);
+    var key = ParticipantCompositeKey.builder()
+        .conversationId(request.conversationId())
+        .participantId(memberId)
+        .build();
+    offlineConversationParticipantRepository.deleteById(key);
   }
 
   public List<OfflineConversationMapResponse> mapRes7Convos(
@@ -107,6 +113,7 @@ public class OfflineConversationService {
             HttpStatus.NOT_FOUND,
             "Conversation not found"
         ));
+    var participantIds = offlineConversationParticipantRepository.findParticipantIdsByConversationId(conversationId);
     return OfflineConversationDetailResponse.builder()
         .novel(convo.getNovel())
         .poem(convo.getPoem())
@@ -120,8 +127,8 @@ public class OfflineConversationService {
         .mapsLink(convo.getMapsLink())
         .location(convo.getLocation())
         .isModerator(convo.getModeratorIds().contains(memberId))
-        .isParticipant(convo.getParticipants().contains(memberId))
-        .numberOfParticipants(convo.getParticipants().size())
+        .isParticipant(participantIds.contains(memberId))
+        .numberOfParticipants(participantIds.size())
         .build();
   }
 }

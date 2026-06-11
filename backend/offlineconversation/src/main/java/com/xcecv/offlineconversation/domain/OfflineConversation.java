@@ -80,14 +80,4 @@ public class OfflineConversation {
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(columnDefinition = "JSON")
   private Set<UUID> moderatorIds = new HashSet<>();
-
-  @ElementCollection(fetch = FetchType.LAZY)
-  @CollectionTable(
-      name = "offline_conversation_participants",
-      joinColumns = @JoinColumn(
-          foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
-      )
-  )
-  @Column(name = "participant_id", nullable = false)
-  private Set<UUID> participants = new HashSet<>();
 }
