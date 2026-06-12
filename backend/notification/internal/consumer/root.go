@@ -97,6 +97,12 @@ func (c *Consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 func (c *Consumer) GetMessage(topics []string) error {
 	ctx, cancel := context.WithCancel(context.Background())
 
+	go func() {
+		for err := range c.consumerGroup.Errors() {
+			log.Printf("Consumer group error: %v", err)
+		}
+	}()
+
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
