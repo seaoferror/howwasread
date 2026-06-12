@@ -12,7 +12,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://gateway01.ap-northeast-1.prod.aws.tidbcloud.com:4000/development?sslMode=VERIFY_IDENTITY
     username: 3aeV1qGntiqNDfJ.root
-    password: ${DB_PASSWORD}
+    password: ${TIDB_PASSWORD}
   jpa:
     database: mysql
     database-platform: org.hibernate.dialect.MySQLDialect
@@ -27,3 +27,6 @@ logging:
   level:
     org.springframework.web.socket: INFO
     org.springframework.messaging: INFO
+valkey:
+  host: localhost
+  port: 6379
