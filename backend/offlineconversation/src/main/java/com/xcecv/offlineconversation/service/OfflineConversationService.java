@@ -75,14 +75,16 @@ public class OfflineConversationService {
                   .latitude(request.lat())
                   .longitude(request.lng())
                   .build()));
+      var checkRes5 = glideClient.exists(new String[]{request.h3Res5()});
+      var checkRes7 = glideClient.exists(new String[]{request.h3Res7()});
       List<CompletableFuture<?>> tasks = new ArrayList<>();
-      if (glideClient.exists(new String[]{request.h3Res5()}).join() > 0) {
+      if (checkRes5.join() > 0) {
         tasks.add(glideClient.hset(request.h3Res5(), hashEntry));
       }
-      if (glideClient.exists(new String[]{request.h3Res7()}).join() > 0) {
+      if (checkRes7.join() > 0) {
         tasks.add(glideClient.hset(request.h3Res7(), hashEntry));
       }
-      if(!tasks.isEmpty()) {
+      if (!tasks.isEmpty()) {
         CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])).join();
       }
     } catch (Exception e) {
