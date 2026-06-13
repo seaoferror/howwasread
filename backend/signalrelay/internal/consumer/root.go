@@ -6,7 +6,6 @@ import (
 	"backend/signalrelay/internal/service"
 	"context"
 	"encoding/json"
-	"errors"
 	"log"
 	"log/slog"
 	"os"
@@ -82,11 +81,7 @@ func (c *Consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 		case msg := <-claim.Messages():
 			log.Print("Kafka message incoming...")
 			session.MarkMessage(msg, "")
-			err := c.distinguishMessage(session.Context(), msg)
-			if err != nil {
-				log.Printf("Fail to manage message: %v", err)
-				return err
-			}
+			c.distinguishMessage(session.Context(), msg)
 			continue
 		case <-session.Context().Done():
 			return nil
@@ -161,7 +156,7 @@ func toggleConsumptionFlow(client sarama.ConsumerGroup, isPaused *bool) {
 	*isPaused = !*isPaused
 }
 
-func (c *Consumer) distinguishMessage(ctx context.Context, message *sarama.ConsumerMessage) error {
+func (c *Consumer) distinguishMessage(ctx context.Context, message *sarama.ConsumerMessage) {
 	if message.Topic == "conversation.signal" {
 		var m payload.OnlineConversationSignal
 		err := json.Unmarshal(message.Value, &m)
@@ -169,10 +164,8 @@ func (c *Consumer) distinguishMessage(ctx context.Context, message *sarama.Consu
 			slog.Error("fail to unmarshal payload value",
 				"err", err,
 				"payload.Value", message.Value)
-			return err
+			return
 		}
 		c.service.PropagateSignal(ctx, m.ToIds, m.FromId, m.Signal)
-		return nil
 	}
-	return errors.New("this topic does not exist")
 }

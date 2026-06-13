@@ -11,7 +11,14 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) ManageMessage(ctx context.Context, id uuid.UUID, fromId uuid.UUID, toIdType string, toId uuid.UUID, contentType string, contents []string) error {
+func (s *Service) ManageMessage(
+	ctx context.Context,
+	id, fromId uuid.UUID,
+	toIdType string,
+	toId uuid.UUID,
+	contentType string,
+	contents []string,
+) {
 	var toIds [][]byte
 	roomId := toId
 	if toIdType == "personal" {
@@ -21,7 +28,7 @@ func (s *Service) ManageMessage(ctx context.Context, id uuid.UUID, fromId uuid.U
 	if toIdType == "room" {
 		participantIds, err := s.repository.FindParticipantIds(ctx, gocql.UUID(toId))
 		if err != nil {
-			return err
+			return
 		}
 		for _, pid := range participantIds {
 			toIds = append(toIds, pid[:])
@@ -57,7 +64,7 @@ func (s *Service) ManageMessage(ctx context.Context, id uuid.UUID, fromId uuid.U
 		wg.Wait()
 		err := errors.Join(es...)
 		if err != nil {
-			return err
+			return
 		}
 	}
 
@@ -72,8 +79,7 @@ func (s *Service) ManageMessage(ctx context.Context, id uuid.UUID, fromId uuid.U
 
 	err := s.producer.PushMessage("manage_message.prepared", nil, p)
 	if err != nil {
-		return err
+		return
 	}
-
-	return nil
+	return
 }

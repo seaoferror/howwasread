@@ -15,7 +15,15 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) PreprocessNotification(ctx context.Context, notificationId uint8, messageId uuid.UUID, toIds [][]byte, roomId, fromId uuid.UUID, contentType string, content []string) error {
+func (s *Service) PreprocessNotification(
+	ctx context.Context,
+	notificationId uint8,
+	messageId uuid.UUID,
+	toIds [][]byte,
+	roomId, fromId uuid.UUID,
+	contentType string,
+	content []string,
+) {
 	log.Print("start notify message...")
 	var em sync.Mutex
 	var es []error
@@ -53,19 +61,19 @@ func (s *Service) PreprocessNotification(ctx context.Context, notificationId uin
 	wg.Wait()
 	err0 := errors.Join(es...)
 	if err0 != nil {
-		return err0
+		return
 	}
 
 	senderName, err := s.repository.FindNameById(ctx, gocql.UUID(fromId))
 	if err != nil {
-		return err
+		return
 	}
 	var roomName string
 	if !bytes.Equal(toIds[0], roomId[:]) {
 		roomName, err = s.repository.FindRoomNameById(ctx, gocql.UUID(roomId))
 	}
 	if err != nil {
-		return err
+		return
 	}
 
 	p := payload.NotificationMessage{
@@ -78,7 +86,7 @@ func (s *Service) PreprocessNotification(ctx context.Context, notificationId uin
 		imageURL, err1 := s.generateSignedURL(contentType, content[0])
 		if err1 != nil {
 			slog.Error("fail to generate Signed URL", "err", err1)
-			return err1
+			return
 		}
 		p.ImageURL = imageURL
 	}
@@ -92,17 +100,17 @@ func (s *Service) PreprocessNotification(ctx context.Context, notificationId uin
 		p.TokenMap = fcmtm
 		err = s.producer.PushMessage("fcm_notification", kafkaKey, payload.Marshal(p))
 		if err != nil {
-			return err
+			return
 		}
 	}
 	if len(apntm) > 0 {
 		p.TokenMap = apntm
 		err = s.producer.PushMessage("apn_notification", kafkaKey, payload.Marshal(p))
 		if err != nil {
-			return err
+			return
 		}
 	}
-	return nil
+	return
 }
 
 func (s *Service) generateSignedURL(contentType, filename string) (string, error) {

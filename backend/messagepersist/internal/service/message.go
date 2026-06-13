@@ -10,7 +10,14 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) PersistMessage(ctx context.Context, id uuid.UUID, toIds [][]byte, roomId uuid.UUID, fromId uuid.UUID, contentType string, contents []string) error {
+func (s *Service) PersistMessage(
+	ctx context.Context,
+	id uuid.UUID,
+	toIds [][]byte,
+	roomId, fromId uuid.UUID,
+	contentType string,
+	contents []string,
+) {
 	var wg sync.WaitGroup
 	var es []error
 	var em sync.Mutex
@@ -38,7 +45,7 @@ func (s *Service) PersistMessage(ctx context.Context, id uuid.UUID, toIds [][]by
 	wg.Wait()
 	err0 := errors.Join(es...)
 	if err0 != nil {
-		return err0
+		return
 	}
-	return nil
+	return
 }

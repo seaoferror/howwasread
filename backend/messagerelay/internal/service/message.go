@@ -16,7 +16,14 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte, roomId uuid.UUID, fromId uuid.UUID, contentType string, contents []string) error {
+func (s *Service) RelayMessage(
+	ctx context.Context,
+	id uuid.UUID,
+	toIds [][]byte,
+	roomId, fromId uuid.UUID,
+	contentType string,
+	contents []string,
+) {
 	var wg sync.WaitGroup
 	relayToIdsByIP := make(map[string][][]byte)
 	var rm sync.Mutex
@@ -61,7 +68,7 @@ func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte
 		})
 		err := s.producer.PushMessage("preprocess_notification", nil, p)
 		if err != nil {
-			return err
+			return
 		}
 		pushToIds = nil
 	}
@@ -169,10 +176,10 @@ func (s *Service) RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte
 		})
 		err := s.producer.PushMessage("preprocess_notification", nil, p)
 		if err != nil {
-			return err
+			return
 		}
 	}
-	return nil
+	return
 }
 
 func (s *Service) checkAndRemoveStaleIP(tid []byte, ip string) {

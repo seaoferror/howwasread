@@ -13,13 +13,18 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) SendNotification(ctx context.Context, messageId uuid.UUID, notificationId uint8, tokenMap map[string]uuid.UUIDs, roomName, senderName, text, imageURL string) error {
+func (s *Service) SendNotification(
+	ctx context.Context,
+	messageId uuid.UUID,
+	notificationId uint8,
+	tokenMap map[string]uuid.UUIDs,
+	roomName, senderName, text, imageURL string) {
 	did, err := s.repository.DidNotification(ctx, string(messageId[:]), string(notificationId))
 	if err != nil {
-		return err
+		return
 	}
 	if did {
-		return nil
+		return
 	}
 	var wg sync.WaitGroup
 	var em sync.Mutex
@@ -46,11 +51,11 @@ func (s *Service) SendNotification(ctx context.Context, messageId uuid.UUID, not
 	defer cancel()
 	br, err := s.fcmClient.SendEachForMulticast(ctxf, message)
 	if err != nil {
-		return err
+		return
 	}
 	err = s.repository.MarkNotification(ctx, string(messageId[:]), string(notificationId))
 	if err != nil {
-		return err
+		return
 	}
 	if br.FailureCount > 0 {
 		for i, resp := range br.Responses {
@@ -77,7 +82,7 @@ func (s *Service) SendNotification(ctx context.Context, messageId uuid.UUID, not
 	wg.Wait()
 	err = errors.Join(es...)
 	if err != nil {
-		return err
+		return
 	}
-	return nil
+	return
 }

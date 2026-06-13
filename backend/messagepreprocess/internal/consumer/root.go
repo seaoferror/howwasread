@@ -6,7 +6,6 @@ import (
 	"backend/messagepreprocess/internal/service"
 	"context"
 	"encoding/json"
-	"errors"
 	"log"
 	"log/slog"
 	"os"
@@ -81,11 +80,7 @@ func (c *Consumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim saram
 		select {
 		case msg := <-claim.Messages():
 			log.Print("Kafka message incoming...")
-			err := c.distinguishMessage(session.Context(), msg)
-			if err != nil {
-				log.Printf("Fail to manage message: %v", err)
-				return err
-			}
+			c.distinguishMessage(session.Context(), msg)
 			session.MarkMessage(msg, "")
 			continue
 		case <-session.Context().Done():
@@ -102,7 +97,7 @@ func (c *Consumer) GetMessage(topics []string) error {
 			log.Printf("Consumer group error: %v", err)
 		}
 	}()
-	
+
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
@@ -161,7 +156,10 @@ func toggleConsumptionFlow(client sarama.ConsumerGroup, isPaused *bool) {
 	*isPaused = !*isPaused
 }
 
-func (c *Consumer) distinguishMessage(ctx context.Context, message *sarama.ConsumerMessage) error {
+func (c *Consumer) distinguishMessage(
+	ctx context.Context,
+	message *sarama.ConsumerMessage,
+) {
 	if message.Topic == "chat.message" {
 		var p payload.ChatMessage
 		err := json.Unmarshal(message.Value, &p)
@@ -169,13 +167,8 @@ func (c *Consumer) distinguishMessage(ctx context.Context, message *sarama.Consu
 			slog.Error("fail to unmarshal payload value",
 				"err", err,
 				"payload.Value", message.Value)
-			return err
+			return
 		}
-		err = c.service.ManageMessage(ctx, uuid.UUID(p.Id), uuid.UUID(p.FromId), p.ToIdType, uuid.UUID(p.ToId), p.ContentType, p.Contents)
-		if err != nil {
-			return err
-		}
-		return nil
+		c.service.ManageMessage(ctx, uuid.UUID(p.Id), uuid.UUID(p.FromId), p.ToIdType, uuid.UUID(p.ToId), p.ContentType, p.Contents)
 	}
-	return errors.New("this topic does not exist")
 }
