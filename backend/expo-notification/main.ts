@@ -30,30 +30,34 @@ async function main() {
   consumer.run({
     partitionsConsumedConcurrently: 6,
     eachMessage: async ({ message }) => {
-      const { value, key, member } = extractData(message);
-      const did = await valkey.sismember(key, member);
-      if (did) {
-        return;
-      }
-      const failedIdPairs = await sendPushNotification(
-        expo,
-        () => valkey.sadd(key, [member]),
-        value.tokenMap,
-        value.roomName,
-        value.senderName,
-        value.text,
-        value.imageURL,
-      );
-      if (failedIdPairs.length > 0) {
-        await Promise.all(
-          failedIdPairs.map((failedIdPair) => {
-            return removePushTokenByIdAndDeviceId(
-              cassandra,
-              failedIdPair[0],
-              failedIdPair[1],
-            );
-          }),
+      try {
+        const { value, key, member } = extractData(message);
+        const did = await valkey.sismember(key, member);
+        if (did) {
+          return;
+        }
+        const failedIdPairs = await sendPushNotification(
+          expo,
+          () => valkey.sadd(key, [member]),
+          value.tokenMap,
+          value.roomName,
+          value.senderName,
+          value.text,
+          value.imageURL,
         );
+        if (failedIdPairs.length > 0) {
+          await Promise.all(
+            failedIdPairs.map((failedIdPair) => {
+              return removePushTokenByIdAndDeviceId(
+                cassandra,
+                failedIdPair[0],
+                failedIdPair[1],
+              );
+            }),
+          );
+        }
+      } catch (error) {
+        console.log("Error message: ",error);
       }
     },
   });
