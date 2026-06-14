@@ -12,10 +12,10 @@ config.server.enhanceMiddleware = (middleware) => {
   };
 };
 
-config.transformer.minifierConfig = {
-  compress: {
-    drop_console: true,
-  },
-};
+// config.transformer.minifierConfig = {
+//   compress: {
+//     drop_console: true,
+//   },
+// };
 
 module.exports = config;
