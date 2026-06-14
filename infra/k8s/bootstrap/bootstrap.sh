@@ -18,4 +18,6 @@ kubectl apply -f sealed-secrets-key.yaml
 
 kubectl rollout restart deployment sealed-secrets-controller -n kube-system
 
+helm upgrade --install holiday . -n backend
+
 kubectl get secret -n argocd argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d

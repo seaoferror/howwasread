@@ -37,11 +37,11 @@ export async function createKafkaConsumer() {
     "security.protocol":
       process.env.PROFILE === "production" ? "ssl" : undefined,
     "ssl.ca.location":
-      process.env.PROFILE === "production" ? "/cert/kafka/ca.crt" : undefined,
+      process.env.PROFILE === "production" ? "/cert/kafka/cluster/ca.crt" : undefined,
     "ssl.certificate.location":
-      process.env.PROFILE === "production" ? "/cert/kafka/user.crt" : undefined,
+      process.env.PROFILE === "production" ? "/cert/kafka/user/user.crt" : undefined,
     "ssl.key.location":
-      process.env.PROFILE === "production" ? "/cert/kafka/user.key" : undefined,
+      process.env.PROFILE === "production" ? "/cert/kafka/user/user.key" : undefined,
 
     "group.id": APN_NOTIFICATION,
     "auto.offset.reset": "earliest",
