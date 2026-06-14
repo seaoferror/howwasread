@@ -24,4 +24,4 @@ COPY --from=stage1 /app/dist ./dist
 # Run as a secure, non-root user (provided automatically by the Node image)
 USER node
 
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/main.js"]
