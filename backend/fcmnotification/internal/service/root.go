@@ -1,6 +1,7 @@
 package service
 
 import (
+	"backend/common/producer"
 	"backend/fcmnotification/internal/repository"
 	"context"
 
@@ -10,11 +11,12 @@ import (
 )
 
 type Service struct {
+	producer   *producer.Producer
 	repository *repository.Repository
 	fcmClient  *messaging.Client
 }
 
-func NewService(r *repository.Repository) *Service {
+func NewService(r *repository.Repository, p *producer.Producer) *Service {
 	opt := option.WithCredentialsFile("cert/firebase/firebase-adminsdk.json")
 	app, err := firebase.NewApp(context.Background(), nil, opt)
 	if err != nil {
@@ -27,6 +29,7 @@ func NewService(r *repository.Repository) *Service {
 	}
 
 	s := Service{
+		producer:   p,
 		repository: r,
 		fcmClient:  fcmClient,
 	}

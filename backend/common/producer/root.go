@@ -37,7 +37,7 @@ func createProducer(clientIdPrefix string) (sarama.SyncProducer, error) {
 	}
 
 	if os.Getenv("PROFILE") == "production" {
-		tlsConfig, err1 := tlsconfig.Create("kafka/user/user.crt", "kafka/user/user.key", "kafka/cluster/ca.crt")
+		tlsConfig, err1 := tlsconfig.Create("cert/kafka/user/user.crt", "cert/kafka/user/user.key", "cert/kafka/cluster/ca.crt")
 		if err1 != nil {
 			return nil, err1
 		}
@@ -83,6 +83,13 @@ func (p *Producer) PushMessage(topic string, key, value []byte) error {
 	log.Print("Success to produce payload", "partition", partition)
 	return nil
 }
+
+//func (p *Producer) PushRetryMessage(
+//	topic string,
+//	key, value []byte,
+//	retryBackoff time.Duration,
+//	errorMessage string) error {
+//}
 
 func (p *Producer) Close() error {
 	return p.syncProducer.Close()

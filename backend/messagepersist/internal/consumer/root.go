@@ -44,7 +44,7 @@ func connectConsumer(groupID string) (sarama.ConsumerGroup, error) {
 	}
 	cfg.ClientID = "persist_message." + id.String()
 	if os.Getenv("PROFILE") == "production" {
-		tlsConfig, err1 := tlsconfig.Create("kafka/user/user.crt", "kafka/user/user.key", "kafka/cluster/ca.crt")
+		tlsConfig, err1 := tlsconfig.Create("cert/kafka/user/user.crt", "cert/kafka/user/user.key", "cert/kafka/cluster/ca.crt")
 		if err1 != nil {
 			return nil, err1
 		}

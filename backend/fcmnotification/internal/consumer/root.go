@@ -1,11 +1,9 @@
 package consumer
 
 import (
-	"backend/common/payload"
 	"backend/common/tlsconfig"
 	"backend/fcmnotification/internal/service"
 	"context"
-	"encoding/json"
 	"log"
 	"log/slog"
 	"os"
@@ -44,14 +42,14 @@ func connectConsumer(groupID string) (sarama.ConsumerGroup, error) {
 	}
 
 	if os.Getenv("PROFILE") == "production" {
-		tlsConfig, err1 := tlsconfig.Create("kafka/user/user.crt", "kafka/user/user.key", "kafka/cluster/ca.crt")
+		tlsConfig, err1 := tlsconfig.Create("cert/kafka/user/user.crt", "cert/kafka/user/user.key", "cert/kafka/cluster/ca.crt")
 		if err1 != nil {
 			return nil, err1
 		}
 		cfg.Net.TLS.Enable = true
 		cfg.Net.TLS.Config = tlsConfig
 	}
-	cfg.ClientID = "consumer.fcm_notification." + id.String()
+	cfg.ClientID = "consumer_fcm_notification." + id.String()
 	//cfg.Net.SASL.Enable = true
 	//cfg.Net.SASL.Version = 1
 	//cfg.Net.SASL.Mechanism = sarama.SASLTypePlaintext
@@ -159,14 +157,14 @@ func toggleConsumptionFlow(client sarama.ConsumerGroup, isPaused *bool) {
 }
 
 func (c *Consumer) distinguishMessage(ctx context.Context, message *sarama.ConsumerMessage) {
-	if message.Topic == "fcm_notification" {
-		var p payload.NotificationMessage
-		err := json.Unmarshal(message.Value, &p)
-		if err != nil {
-			slog.Error("fail to unmarshal payload value",
-				"err", err,
-				"payload.Value", message.Value)
-		}
-		c.service.SendNotification(ctx, uuid.UUID(message.Key[:16]), message.Key[16], p.TokenMap, p.RoomName, p.SenderName, p.Text, p.ImageURL)
-	}
+	//ts := strings.Split(message.Topic, "-")
+	//if len(ts) > 1 {
+	//retryBackOff, err := strconv.Atoi(ts[1])
+	//if err != nil {
+	//	slog.Error("fail to parse int from string", "err", err)
+	//	return
+	//}
+	c.service.SendNotification(ctx, uuid.UUID(message.Key[:16]), message.Key[16], message.Value)
+	//if len(ts) == 1 {
+	//}
 }

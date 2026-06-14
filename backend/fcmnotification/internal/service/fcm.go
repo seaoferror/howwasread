@@ -1,7 +1,9 @@
 package service
 
 import (
+	"backend/common/payload"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -15,17 +17,40 @@ import (
 
 func (s *Service) SendNotification(
 	ctx context.Context,
+	//originTopic string,
+	//retryBackoff time.Duration,
 	messageId uuid.UUID,
 	notificationId uint8,
-	tokenMap map[string]uuid.UUIDs,
-	roomName, senderName, text, imageURL string) {
+	value []byte) {
 	did, err := s.repository.DidNotification(ctx, string(messageId[:]), string(notificationId))
 	if err != nil {
+		//err = s.producer.PushRetryMessage(
+		//	fmt.Sprintf("%v-%v", originTopic, "retry"),
+		//	append(messageId[:], notificationId), value,
+		//	50*time.Millisecond,
+		//	err.Error(),
+		//)
+		//if err != nil {
+		//	panic(err)
+		//}
 		return
 	}
 	if did {
 		return
 	}
+	var p payload.NotificationMessage
+	err = json.Unmarshal(value, &p)
+	if err != nil {
+		slog.Error("fail to unmarshal payload value",
+			"err", err,
+			"value", value)
+		return
+	}
+	tokenMap := p.TokenMap
+	roomName := p.RoomName
+	senderName := p.SenderName
+	text := p.Text
+	imageURL := p.ImageURL
 	var wg sync.WaitGroup
 	var em sync.Mutex
 	var es []error
@@ -59,9 +84,7 @@ func (s *Service) SendNotification(
 	}
 	if br.FailureCount > 0 {
 		for i, resp := range br.Responses {
-			if !resp.Success {
-				slog.Info("fail to send fcm notification",
-					"failedId", tokenMap[ts[i]])
+			if messaging.IsUnregistered(resp.Error) || messaging.IsInvalidArgument(resp.Error) {
 				failedIds = append(failedIds, tokenMap[ts[i]])
 			}
 		}

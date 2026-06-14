@@ -10,6 +10,7 @@ variable "ecr_repos" {
     "backend/messagerelay",
     "backend/notification",
     "backend/onlineconversation",
+    "backend/offlineconversation",
     "backend/signalrelay"
   ]
 }

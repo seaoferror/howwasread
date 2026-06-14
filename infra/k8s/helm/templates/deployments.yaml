@@ -42,9 +42,9 @@ spec:
             - secretRef:
                 name: aws
             {{- end }}
-            {{- if $app.mongodb }}
+            {{- if $app.tidb }}
             - secretRef:
-                name: mongodb
+                name: tidb
             {{- end }}
             {{- if $app.smtp }}
             - secretRef:
