@@ -1,8 +1,8 @@
 import { RegisterNotificationRequest } from "@/types/token";
-import { localDevInstance } from "@/api/axios";
+import { axiosInstance } from "@/api/axios";
 
 export async function registerNotification(body: RegisterNotificationRequest) {
   console.log(body);
-  const { data } = await localDevInstance.post("/notification/register", body);
+  const { data } = await axiosInstance.post("/notification/register", body);
   return data;
 }

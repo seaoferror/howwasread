@@ -69,7 +69,7 @@ export default function OfflineConversationMap() {
   );
 
   const handleCameraMove = (event: CameraMoveEvent) => {
-    console.log(event.zoom);
+    // console.log(event.zoom);
     setZoom(event.zoom);
     const lat = event.coordinates.latitude;
     const lng = event.coordinates.longitude;

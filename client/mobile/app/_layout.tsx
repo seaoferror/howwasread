@@ -5,7 +5,6 @@ import Toast from "react-native-toast-message";
 import { ActionSheetProvider } from "@expo/react-native-action-sheet";
 import { SQLiteProvider, useSQLiteContext } from "expo-sqlite";
 import { parse as uuidParse, stringify as uuidStringify } from "uuid";
-import { baseUrl, localDevId } from "@/api/axios";
 import { MessagingResponse } from "@/types/chat";
 import { useCallback, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -66,10 +65,10 @@ function RootNavigator() {
           playsInSilentMode: true,
         });
         let deviceId = await getSecureAsync("deviceId");
-        console.log(deviceId);
+        // console.log(deviceId);
         if (!deviceId) {
           deviceId = randomUUID();
-          console.log(deviceId);
+          // console.log(deviceId);
           await setSecure("deviceId", deviceId);
         }
         try {
@@ -113,12 +112,12 @@ function RootNavigator() {
         }
 
         ws.current = new WebSocket(
-          `ws://${baseUrl.ios}:8080/chat/messaging/connect`,
+          `wss://${process.env.EXPO_BASE_URL}/chat/messaging/connect`,
           undefined,
           {
             headers: {
               Authorization: `Bearer ${await getSecureAsync("accessToken")}`,
-              "X-User-Id": `${Platform.OS === "ios" ? localDevId.ios : localDevId.android}`,
+              // "X-User-Id": `${Platform.OS === "ios" ? localDevId.ios : localDevId.android}`,
               "Device-Id": await getSecureAsync("deviceId"),
             },
           },
@@ -130,12 +129,11 @@ function RootNavigator() {
           await saveRecentMessage(db, data, roomId, timestamp);
         };
       };
-      // if (id)
-      connectMessaging();
+      if (id) connectMessaging();
       return () => {
         ws.current?.close();
       };
-    }, [db]),
+    }, []),
   );
   return (
     <Stack>

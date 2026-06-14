@@ -18,7 +18,6 @@ import {
   mediaDevices,
   MediaStream,
 } from "react-native-webrtc";
-import { baseUrl, localDevId } from "@/api/axios";
 import { getSecureAsync } from "@/util/storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import OnlineConversationRoomHeader from "@/components/conversation/OnlineConversationRoomHeader";
@@ -45,7 +44,6 @@ declare const WebSocket: {
 
 export default function OnlineConversationScreen() {
   const { profile } = useMyProfile();
-  const myId = Platform.OS === "ios" ? localDevId.ios : localDevId.android;
 
   const {
     id: conversationId,
@@ -102,7 +100,7 @@ export default function OnlineConversationScreen() {
     if (localAudio.current) {
       const audioTrack = localAudio.current.getAudioTracks()[0];
       audioTrack.enabled = !audioTrack.enabled;
-      participantMutes.current[myId] = !participantMutes.current[myId];
+      participantMutes.current[profile.id] = !participantMutes.current[profile.id];
       ws.current?.send(
         JSON.stringify({
           toId: Object.keys(peers.current),
@@ -190,25 +188,25 @@ export default function OnlineConversationScreen() {
     const joinConversation = async () => {
       console.log("try to connect ws");
       ws.current = new WebSocket(
-        `ws://${baseUrl.ios}:8080/online/conversation/join?id=${conversationId}`,
+        `wss://${process.env.EXPO_BASE_URL}/online/conversation/join?id=${conversationId}`,
         undefined,
         {
           headers: {
             Authorization: `Bearer ${await getSecureAsync("accessToken")}`,
-            "X-User-Id": `${Platform.OS === "ios" ? localDevId.ios : localDevId.android}`,
+            // "X-User-Id": `${Platform.OS === "ios" ? localDevId.ios : localDevId.android}`,
           },
         },
       );
       console.log(
-        `ws://${baseUrl.ios}:8080/online/conversation/join?id=${conversationId}`,
+        `wss://${process.env.EXPO_BASE_URL}/online/conversation/join?id=${conversationId}`,
       );
       localAudio.current = await mediaDevices.getUserMedia({
         audio: true,
         video: false,
       });
-      participantIds.current = [myId];
-      participantNames.current[myId] = profile.name;
-      participantMutes.current[myId] = false;
+      participantIds.current = [profile.id];
+      participantNames.current[profile.id] = profile.name;
+      participantMutes.current[profile.id] = false;
       coordinateSeat();
 
       ws.current.onmessage = async (event) => {
@@ -406,7 +404,7 @@ export default function OnlineConversationScreen() {
                     size={24}
                     color="black"
                     onPress={
-                      seat.id !== myId
+                      seat.id !== profile.id
                         ? () =>
                             handlePressParticipant(
                               seat.id ?? "",

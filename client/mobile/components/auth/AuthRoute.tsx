@@ -12,9 +12,15 @@ export default function AuthRoute({ children }: AuthRouteProps) {
   const { profile } = useMyProfile();
 
   useFocusEffect(() => {
-    // !id && router.replace("/auth");
-    // !profile.name && router.replace("/profile/name?newcomer=true")
-    !id && router.replace("/conversations");
+    if (!id) {
+      router.replace("/auth");
+      return
+    }
+    if (!profile.name) {
+      router.replace("/profile/name?newcomer=true");
+      return;
+    }
+    router.replace("/conversations")
   });
   return <>{children}</>;
 }
