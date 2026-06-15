@@ -112,7 +112,7 @@ function RootNavigator() {
         }
 
         ws.current = new WebSocket(
-          `wss://${process.env.EXPO_BASE_URL}/chat/messaging/connect`,
+          `wss://${process.env.EXPO_PUBLIC_API_URL}/chat/messaging/connect`,
           undefined,
           {
             headers: {

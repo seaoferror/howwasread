@@ -15,7 +15,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) SignInWithApple(ctx context.Context, user, nonce, identityToken, email string) (*dto.SignInWithAppleResponse, string, error) {
+func (s *Service) SignInWithApple(ctx context.Context, user, nonce, identityToken string, email *string) (*dto.SignInWithAppleResponse, string, error) {
 	keyReq, err := http.NewRequestWithContext(
 		ctx,
 		http.MethodGet,
@@ -120,8 +120,8 @@ func (s *Service) SignInWithApple(ctx context.Context, user, nonce, identityToke
 		return nil, "", ErrSignInWithApple
 	}
 
-	if email != "" {
-		_, phoneNumberVerified, id, _, role, err := s.repository.FindLoginInfoByEmail(email)
+	if email != nil {
+		_, phoneNumberVerified, id, _, role, err := s.repository.FindLoginInfoByEmail(*email)
 		if errors.Is(err, gocql.ErrNotFound) {
 			err = nil
 			idv7, err := uuid.NewV7()
@@ -130,7 +130,7 @@ func (s *Service) SignInWithApple(ctx context.Context, user, nonce, identityToke
 				return nil, "", ErrInternalServer
 			}
 			id = gocql.UUID(idv7)
-			err = s.repository.SaveAppleSignInInfo(id, user, email, false)
+			err = s.repository.SaveAppleSignInInfo(id, user, *email, false)
 			if err != nil {
 				return nil, "", ErrInternalServer
 			}
@@ -141,7 +141,7 @@ func (s *Service) SignInWithApple(ctx context.Context, user, nonce, identityToke
 				return nil, "", ErrInternalServer
 			}
 
-			err = s.repository.SaveEmailBySessionId(sessionId, email)
+			err = s.repository.SaveEmailBySessionId(sessionId, *email)
 			if err != nil {
 				return nil, "", ErrInternalServer
 			}
@@ -156,7 +156,7 @@ func (s *Service) SignInWithApple(ctx context.Context, user, nonce, identityToke
 			return nil, "", ErrSignInWithApple
 		}
 
-		err = s.repository.SaveAppleSignInInfo(id, user, email, phoneNumberVerified)
+		err = s.repository.SaveAppleSignInInfo(id, user, *email, phoneNumberVerified)
 		if err != nil {
 			return nil, "", ErrInternalServer
 		}

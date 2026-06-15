@@ -11,9 +11,9 @@ import (
 )
 
 func infoRouter(c *Controller) {
-	c.Router(GET, "/profile/my", c.getMyProfile)
-	c.Router(PUT, "/profile/name", c.setName)
-	c.Router(GET, "/profile", c.getProfile)
+	c.Router(GET, "/chat/profile/my", c.getMyProfile)
+	c.Router(PUT, "/chat/profile/name", c.setName)
+	c.Router(GET, "/chat/profile", c.getProfile)
 	c.Router(GET, "/chat/room/info", c.getChatRoomInfo)
 }
 

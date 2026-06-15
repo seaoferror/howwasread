@@ -2,7 +2,7 @@ import { create } from "axios";
 
 export const axiosInstance = create({
   adapter: "fetch",
-  baseURL: `https://${process.env.EXPO_BASE_URL}`,
+  baseURL: `https://${process.env.EXPO_PUBLIC_API_URL}`,
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",

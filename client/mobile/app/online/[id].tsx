@@ -188,7 +188,7 @@ export default function OnlineConversationScreen() {
     const joinConversation = async () => {
       console.log("try to connect ws");
       ws.current = new WebSocket(
-        `wss://${process.env.EXPO_BASE_URL}/online/conversation/join?id=${conversationId}`,
+        `wss://${process.env.EXPO_PUBLIC_API_URL}/online/conversation/join?id=${conversationId}`,
         undefined,
         {
           headers: {
@@ -198,7 +198,7 @@ export default function OnlineConversationScreen() {
         },
       );
       console.log(
-        `wss://${process.env.EXPO_BASE_URL}/online/conversation/join?id=${conversationId}`,
+        `wss://${process.env.EXPO_PUBLIC_API_URL}/online/conversation/join?id=${conversationId}`,
       );
       localAudio.current = await mediaDevices.getUserMedia({
         audio: true,
