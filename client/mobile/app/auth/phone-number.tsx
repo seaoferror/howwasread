@@ -69,7 +69,7 @@ export default function PhoneNumberScreen() {
     console.log("execute mutate");
     requestSMSOTPMutation.mutate(
       {
-        sessionId: await getSecureAsync("sessionId"),
+        sessionId: await getSecureAsync("sessionId") || null,
         phoneNumber: wholeNumber,
       },
       {

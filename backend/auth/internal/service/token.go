@@ -117,7 +117,7 @@ func createTokenWithJTI(id, jti, role string, secretKey *rsa.PrivateKey, ttl int
 		"exp":  time.Now().Add(time.Second * time.Duration(ttl)).Unix(),
 	}
 
-	token, err = jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString(secretKey)
+	token, err = jwt.NewWithClaims(jwt.SigningMethodRS256, claims).SignedString(secretKey)
 	if err != nil {
 		slog.Error("fail to make token with JTI",
 			"err", err,

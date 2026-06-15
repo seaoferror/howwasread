@@ -44,9 +44,7 @@ function useLoginWithEmail() {
     mutationFn: loginInWithEmail,
     onSuccess: async (data) => {
       if (!data.emailVerified) {
-        setSecure("verificationId", data.verificationId ?? "");
-        const v = await getSecureAsync("verificationId");
-        console.log(v);
+        await setSecure("verificationId", data.verificationId ?? "");
         return;
       }
       if (!data.phoneNumberVerified) {
@@ -85,8 +83,7 @@ function useVerifyEmailOTP() {
     mutationFn: verifyEmailOTP,
     onSuccess: async (data) => {
       console.log(data.sessionId);
-      setSecure("sessionId", data?.sessionId ?? "");
-      console.log(await getSecureAsync("sessionId"));
+      await setSecure("sessionId", data?.sessionId ?? "");
     },
     onError: (error: AxiosError) => {
       Toast.show({
