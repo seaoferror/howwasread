@@ -12,6 +12,7 @@ export default function AuthRoute({ children }: AuthRouteProps) {
   const { profile } = useMyProfile();
 
   useFocusEffect(() => {
+    console.log(id)
     if (!id) {
       router.replace("/auth");
       return

@@ -54,6 +54,7 @@ export default function EmailScreen() {
         <FixedBottomCTA
           label="Confirm"
           onPress={emailOTPForm.handleSubmit(onSubmit)}
+          disabled={verifyEmailOTPMutation.isPending}
         />
       </SafeAreaView>
     </FormProvider>

@@ -60,6 +60,7 @@ export default function LoginScreen() {
         <FixedBottomCTA
           label="login"
           onPress={emailLoginForm.handleSubmit(onSubmit)}
+          disabled={loginWithEmailMutation.isPending}
         />
       </View>
     </FormProvider>

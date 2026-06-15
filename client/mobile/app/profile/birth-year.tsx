@@ -41,6 +41,7 @@ export default function BirthYearScreen() {
         <FixedBottomCTA
           label="Set birth year"
           onPress={birthYearForm.handleSubmit(onSubmit)}
+          disabled={setBirthYearMutation.isPending}
         />
       </SafeAreaView>
     </FormProvider>

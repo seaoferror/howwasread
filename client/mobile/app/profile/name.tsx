@@ -50,6 +50,7 @@ export default function NameScreen() {
         <FixedBottomCTA
           label="Set this name"
           onPress={nameForm.handleSubmit(onSubmit)}
+          disabled={setNameMutation.isPending}
         />
       </SafeAreaView>
     </FormProvider>

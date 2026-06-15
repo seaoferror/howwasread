@@ -36,7 +36,7 @@ export default function SMSScreen() {
     verifySMSOTPMutation.mutate(
       { otp, verificationId, sessionId: await getSecureAsync("sessionId") || null },
       {
-        onSuccess: () => router.replace("/"),
+        onSuccess: () => router.replace("/conversations"),
       },
     );
   };
@@ -50,6 +50,7 @@ export default function SMSScreen() {
         <FixedBottomCTA
           label="Confirm"
           onPress={smsOTPForm.handleSubmit(onSubmit)}
+          disabled={verifySMSOTPMutation.isPending}
         />
       </SafeAreaView>
     </FormProvider>

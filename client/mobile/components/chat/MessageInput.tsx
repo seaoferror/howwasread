@@ -164,6 +164,7 @@ export default function MessageInput() {
               <Pressable
                 style={styles.buttonContainer}
                 onPress={() => handleSendMessage("text", [textContent])}
+                disabled={sendMessageMutation.isPending}
               >
                 <Ionicons name="send-sharp" size={20} color={colors.WHITE} />
               </Pressable>

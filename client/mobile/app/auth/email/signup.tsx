@@ -49,6 +49,7 @@ export default function SignupScreen() {
         <FixedBottomCTA
           label="Sign up"
           onPress={emailSignupForm.handleSubmit(onSubmit)}
+          disabled={signUpWithEmailMutation.isPending}
         />
       </View>
     </FormProvider>

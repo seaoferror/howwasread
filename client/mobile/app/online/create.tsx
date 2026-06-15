@@ -138,6 +138,7 @@ export default function OnlineConversationCreateScreen() {
           <FixedBottomCTA
             label="Create"
             onPress={onlineConversationForm.handleSubmit(onSubmit)}
+            disabled={createOnlineConversationMutation.isPending}
           />
         </KeyboardAvoidingView>
       </View>

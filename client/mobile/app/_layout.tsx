@@ -1,4 +1,4 @@
-import { Stack, useFocusEffect } from "expo-router";
+import { Stack } from "expo-router";
 import { QueryClientProvider } from "@tanstack/react-query";
 import queryClient from "@/api/queryClient";
 import Toast from "react-native-toast-message";
@@ -6,7 +6,7 @@ import { ActionSheetProvider } from "@expo/react-native-action-sheet";
 import { SQLiteProvider, useSQLiteContext } from "expo-sqlite";
 import { parse as uuidParse, stringify as uuidStringify } from "uuid";
 import { MessagingResponse } from "@/types/chat";
-import { useCallback, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { getSecureAsync, setSecure } from "@/util/storage";
 import { Platform } from "react-native";
@@ -57,8 +57,7 @@ function RootNavigator() {
   const ws = useRef<WebSocket>(null);
 
 
-  useFocusEffect(
-    useCallback(() => {
+  useEffect(() => {
       const connectMessaging = async () => {
         await setAudioModeAsync({
           allowsRecording: true,
@@ -133,8 +132,7 @@ function RootNavigator() {
       return () => {
         ws.current?.close();
       };
-    }, []),
-  );
+    }, [id]);
   return (
     <Stack>
       <Stack.Screen name="(init)" options={{ headerShown: false }} />
