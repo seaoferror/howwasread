@@ -49,7 +49,7 @@ func NewRepository() *Repository {
 		InitAddress: []string{os.Getenv("VALKEY_ADDRESS")},
 	}
 	if os.Getenv("PROFILE") == "production" {
-		caCertPEM, err1 := os.ReadFile("/certs/valkey-ca/ca.crt")
+		caCertPEM, err1 := os.ReadFile("/cert/valkey/ca.crt")
 		if err1 != nil {
 			log.Fatalf("Failed to read CA certificate: %v", err1)
 		}

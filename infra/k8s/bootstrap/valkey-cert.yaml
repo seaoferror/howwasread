@@ -18,7 +18,7 @@ spec:
   dnsNames:
     - valkey-valkey-cluster.valkey-system.svc
     - valkey-valkey-cluster.valkey-system.svc.cluster.local
-    - "*.valkey-cluster.valkey-system.svc.cluster.local"
+    - "*valkey-cluster.valkey-system.svc.cluster.local"
   issuerRef:
     name: internal-ca-issuer
     kind: ClusterIssuer

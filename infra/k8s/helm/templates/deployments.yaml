@@ -30,8 +30,6 @@ spec:
                 secretKeyRef:
                   name: valkey
                   key: lule
-            - name: NODE_EXTRA_CA_CERTS
-              value: "/cert/valkey/ca.crt"
           {{- end}}
           envFrom:
             - configMapRef:
