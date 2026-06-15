@@ -1,11 +1,9 @@
-import { queryKey } from "@/constants";
-import { deleteSecure, getSecureAsync, setSecure } from "@/util/storage";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { deleteSecure, setSecure } from "@/util/storage";
+import { useMutation } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import Toast from "react-native-toast-message";
 import {
   deleteAccount,
-  getMyId,
   loginInWithEmail,
   requestSMSOTP,
   signInWithApple,
@@ -13,15 +11,6 @@ import {
   verifyEmailOTP,
   verifySMSOTP,
 } from "@/api/auth";
-
-function useGetMyId() {
-  const { data } = useQuery({
-    queryFn: getMyId,
-    queryKey: [queryKey.AUTH, queryKey.GET_MY_ID],
-  });
-
-  return { data };
-}
 
 function useSignupWithEmail() {
   return useMutation({
@@ -149,7 +138,6 @@ function useDeleteAccount() {
 }
 
 export function useAuth() {
-  const { data } = useGetMyId();
   const signUpWithEmailMutation = useSignupWithEmail();
   const loginWithEmailMutation = useLoginWithEmail();
   const verifyEmailOTPMutation = useVerifyEmailOTP();
@@ -159,7 +147,6 @@ export function useAuth() {
   const deleteAccountMutation = useDeleteAccount();
 
   return {
-    id: data?.id,
     signUpWithEmailMutation,
     loginWithEmailMutation,
     verifyEmailOTPMutation,

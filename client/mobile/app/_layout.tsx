@@ -7,8 +7,7 @@ import { SQLiteProvider, useSQLiteContext } from "expo-sqlite";
 import { parse as uuidParse, stringify as uuidStringify } from "uuid";
 import { MessagingResponse } from "@/types/chat";
 import { useEffect, useRef } from "react";
-import { useAuth } from "@/hooks/useAuth";
-import { getSecureAsync, setSecure } from "@/util/storage";
+import { getSecure, getSecureAsync, setSecure } from "@/util/storage";
 import { Platform } from "react-native";
 import { getTimestamp } from "@/util/time";
 import { getRecentMessages } from "@/api/chat";
@@ -21,6 +20,7 @@ import {
 } from "expo-notifications";
 import { registerNotification } from "@/api/notification";
 import { setAudioModeAsync } from "expo-audio";
+import { useMyProfile } from "@/hooks/useMyProfile";
 
 declare const WebSocket: {
   prototype: WebSocket;
@@ -53,86 +53,86 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const db = useSQLiteContext();
-  const { id } = useAuth();
+  const { profile } = useMyProfile();
   const ws = useRef<WebSocket>(null);
 
-
   useEffect(() => {
-      const connectMessaging = async () => {
-        await setAudioModeAsync({
-          allowsRecording: true,
-          playsInSilentMode: true,
-        });
-        let deviceId = await getSecureAsync("deviceId");
+    console.log(getSecure("accessToken"));
+    const connectMessaging = async () => {
+      await setAudioModeAsync({
+        allowsRecording: true,
+        playsInSilentMode: true,
+      });
+      let deviceId = await getSecureAsync("deviceId");
+      // console.log(deviceId);
+      if (!deviceId) {
+        deviceId = randomUUID();
         // console.log(deviceId);
-        if (!deviceId) {
-          deviceId = randomUUID();
-          // console.log(deviceId);
-          await setSecure("deviceId", deviceId);
-        }
-        try {
-          await requestPermissionsAsync({
-            ios: {
-              allowAlert: true,
-              allowBadge: true,
-              allowSound: true,
-            },
-          });
-          await registerNotification({
-            deviceId: deviceId,
-            os: Platform.OS,
-            devicePushToken:
-              Platform.OS === "android"
-                ? (await getDevicePushTokenAsync()).data
-                : (await getExpoPushTokenAsync()).data,
-          });
-        } catch (error) {
-          console.log(error);
-        }
-
-        const row = await db.getFirstAsync<{ id: Uint8Array }>(
-          `SELECT id FROM message ORDER BY rowid DESC LIMIT 1`,
-        );
-        console.log(row);
-        let cursor = "00000000-0000-7000-8000-000000000000";
-        if (row) {
-          cursor = uuidStringify(row.id);
-          console.log("last inserted ID:", cursor);
-        }
-        const messages = await getRecentMessages(cursor);
-        if (messages && messages.length > 0) {
-          await Promise.all(
-            messages.map((m) => {
-              const timestamp = getTimestamp(m.id);
-              const roomId = uuidParse(m.roomId);
-              return saveRecentMessage(db, m, roomId, timestamp);
-            }),
-          );
-        }
-
-        ws.current = new WebSocket(
-          `wss://${process.env.EXPO_PUBLIC_API_URL}/chat/messaging/connect`,
-          undefined,
-          {
-            headers: {
-              Authorization: `Bearer ${await getSecureAsync("accessToken")}`,
-              // "X-User-Id": `${Platform.OS === "ios" ? localDevId.ios : localDevId.android}`,
-              "Device-Id": await getSecureAsync("deviceId"),
-            },
+        await setSecure("deviceId", deviceId);
+      }
+      try {
+        await requestPermissionsAsync({
+          ios: {
+            allowAlert: true,
+            allowBadge: true,
+            allowSound: true,
           },
+        });
+        await registerNotification({
+          deviceId: deviceId,
+          os: Platform.OS,
+          devicePushToken:
+            Platform.OS === "android"
+              ? (await getDevicePushTokenAsync()).data
+              : (await getExpoPushTokenAsync()).data,
+        });
+      } catch (error) {
+        console.log(error);
+      }
+
+      const row = await db.getFirstAsync<{ id: Uint8Array }>(
+        `SELECT id FROM message ORDER BY rowid DESC LIMIT 1`,
+      );
+      console.log(row);
+      let cursor = "00000000-0000-7000-8000-000000000000";
+      if (row) {
+        cursor = uuidStringify(row.id);
+        console.log("last inserted ID:", cursor);
+      }
+      const messages = await getRecentMessages(cursor);
+      if (messages && messages.length > 0) {
+        await Promise.all(
+          messages.map((m) => {
+            const timestamp = getTimestamp(m.id);
+            const roomId = uuidParse(m.roomId);
+            return saveRecentMessage(db, m, roomId, timestamp);
+          }),
         );
-        ws.current.onmessage = async (event) => {
-          const data: MessagingResponse = JSON.parse(event.data);
-          const timestamp = getTimestamp(data.id);
-          const roomId = uuidParse(data.roomId);
-          await saveRecentMessage(db, data, roomId, timestamp);
-        };
+      }
+
+      ws.current = new WebSocket(
+        `wss://${process.env.EXPO_PUBLIC_API_URL}/chat/messaging/connect`,
+        undefined,
+        {
+          headers: {
+            Authorization: `Bearer ${await getSecureAsync("accessToken")}`,
+            // "X-User-Id": `${Platform.OS === "ios" ? localDevId.ios : localDevId.android}`,
+            "Device-Id": await getSecureAsync("deviceId"),
+          },
+        },
+      );
+      ws.current.onmessage = async (event) => {
+        const data: MessagingResponse = JSON.parse(event.data);
+        const timestamp = getTimestamp(data.id);
+        const roomId = uuidParse(data.roomId);
+        await saveRecentMessage(db, data, roomId, timestamp);
       };
-      if (id) connectMessaging();
-      return () => {
-        ws.current?.close();
-      };
-    }, [id]);
+    };
+    if (profile.name) connectMessaging();
+    return () => {
+      ws.current?.close();
+    };
+  }, [profile]);
   return (
     <Stack>
       <Stack.Screen name="(init)" options={{ headerShown: false }} />

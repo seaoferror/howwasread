@@ -2,7 +2,6 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors } from "@/constants";
 import { router } from "expo-router";
 import { OnlineConversationFeedResponse } from "@/types/conversation";
-import { useAuth } from "@/hooks/useAuth";
 
 interface OnlineConversationItemProps {
   conversation: OnlineConversationFeedResponse;
@@ -11,7 +10,6 @@ interface OnlineConversationItemProps {
 export default function OnlineConversationItem({
   conversation,
 }: OnlineConversationItemProps) {
-  const { id } = useAuth();
   console.log(conversation.id);
 
   return (

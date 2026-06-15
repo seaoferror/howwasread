@@ -19,7 +19,6 @@ func NewNetwork(s *service.Service) *Network {
 
 	setGin(n.engine)
 
-	idRouter(n)
 	emailRouter(n)
 	tokenRouter(n)
 	smsRouter(n)

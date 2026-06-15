@@ -36,7 +36,7 @@ export default function SMSScreen() {
     verifySMSOTPMutation.mutate(
       { otp, verificationId, sessionId: await getSecureAsync("sessionId") || null },
       {
-        onSuccess: () => router.replace("/conversations"),
+        onSuccess: () => router.replace("/"),
       },
     );
   };

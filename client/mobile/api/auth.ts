@@ -62,11 +62,6 @@ export async function signInWithApple(
   return data;
 }
 
-export async function getMyId(): Promise<{ id: string }> {
-  const { data } = await axiosInstance.get("/auth/my-id");
-  return data;
-}
-
 export async function deleteAccount() {
   const { data } = await axiosInstance.post("/auth/delete");
   return data;
