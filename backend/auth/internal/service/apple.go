@@ -168,7 +168,7 @@ func (s *Service) SignInWithApple(ctx context.Context, user, nonce, identityToke
 				return nil, "", ErrSignInWithApple
 			}
 
-			err = s.repository.SaveEmailBySessionId(sessionId, email)
+			err = s.repository.SaveEmailBySessionId(sessionId, *email)
 			if err != nil {
 				return nil, "", ErrSignInWithApple
 			}
