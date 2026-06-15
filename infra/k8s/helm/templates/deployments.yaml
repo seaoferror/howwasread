@@ -30,6 +30,8 @@ spec:
                 secretKeyRef:
                   name: valkey
                   key: lule
+            - name: NODE_EXTRA_CA_CERTS
+              value: "/cert/valkey/ca.crt"
           {{- end}}
           envFrom:
             - configMapRef:
@@ -54,8 +56,13 @@ spec:
             - secretRef:
                 name: twilio
             {{- end }}
-          {{- if or $app.authentication $app.kafka $app.astradb $app.aws $app.firebase $app.mongodb }}
+          {{- if or $app.valkey $app.authentication $app.kafka $app.astradb $app.aws $app.firebase $app.mongodb }}
           volumeMounts:
+            {{- if $app.valkey }}
+            - name: valkey-cert-volume
+              mountPath: "/cert/valkey"
+              readOnly: true
+            {{- end }}
             {{- if $app.authentication}}
             - name: authentication-volume
               mountPath: "/cert/authentication"
@@ -91,8 +98,16 @@ spec:
             {{- end }}
           {{- end }}
 
-      {{- if or $app.kafka $app.astradb $app.aws $app.firebase $app.mongodb }}
+      {{- if or $app.valkey $app.kafka $app.authentication $app.astradb $app.aws $app.firebase $app.mongodb }}
       volumes:
+        {{- if $app.valkey }}
+        - name: valkey-cert-volume
+          secret:
+            secretName: valkey-cert
+            items:
+              - key: ca.crt
+                path: ca.crt
+        {{- end }}
         {{- if $app.kafka }}
         - name: kafka-user
           secret:

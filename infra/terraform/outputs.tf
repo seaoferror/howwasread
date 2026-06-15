@@ -23,3 +23,8 @@ output "configure_kubectl" {
   description = "Run this command to configure kubectl"
   value       = "aws eks update-kubeconfig --region ${local.region} --name ${local.cluster_name}"
 }
+
+output "nat_gateway_public_ips" {
+  description = "The public IPv4 addresses assigned to the NAT Gateway(s) to use ip whitelisting in external dbs"
+  value       = module.vpc.nat_public_ips
+}

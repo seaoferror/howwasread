@@ -14,7 +14,7 @@ import com.xcecv.offlineconversation.projection.OfflineConversationMapProjection
 import com.xcecv.offlineconversation.projection.OfflineConversationPinProjection;
 import com.xcecv.offlineconversation.repository.OfflineConversationParticipantRepository;
 import com.xcecv.offlineconversation.repository.OfflineConversationRepository;
-import glide.api.GlideClient;
+import glide.api.GlideClusterClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -34,7 +34,7 @@ public class OfflineConversationService {
 
   private final OfflineConversationRepository offlineConversationRepository;
   private final OfflineConversationParticipantRepository offlineConversationParticipantRepository;
-  private final GlideClient glideClient;
+  private final GlideClusterClient glideClusterClient;
   private final ObjectMapper objectMapper;
 
   @Transactional
@@ -75,14 +75,14 @@ public class OfflineConversationService {
                   .latitude(request.lat())
                   .longitude(request.lng())
                   .build()));
-      var checkRes5 = glideClient.exists(new String[]{request.h3Res5()});
-      var checkRes7 = glideClient.exists(new String[]{request.h3Res7()});
+      var checkRes5 = glideClusterClient.exists(new String[]{request.h3Res5()});
+      var checkRes7 = glideClusterClient.exists(new String[]{request.h3Res7()});
       List<CompletableFuture<?>> tasks = new ArrayList<>();
       if (checkRes5.join() > 0) {
-        tasks.add(glideClient.hset(request.h3Res5(), hashEntry));
+        tasks.add(glideClusterClient.hset(request.h3Res5(), hashEntry));
       }
       if (checkRes7.join() > 0) {
-        tasks.add(glideClient.hset(request.h3Res7(), hashEntry));
+        tasks.add(glideClusterClient.hset(request.h3Res7(), hashEntry));
       }
       if (!tasks.isEmpty()) {
         CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])).join();
@@ -115,7 +115,7 @@ public class OfflineConversationService {
   public List<OfflineConversationMapResponse> mapRes7Convos(
       String h3Res7) {
     try {
-      Map<String, String> cache = glideClient.hgetall(h3Res7).join();
+      Map<String, String> cache = glideClusterClient.hgetall(h3Res7).join();
       if (cache != null && !cache.isEmpty()) {
         return unmarshalH3Cache(cache);
       }
@@ -135,7 +135,7 @@ public class OfflineConversationService {
   public List<OfflineConversationMapResponse> mapRes5Convos(
       String h3Res5) {
     try {
-      Map<String, String> cacheRaw = glideClient.hgetall(h3Res5).join();
+      Map<String, String> cacheRaw = glideClusterClient.hgetall(h3Res5).join();
       if (cacheRaw != null && !cacheRaw.isEmpty()) {
         return unmarshalH3Cache(cacheRaw);
       }
@@ -184,7 +184,7 @@ public class OfflineConversationService {
                   .build()
           ));
     }
-    glideClient.hset(h3Index, values).join();
+    glideClusterClient.hset(h3Index, values).join();
   }
 
 

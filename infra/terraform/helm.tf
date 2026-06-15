@@ -224,7 +224,7 @@ resource "helm_release" "aws_load_balancer_controller" {
 
 resource "helm_release" "sealed_secrets" {
   name       = "sealed-secrets-controller"
-  repository = "https://bitnami-labs.github.io/sealed-secrets"
+  repository = "oci://registry-1.docker.io/bitnamicharts"
   chart      = "sealed-secrets"
   namespace  = "kube-system"
 

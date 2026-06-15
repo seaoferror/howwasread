@@ -14,7 +14,11 @@ terraform apply -target="module.vpc"
 
 terraform apply
 
-kubectl apply -f sealed-secrets-key.yaml
+kubectl create namespace backend
+
+kubectl apply -f . #in bootstrap
+
+kubectl apply -f . #in sealedsecret
 
 kubectl rollout restart deployment sealed-secrets-controller -n kube-system
 

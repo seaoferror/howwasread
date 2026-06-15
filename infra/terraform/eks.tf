@@ -41,11 +41,17 @@ module "cluster1" {
 
   eks_managed_node_groups = {
     default = {
-      instance_types = ["t3.large"]
-      min_size       = 2
-      max_size       = 5
-      desired_size   = 2
+      instance_types = ["t3.medium"]
+      min_size       = 3
+      max_size       = 3
+      desired_size   = 3
     }
+    # small = {
+    #   instance_types = ["t3.small"]
+    #   min_size       = 1
+    #   max_size       = 1
+    #   desired_size   = 1
+    # }
   }
 
   node_security_group_additional_rules = {
@@ -54,7 +60,7 @@ module "cluster1" {
       protocol                      = "tcp"
       from_port                     = 8080
       to_port                       = 8080
-      type                          = "ingress" //ingress  egress
+      type                          = "ingress" //ingress  egress 's ingress
       source_cluster_security_group = true
     }
   }
@@ -72,7 +78,7 @@ data "aws_iam_policy_document" "ebs_csi_trust_policy" {
 
     # Restrict the role to ONLY the specific namespace and service account used by the driver
     condition {
-      test     = "StringEquals"
+      test = "StringEquals"
       # Note: We use module.eks.oidc_provider here (the URL), NOT the ARN
       variable = "${module.cluster1.oidc_provider}:sub"
       values   = ["system:serviceaccount:kube-system:ebs-csi-controller-sa"]
