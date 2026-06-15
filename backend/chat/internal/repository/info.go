@@ -22,10 +22,10 @@ func (r *Repository) FindProfileById(ctx context.Context, id gocql.UUID) (name s
 	err = r.session.Query(`SELECT name FROM profile_by_id WHERE id = ?`,
 		id).ScanContext(ctx, &name)
 	if err != nil {
-		slog.Error("fail to find profile by id",
+		slog.Info("fail to find profile by id",
 			"err", err,
 			"id", id.String())
-		return "", nil
+		return "", err
 	}
 	return name, nil
 }

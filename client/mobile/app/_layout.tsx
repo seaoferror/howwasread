@@ -20,7 +20,7 @@ import {
 } from "expo-notifications";
 import { registerNotification } from "@/api/notification";
 import { setAudioModeAsync } from "expo-audio";
-import { useMyProfile } from "@/hooks/useMyProfile";
+import { useGetMyProfile } from "@/hooks/useProfile";
 
 declare const WebSocket: {
   prototype: WebSocket;
@@ -53,7 +53,7 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const db = useSQLiteContext();
-  const { profile } = useMyProfile();
+  const { data: profile } = useGetMyProfile();
   const ws = useRef<WebSocket>(null);
 
   useEffect(() => {
@@ -128,7 +128,7 @@ function RootNavigator() {
         await saveRecentMessage(db, data, roomId, timestamp);
       };
     };
-    if (profile.name) connectMessaging();
+    if (profile?.name) connectMessaging();
     return () => {
       ws.current?.close();
     };

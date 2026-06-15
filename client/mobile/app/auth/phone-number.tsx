@@ -11,7 +11,7 @@ import {
   parsePhoneNumberFromString,
 } from "libphonenumber-js";
 import Toast from "react-native-toast-message";
-import { useAuth } from "@/hooks/useAuth";
+import { useRequestSMSOTP } from "@/hooks/useAuth";
 import { router } from "expo-router";
 import { getSecureAsync, setSecure } from "@/util/storage";
 
@@ -28,7 +28,7 @@ export default function PhoneNumberScreen() {
     },
   });
 
-  const { requestSMSOTPMutation } = useAuth();
+  const requestSMSOTPMutation = useRequestSMSOTP();
 
   const onSubmit = async (formValues: FormValue) => {
     console.log("start submit");
@@ -69,7 +69,7 @@ export default function PhoneNumberScreen() {
     console.log("execute mutate");
     requestSMSOTPMutation.mutate(
       {
-        sessionId: await getSecureAsync("sessionId") || null,
+        sessionId: (await getSecureAsync("sessionId")) || null,
         phoneNumber: wholeNumber,
       },
       {

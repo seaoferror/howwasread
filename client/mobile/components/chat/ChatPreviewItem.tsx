@@ -3,7 +3,7 @@ import { Message } from "@/types/chat";
 import { colors } from "@/constants";
 import { router } from "expo-router";
 import { useGetChatRoomInfo } from "@/hooks/useChat";
-import { useGetProfile, useMyProfile } from "@/hooks/useMyProfile";
+import { useGetMyProfile, useGetProfile } from "@/hooks/useProfile";
 import { formatPreviewDate } from "@/util/time";
 
 interface ChatPreviewItemProps {
@@ -13,7 +13,11 @@ interface ChatPreviewItemProps {
 export default function ChatPreviewItem({ preview }: ChatPreviewItemProps) {
   const { data: roomInfo } = useGetChatRoomInfo(preview.roomId);
   const { data: fromProfile } = useGetProfile(preview.fromId);
-  const { profile: myProfile } = useMyProfile();
+  const { data: myProfile } = useGetMyProfile();
+
+  if (!myProfile) {
+    return null;
+  }
 
   return (
     <Pressable

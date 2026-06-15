@@ -3,7 +3,7 @@ import { FormProvider, useForm } from "react-hook-form";
 import FixedBottomCTA from "@/components/FixedBottomCTA";
 import EmailInput from "@/components/auth/EmailInput";
 import PasswordInput from "@/components/auth/PasswordInput";
-import { useAuth } from "@/hooks/useAuth";
+import { useLoginWithEmail } from "@/hooks/useAuth";
 import { colors } from "@/constants";
 import { router } from "expo-router";
 
@@ -14,7 +14,7 @@ interface FormValue {
 }
 
 export default function LoginScreen() {
-  const { loginWithEmailMutation } = useAuth();
+  const loginWithEmailMutation = useLoginWithEmail();
 
   const emailLoginForm = useForm<FormValue>({
     defaultValues: {

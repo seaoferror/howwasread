@@ -3,7 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "@/constants";
 import FixedBottomCTA from "@/components/FixedBottomCTA";
 import { FormProvider, useForm } from "react-hook-form";
-import { useAuth } from "@/hooks/useAuth";
+import { useVerifySMSOTP } from "@/hooks/useAuth";
 import { router } from "expo-router";
 import { getSecureAsync } from "@/util/storage";
 import Toast from "react-native-toast-message";
@@ -14,7 +14,7 @@ interface FormValue {
 }
 
 export default function SMSScreen() {
-  const { verifySMSOTPMutation } = useAuth();
+  const verifySMSOTPMutation = useVerifySMSOTP();
   const smsOTPForm = useForm<FormValue>({
     defaultValues: {
       otp: "",
@@ -34,7 +34,11 @@ export default function SMSScreen() {
     }
     console.log("execute post sms otp mutate");
     verifySMSOTPMutation.mutate(
-      { otp, verificationId, sessionId: await getSecureAsync("sessionId") || null },
+      {
+        otp,
+        verificationId,
+        sessionId: (await getSecureAsync("sessionId")) || null,
+      },
       {
         onSuccess: () => router.replace("/"),
       },

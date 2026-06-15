@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 import { Message } from "@/types/chat";
 import { getHourMinute, getLongDate } from "@/util/time";
-import { useMyProfile } from "@/hooks/useMyProfile";
+import { useGetMyProfile } from "@/hooks/useProfile";
 import { colors } from "@/constants";
 import { useGetSignedURLs } from "@/hooks/useChat";
 import { Image } from "expo-image";
@@ -14,11 +14,14 @@ interface MessageItemProps {
 }
 
 export default function MessageItem({ message, isDayFirst }: MessageItemProps) {
-  const { profile } = useMyProfile();
+  const { data: profile } = useGetMyProfile();
   const { urls } = useGetSignedURLs({
     contentType: message.contentType,
     contents: message.contents,
   });
+  if (!profile) {
+    return null;
+  }
 
   const isMine = profile.id === message.fromId;
 

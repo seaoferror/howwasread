@@ -12,7 +12,7 @@ import {
   verifySMSOTP,
 } from "@/api/auth";
 
-function useSignupWithEmail() {
+export function useSignupWithEmail() {
   return useMutation({
     mutationFn: signUpWithEmail,
     onSuccess: async (data) => {
@@ -28,7 +28,7 @@ function useSignupWithEmail() {
   });
 }
 
-function useLoginWithEmail() {
+export function useLoginWithEmail() {
   return useMutation({
     mutationFn: loginInWithEmail,
     onSuccess: async (data) => {
@@ -51,7 +51,7 @@ function useLoginWithEmail() {
   });
 }
 
-function useRequestSMSOTP() {
+export function useRequestSMSOTP() {
   return useMutation({
     mutationFn: requestSMSOTP,
     onSuccess: (data) => {
@@ -67,7 +67,7 @@ function useRequestSMSOTP() {
   });
 }
 
-function useVerifyEmailOTP() {
+export function useVerifyEmailOTP() {
   return useMutation({
     mutationFn: verifyEmailOTP,
     onSuccess: async (data) => {
@@ -83,7 +83,7 @@ function useVerifyEmailOTP() {
   });
 }
 
-function useVerifySMSOTP() {
+export function useVerifySMSOTP() {
   return useMutation({
     mutationFn: verifySMSOTP,
     onSuccess: (data) => {
@@ -99,7 +99,7 @@ function useVerifySMSOTP() {
   });
 }
 
-function useSignInWithApple() {
+export function useSignInWithApple() {
   return useMutation({
     mutationFn: signInWithApple,
     onSuccess: async (data) => {
@@ -118,7 +118,7 @@ function useSignInWithApple() {
   });
 }
 
-function useDeleteAccount() {
+export function useDeleteAccount() {
   return useMutation({
     mutationFn: deleteAccount,
     onSuccess: async () => {
@@ -135,24 +135,4 @@ function useDeleteAccount() {
       });
     },
   });
-}
-
-export function useAuth() {
-  const signUpWithEmailMutation = useSignupWithEmail();
-  const loginWithEmailMutation = useLoginWithEmail();
-  const verifyEmailOTPMutation = useVerifyEmailOTP();
-  const requestSMSOTPMutation = useRequestSMSOTP();
-  const verifySMSOTPMutation = useVerifySMSOTP();
-  const signInWithAppleMutation = useSignInWithApple();
-  const deleteAccountMutation = useDeleteAccount();
-
-  return {
-    signUpWithEmailMutation,
-    loginWithEmailMutation,
-    verifyEmailOTPMutation,
-    requestSMSOTPMutation,
-    verifySMSOTPMutation,
-    signInWithAppleMutation,
-    deleteAccountMutation,
-  };
 }

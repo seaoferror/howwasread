@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FormProvider, useForm } from "react-hook-form";
 import { router, useLocalSearchParams } from "expo-router";
-import { useMyProfile } from "@/hooks/useMyProfile";
+import { useSetName } from "@/hooks/useProfile";
 import NameInput from "@/components/profile/NameInput";
 import FixedBottomCTA from "@/components/FixedBottomCTA";
 import { colors } from "@/constants";
@@ -18,7 +18,7 @@ export default function NameScreen() {
       name: "",
     },
   });
-  const { setNameMutation } = useMyProfile();
+  const setNameMutation = useSetName();
 
   const onSubmit = async (formValue: FormValue) => {
     const { name } = formValue;

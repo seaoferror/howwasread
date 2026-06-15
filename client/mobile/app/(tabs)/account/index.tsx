@@ -2,12 +2,12 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useActionSheet } from "@expo/react-native-action-sheet";
-import { useAuth } from "@/hooks/useAuth";
+import { useDeleteAccount } from "@/hooks/useAuth";
 import { colors } from "@/constants";
 
 export default function AccountScreen() {
   const { showActionSheetWithOptions } = useActionSheet();
-  const { deleteAccountMutation } = useAuth();
+  const deleteAccountMutation = useDeleteAccount();
   const handleDeleteAccount = () => {
     showActionSheetWithOptions(
       {
@@ -34,26 +34,26 @@ export default function AccountScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-        <View style={styles.menuContainer}>
-          <Pressable 
-            onPress={() => router.push("/profile/name")}
-            style={({ pressed }) => [
-              styles.menuItem,
-              pressed && styles.menuItemPressed,
-            ]}
-          >
-            <Text style={styles.menuText}>Change your profile</Text>
-          </Pressable>
-        </View>
+      <View style={styles.menuContainer}>
+        <Pressable
+          onPress={() => router.push("/profile/name")}
+          style={({ pressed }) => [
+            styles.menuItem,
+            pressed && styles.menuItemPressed,
+          ]}
+        >
+          <Text style={styles.menuText}>Change your profile</Text>
+        </Pressable>
+      </View>
 
-        <View style={styles.footer}>
-          <Pressable 
-            onPress={handleDeleteAccount}
-            style={({ pressed }) => [pressed && styles.deletePressed]}
-          >
-            <Text style={styles.deleteText}>Delete your account</Text>
-          </Pressable>
-        </View>
+      <View style={styles.footer}>
+        <Pressable
+          onPress={handleDeleteAccount}
+          style={({ pressed }) => [pressed && styles.deletePressed]}
+        >
+          <Text style={styles.deleteText}>Delete your account</Text>
+        </Pressable>
+      </View>
     </SafeAreaView>
   );
 }

@@ -4,7 +4,7 @@ import { colors } from "@/constants";
 import FixedBottomCTA from "@/components/FixedBottomCTA";
 import { FormProvider, useForm } from "react-hook-form";
 import BirthYearBox from "@/components/profile/BirthYearBox";
-import { useMyProfile } from "@/hooks/useMyProfile";
+import { useSetBirthYear } from "@/hooks/useProfile";
 
 interface FormValue {
   birthYear: number;
@@ -14,7 +14,7 @@ export default function BirthYearScreen() {
   const birthYearForm = useForm<FormValue>({
     defaultValues: { birthYear: 2000 },
   });
-  const { setBirthYearMutation } = useMyProfile();
+  const setBirthYearMutation = useSetBirthYear();
 
   const onSubmit = async (formValue: FormValue) => {
     const { birthYear } = formValue;

@@ -3,7 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "@/constants";
 import FixedBottomCTA from "@/components/FixedBottomCTA";
 import { FormProvider, useForm } from "react-hook-form";
-import { useAuth } from "@/hooks/useAuth";
+import { useVerifyEmailOTP } from "@/hooks/useAuth";
 import { router } from "expo-router";
 import { getSecureAsync } from "@/util/storage";
 import Toast from "react-native-toast-message";
@@ -14,7 +14,7 @@ interface FormValue {
 }
 
 export default function EmailScreen() {
-  const { verifyEmailOTPMutation } = useAuth();
+  const verifyEmailOTPMutation = useVerifyEmailOTP();
 
   const emailOTPForm = useForm<FormValue>({
     defaultValues: {

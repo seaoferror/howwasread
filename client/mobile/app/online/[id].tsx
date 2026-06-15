@@ -1,4 +1,4 @@
-import { Platform, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
 import {
   colors,
@@ -12,17 +12,17 @@ import {
   SeatAssignment,
 } from "@/types/conversation";
 import {
-  RTCPeerConnection,
-  RTCIceCandidate,
-  RTCSessionDescription,
   mediaDevices,
   MediaStream,
+  RTCIceCandidate,
+  RTCPeerConnection,
+  RTCSessionDescription,
 } from "react-native-webrtc";
 import { getSecureAsync } from "@/util/storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import OnlineConversationRoomHeader from "@/components/conversation/OnlineConversationRoomHeader";
 import { Feather, Ionicons } from "@expo/vector-icons";
-import { useMyProfile } from "@/hooks/useMyProfile";
+import { useGetMyProfile } from "@/hooks/useProfile";
 import { useActionSheet } from "@expo/react-native-action-sheet";
 import { useSendLike } from "@/hooks/useChat";
 import Toast from "react-native-toast-message";
@@ -43,8 +43,7 @@ declare const WebSocket: {
 };
 
 export default function OnlineConversationScreen() {
-  const { profile } = useMyProfile();
-
+  const { data: profile } = useGetMyProfile();
   const {
     id: conversationId,
     novel,
@@ -97,10 +96,14 @@ export default function OnlineConversationScreen() {
   };
 
   const toggleAudio = () => {
+    if (!profile) {
+      return;
+    }
     if (localAudio.current) {
       const audioTrack = localAudio.current.getAudioTracks()[0];
       audioTrack.enabled = !audioTrack.enabled;
-      participantMutes.current[profile.id] = !participantMutes.current[profile.id];
+      participantMutes.current[profile.id] =
+        !participantMutes.current[profile.id];
       ws.current?.send(
         JSON.stringify({
           toId: Object.keys(peers.current),
@@ -186,6 +189,9 @@ export default function OnlineConversationScreen() {
 
   useFocusEffect(() => {
     const joinConversation = async () => {
+      if (!profile) {
+        return;
+      }
       console.log("try to connect ws");
       ws.current = new WebSocket(
         `wss://${process.env.EXPO_PUBLIC_API_URL}/online/conversation/join?id=${conversationId}`,
@@ -370,6 +376,10 @@ export default function OnlineConversationScreen() {
       ws.current?.close();
     };
   });
+
+  if (!profile) {
+    return null;
+  }
 
   return (
     <SafeAreaView style={styles.container}>

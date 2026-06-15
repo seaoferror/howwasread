@@ -6,12 +6,12 @@ import {
   AppleAuthenticationScope,
   signInAsync,
 } from "expo-apple-authentication";
-import { useAuth } from "@/hooks/useAuth";
+import { useSignInWithApple } from "@/hooks/useAuth";
 import { randomUUID } from "expo-crypto";
 import { router } from "expo-router";
 
 export default function AppleSignInButton() {
-  const { signInWithAppleMutation } = useAuth();
+  const signInWithAppleMutation = useSignInWithApple();
 
   const onSignIn = async () => {
     const rawNonce = randomUUID();

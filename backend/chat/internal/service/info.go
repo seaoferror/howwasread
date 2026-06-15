@@ -32,6 +32,9 @@ func (s *Service) SetName(ctx context.Context, memberId uuid.UUID, name string) 
 
 func (s *Service) GetProfile(ctx context.Context, id uuid.UUID) (*dto.GetProfileResponse, error) {
 	name, err := s.repository.FindProfileById(ctx, gocql.UUID(id))
+	if errors.Is(err, gocql.ErrNotFound) {
+		err = nil
+	}
 	if err != nil {
 		return nil, err
 	}

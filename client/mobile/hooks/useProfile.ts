@@ -3,13 +3,12 @@ import { getMyProfile, getProfile, setBirthYear, setName } from "@/api/profile";
 import Toast from "react-native-toast-message";
 import { queryKey } from "@/constants";
 
-function useGetMyProfile() {
-  const { data } = useQuery({
+export function useGetMyProfile() {
+  return useQuery({
     queryFn: getMyProfile,
     queryKey: [queryKey.PROFILE, queryKey.GET_MY_PROFILE],
-  });
+  },);
 
-  return { data };
 }
 
 export function useGetProfile(id: string) {
@@ -21,7 +20,7 @@ export function useGetProfile(id: string) {
   return { data }
 }
 
-function useSetName() {
+export function useSetName() {
   return useMutation({
     mutationFn: setName,
     onSuccess: async () => {},
@@ -34,7 +33,7 @@ function useSetName() {
   });
 }
 
-function useSetBirthYear() {
+export function useSetBirthYear() {
   return useMutation({
     mutationFn: setBirthYear,
     onSuccess: async () => {},
@@ -45,20 +44,4 @@ function useSetBirthYear() {
       });
     },
   });
-}
-
-export function useMyProfile() {
-  const { data } = useGetMyProfile();
-
-  const setNameMutation = useSetName();
-  const setBirthYearMutation = useSetBirthYear();
-
-  return {
-    profile: {
-      id: data?.id ?? "",
-      name: data?.name ?? "",
-    },
-    setNameMutation: setNameMutation,
-    setBirthYearMutation,
-  };
 }
