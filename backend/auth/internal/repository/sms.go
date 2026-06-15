@@ -150,7 +150,7 @@ func (r *Repository) ReplaceAndLinkMemberWithOldAccount(newId, oldAccountId gocq
 			email, phoneNumber).
 		Exec()
 	if err != nil {
-		slog.Error("fail to replace and link member with old phone number account")
+		slog.Error("fail to replace and link member with old phone number account", "err", err)
 		return err
 	}
 	return nil
