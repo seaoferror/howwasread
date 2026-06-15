@@ -128,6 +128,7 @@ func (r *Repository) FindEmailByPhoneNumber(phoneNumber string) (email string, e
 	).Scan(&email)
 	if err != nil {
 		slog.Info("fail to find email by phone number",
+			"err", err,
 			"phoneNumber", phoneNumber,
 		)
 		return "", err
