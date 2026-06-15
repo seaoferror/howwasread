@@ -37,8 +37,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
-		//OriginPatterns:     []string{"example.com"},
-		InsecureSkipVerify: true,
+		InsecureSkipVerify: false,
 	})
 	if err != nil {
 		slog.Error("fail to accept connection", err)

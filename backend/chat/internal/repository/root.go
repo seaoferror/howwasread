@@ -149,6 +149,7 @@ func NewRepository() *Repository {
 		clientOption.TLSConfig = &tls.Config{
 			RootCAs:            rootCAs,
 			InsecureSkipVerify: false,
+			ServerName:         os.Getenv("VALKEY_HOST"),
 		}
 	}
 	client, err := valkey.NewClient(clientOption)
