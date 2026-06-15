@@ -14,6 +14,7 @@ RUN cd messagepersist && CGO_ENABLED=0 GOOS=linux go build -o /messagepersist .
 #/chat(The compiled Go binary, sitting by itself at the absolute root -o /chat)
 
 FROM scratch
+COPY --from=stage1 /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=stage1 /messagepersist /messagepersist
 CMD ["/messagepersist"]
 
