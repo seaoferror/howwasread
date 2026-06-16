@@ -8,7 +8,7 @@ COPY gradlew .
 RUN chmod +x gradlew
 RUN ./gradlew bootJar
 
-FROM gcr.io/distroless/java25-debian12
+FROM gcr.io/distroless/java25-debian13
 WORKDIR /app
 COPY --from=stage1 /app/build/libs/*.jar app.jar
 
