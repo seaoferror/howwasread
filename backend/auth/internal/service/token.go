@@ -126,3 +126,58 @@ func createTokenWithJTI(id, jti, role string, secretKey *rsa.PrivateKey, ttl int
 	}
 	return token, nil
 }
+
+func (s *Service) DeleteAccount(refreshToken string) error {
+	rt, err := jwt.Parse(refreshToken, func(token *jwt.Token) (any, error) {
+		if token.Method.Alg() != jwt.SigningMethodRS256.Alg() {
+			slog.Info("unexpected signing method")
+			return nil, ErrGenerateToken
+		}
+		return s.publicKeyRT, nil
+	})
+	if err != nil {
+		slog.Info("fail to parse token",
+			"err", err)
+		return err
+	}
+	if !rt.Valid {
+		slog.Info("invalid token",
+			"rt", rt)
+		return err
+	}
+	exp, err := rt.Claims.GetExpirationTime()
+	if err != nil {
+		slog.Info("fail to get expiration time")
+		return err
+	}
+	if exp.Unix() < time.Now().Unix() {
+		slog.Info("stale token")
+		return err
+	}
+	rawId, err := rt.Claims.GetSubject()
+	if err != nil {
+		slog.Info("fail to get subject from claim",
+			"err", err,
+		)
+		return err
+	}
+	id, err := gocql.ParseUUID(rawId)
+	if err != nil {
+		slog.Info("fail to parse gocql uuid from id",
+			"err", err)
+		return err
+	}
+	jti, err := s.repository.FindRefreshTokenJTIById(id)
+	if err != nil {
+		return err
+	}
+	if rt.Claims.(jwt.MapClaims)["jti"].(string) != jti.String() {
+		slog.Info("refresh token jti is not same with DB")
+		return err
+	}
+	err = s.repository.DeleteAccount(id)
+	if err != nil {
+		return err
+	}
+	return nil
+}
