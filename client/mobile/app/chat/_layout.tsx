@@ -7,7 +7,6 @@ export default function ChatLayout() {
         name="[id]"
         options={{
           headerShown: true,
-          animation: "none",
         }}
       />
     </Stack>

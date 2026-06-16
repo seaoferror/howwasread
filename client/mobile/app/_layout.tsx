@@ -139,6 +139,8 @@ function RootNavigator() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="auth" options={{ headerShown: false }} />
       <Stack.Screen name="profile" options={{ headerShown: false }} />
+      <Stack.Screen name="chat" options={{ headerShown: false }} />
+      <Stack.Screen name="offline" options={{ headerShown: false }} />
       <Stack.Screen name="online" options={{ headerShown: false }} />
     </Stack>
   );

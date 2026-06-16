@@ -1,9 +1,15 @@
-import { KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+} from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import {
+  router,
   useFocusEffect,
   useLocalSearchParams,
   useNavigation,
@@ -13,6 +19,7 @@ import MessageList from "@/components/chat/MessageList";
 import { colors } from "@/constants";
 import MessageInput from "@/components/chat/MessageInput";
 import useKeyboard from "@/hooks/useKeyboard";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function ChatScreen() {
   const { id: roomId } = useLocalSearchParams();
@@ -21,10 +28,14 @@ export default function ChatScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
-
   useFocusEffect(() => {
     navigation.setOptions({
       title: roomInfo?.name,
+      headerLeft: () => (
+        <Pressable onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={28} color="black" />
+        </Pressable>
+      ),
     });
   });
 
