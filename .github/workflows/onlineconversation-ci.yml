@@ -36,3 +36,13 @@ jobs:
           docker buildx build --platform linux/amd64 \
           -t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
           -f ./backend/onlineconversation/Dockerfile ./backend --push
+
+      - name: install kubectl
+        uses: azure/setup-kubectl@v4
+        id: install
+
+      - name: update cluster infomation
+        run: aws eks update-kubeconfig --name cluster1 --region ap-northeast-2
+
+      - name: eks kubectl apply
+        run: kubectl rollout restart deployment onlineconversation -n backend
