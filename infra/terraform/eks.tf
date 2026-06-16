@@ -22,6 +22,12 @@ module "cluster1" {
     kube-proxy = {}
     vpc-cni = {
       before_compute = true
+      configuration_values = jsonencode({
+        env = {
+          ENABLE_PREFIX_DELEGATION = "true"
+          WARM_PREFIX_TARGET       = "1"
+        }
+      })
     }
     aws-ebs-csi-driver = {
       most_recent              = true
@@ -40,11 +46,11 @@ module "cluster1" {
   enable_irsa = true
 
   eks_managed_node_groups = {
-    default = {
+    medium_group = {
       instance_types = ["t3.medium"]
-      min_size       = 3
-      max_size       = 3
-      desired_size   = 3
+      min_size       = 1
+      max_size       = 1
+      desired_size   = 1
     }
     # small = {
     #   instance_types = ["t3.small"]
