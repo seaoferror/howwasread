@@ -31,11 +31,6 @@ export default function ChatScreen() {
   useFocusEffect(() => {
     navigation.setOptions({
       title: roomInfo?.name,
-      headerLeft: () => (
-        <Pressable onPress={() => router.back()}>
-          <Ionicons name="chevron-back" size={28} color="black" />
-        </Pressable>
-      ),
     });
   });
 
