@@ -37,6 +37,9 @@ public class OfflineConversationService {
   private final GlideClusterClient glideClusterClient;
   private final ObjectMapper objectMapper;
 
+  private static final String EMPTY_CACHE_DUMMY_KEY = "_";
+  private static final long CACHE_TTL_SECONDS = 3600;
+
   @Transactional
   public Map<String, UUID> create(
       CreateOfflineConversationRequest request,
@@ -80,9 +83,11 @@ public class OfflineConversationService {
       List<CompletableFuture<?>> tasks = new ArrayList<>();
       if (checkRes5.join() > 0) {
         tasks.add(glideClusterClient.hset(request.h3Res5(), hashEntry));
+        tasks.add(glideClusterClient.expire(request.h3Res5(), CACHE_TTL_SECONDS));
       }
       if (checkRes7.join() > 0) {
         tasks.add(glideClusterClient.hset(request.h3Res7(), hashEntry));
+        tasks.add(glideClusterClient.expire(request.h3Res7(), CACHE_TTL_SECONDS));
       }
       if (!tasks.isEmpty()) {
         CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])).join();
@@ -121,9 +126,7 @@ public class OfflineConversationService {
       }
       var convos = offlineConversationRepository.findByH3Res7(h3Res7);
       var response = buildOfflineConversationMapResponse(convos);
-      if (!response.isEmpty()) {
-        setH3Cache(h3Res7, response);
-      }
+      setH3Cache(h3Res7, response);
       return response;
     } catch (Exception e) {
       log.error("Failed to read from cache for h3Index {}. Falling back to DB.", h3Res7, e);
@@ -141,9 +144,7 @@ public class OfflineConversationService {
       }
       var convos = offlineConversationRepository.findTop2ByH3Res5(h3Res5);
       var response = buildOfflineConversationMapResponse(convos);
-      if (!response.isEmpty()) {
-        setH3Cache(h3Res5, response);
-      }
+      setH3Cache(h3Res5, response);
       return response;
     } catch (Exception e) {
       log.error("Failed to read from cache for h3Index {}. Falling back to DB.", h3Res5, e);
@@ -157,6 +158,9 @@ public class OfflineConversationService {
     log.info("cache hit");
     List<OfflineConversationMapResponse> response = new ArrayList<>();
     for (Map.Entry<String, String> entry : cacheRaw.entrySet()) {
+      if (EMPTY_CACHE_DUMMY_KEY.equals(entry.getKey())) {
+        continue;
+      }
       UUID conversationId = UUID.fromString(entry.getKey());
       OfflineConversationPinProjection pinValue = objectMapper.readValue(
           entry.getValue(),
@@ -174,6 +178,10 @@ public class OfflineConversationService {
 
   private void setH3Cache(String h3Index, List<OfflineConversationMapResponse> response) throws JsonProcessingException {
     Map<String, String> values = new HashMap<>();
+    if (response.isEmpty()) {
+      values.put(EMPTY_CACHE_DUMMY_KEY, "1");
+      return;
+    }
     for (var item : response) {
       values.put(item.id().toString(),
           objectMapper.writeValueAsString(
@@ -185,6 +193,7 @@ public class OfflineConversationService {
           ));
     }
     glideClusterClient.hset(h3Index, values).join();
+    glideClusterClient.expire(h3Index, CACHE_TTL_SECONDS).join();
   }
 
 

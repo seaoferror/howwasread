@@ -5,7 +5,7 @@ metadata:
   namespace: valkey-system
 spec:
   config:
-    maxmemory-policy: "allkeys-lfu"
+    maxmemory-policy: "volatile-lfu"
   shards: 1
   replicas: 0
   tls:
