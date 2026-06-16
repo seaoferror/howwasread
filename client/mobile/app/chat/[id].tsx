@@ -1,15 +1,9 @@
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  StyleSheet,
-} from "react-native";
+import { KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
 import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import {
-  router,
   useFocusEffect,
   useLocalSearchParams,
   useNavigation,
@@ -19,7 +13,6 @@ import MessageList from "@/components/chat/MessageList";
 import { colors } from "@/constants";
 import MessageInput from "@/components/chat/MessageInput";
 import useKeyboard from "@/hooks/useKeyboard";
-import { Ionicons } from "@expo/vector-icons";
 
 export default function ChatScreen() {
   const { id: roomId } = useLocalSearchParams();
@@ -38,9 +31,13 @@ export default function ChatScreen() {
     <SafeAreaView style={styles.container} edges={["bottom"]}>
       <KeyboardAvoidingView
         style={styles.keyboardAvoidingView}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         keyboardVerticalOffset={
-          Platform.OS === "ios" || isKeyboardVisible ? 100 : insets.bottom //TODO: this need adjust in both platform
+          Platform.OS === "ios" || isKeyboardVisible
+            ? Platform.OS === "ios"
+              ? 100
+              : 80
+            : insets.bottom
         }
       >
         <MessageList />
