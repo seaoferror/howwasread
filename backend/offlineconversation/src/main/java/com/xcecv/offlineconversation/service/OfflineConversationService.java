@@ -180,7 +180,6 @@ public class OfflineConversationService {
     Map<String, String> values = new HashMap<>();
     if (response.isEmpty()) {
       values.put(EMPTY_CACHE_DUMMY_KEY, "1");
-      return;
     }
     for (var item : response) {
       values.put(item.id().toString(),
