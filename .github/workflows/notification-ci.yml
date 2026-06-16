@@ -41,8 +41,8 @@ jobs:
         uses: azure/setup-kubectl@v4
         id: install
 
-      - name: update cluster infomation
+      - name: update kubeconfig to connect eks
         run: aws eks update-kubeconfig --name cluster1 --region ap-northeast-2
 
-      - name: eks kubectl apply
+      - name: rollout restart
         run: kubectl rollout restart deployment notification -n backend
