@@ -5,6 +5,7 @@ import Toast from "react-native-toast-message";
 import {
   deleteAccount,
   loginInWithEmail,
+  logout,
   requestSMSOTP,
   signInWithApple,
   signUpWithEmail,
@@ -109,6 +110,18 @@ export function useSignInWithApple() {
       }
       await setSecure("accessToken", data?.accessToken ?? "");
     },
+    onError: (error: AxiosError) => {
+      Toast.show({
+        type: "error",
+        text1: String(error?.response?.data),
+      });
+    },
+  });
+}
+
+export function useLogout() {
+  return useMutation({
+    mutationFn: logout,
     onError: (error: AxiosError) => {
       Toast.show({
         type: "error",

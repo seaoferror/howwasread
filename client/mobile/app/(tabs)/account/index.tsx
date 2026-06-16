@@ -2,12 +2,14 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useActionSheet } from "@expo/react-native-action-sheet";
-import { useDeleteAccount } from "@/hooks/useAuth";
+import { useDeleteAccount, useLogout } from "@/hooks/useAuth";
 import { colors } from "@/constants";
+import { setSecure } from "@/util/storage";
 
 export default function AccountScreen() {
   const { showActionSheetWithOptions } = useActionSheet();
   const deleteAccountMutation = useDeleteAccount();
+  const logoutMutation = useLogout();
   const handleDeleteAccount = () => {
     showActionSheetWithOptions(
       {
@@ -21,6 +23,7 @@ export default function AccountScreen() {
           case 0:
             deleteAccountMutation.mutate(undefined, {
               onSuccess: async () => {
+                await setSecure("accessToken", "");
                 router.replace("/");
               },
             });
@@ -31,7 +34,14 @@ export default function AccountScreen() {
       },
     );
   };
-
+  const handleLogout = () => {
+    logoutMutation.mutate(undefined, {
+      onSuccess: async () => {
+        await setSecure("accessToken", "");
+        router.replace("/");
+      },
+    });
+  };
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.menuContainer}>
@@ -44,8 +54,16 @@ export default function AccountScreen() {
         >
           <Text style={styles.menuText}>Change your profile</Text>
         </Pressable>
+        <Pressable
+          onPress={handleLogout}
+          style={({ pressed }) => [
+            styles.menuItem,
+            pressed && styles.menuItemPressed,
+          ]}
+        >
+          <Text style={styles.menuText}>Logout</Text>
+        </Pressable>
       </View>
-
       <View style={styles.footer}>
         <Pressable
           onPress={handleDeleteAccount}
@@ -64,11 +82,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.SAND_110,
   },
   menuContainer: {
+    flex: 1,
     gap: 10,
   },
   menuItem: {
     padding: 20,
-    flex: 1,
     borderWidth: StyleSheet.hairlineWidth,
     borderBottomColor: colors.BLACK,
   },

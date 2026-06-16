@@ -1,12 +1,12 @@
 import { StyleSheet, Text, View } from "react-native";
-import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import {
   colors,
   queryKey,
   SEAT_COORDINATES,
   SEAT_FILL_ORDER,
 } from "@/constants";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ConversationSignalResponse,
   SeatAssignment,
@@ -187,14 +187,14 @@ export default function OnlineConversationScreen() {
     );
   };
 
-  useFocusEffect(() => {
+  useEffect(() => {
     const joinConversation = async () => {
       if (!profile) {
         return;
       }
       console.log("try to connect ws");
       ws.current = new WebSocket(
-        `wss://${process.env.EXPO_PUBLIC_API_URL}/online/conversation/join?id=${conversationId}`,
+        `wss://${process.env.EXPO_PUBLIC_API_URL}/onlineconversation/conversation/join?id=${conversationId}`,
         undefined,
         {
           headers: {
@@ -204,7 +204,7 @@ export default function OnlineConversationScreen() {
         },
       );
       console.log(
-        `wss://${process.env.EXPO_PUBLIC_API_URL}/online/conversation/join?id=${conversationId}`,
+        `wss://${process.env.EXPO_PUBLIC_API_URL}/onlineconversation/conversation/join?id=${conversationId}`,
       );
       localAudio.current = await mediaDevices.getUserMedia({
         audio: true,
@@ -360,12 +360,14 @@ export default function OnlineConversationScreen() {
     joinConversation();
 
     return () => {
-      ws.current?.send(
-        JSON.stringify({
-          toIds: Object.keys(peers.current),
-          signal: { type: "leave" },
-        }),
-      );
+      if (ws.current && ws.current.readyState === 1) {
+        ws.current?.send(
+          JSON.stringify({
+            toIds: Object.keys(peers.current),
+            signal: { type: "leave" },
+          }),
+        );
+      }
       for (const peer of Object.values(peers.current)) {
         peer.close();
       }
@@ -375,7 +377,7 @@ export default function OnlineConversationScreen() {
       }
       ws.current?.close();
     };
-  });
+  }, [profile]);
 
   if (!profile) {
     return null;
@@ -433,9 +435,9 @@ export default function OnlineConversationScreen() {
         </View>
         <View style={styles.controls}>
           {mute ? (
-            <CustomButton label="turn off your mic" onPress={toggleAudio} />
-          ) : (
             <CustomButton label="turn on your mic" onPress={toggleAudio} />
+          ) : (
+            <CustomButton label="turn off your mic" onPress={toggleAudio} />
           )}
         </View>
       </View>

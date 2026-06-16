@@ -62,7 +62,12 @@ export async function signInWithApple(
   return data;
 }
 
+export async function logout() {
+  const { data } = await axiosInstance.post("/auth/account/logout");
+  return data;
+}
+
 export async function deleteAccount() {
-  const { data } = await axiosInstance.post("/auth/delete");
+  const { data } = await axiosInstance.post("/auth/account/delete");
   return data;
 }

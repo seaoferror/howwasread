@@ -24,7 +24,6 @@ async function refreshAccessToken(): Promise<{ accessToken: string }> {
 axiosInstance.interceptors.request.use(async (config) => {
   const token = await getSecureAsync("accessToken");
   if (token) {
-    console.log("use access token for request: ", token)
     config.headers.Authorization = `Bearer ${token}`;
   }
 
