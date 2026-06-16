@@ -108,11 +108,9 @@ func (s *Service) VerifySMSOTP(sessionId *uuid.UUID, verificationId uuid.UUID, o
 	if *resp.Status != "approved" {
 		slog.Info("otp is not correct",
 			"otp", otp,
+			"status", *resp.Status,
 		)
-		r := dto.VerifySMSOTPResponse{
-			PhoneNumberVerified: false,
-		}
-		return &r, "", nil
+		return nil, "", ErrVerifySMSOTP
 	}
 
 	if sessionId == nil {
