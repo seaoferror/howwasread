@@ -28,7 +28,7 @@ func NewService(r *repository.Repository, p *producer.Producer) *Service {
 		repository:    r,
 		producer:      p,
 		signer:        signer,
-		cloudfrontURL: os.Getenv("AWS_CLOUD_FRONT_URL"),
+		cloudfrontURL: os.Getenv("AWS_CLOUDFRONT_URL"),
 	}
 	return &s
 }

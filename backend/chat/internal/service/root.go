@@ -43,7 +43,7 @@ func NewService(r *repository.Repository, kp *producer.Producer) *Service {
 		presignClient: presignClient,
 		signer:        signer,
 		bucketName:    os.Getenv("AWS_S3_BUCKET_NAME"),
-		cloudfrontURL: os.Getenv("AWS_CLOUD_FRONT_URL"),
+		cloudfrontURL: os.Getenv("AWS_CLOUDFRONT_URL"),
 	}
 	return &s
 }

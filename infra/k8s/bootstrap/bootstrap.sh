@@ -14,14 +14,6 @@ terraform apply -target="module.vpc"
 
 terraform apply
 
-kubectl create namespace backend
-
-kubectl apply -f . #in bootstrap
-
-kubectl apply -f . #in sealedsecret
-
 kubectl rollout restart deployment sealed-secrets-controller -n kube-system
-
-helm upgrade --install holiday . -n backend
 
 kubectl get secret -n argocd argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
