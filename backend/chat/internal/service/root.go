@@ -25,7 +25,7 @@ type Service struct {
 func NewService(r *repository.Repository, kp *producer.Producer) *Service {
 	cfg, err := config.LoadDefaultConfig(
 		context.Background(),
-		config.WithRegion(os.Getenv("AWS_S3_REGIONS")))
+		config.WithRegion(os.Getenv("AWS_S3_REGION")))
 	if err != nil {
 		log.Panicf("fail to config for presigned client: %v", err)
 	}

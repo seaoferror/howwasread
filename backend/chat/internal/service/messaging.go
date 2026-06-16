@@ -112,8 +112,8 @@ func (s *Service) GeneratePresignedURL(ctx context.Context, id uuid.UUID, conten
 			}
 		})
 		if err1 != nil {
-			slog.Error("fail to generate presigned URL", "err", err)
-			return nil, err
+			slog.Error("fail to generate presigned URL", "err", err1)
+			return nil, err1
 		}
 		res[i].URL = p.URL
 		res[i].Fields = p.Values
