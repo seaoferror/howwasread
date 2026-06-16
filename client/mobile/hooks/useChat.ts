@@ -8,7 +8,6 @@ import {
   generatePresignedURL,
   getChatRoomInfo,
   getSignedURL,
-  sendLike,
   sendMessage,
 } from "@/api/chat";
 import { AxiosError } from "axios";
@@ -24,19 +23,6 @@ import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
 import { stringify as uuidStringify } from "uuid";
 import { useEffect, useState } from "react";
 import { Message } from "@/types/chat";
-
-export function useSendLike() {
-  return useMutation({
-    mutationFn: sendLike,
-    onError: (error: AxiosError) => {
-      console.log(error?.response?.data);
-      Toast.show({
-        type: "error",
-        text1: String(error?.response?.data),
-      });
-    },
-  });
-}
 
 export function useGetInfiniteMessages(db: SQLiteDatabase, roomId: string) {
   return useInfiniteQuery({

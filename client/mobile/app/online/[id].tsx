@@ -24,7 +24,7 @@ import OnlineConversationRoomHeader from "@/components/conversation/OnlineConver
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { useGetMyProfile } from "@/hooks/useProfile";
 import { useActionSheet } from "@expo/react-native-action-sheet";
-import { useSendLike } from "@/hooks/useChat";
+import { useSendMessage } from "@/hooks/useChat";
 import Toast from "react-native-toast-message";
 import CustomButton from "@/components/CustomButton";
 import queryClient from "@/api/queryClient";
@@ -61,7 +61,7 @@ export default function OnlineConversationScreen() {
   const { showActionSheetWithOptions } = useActionSheet();
   const coordinates = SEAT_COORDINATES[Number(capacity)];
   const fillOrder = SEAT_FILL_ORDER[Number(capacity)];
-  const sendLikeMutation = useSendLike();
+  const sendMessageMutation = useSendMessage();
   const banParticipantMutation = useBanParticipant();
 
   const [seatAssignments, setSeatAssignments] = useState<SeatAssignment[]>([]);
@@ -126,13 +126,18 @@ export default function OnlineConversationScreen() {
         (selectedIndex?: number) => {
           switch (selectedIndex) {
             case 0:
-              sendLikeMutation.mutate(
-                { toId: id },
+              sendMessageMutation.mutate(
+                {
+                  toIdType: "personal",
+                  toId: id,
+                  contentType: "text",
+                  contents: ["👍"],
+                },
                 {
                   onSuccess: () => {
                     Toast.show({
                       type: "success",
-                      text1: `${name} will know you sent like after this conversation`,
+                      text1: `you sent like to ${name}`,
                     });
                   },
                 },
@@ -168,8 +173,13 @@ export default function OnlineConversationScreen() {
       (selectedIndex?: number) => {
         switch (selectedIndex) {
           case 0:
-            sendLikeMutation.mutate(
-              { toId: id },
+            sendMessageMutation.mutate(
+              {
+                toIdType: "personal",
+                toId: id,
+                contentType: "text",
+                contents: ["👍"],
+              },
               {
                 onSuccess: () => {
                   Toast.show({

@@ -9,11 +9,6 @@ import {
 } from "@/types/chat";
 import { File } from "expo-file-system";
 
-export async function sendLike(body: { toId: string }) {
-  const { data } = await axiosInstance.post("/chat/like", body);
-  return data;
-}
-
 export async function getRecentMessages(
   cursor: string,
 ): Promise<MessagingResponse[]> {
