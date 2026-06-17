@@ -23,6 +23,13 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: {{ $app.port }}
+          resources:
+            requests:
+              cpu: "0.1"
+              memory: "100Mi"
+            limits:
+              cpu: "0.3"
+              memory: "100Mi"
           {{- if $app.valkey }}
           env:
             - name: VALKEY_PASSWORD
@@ -156,4 +163,27 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: {{ $app.port }}
+
+---
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Values.namespace }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ $name }}
+  minReplicas: 1
+  maxReplicas: 2
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
+
 {{- end }}

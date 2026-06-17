@@ -255,3 +255,14 @@ resource "helm_release" "valkey_operator" {
     module.cluster1.eks_managed_node_groups
   ]
 }
+
+resource "helm_release" "metrics_server" {
+  name       = "metrics-server"
+  repository = "https://kubernetes-sigs.github.io/metrics-server/"
+  chart      = "metrics-server"
+  namespace  = "kube-system"
+
+  depends_on = [
+    module.cluster1.eks_managed_node_groups
+  ]
+}
