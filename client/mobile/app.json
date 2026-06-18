@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "Howwasread",
+    "slug": "howwasread",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "mobile",
+    "scheme": "howwasread",
     "userInterfaceStyle": "automatic",
     "ios": {
       "appleTeamId": "363TFV85A8",
@@ -14,16 +14,13 @@
       "bundleIdentifier": "com.xcecv.mobile",
       "infoPlist": {
         "NSAppTransportSecurity": {
-          "NSAllowsArbitraryLoads": true
+          "NSAllowsArbitraryLoads": false
         },
         "ITSAppUsesNonExemptEncryption": false,
         "UIBackgroundModes": [
           "audio",
           "voip"
         ]
-      },
-      "entitlements": {
-        "aps-environment": "development"
       }
     },
     "android": {
