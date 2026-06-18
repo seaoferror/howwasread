@@ -2,8 +2,6 @@ package com.xcecv.offlineconversation.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.zaxxer.hikari.util.Credentials;
-import glide.api.GlideClient;
 import glide.api.GlideClusterClient;
 import glide.api.models.configuration.*;
 import org.springframework.beans.factory.annotation.Value;

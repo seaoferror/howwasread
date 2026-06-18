@@ -2,22 +2,22 @@ package com.xcecv.offlineconversation.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.f4b6a3.uuid.UuidCreator;
 import com.xcecv.offlineconversation.domain.OfflineConversation;
 import com.xcecv.offlineconversation.domain.OfflineConversationParticipant;
 import com.xcecv.offlineconversation.domain.ParticipantCompositeKey;
-import com.xcecv.offlineconversation.dto.CreateOfflineConversationRequest;
-import com.xcecv.offlineconversation.dto.JoinOfflineConversationRequest;
-import com.xcecv.offlineconversation.dto.OfflineConversationDetailResponse;
-import com.xcecv.offlineconversation.dto.OfflineConversationMapResponse;
+import com.xcecv.offlineconversation.dto.*;
 import com.xcecv.offlineconversation.projection.OfflineConversationDetailProjection;
 import com.xcecv.offlineconversation.projection.OfflineConversationMapProjection;
 import com.xcecv.offlineconversation.projection.OfflineConversationPinProjection;
 import com.xcecv.offlineconversation.repository.OfflineConversationParticipantRepository;
 import com.xcecv.offlineconversation.repository.OfflineConversationRepository;
+import com.xcecv.offlineconversation.util.UUIDUtil;
 import glide.api.GlideClusterClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -36,6 +36,7 @@ public class OfflineConversationService {
   private final OfflineConversationParticipantRepository offlineConversationParticipantRepository;
   private final GlideClusterClient glideClusterClient;
   private final ObjectMapper objectMapper;
+  private final KafkaTemplate<byte[], Object> kafkaTemplate;
 
   private static final String EMPTY_CACHE_DUMMY_KEY = "_";
   private static final long CACHE_TTL_SECONDS = 3600;
@@ -70,6 +71,15 @@ public class OfflineConversationService {
         .participantId(memberId)
         .build();
     offlineConversationParticipantRepository.save(new OfflineConversationParticipant(key, convo));
+    kafkaTemplate.send("chat_message",
+        ChatMessage.builder()
+            .id(UUIDUtil.uuidToBytes(UuidCreator.getTimeOrderedEpoch()))
+            .fromId(UUIDUtil.uuidToBytes(memberId))
+            .toIdType("group")
+            .toId(UUIDUtil.uuidToBytes(conversationId))
+            .contentType("create")
+            .contents(new ArrayList<>(List.of(request.location())))
+            .build());
     try {
       Map<String, String> hashEntry = Map.of(conversationId.toString(),
           objectMapper.writeValueAsString(
@@ -106,6 +116,15 @@ public class OfflineConversationService {
         .participantId(memberId)
         .build();
     offlineConversationParticipantRepository.save(new OfflineConversationParticipant(key, conversationProxy));
+    kafkaTemplate.send("chat_message",
+        ChatMessage.builder()
+            .id(UUIDUtil.uuidToBytes(UuidCreator.getTimeOrderedEpoch()))
+            .fromId(UUIDUtil.uuidToBytes(memberId))
+            .toIdType("group")
+            .toId(UUIDUtil.uuidToBytes(request.conversationId()))
+            .contentType("participate")
+            .contents(null)
+            .build());
   }
 
   @Transactional
@@ -115,6 +134,15 @@ public class OfflineConversationService {
         .participantId(memberId)
         .build();
     offlineConversationParticipantRepository.deleteById(key);
+    kafkaTemplate.send("chat_message",
+        ChatMessage.builder()
+            .id(UUIDUtil.uuidToBytes(UuidCreator.getTimeOrderedEpoch()))
+            .fromId(UUIDUtil.uuidToBytes(memberId))
+            .toIdType("group")
+            .toId(UUIDUtil.uuidToBytes(request.conversationId()))
+            .contentType("quit")
+            .contents(null)
+            .build());
   }
 
   public List<OfflineConversationMapResponse> mapRes7Convos(
