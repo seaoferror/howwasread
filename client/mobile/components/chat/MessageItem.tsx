@@ -59,6 +59,10 @@ export default function MessageItem({ message, isDayFirst }: MessageItemProps) {
                   style={styles.media}
                   source={url}
                   cachePolicy="memory"
+                  priority="low"
+                  onError={(event) => {
+                    console.log(event.error);
+                  }}
                 />
               ))
             ) : message.contentType === "audio" ? (
