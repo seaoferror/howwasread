@@ -26,3 +26,39 @@ func (r *Repository) SaveIdsByFileName(ctx context.Context, ids []gocql.UUID, fi
 	}
 	return nil
 }
+
+func (r *Repository) CreateChatRoom(ctx context.Context, roomId gocql.UUID, memberId gocql.UUID, roomName string) error {
+	err := r.session.Query(`INSERT INTO chat_room_by_id (id, name, room_type, participant_ids) VALUES (?, ?, ?, ?)`,
+		roomId, roomName, "group", []gocql.UUID{memberId}).ExecContext(ctx)
+	if err != nil {
+		slog.Error("fail to create chat room", "err", err,
+			"roomId", roomId,
+			"memberId", memberId)
+		return err
+	}
+	return nil
+}
+
+func (r *Repository) AddParticipantId(ctx context.Context, roomId gocql.UUID, participantId gocql.UUID) error {
+	err := r.session.Query(`UPDATE chat_room_by_id SET participant_ids = participant_ids + ? WHERE id = ?`,
+		participantId, roomId).ExecContext(ctx)
+	if err != nil {
+		slog.Error("fail to save participant id", "err", err,
+			"roomId", roomId,
+			"participantId", participantId)
+		return err
+	}
+	return nil
+}
+
+func (r *Repository) RemoveParticipantId(ctx context.Context, roomId gocql.UUID, participantId gocql.UUID) error {
+	err := r.session.Query(`UPDATE chat_room_by_id SET participant_ids = participant_ids - ? WHERE id = ?`,
+		participantId, roomId).ExecContext(ctx)
+	if err != nil {
+		slog.Error("fail to delete participant id", "err", err,
+			"roomId", roomId,
+			"participantId", participantId)
+		return err
+	}
+	return nil
+}

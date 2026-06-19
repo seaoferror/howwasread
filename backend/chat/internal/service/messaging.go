@@ -55,7 +55,7 @@ func (s *Service) PublishMessaging(ctx context.Context, fromId uuid.UUID, toIdTy
 	if err != nil {
 		return nil, err
 	}
-	if contentType != "text" {
+	if contentType == "image" || contentType == "audio" || contentType == "video" {
 		exists, err1 := s.repository.HasFilepath(ctx, contentType+string(fromId[:]), contents)
 		if err1 != nil {
 			return nil, err1
@@ -76,7 +76,7 @@ func (s *Service) PublishMessaging(ctx context.Context, fromId uuid.UUID, toIdTy
 		ContentType: contentType,
 		Contents:    contents,
 	})
-	err = s.producer.PushMessage("chat.message", nil, p)
+	err = s.producer.PushMessage("chat_message", nil, p)
 	if err != nil {
 		slog.Error("fail to publish message", "err", err)
 		return nil, err

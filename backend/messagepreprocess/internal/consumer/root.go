@@ -160,7 +160,7 @@ func (c *Consumer) distinguishMessage(
 	ctx context.Context,
 	message *sarama.ConsumerMessage,
 ) {
-	if message.Topic == "chat.message" {
+	if message.Topic == "chat_message" {
 		var p payload.ChatMessage
 		err := json.Unmarshal(message.Value, &p)
 		if err != nil {

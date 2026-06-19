@@ -39,7 +39,7 @@ func (s *Service) RelayMessage(
 			ctxr, cancel := context.WithTimeout(ctx, 1*time.Second)
 			defer cancel()
 			ips, err := s.repository.GetServerIPs(ctxr, string(tid))
-			if (err != nil || len(ips) == 0) && !bytes.Equal(tid, fromId[:]) {
+			if (err != nil || len(ips) == 0) && !bytes.Equal(tid, fromId[:]) && contentType != "quit" && contentType != "participate" && contentType != "create" {
 				pm.Lock()
 				pushToIds = append(pushToIds, tid)
 				pm.Unlock()
@@ -90,9 +90,11 @@ func (s *Service) RelayMessage(
 				if err != nil {
 					slog.Error("fail to get *ClientConn for relay",
 						"err", err)
-					pm.Lock()
-					pushToIds = append(pushToIds, tids...)
-					pm.Unlock()
+					if contentType != "quit" && contentType != "participate" && contentType != "create" {
+						pm.Lock()
+						pushToIds = append(pushToIds, tids...)
+						pm.Unlock()
+					}
 					return
 				}
 				s.ccsMutex.Lock()
@@ -113,9 +115,11 @@ func (s *Service) RelayMessage(
 			res, err := client.RelayMessaging(ctxt, &req)
 			if err != nil {
 				slog.Error("fail to relay messaging", "err", err)
-				pm.Lock()
-				pushToIds = append(pushToIds, tids...)
-				pm.Unlock()
+				if contentType != "quit" && contentType != "participate" && contentType != "create" {
+					pm.Lock()
+					pushToIds = append(pushToIds, tids...)
+					pm.Unlock()
+				}
 				//st, ok := status.FromError(err)
 				//if ok && (st.Code() == codes.Unavailable || st.Code() == codes.DeadlineExceeded) {
 				s.ccsMutex.Lock()
@@ -141,9 +145,11 @@ func (s *Service) RelayMessage(
 			if res == nil || len(res.PushToIds) == 0 {
 				return
 			}
-			pm.Lock()
-			pushToIds = append(pushToIds, res.PushToIds...)
-			pm.Unlock()
+			if contentType != "quit" && contentType != "participate" && contentType != "create" {
+				pm.Lock()
+				pushToIds = append(pushToIds, res.PushToIds...)
+				pm.Unlock()
+			}
 			var wg1 sync.WaitGroup
 			for _, tid := range res.PushToIds {
 				wg1.Add(1)
