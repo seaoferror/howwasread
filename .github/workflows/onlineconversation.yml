@@ -1,10 +1,10 @@
-name: notification-ci
+name: onlineconversation
 on:
   push:
     branches:
       - main
     paths:
-      - 'backend/notification/**'
+      - 'backend/onlineconversation/**'
       - 'backend/common/**'
 
 jobs:
@@ -27,15 +27,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: build and push notification
+      - name: build and push onlineconversation
         env:
           REGISTRY: 565319458549.dkr.ecr.ap-northeast-2.amazonaws.com
-          REPOSITORY: backend/notification
+          REPOSITORY: backend/onlineconversation
           IMAGE_TAG: latest
         run: |
           docker buildx build --platform linux/amd64 \
           -t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
-          -f ./backend/notification/Dockerfile ./backend --push
+          -f ./backend/onlineconversation/Dockerfile ./backend --push
 
       - name: install kubectl
         uses: azure/setup-kubectl@v4
@@ -45,4 +45,4 @@ jobs:
         run: aws eks update-kubeconfig --name cluster1 --region ap-northeast-2
 
       - name: rollout restart
-        run: kubectl rollout restart deployment notification -n backend
+        run: kubectl rollout restart deployment onlineconversation -n backend

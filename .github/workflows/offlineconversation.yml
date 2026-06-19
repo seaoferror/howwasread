@@ -1,11 +1,10 @@
-name: messagepreprocess-ci
+name: offlineconversation
 on:
   push:
     branches:
       - main
     paths:
-      - 'backend/messagepreprocess/**'
-      - 'backend/common/**'
+      - 'backend/offlineconversation/**'
 
 jobs:
   build-and-push:
@@ -27,15 +26,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: build and push messagepreprocess
+      - name: build and push offlineconversation
         env:
           REGISTRY: 565319458549.dkr.ecr.ap-northeast-2.amazonaws.com
-          REPOSITORY: backend/messagepreprocess
+          REPOSITORY: backend/offlineconversation
           IMAGE_TAG: latest
         run: |
           docker buildx build --platform linux/amd64 \
           -t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
-          -f ./backend/messagepreprocess/Dockerfile ./backend --push
+          -f ./backend/offlineconversation/Dockerfile ./backend/offlineconversation --push
 
       - name: install kubectl
         uses: azure/setup-kubectl@v4
@@ -45,4 +44,4 @@ jobs:
         run: aws eks update-kubeconfig --name cluster1 --region ap-northeast-2
 
       - name: rollout restart
-        run: kubectl rollout restart deployment messagepreprocess -n backend
+        run: kubectl rollout restart deployment offlineconversation -n backend
