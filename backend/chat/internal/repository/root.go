@@ -46,7 +46,7 @@ func NewRepository() *Repository {
     room_id uuid,
     content_type text,
     contents set<text>,
-    PRIMARY KEY ((to_id), id)
+    PRIMARY KEY ((to_id), room_id, id)
     ) WITH CLUSTERING ORDER BY (id DESC);`).Exec()
 	if err != nil {
 		log.Panicf("fail to create table payload: %v", err)

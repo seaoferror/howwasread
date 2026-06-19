@@ -26,7 +26,7 @@ func (s *Service) ManageMessage(
 		toIds = append(toIds, fromId[:])
 	}
 	if contentType == "quit" {
-		err := s.repository.RemoveParticipantId(ctx, gocql.UUID(roomId), gocql.UUID(fromId))
+		err := s.repository.QuitChatRoom(ctx, gocql.UUID(roomId), gocql.UUID(fromId))
 		if err != nil {
 			return
 		}
