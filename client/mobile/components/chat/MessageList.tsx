@@ -8,6 +8,7 @@ import { stringify as uuidStringify } from "uuid";
 import MessageItem from "@/components/chat/MessageItem";
 import { useLocalSearchParams } from "expo-router";
 import { findNewMessage } from "@/db/message";
+import { useGetMyProfile } from "@/hooks/useProfile";
 
 export default function MessageList() {
   const db = useSQLiteContext();
@@ -15,6 +16,7 @@ export default function MessageList() {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useGetInfiniteMessages(db, String(roomId));
   const [messages, setMessages] = useState<Omit<Message, "roomId">[]>([]);
+  const { data: myProfile } = useGetMyProfile();
 
   useEffect(() => {
     if (data?.pages) {
@@ -26,16 +28,23 @@ export default function MessageList() {
       if (roomId !== uuidStringify(newMessageRaw.room_id)) {
         return;
       }
-      setMessages((prev) => [
-        {
-          id: uuidStringify(newMessageRaw.id),
-          fromId: uuidStringify(newMessageRaw.from_id),
-          contentType: newMessageRaw.content_type,
-          contents: JSON.parse(newMessageRaw.contents),
-          createdAt: newMessageRaw.created_at,
-        },
-        ...prev,
-      ]);
+      const newMessage = {
+        id: uuidStringify(newMessageRaw.id),
+        fromId: uuidStringify(newMessageRaw.from_id),
+        contentType: newMessageRaw.content_type,
+        contents: JSON.parse(newMessageRaw.contents),
+        createdAt: newMessageRaw.created_at,
+      };
+      if (
+        newMessage.contentType === "image" ||
+        newMessage.contentType === "video"
+      ) {
+        setTimeout(() => {
+          setMessages((prev) => [newMessage, ...prev]);
+        }, 1500);
+        return;
+      }
+      setMessages((prev) => [newMessage, ...prev]);
     });
 
     return () => {
@@ -49,6 +58,10 @@ export default function MessageList() {
     }
   };
 
+  if (!myProfile) {
+    return null;
+  }
+
   return (
     <FlatList
       data={messages}
@@ -59,7 +72,15 @@ export default function MessageList() {
           ? new Date(olderMessage.createdAt).toLocaleDateString()
           : null;
         const isDayFirst = currentMsgDate !== olderMsgDate;
-        return <MessageItem message={item} isDayFirst={isDayFirst} />;
+        const isFromChange =
+          olderMessage.fromId !== item.fromId && item.fromId !== myProfile.id;
+        return (
+          <MessageItem
+            message={item}
+            isDayFirst={isDayFirst}
+            isFromChange={isFromChange}
+          />
+        );
       }}
       keyExtractor={(item, index) => `${item.id}-${index}`}
       contentContainerStyle={{ ...styles.contentContainer }}

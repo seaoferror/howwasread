@@ -37,11 +37,10 @@ export function useGetInfiniteMessages(db: SQLiteDatabase, roomId: string) {
 }
 
 export function useGetChatRoomInfo(roomId: string) {
-  const { data } = useQuery({
+  return useQuery({
     queryFn: () => getChatRoomInfo(roomId),
     queryKey: [queryKey.CHAT, queryKey.GET_CHAT_ROOM_INFO, roomId],
   });
-  return { data };
 }
 
 export function useSendMessage() {

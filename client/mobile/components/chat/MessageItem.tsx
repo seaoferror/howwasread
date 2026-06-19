@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from "react-native";
 import { Message } from "@/types/chat";
 import { getHourMinute, getLongDate } from "@/util/time";
-import { useGetMyProfile } from "@/hooks/useProfile";
+import { useGetMyProfile, useGetProfile } from "@/hooks/useProfile";
 import { colors } from "@/constants";
 import { useGetSignedURLs } from "@/hooks/useChat";
 import { Image } from "expo-image";
@@ -11,73 +11,94 @@ import VoiceMessage from "@/components/chat/VoiceMessage";
 interface MessageItemProps {
   message: Omit<Message, "roomId">;
   isDayFirst: boolean;
+  isFromChange: boolean;
 }
 
-export default function MessageItem({ message, isDayFirst }: MessageItemProps) {
-  const { data: profile } = useGetMyProfile();
+export default function MessageItem({
+  message,
+  isDayFirst,
+  isFromChange,
+}: MessageItemProps) {
+  const { data: myProfile } = useGetMyProfile();
+  const { data: fromProfile } = useGetProfile(message.fromId);
   const { urls } = useGetSignedURLs({
     contentType: message.contentType,
     contents: message.contents,
   });
-  if (!profile) {
+  if (!myProfile || !fromProfile) {
     return null;
   }
 
-  const isMine = profile.id === message.fromId;
+  const isMine = myProfile.id === message.fromId;
+  const isEvent =
+    message.contentType === "participate" ||
+    message.contentType === "quit" ||
+    message.contentType === "create";
 
   return (
     <View style={styles.container}>
       {isDayFirst && (
-        <View style={styles.dateContainer}>
-          <View style={styles.datePill}>
-            <Text style={styles.dateText}>
+        <View style={styles.pillPosition}>
+          <View style={styles.pill}>
+            <Text style={styles.pillText}>
               {getLongDate(message.createdAt)}
             </Text>
           </View>
         </View>
       )}
 
-      <View style={[styles.row, isMine ? styles.rowRight : styles.rowLeft]}>
-        <View
-          style={[
-            styles.bubbleWrapper,
-            isMine ? styles.bubbleWrapperReverse : null,
-          ]}
-        >
+      {isEvent ? (
+        <View style={styles.pillPosition}>
+          <View style={styles.pill}>
+            <Text style={styles.pillText}>
+              `${fromProfile.name} ${message.contentType} chat room`
+            </Text>
+          </View>
+        </View>
+      ) : (
+        <View style={[styles.row, isMine ? styles.rowRight : styles.rowLeft]}>
           <View
             style={[
-              styles.messageContainer,
-              isMine ? styles.mine : styles.theirs,
+              styles.bubbleWrapper,
+              isMine ? styles.bubbleWrapperReverse : null,
             ]}
           >
-            {message.contentType === "text" ? (
-              <Text style={styles.content}>{message.contents[0]}</Text>
-            ) : message.contentType === "image" ? (
-              urls.map((url, idx) => (
-                <Image
-                  key={idx}
-                  style={styles.media}
-                  source={url}
-                  cachePolicy="memory"
-                  priority="low"
-                  onError={(event) => {
-                    console.log(event.error);
-                  }}
-                />
-              ))
-            ) : message.contentType === "audio" ? (
-              urls.some((url) => url) && <VoiceMessage url={urls[0]} />
-            ) : message.contentType === "video" ? (
-              <>
-                {urls.map(
-                  (url, idx) => url && <VideoMessage key={idx} url={url} />,
-                )}
-              </>
-            ) : null}
+            <View
+              style={[
+                styles.messageContainer,
+                isMine ? styles.mine : styles.theirs,
+              ]}
+            >
+              {isFromChange && <Text>{fromProfile.name}</Text>}
+              {message.contentType === "text" ? (
+                <Text style={styles.content}>{message.contents[0]}</Text>
+              ) : message.contentType === "image" ? (
+                urls.map((url, idx) => (
+                  <Image
+                    key={idx}
+                    style={styles.media}
+                    source={url}
+                    cachePolicy="memory"
+                    priority="low"
+                    onError={(event) => {
+                      console.log(event.error);
+                    }}
+                  />
+                ))
+              ) : message.contentType === "audio" ? (
+                urls.some((url) => url) && <VoiceMessage url={urls[0]} />
+              ) : message.contentType === "video" ? (
+                <>
+                  {urls.map(
+                    (url, idx) => url && <VideoMessage key={idx} url={url} />,
+                  )}
+                </>
+              ) : null}
+            </View>
+            <Text style={styles.time}>{getHourMinute(message.createdAt)}</Text>
           </View>
-          <Text style={styles.time}>{getHourMinute(message.createdAt)}</Text>
         </View>
-      </View>
+      )}
     </View>
   );
 }
@@ -132,18 +153,18 @@ const styles = StyleSheet.create({
     color: colors.GRAY_500,
     marginBottom: 2,
   },
-  dateContainer: {
+  pillPosition: {
     justifyContent: "center",
     alignItems: "center",
     marginVertical: 12,
   },
-  datePill: {
+  pill: {
     backgroundColor: "rgba(0, 0, 0, 0.05)",
     borderRadius: 999,
     paddingHorizontal: 12,
     paddingVertical: 4,
   },
-  dateText: {
+  pillText: {
     color: colors.GRAY_700,
     fontSize: 12,
     fontWeight: "500",

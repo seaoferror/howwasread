@@ -64,12 +64,11 @@ function RootNavigator() {
         playsInSilentMode: true,
       });
       let deviceId = await getSecureAsync("deviceId");
-      // console.log(deviceId);
       if (!deviceId) {
         deviceId = randomUUID();
-        // console.log(deviceId);
         await setSecure("deviceId", deviceId);
       }
+      console.log(deviceId);
       try {
         await requestPermissionsAsync({
           ios: {
@@ -91,7 +90,7 @@ function RootNavigator() {
       }
 
       const row = await db.getFirstAsync<{ id: Uint8Array }>(
-        `SELECT id FROM message ORDER BY rowid DESC LIMIT 1`,
+        `SELECT id FROM message ORDER BY id DESC LIMIT 1`,
       );
       console.log(row);
       let cursor = "00000000-0000-7000-8000-000000000000";

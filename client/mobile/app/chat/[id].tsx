@@ -3,16 +3,13 @@ import {
   SafeAreaView,
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
-import {
-  useFocusEffect,
-  useLocalSearchParams,
-  useNavigation,
-} from "expo-router";
+import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useGetChatRoomInfo } from "@/hooks/useChat";
 import MessageList from "@/components/chat/MessageList";
 import { colors } from "@/constants";
 import MessageInput from "@/components/chat/MessageInput";
 import useKeyboard from "@/hooks/useKeyboard";
+import { useEffect } from "react";
 
 export default function ChatScreen() {
   const { id: roomId } = useLocalSearchParams();
@@ -21,11 +18,11 @@ export default function ChatScreen() {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
-  useFocusEffect(() => {
+  useEffect(() => {
     navigation.setOptions({
       title: roomInfo?.name,
     });
-  });
+  }, [roomInfo]);
 
   return (
     <SafeAreaView style={styles.container} edges={["bottom"]}>

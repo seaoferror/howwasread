@@ -12,12 +12,10 @@ export function useGetMyProfile() {
 }
 
 export function useGetProfile(id: string) {
-  const { data } = useQuery({
+  return useQuery({
     queryFn: () => getProfile(id),
     queryKey: [queryKey.PROFILE, queryKey.GET_PROFILE, id]
   });
-
-  return { data }
 }
 
 export function useSetName() {

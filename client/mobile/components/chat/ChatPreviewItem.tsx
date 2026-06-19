@@ -15,7 +15,7 @@ export default function ChatPreviewItem({ preview }: ChatPreviewItemProps) {
   const { data: fromProfile } = useGetProfile(preview.fromId);
   const { data: myProfile } = useGetMyProfile();
 
-  if (!myProfile) {
+  if (!myProfile || !roomInfo || !fromProfile) {
     return null;
   }
 
@@ -33,21 +33,21 @@ export default function ChatPreviewItem({ preview }: ChatPreviewItemProps) {
     >
       <View style={styles.avatar}>
         <Text style={styles.avatarText}>
-          {(roomInfo?.name ?? "").charAt(0)}
+          {(roomInfo.name).charAt(0)}
         </Text>
       </View>
 
       <View style={styles.textContainer}>
         <Text style={styles.roomName} numberOfLines={1}>
-          {roomInfo?.name ?? ""}
+          {roomInfo.name}
         </Text>
         <Text style={styles.messagePreview} numberOfLines={1}>
           {preview.fromId === preview.roomId || preview.fromId === myProfile.id
             ? ""
-            : `${fromProfile?.name}: `}
+            : `${fromProfile.name}: `}
           {preview.contentType === "text"
             ? preview.contents[0]
-            : preview.contentType}
+            : "("+preview.contentType+")"}
         </Text>
       </View>
 
