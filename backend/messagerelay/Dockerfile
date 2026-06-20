@@ -1,4 +1,4 @@
-FROM golang:1.25.0 AS stage1
+FROM golang:1.26.0 AS stage1
 RUN apt-get update && apt-get install -y ca-certificates
 WORKDIR /app
 COPY go.mod go.sum ./
