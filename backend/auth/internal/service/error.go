@@ -3,6 +3,7 @@ package service
 import "errors"
 
 var (
+	ErrSignInWithGoogle         = errors.New("fail to google sing in")
 	ErrSignInWithApple          = errors.New("fail to apple sign in")
 	ErrCheckEmail               = errors.New("fail to check email usability")
 	ErrSignUpWithEmail          = errors.New("fail to sign up with email")

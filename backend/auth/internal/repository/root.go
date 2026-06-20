@@ -33,17 +33,22 @@ func NewRepository() *Repository {
 	queries := []string{
 		`CREATE TABLE IF NOT EXISTS member_by_email (
 			email text PRIMARY KEY, id uuid, email_verified boolean, phone_number_verified boolean,
-			phone_number text, password text, role text, apple_sign_in_user text
+			phone_number text, password text, role text
 		);`,
 		`CREATE TABLE IF NOT EXISTS member_by_id (
 			id uuid PRIMARY KEY, email text, email_verified boolean, phone_number_verified boolean,
-			phone_number text, password text, role text, apple_sign_in_user text, refresh_token_jti uuid
+			phone_number text, password text, role text, refresh_token_jti uuid
 		);`,
 		`CREATE TABLE IF NOT EXISTS member_by_phone_number (
 			phone_number text PRIMARY KEY, id uuid, email text, phone_number_verified boolean, role text
 		);`,
-		`CREATE TABLE IF NOT EXISTS member_by_apple_sign_in_user (
-			apple_sign_in_user text PRIMARY KEY, id uuid, email text, role text
+		`CREATE TABLE IF NOT EXISTS member_by_third_party (
+    		provider_name text,
+    		third_party_id text,
+    		id uuid,
+    		email text,
+    		role text,
+    		PRIMARY KEY ((provider_name, third_party_id))
 		);`,
 		`CREATE TABLE IF NOT EXISTS member_by_verification_id (
 			verification_id uuid PRIMARY KEY, email text, phone_number text, otp text

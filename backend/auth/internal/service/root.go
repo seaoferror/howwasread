@@ -15,14 +15,15 @@ import (
 )
 
 type Service struct {
-	repository   *repository.Repository
-	privateKeyAT *rsa.PrivateKey
-	privateKeyRT *rsa.PrivateKey
-	publicKeyRT  *rsa.PublicKey
-	issuer       string
-	audience     string
-	twilioClient *twilio.RestClient
-	appleKeyFunc func(token *jwt.Token) (interface{}, error)
+	repository              *repository.Repository
+	privateKeyAT            *rsa.PrivateKey
+	privateKeyRT            *rsa.PrivateKey
+	publicKeyRT             *rsa.PublicKey
+	issuer                  string
+	audience                string
+	googleSignInWebClientId string
+	twilioClient            *twilio.RestClient
+	appleKeyFunc            func(token *jwt.Token) (interface{}, error)
 }
 
 func NewService(r *repository.Repository) *Service {
@@ -41,14 +42,15 @@ func NewService(r *repository.Repository) *Service {
 	}
 
 	return &Service{
-		repository:   r,
-		privateKeyAT: loadRSAPrivateKey("cert/authentication/private-key-at.pem"),
-		privateKeyRT: loadRSAPrivateKey("cert/authentication/private-key-rt.pem"),
-		publicKeyRT:  loadRSAPublicKey("cert/authentication/public-key-rt.pem"),
-		issuer:       os.Getenv("ISSUER"),
-		audience:     os.Getenv("BUNDLE_IDENTIFIER"),
-		twilioClient: twilioClient,
-		appleKeyFunc: appleJWKs.Keyfunc,
+		repository:              r,
+		privateKeyAT:            loadRSAPrivateKey("cert/authentication/private-key-at.pem"),
+		privateKeyRT:            loadRSAPrivateKey("cert/authentication/private-key-rt.pem"),
+		publicKeyRT:             loadRSAPublicKey("cert/authentication/public-key-rt.pem"),
+		issuer:                  os.Getenv("ISSUER"),
+		audience:                os.Getenv("BUNDLE_IDENTIFIER"),
+		googleSignInWebClientId: os.Getenv("GOOGLE_SIGN_IN_WEB_CLIENT_ID"),
+		twilioClient:            twilioClient,
+		appleKeyFunc:            appleJWKs.Keyfunc,
 	}
 }
 

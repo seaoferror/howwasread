@@ -3,6 +3,7 @@ package service
 import (
 	"backend/auth/internal/constant"
 	"backend/auth/internal/dto"
+	"context"
 	"errors"
 	"log/slog"
 	"time"
@@ -12,7 +13,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) SignInWithApple(identityToken string, isFirstSignIn bool) (*dto.SignInWithAppleResponse, string, error) {
+func (s *Service) SignInWithApple(identityToken string, isFirstSignIn bool) (*dto.SignInWithThirdPartyResponse, string, error) {
 	idt, err := jwt.Parse(identityToken, s.appleKeyFunc)
 	if err != nil {
 		slog.Info("fail to parse identityToken with apple JWKs", "err", err)
@@ -92,67 +93,33 @@ func (s *Service) SignInWithApple(identityToken string, isFirstSignIn bool) (*dt
 				slog.Error("fail to create uuid v7 for apple sign in user")
 				return nil, "", ErrInternalServer
 			}
-			id = gocql.UUID(idv7)
-			err = s.repository.SaveAppleSignInInfo(id, user, email, false, true)
+			err = s.repository.SaveThirdPartySignInInfo(context.Background(), gocql.UUID(idv7), user, email, false, true, "apple")
 			if err != nil {
 				return nil, "", ErrInternalServer
 			}
-			sessionId, err2 := gocql.RandomUUID()
-			if err2 != nil {
-				slog.Error("fail to generate random uuid for session")
-				return nil, "", ErrInternalServer
-			}
-			err = s.repository.SaveEmailBySessionId(sessionId, email)
-			if err != nil {
-				return nil, "", ErrInternalServer
-			}
-			resp := dto.SignInWithAppleResponse{
-				SessionId: uuid.UUID(sessionId),
-			}
-			return &resp, "", nil
+			return s.provideSessionId(email)
 		}
 		if err1 != nil {
 			return nil, "", ErrSignInWithApple
 		}
-		err = s.repository.SaveAppleSignInInfo(id, user, email, phoneNumberVerified, emailVerified)
+		err = s.repository.SaveThirdPartySignInInfo(context.Background(), id, user, email, phoneNumberVerified, emailVerified, "apple")
 		if err != nil {
 			return nil, "", ErrInternalServer
 		}
 		if !phoneNumberVerified {
-			sessionId := uuid.New()
-			err = s.repository.SaveEmailBySessionId(gocql.UUID(sessionId), email)
-			if err != nil {
-				return nil, "", ErrSignInWithApple
-			}
-			resp := dto.SignInWithAppleResponse{
-				SessionId: sessionId,
-			}
-			return &resp, "", nil
+			return s.provideSessionId(email)
 		}
-		jti, err1 := gocql.RandomUUID()
-		if err1 != nil {
-			slog.Error("fail to create random uuid for jti")
-			return nil, "", ErrSignInWithApple
-		}
-
-		at, rt, err1 := s.createLoginTokens(id.String(), jti.String(), role)
-		if err1 != nil {
-			return nil, "", ErrSignInWithApple
-		}
-
-		err = s.repository.SaveRefreshTokenJTIById(id, jti)
-		if err != nil {
-			return nil, "", ErrSignInWithApple
-		}
-		resp := dto.SignInWithAppleResponse{
-			AccessToken: at,
-		}
-		return &resp, rt, nil
+		return s.provideTokens(id, role)
 	}
-
-	id, emailFromDB, role, err := s.repository.FindAppleSignInInfoByUser(user)
+	id, emailFromDB, role, err := s.repository.FindThirdPartySignInInfo(context.Background(), user, "apple")
 	if err != nil {
 		return nil, "", ErrSignInWithApple
+	}
+	if emailFromDB != email {
+		err = s.repository.UpdateThirdPartyEmail(context.Background(), email, user, "apple")
+		if err != nil {
+			return nil, "", ErrInternalServer
+		}
 	}
 	//this additional fetching can be removed to improve speed little bit
 	//by adding few lines, but the advantage is also small currently and
@@ -162,31 +129,7 @@ func (s *Service) SignInWithApple(identityToken string, isFirstSignIn bool) (*dt
 		return nil, "", ErrSignInWithApple
 	}
 	if !phoneNumberVerified {
-		sessionId := uuid.New()
-		err = s.repository.SaveEmailBySessionId(gocql.UUID(sessionId), emailFromDB)
-		if err != nil {
-			return nil, "", ErrSignInWithApple
-		}
-		resp := dto.SignInWithAppleResponse{
-			SessionId: sessionId,
-		}
-		return &resp, "", nil
+		return s.provideSessionId(email)
 	}
-	jti, err := gocql.RandomUUID()
-	if err != nil {
-		slog.Error("fail to create random uuid for jti")
-		return nil, "", ErrInternalServer
-	}
-	at, rt, err := s.createLoginTokens(id.String(), jti.String(), role)
-	if err != nil {
-		return nil, "", ErrInternalServer
-	}
-	err = s.repository.SaveRefreshTokenJTIById(id, jti)
-	if err != nil {
-		return nil, "", ErrInternalServer
-	}
-	resp := dto.SignInWithAppleResponse{
-		AccessToken: at,
-	}
-	return &resp, rt, nil
+	return s.provideTokens(id, role)
 }

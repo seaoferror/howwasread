@@ -94,6 +94,7 @@ func (n *Network) signInWithApple(c *gin.Context) {
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, err.Error())
+		return
 	}
 	responseBody, rt, err := n.service.SignInWithApple(
 		req.IdentityToken,
@@ -101,6 +102,7 @@ func (n *Network) signInWithApple(c *gin.Context) {
 	)
 	if err != nil {
 		c.JSON(getStatusCode(err), err.Error())
+		return
 	}
 	if rt != "" {
 		c.SetCookie("refresh_token",
@@ -113,4 +115,14 @@ func (n *Network) signInWithApple(c *gin.Context) {
 		)
 	}
 	c.JSON(http.StatusOK, responseBody)
+}
+
+func (n *Network) signInWithGoogle(c *gin.Context) {
+	var req dto.SignInWithGoogleRequest
+	err := c.ShouldBindJSON(&req)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, err.Error())
+		return
+	}
+	response, rt, err := n.service.SignInWithGoogle(c.Request.Context(), req.IdToken)
 }

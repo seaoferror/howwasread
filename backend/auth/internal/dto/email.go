@@ -29,7 +29,11 @@ type SignInWithAppleRequest struct {
 	IdentityToken string `json:"identityToken"`
 }
 
-type SignInWithAppleResponse struct {
+type SignInWithGoogleRequest struct {
+	IdToken string `json:"idToken"`
+}
+
+type SignInWithThirdPartyResponse struct {
 	SessionId   uuid.UUID `json:"sessionId"`
 	AccessToken string    `json:"accessToken"`
 }
