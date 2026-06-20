@@ -4,6 +4,7 @@ metadata:
   name: config-map
   namespace: {{.Values.namespace}}
 data:
+  GOOGLE_SIGN_IN_WEB_CLIENT_ID: "151293957834-1j7mtcqmis9o9rsbt8hnv5jpmd7mi0au.apps.googleusercontent.com"
   PROFILE: "production"
   MONGODB_URI: "mongodb+srv://cluster0.jyynkfi.mongodb.net/?appName=Cluster0"
   TIDB_URL: "gateway01.ap-northeast-1.prod.aws.tidbcloud.com:4000/development?sslMode=VERIFY_IDENTITY"

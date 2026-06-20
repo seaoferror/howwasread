@@ -14,6 +14,7 @@ func emailRouter(n *Network) {
 	n.Router(GET, "/email/check", n.checkEmail)
 	n.Router(POST, "/email/otp/verify", n.verifyEmailOTP)
 	n.Router(POST, "/email/apple", n.signInWithApple)
+	n.Router(POST, "/email/google", n.signInWithGoogle)
 }
 
 func (n *Network) createMemberByEmail(c *gin.Context) {
@@ -124,5 +125,20 @@ func (n *Network) signInWithGoogle(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, err.Error())
 		return
 	}
-	response, rt, err := n.service.SignInWithGoogle(c.Request.Context(), req.IdToken)
+	responseBody, rt, err := n.service.SignInWithGoogle(c.Request.Context(), req.IdToken)
+	if err != nil {
+		c.JSON(getStatusCode(err), err.Error())
+		return
+	}
+	if rt != "" {
+		c.SetCookie("refresh_token",
+			rt,
+			constant.RefreshTokenTTL,
+			"",
+			"",
+			false,
+			true,
+		)
+	}
+	c.JSON(http.StatusOK, responseBody)
 }

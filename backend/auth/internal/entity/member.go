@@ -13,7 +13,7 @@ type Member struct {
 	//for verification and mark member as verified after verification
 	//by retrieved phone number and email
 	VerificationId gocql.UUID `db:"verification_id"`
-	//SessionId is for connection with previous verified email password login
+	//SessionId is for linking with previous verified email password login
 	//Give this to user who success to verify their email and who need to verify
 	//their sms(also give this to who success to log in and already verified their
 	//email before, but who need to verify their sms)

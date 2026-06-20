@@ -3,10 +3,9 @@ import {
   LoginWithEmailResponse,
   SendSMSOTPRequest,
   SignInWithAppleRequest,
-  SignInWithAppleResponse,
   SignInWithEmailRequest,
   SignInWithGoogleRequest,
-  SignInWithGoogleResponse,
+  SignInWithThirdPartyResponse,
   VerifyEmailOTPRequest,
   VerifyEmailOTPResponse,
   VerifySMSOTPRequest,
@@ -59,14 +58,14 @@ export async function verifySMSOTP(
 
 export async function signInWithApple(
   body: SignInWithAppleRequest,
-): Promise<SignInWithAppleResponse> {
+): Promise<SignInWithThirdPartyResponse> {
   const { data } = await axiosInstance.post("/auth/email/apple", body);
   return data;
 }
 
 export async function signInWithGoogle(
   body: SignInWithGoogleRequest,
-): Promise<SignInWithGoogleResponse> {
+): Promise<SignInWithThirdPartyResponse> {
   const { data } = await axiosInstance.post("/auth/email/google", body);
   return data;
 }

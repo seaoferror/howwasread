@@ -42,12 +42,7 @@ export interface SignInWithGoogleRequest {
   idToken: string;
 }
 
-export interface SignInWithAppleResponse {
-  sessionId?: string;
-  accessToken?: string;
-}
-
-export interface SignInWithGoogleResponse {
+export interface SignInWithThirdPartyResponse {
   sessionId?: string;
   accessToken?: string;
 }
