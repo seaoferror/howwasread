@@ -22,7 +22,7 @@ import java.util.UUID;
 @Configuration
 public class KafkaProducerConfig {
 
-  @Value("${profile:development}")
+  @Value("${spring.profiles.active:development}")
   private String profile;
 
   @Value("${spring.kafka.bootstrap-servers:localhost:9092}")

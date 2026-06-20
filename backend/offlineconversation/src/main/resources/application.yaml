@@ -1,7 +1,8 @@
-profile: ${PROFILE}
 server:
   port: 8080
 spring:
+  profiles:
+    active: ${PROFILE}
   threads:
     virtual:
       enabled: true

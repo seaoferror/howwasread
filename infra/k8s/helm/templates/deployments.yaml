@@ -25,11 +25,11 @@ spec:
             - containerPort: {{ $app.port }}
           resources:
             requests:
-              cpu: "0.1"
-              memory: "100Mi"
+              cpu: {{ $app.cpuRequests }}
+              memory: {{ $app.memoryRequests }}
             limits:
-              cpu: "0.3"
-              memory: "100Mi"
+              cpu: {{ $app.cpuLimits }}
+              memory: {{ $app.memoryLimits }}
           {{- if $app.valkey }}
           env:
             - name: VALKEY_PASSWORD
@@ -61,7 +61,6 @@ spec:
             - secretRef:
                 name: twilio
             {{- end }}
-          {{- if or $app.valkey $app.authentication $app.kafka $app.astradb $app.aws $app.firebase $app.mongodb }}
           volumeMounts:
             {{- if $app.valkey }}
             - name: valkey-cert-volume
@@ -101,9 +100,6 @@ spec:
               mountPath: "/cert/mongodb"
               readOnly: true
             {{- end }}
-          {{- end }}
-
-      {{- if or $app.valkey $app.kafka $app.authentication $app.astradb $app.aws $app.firebase $app.mongodb }}
       volumes:
         {{- if $app.valkey }}
         - name: valkey-cert-volume
@@ -146,7 +142,6 @@ spec:
           secret:
             secretName: mongodb-volume
         {{- end }}
-      {{- end }}
 
 ---
 apiVersion: v1

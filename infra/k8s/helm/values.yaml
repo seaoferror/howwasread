@@ -23,6 +23,10 @@ apps:
     twilio: true
     firebase: false
     valkey: false
+#    cpuRequests: "0.03"
+#    memoryRequests: "10Mi"
+#    cpuLimits: "0.1"
+#    memoryLimits: "10Mi"
   chat:
     image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/chat:latest"
     port: 8080
@@ -37,6 +41,10 @@ apps:
     twilio: false
     firebase: false
     valkey: true
+#    cpuRequests: "0.03"
+#    memoryRequests: "10Mi"
+#    cpuLimits: "0.1"
+#    memoryLimits: "10Mi"
   expo-notification:
     image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/expo-notification:latest"
     port: 8080
@@ -49,6 +57,10 @@ apps:
     tidb: false
     firebase: false
     valkey: true
+#    cpuRequests: "0.03"
+#    memoryRequests: "10Mi"
+#    cpuLimits: "0.1"
+#    memoryLimits: "10Mi"
   fcmnotification:
     image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/fcmnotification:latest"
     port: 8080
@@ -63,6 +75,10 @@ apps:
     twilio: false
     firebase: true
     valkey: true
+#    cpuRequests: "0.03"
+#    memoryRequests: "10Mi"
+#    cpuLimits: "0.1"
+#    memoryLimits: "10Mi"
   messagepersist:
     image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/messagepersist:latest"
     port: 8080
@@ -77,6 +93,10 @@ apps:
     twilio: false
     firebase: false
     valkey: false
+#    cpuRequests: "0.03"
+#    memoryRequests: "10Mi"
+#    cpuLimits: "0.1"
+#    memoryLimits: "10Mi"
   messagepreprocess:
     image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/messagepreprocess:latest"
     port: 8080
@@ -91,6 +111,10 @@ apps:
     twilio: false
     firebase: false
     valkey: true
+#    cpuRequests: "0.03"
+#    memoryRequests: "10Mi"
+#    cpuLimits: "0.1"
+#    memoryLimits: "10Mi"
   messagerelay:
     image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/messagerelay:latest"
     port: 8080
@@ -105,6 +129,10 @@ apps:
     twilio: false
     firebase: false
     valkey: true
+#    cpuRequests: "0.03"
+#    memoryRequests: "10Mi"
+#    cpuLimits: "0.1"
+#    memoryLimits: "10Mi"
   notification:
     image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/notification:latest"
     port: 8080
@@ -119,6 +147,10 @@ apps:
     twilio: false
     firebase: false
     valkey: false
+#    cpuRequests: "0.03"
+#    memoryRequests: "10Mi"
+#    cpuLimits: "0.1"
+#    memoryLimits: "10Mi"
   onlineconversation:
     image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/onlineconversation:latest"
     port: 8080
@@ -133,6 +165,10 @@ apps:
     twilio: false
     firebase: false
     valkey: true
+#    cpuRequests: "0.03"
+#    memoryRequests: "10Mi"
+#    cpuLimits: "0.1"
+#    memoryLimits: "10Mi"
   signalrelay:
     image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/signalrelay:latest"
     port: 8080
@@ -147,6 +183,10 @@ apps:
     twilio: false
     firebase: false
     valkey: true
+#    cpuRequests: "0.03"
+#    memoryRequests: "10Mi"
+#    cpuLimits: "0.1"
+#    memoryLimits: "10Mi"
   offlineconversation:
     image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/offlineconversation:latest"
     port: 8080
@@ -161,6 +201,10 @@ apps:
     twilio: false
     firebase: false
     valkey: true
+#    cpuRequests: "0.3"
+#    memoryRequests: "100Mi"
+#    cpuLimits: "0.4"
+#    memoryLimits: "100Mi"
 
 
 
