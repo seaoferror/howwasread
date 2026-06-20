@@ -5,6 +5,8 @@ import {
   SignInWithAppleRequest,
   SignInWithAppleResponse,
   SignInWithEmailRequest,
+  SignInWithGoogleRequest,
+  SignInWithGoogleResponse,
   VerifyEmailOTPRequest,
   VerifyEmailOTPResponse,
   VerifySMSOTPRequest,
@@ -13,7 +15,7 @@ import {
 
 export async function signUpWithEmail(
   body: SignInWithEmailRequest,
-): Promise<{ verificationId: string }> {
+): Promise<{ verificationId?: string }> {
   console.log("post email sign up");
   const { data } = await axiosInstance.post("/auth/email/create", body);
   return data;
@@ -59,6 +61,13 @@ export async function signInWithApple(
   body: SignInWithAppleRequest,
 ): Promise<SignInWithAppleResponse> {
   const { data } = await axiosInstance.post("/auth/email/apple", body);
+  return data;
+}
+
+export async function signInWithGoogle(
+  body: SignInWithGoogleRequest,
+): Promise<SignInWithGoogleResponse> {
+  const { data } = await axiosInstance.post("/auth/email/google", body);
   return data;
 }
 

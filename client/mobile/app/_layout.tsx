@@ -21,6 +21,12 @@ import {
 import { registerNotification } from "@/api/notification";
 import { setAudioModeAsync } from "expo-audio";
 import { useGetMyProfile } from "@/hooks/useProfile";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+
+GoogleSignin.configure({
+  webClientId: process.env.EXPO_PUBLIC_GOOGLE_SIGN_IN_WEB_CLIENT_ID,
+  iosClientId: process.env.EXPO_PUBLIC_GOOGLE_SIGN_IN_IOS_CLIENT_ID,
+});
 
 declare const WebSocket: {
   prototype: WebSocket;

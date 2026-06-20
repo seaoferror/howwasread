@@ -8,6 +8,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/MicahParks/keyfunc/v3"
+	"github.com/golang-jwt/jwt/v5"
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/twilio/twilio-go"
 )
@@ -20,6 +22,7 @@ type Service struct {
 	issuer       string
 	audience     string
 	twilioClient *twilio.RestClient
+	appleKeyFunc func(token *jwt.Token) (interface{}, error)
 }
 
 func NewService(r *repository.Repository) *Service {
@@ -27,11 +30,15 @@ func NewService(r *repository.Repository) *Service {
 	apiKey := os.Getenv("TWILIO_API_KEY")
 	apiSecret := os.Getenv("TWILIO_API_SECRET")
 
-	client := twilio.NewRestClientWithParams(twilio.ClientParams{
+	twilioClient := twilio.NewRestClientWithParams(twilio.ClientParams{
 		Username:   apiKey,
 		Password:   apiSecret,
 		AccountSid: accountSid,
 	})
+	appleJWKs, err := keyfunc.NewDefault([]string{"https://appleid.apple.com/auth/keys"})
+	if err != nil {
+		log.Fatalf("Failed to create JWKS from Apple: %v", err)
+	}
 
 	return &Service{
 		repository:   r,
@@ -40,7 +47,8 @@ func NewService(r *repository.Repository) *Service {
 		publicKeyRT:  loadRSAPublicKey("cert/authentication/public-key-rt.pem"),
 		issuer:       os.Getenv("ISSUER"),
 		audience:     os.Getenv("BUNDLE_IDENTIFIER"),
-		twilioClient: client,
+		twilioClient: twilioClient,
+		appleKeyFunc: appleJWKs.Keyfunc,
 	}
 }
 

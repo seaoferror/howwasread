@@ -34,7 +34,11 @@ export default function SignupScreen() {
         password,
       },
       {
-        onSuccess: () => router.replace("/auth/otp/email"),
+        onSuccess: (data) => {
+          if(data.verificationId) {
+            router.replace("/auth/otp/email");
+          }
+        }
       },
     );
   };

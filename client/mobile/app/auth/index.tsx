@@ -5,12 +5,27 @@ import { Link, router, useFocusEffect } from "expo-router";
 import { colors } from "@/constants";
 import AppleSignInButton from "@/components/auth/AppleSignInButton";
 import { deleteSecure } from "@/util/storage";
+import {
+  GoogleSignin,
+  GoogleSigninButton,
+} from "@react-native-google-signin/google-signin";
+import { useSignInWithGoogle } from "@/hooks/useAuth";
 
 export default function AuthScreen() {
+  const googleSigninMutation = useSignInWithGoogle();
   useFocusEffect(() => {
     deleteSecure("verificationId");
     deleteSecure("sessionId");
   });
+
+  const handleGoogleSignInButtonPress = async () => {
+    const response = await GoogleSignin.signIn();
+    if (response.idToken) {
+      googleSigninMutation.mutate({
+        idToken: response.idToken,
+      });
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -20,6 +35,7 @@ export default function AuthScreen() {
           label={"Start with your Phone number"}
           onPress={() => router.push("/auth/phone-number")}
         />
+        <GoogleSigninButton onPress={handleGoogleSignInButtonPress} />
         {Platform.OS === "ios" && <AppleSignInButton />}
         <View style={styles.emailContainer}>
           <CustomButton

@@ -3,11 +3,8 @@ package service
 import (
 	"backend/auth/internal/constant"
 	"backend/auth/internal/dto"
-	"context"
-	"encoding/json"
 	"errors"
 	"log/slog"
-	"net/http"
 	"time"
 
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
@@ -15,47 +12,15 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) SignInWithApple(ctx context.Context, user, nonce, identityToken string, email *string) (*dto.SignInWithAppleResponse, string, error) {
-	keyReq, err := http.NewRequestWithContext(
-		ctx,
-		http.MethodGet,
-		constant.AppleKeyUrl,
-		nil,
-	)
+func (s *Service) SignInWithApple(identityToken string, isFirstSignIn bool) (*dto.SignInWithAppleResponse, string, error) {
+	idt, err := jwt.Parse(identityToken, s.appleKeyFunc)
 	if err != nil {
-		slog.Error("fail to make http request",
-			"err", err,
-		)
-		return nil, "", ErrInternalServer
+		slog.Info("fail to parse identityToken with apple JWKs", "err", err)
+		return nil, "", ErrSignInWithApple
 	}
-
-	client := &http.Client{Timeout: 10 * time.Second}
-	keyRes, err := client.Do(keyReq)
-	if err != nil {
-		slog.Error("fail to do request", "err", err)
-		return nil, "", ErrInternalServer
+	if !idt.Valid {
+		return nil, "", ErrSignInWithApple
 	}
-
-	defer keyRes.Body.Close()
-
-	var jwks jwt.VerificationKeySet
-	err = json.NewDecoder(keyRes.Body).Decode(&jwks)
-	if err != nil {
-		slog.Error("fail to decode jwks in time",
-			"err", err,
-			"resp", keyRes,
-		)
-		return nil, "", ErrInternalServer
-	}
-
-	idt, err := jwt.Parse(identityToken, func(token *jwt.Token) (any, error) {
-		if token.Method.Alg() != jwt.SigningMethodRS256.Alg() {
-			slog.Info("unexpected signing method")
-			return nil, ErrSignInWithApple
-		}
-		return jwks.Keys, nil
-	})
-
 	issFromClaims, err := idt.Claims.GetIssuer()
 	if err != nil {
 		slog.Info("fail to get issuer",
@@ -64,14 +29,12 @@ func (s *Service) SignInWithApple(ctx context.Context, user, nonce, identityToke
 		)
 		return nil, "", ErrSignInWithApple
 	}
-
 	if issFromClaims != constant.AppleIssuerUrl {
 		slog.Info("not expected apple issuer",
 			"iss", issFromClaims,
 		)
 		return nil, "", ErrSignInWithApple
 	}
-
 	audsFromClaims, err := idt.Claims.GetAudience()
 	if err != nil {
 		slog.Info("fail to get audience",
@@ -80,113 +43,100 @@ func (s *Service) SignInWithApple(ctx context.Context, user, nonce, identityToke
 		)
 		return nil, "", ErrSignInWithApple
 	}
-
 	if len(audsFromClaims) == 0 || audsFromClaims[0] != s.audience {
 		slog.Info("no audience or not expected audience")
 		return nil, "", ErrSignInWithApple
 	}
-
 	exp, err := idt.Claims.GetExpirationTime()
 	if err != nil {
 		slog.Info("fail to get expiration time")
 		return nil, "", ErrSignInWithApple
 	}
-
 	if exp.Unix() < time.Now().Unix() {
 		slog.Info("stale token")
 		return nil, "", ErrSignInWithApple
 	}
-
-	nonceFromClaims, ok := idt.Claims.(jwt.MapClaims)["nonce"].(string)
+	nonce, ok := idt.Claims.(jwt.MapClaims)["nonce"].(string)
 	if !ok {
 		slog.Info("no nonce in claims")
 		return nil, "", ErrSignInWithApple
 	}
-
-	if nonceFromClaims != nonce {
-		slog.Info("not expected identityToken's nonce")
+	exist, err := s.repository.CheckNonce(nonce)
+	if err != nil {
+		return nil, "", ErrInternalServer
+	}
+	if exist {
 		return nil, "", ErrSignInWithApple
 	}
-
-	userFromClaims, err := idt.Claims.GetSubject()
+	err = s.repository.SaveNonce(nonce)
+	if err != nil {
+		return nil, "", ErrInternalServer
+	}
+	user, err := idt.Claims.GetSubject()
 	if err != nil {
 		slog.Info("fail to get subject",
 			"err", err,
 		)
 	}
-
-	if userFromClaims != user {
-		slog.Info("unexpected user")
+	email, ok := idt.Claims.(jwt.MapClaims)["email"].(string)
+	if !ok {
+		slog.Info("no email in claims")
 		return nil, "", ErrSignInWithApple
 	}
-
-	if email != nil {
-		_, phoneNumberVerified, id, _, role, err := s.repository.FindLoginInfoByEmail(*email)
-		if errors.Is(err, gocql.ErrNotFound) {
-			err = nil
-			idv7, err := uuid.NewV7()
-			if err != nil {
+	if isFirstSignIn {
+		emailVerified, phoneNumberVerified, id, _, role, err1 := s.repository.FindLoginInfoByEmail(email)
+		if errors.Is(err1, gocql.ErrNotFound) {
+			err1 = nil
+			idv7, err2 := uuid.NewV7()
+			if err2 != nil {
 				slog.Error("fail to create uuid v7 for apple sign in user")
 				return nil, "", ErrInternalServer
 			}
 			id = gocql.UUID(idv7)
-			err = s.repository.SaveAppleSignInInfo(id, user, *email, false)
+			err = s.repository.SaveAppleSignInInfo(id, user, email, false, true)
 			if err != nil {
 				return nil, "", ErrInternalServer
 			}
-
-			sessionId, err := gocql.RandomUUID()
-			if err != nil {
+			sessionId, err2 := gocql.RandomUUID()
+			if err2 != nil {
 				slog.Error("fail to generate random uuid for session")
 				return nil, "", ErrInternalServer
 			}
-
-			err = s.repository.SaveEmailBySessionId(sessionId, *email)
+			err = s.repository.SaveEmailBySessionId(sessionId, email)
 			if err != nil {
 				return nil, "", ErrInternalServer
 			}
-
 			resp := dto.SignInWithAppleResponse{
-				PhoneNumberVerified: false,
-				SessionId:           uuid.UUID(sessionId),
+				SessionId: uuid.UUID(sessionId),
 			}
 			return &resp, "", nil
 		}
-		if err != nil {
+		if err1 != nil {
 			return nil, "", ErrSignInWithApple
 		}
-
-		err = s.repository.SaveAppleSignInInfo(id, user, *email, phoneNumberVerified)
+		err = s.repository.SaveAppleSignInInfo(id, user, email, phoneNumberVerified, emailVerified)
 		if err != nil {
 			return nil, "", ErrInternalServer
 		}
-
 		if !phoneNumberVerified {
-			sessionId, err := gocql.RandomUUID()
-			if err != nil {
-				slog.Error("fail to generate random uuid for session")
-				return nil, "", ErrSignInWithApple
-			}
-
-			err = s.repository.SaveEmailBySessionId(sessionId, *email)
+			sessionId := uuid.New()
+			err = s.repository.SaveEmailBySessionId(gocql.UUID(sessionId), email)
 			if err != nil {
 				return nil, "", ErrSignInWithApple
 			}
-
 			resp := dto.SignInWithAppleResponse{
-				PhoneNumberVerified: false,
-				SessionId:           uuid.UUID(sessionId),
+				SessionId: sessionId,
 			}
 			return &resp, "", nil
 		}
-		jti, err := gocql.RandomUUID()
-		if err != nil {
+		jti, err1 := gocql.RandomUUID()
+		if err1 != nil {
 			slog.Error("fail to create random uuid for jti")
 			return nil, "", ErrSignInWithApple
 		}
 
-		at, rt, err := s.createLoginTokens(id.String(), jti.String(), role)
-		if err != nil {
+		at, rt, err1 := s.createLoginTokens(id.String(), jti.String(), role)
+		if err1 != nil {
 			return nil, "", ErrSignInWithApple
 		}
 
@@ -194,20 +144,16 @@ func (s *Service) SignInWithApple(ctx context.Context, user, nonce, identityToke
 		if err != nil {
 			return nil, "", ErrSignInWithApple
 		}
-
 		resp := dto.SignInWithAppleResponse{
-			PhoneNumberVerified: true,
-			AccessToken:         at,
+			AccessToken: at,
 		}
 		return &resp, rt, nil
-
 	}
 
 	id, emailFromDB, role, err := s.repository.FindAppleSignInInfoByUser(user)
 	if err != nil {
 		return nil, "", ErrSignInWithApple
 	}
-
 	//this additional fetching can be removed to improve speed little bit
 	//by adding few lines, but the advantage is also small currently and
 	//make link phone number process more complicate
@@ -215,45 +161,32 @@ func (s *Service) SignInWithApple(ctx context.Context, user, nonce, identityToke
 	if err != nil {
 		return nil, "", ErrSignInWithApple
 	}
-
 	if !phoneNumberVerified {
-		sessionId, err := gocql.RandomUUID()
-		if err != nil {
-			slog.Error("fail to generate random uuid for session")
-			return nil, "", ErrSignInWithApple
-		}
-
-		err = s.repository.SaveEmailBySessionId(sessionId, emailFromDB)
+		sessionId := uuid.New()
+		err = s.repository.SaveEmailBySessionId(gocql.UUID(sessionId), emailFromDB)
 		if err != nil {
 			return nil, "", ErrSignInWithApple
 		}
-
 		resp := dto.SignInWithAppleResponse{
-			PhoneNumberVerified: false,
-			SessionId:           uuid.UUID(sessionId),
+			SessionId: sessionId,
 		}
 		return &resp, "", nil
 	}
-
 	jti, err := gocql.RandomUUID()
 	if err != nil {
 		slog.Error("fail to create random uuid for jti")
 		return nil, "", ErrInternalServer
 	}
-
 	at, rt, err := s.createLoginTokens(id.String(), jti.String(), role)
 	if err != nil {
 		return nil, "", ErrInternalServer
 	}
-
 	err = s.repository.SaveRefreshTokenJTIById(id, jti)
 	if err != nil {
 		return nil, "", ErrInternalServer
 	}
-
 	resp := dto.SignInWithAppleResponse{
-		PhoneNumberVerified: true,
-		AccessToken:         at,
+		AccessToken: at,
 	}
 	return &resp, rt, nil
 }

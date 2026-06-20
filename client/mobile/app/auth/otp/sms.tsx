@@ -40,7 +40,11 @@ export default function SMSScreen() {
         sessionId: (await getSecureAsync("sessionId")) || null,
       },
       {
-        onSuccess: () => router.replace("/"),
+        onSuccess: (data) => {
+          if(data.accessToken) {
+            router.replace("/")
+          }
+        }
       },
     );
   };

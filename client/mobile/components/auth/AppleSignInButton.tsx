@@ -19,24 +19,24 @@ export default function AppleSignInButton() {
       requestedScopes: [AppleAuthenticationScope.EMAIL],
       nonce: rawNonce,
     });
-    const idt = credential.identityToken ?? "";
+    const idt = credential.identityToken;
     if (!idt) {
       return;
     }
     signInWithAppleMutation.mutate(
       {
-        user: credential.user,
-        email: credential.email,
+        isFirstSignIn: !!credential.email,
         identityToken: idt,
-        nonce: rawNonce,
       },
       {
         onSuccess: async (data) => {
-          if (!data.phoneNumberVerified) {
+          if (data.sessionId) {
             router.push("/auth/phone-number");
             return;
           }
-          router.replace("/");
+          if (data.accessToken){
+            router.replace("/");
+          }
         },
       },
     );

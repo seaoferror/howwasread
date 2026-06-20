@@ -8,6 +8,7 @@ import {
   logout,
   requestSMSOTP,
   signInWithApple,
+  signInWithGoogle,
   signUpWithEmail,
   verifyEmailOTP,
   verifySMSOTP,
@@ -17,7 +18,9 @@ export function useSignupWithEmail() {
   return useMutation({
     mutationFn: signUpWithEmail,
     onSuccess: async (data) => {
-      setSecure("verificationId", data.verificationId);
+      if (data.verificationId) {
+        await setSecure("verificationId", data.verificationId);
+      }
       console.log("success to save verification Id");
     },
     onError: (error: AxiosError) => {
@@ -33,15 +36,17 @@ export function useLoginWithEmail() {
   return useMutation({
     mutationFn: loginInWithEmail,
     onSuccess: async (data) => {
-      if (!data.emailVerified) {
-        await setSecure("verificationId", data.verificationId ?? "");
+      if (data.verificationId) {
+        await setSecure("verificationId", data.verificationId);
         return;
       }
-      if (!data.phoneNumberVerified) {
-        setSecure("sessionId", data?.sessionId ?? "");
+      if (data.sessionId) {
+        await setSecure("sessionId", data.sessionId);
         return;
       }
-      setSecure("accessToken", data?.accessToken ?? "");
+      if (data.accessToken) {
+        await setSecure("accessToken", data.accessToken);
+      }
     },
     onError: (error: AxiosError) => {
       Toast.show({
@@ -55,8 +60,8 @@ export function useLoginWithEmail() {
 export function useRequestSMSOTP() {
   return useMutation({
     mutationFn: requestSMSOTP,
-    onSuccess: (data) => {
-      setSecure("verificationId", data.verificationId);
+    onSuccess: async (data) => {
+      await setSecure("verificationId", data.verificationId);
       console.log("success to save verificationId");
     },
     onError: (error: AxiosError) => {
@@ -72,8 +77,9 @@ export function useVerifyEmailOTP() {
   return useMutation({
     mutationFn: verifyEmailOTP,
     onSuccess: async (data) => {
-      console.log(data.sessionId);
-      await setSecure("sessionId", data?.sessionId ?? "");
+      if (data.sessionId) {
+        await setSecure("sessionId", data?.sessionId);
+      }
     },
     onError: (error: AxiosError) => {
       Toast.show({
@@ -87,9 +93,31 @@ export function useVerifyEmailOTP() {
 export function useVerifySMSOTP() {
   return useMutation({
     mutationFn: verifySMSOTP,
-    onSuccess: (data) => {
-      if (data.phoneNumberVerified)
-        setSecure("accessToken", data?.accessToken ?? "");
+    onSuccess: async (data) => {
+      if (data.accessToken) {
+        await setSecure("accessToken", data.accessToken);
+      }
+    },
+    onError: (error: AxiosError) => {
+      Toast.show({
+        type: "error",
+        text1: String(error?.response?.data),
+      });
+    },
+  });
+}
+
+export function useSignInWithGoogle() {
+  return useMutation({
+    mutationFn: signInWithGoogle,
+    onSuccess: async (data) => {
+      if (data.sessionId) {
+        await setSecure("sessionId", data.sessionId);
+        return;
+      }
+      if (data.accessToken) {
+        await setSecure("accessToken", data.accessToken);
+      }
     },
     onError: (error: AxiosError) => {
       Toast.show({
@@ -104,11 +132,13 @@ export function useSignInWithApple() {
   return useMutation({
     mutationFn: signInWithApple,
     onSuccess: async (data) => {
-      if (!data.phoneNumberVerified) {
-        await setSecure("sessionId", data?.sessionId ?? "");
+      if (data.sessionId) {
+        await setSecure("sessionId", data.sessionId);
         return;
       }
-      await setSecure("accessToken", data?.accessToken ?? "");
+      if (data.accessToken) {
+        await setSecure("accessToken", data.accessToken);
+      }
     },
     onError: (error: AxiosError) => {
       Toast.show({

@@ -106,13 +106,10 @@ func (s *Service) LoginWithEmail(email, password string) (*dto.LoginWithEmailRes
 	}
 
 	if !emailVerified {
-		resp.EmailVerified = false
-		resp.PhoneNumberVerified = false
 		resp.VerificationId, err = s.sendEmailOTP(email)
 		if err != nil {
 			return nil, "", ErrInternalServer
 		}
-
 		return &resp, "", nil
 	}
 
@@ -124,8 +121,6 @@ func (s *Service) LoginWithEmail(email, password string) (*dto.LoginWithEmailRes
 		}
 
 		err = s.repository.SaveEmailBySessionId(sid, email)
-		resp.EmailVerified = true
-		resp.PhoneNumberVerified = false
 		resp.SessionId = uuid.UUID(sid)
 		return &resp, "", nil
 	}
@@ -143,8 +138,6 @@ func (s *Service) LoginWithEmail(email, password string) (*dto.LoginWithEmailRes
 	if err != nil {
 		return nil, "", ErrInternalServer
 	}
-	resp.EmailVerified = true
-	resp.PhoneNumberVerified = true
 	resp.AccessToken = at
 	return &resp, rt, nil
 }
@@ -201,12 +194,8 @@ func (s *Service) VerifyEmailOTP(otp string, verificationId uuid.UUID) (*dto.Ver
 			"code is not same with db code- received code: %v, db code: %v",
 			otp, dbOTP,
 		)
-		resp := dto.VerifyEmailOTPResponse{
-			EmailVerified: false,
-		}
-		return &resp, nil
+		return nil, ErrVerifyEmailOTP
 	}
-
 	err = s.repository.MarkEmailVerified(email)
 	if err != nil {
 		return nil, ErrInternalServer
@@ -223,8 +212,7 @@ func (s *Service) VerifyEmailOTP(otp string, verificationId uuid.UUID) (*dto.Ver
 	}
 
 	resp := dto.VerifyEmailOTPResponse{
-		EmailVerified: true,
-		SessionId:     uuid.UUID(sid),
+		SessionId: uuid.UUID(sid),
 	}
 	return &resp, nil
 }

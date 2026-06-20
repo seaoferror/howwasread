@@ -43,7 +43,7 @@ func NewRepository() *Repository {
 			phone_number text PRIMARY KEY, id uuid, email text, phone_number_verified boolean, role text
 		);`,
 		`CREATE TABLE IF NOT EXISTS member_by_apple_sign_in_user (
-			apple_sign_in_user text PRIMARY KEY, id uuid, email text, email_verified boolean, role text
+			apple_sign_in_user text PRIMARY KEY, id uuid, email text, role text
 		);`,
 		`CREATE TABLE IF NOT EXISTS member_by_verification_id (
 			verification_id uuid PRIMARY KEY, email text, phone_number text, otp text

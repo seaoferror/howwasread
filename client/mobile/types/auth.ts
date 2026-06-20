@@ -9,7 +9,6 @@ export interface VerifyEmailOTPRequest {
 }
 
 export interface VerifyEmailOTPResponse {
-  emailVerified: boolean;
   sessionId?: string;
 }
 
@@ -25,27 +24,30 @@ export interface VerifySMSOTPRequest {
 }
 
 export interface VerifySMSOTPResponse {
-  phoneNumberVerified: boolean;
   accessToken?: string;
 }
 
 export interface LoginWithEmailResponse {
-  emailVerified: boolean;
-  phoneNumberVerified: boolean;
   verificationId?: string;
   sessionId?: string;
   accessToken?: string;
 }
 
 export interface SignInWithAppleRequest {
-  user: string;
-  email: string | null;
+  isFirstSignIn: boolean;
   identityToken: string;
-  nonce: string;
+}
+
+export interface SignInWithGoogleRequest {
+  idToken: string;
 }
 
 export interface SignInWithAppleResponse {
-  phoneNumberVerified: boolean;
+  sessionId?: string;
+  accessToken?: string;
+}
+
+export interface SignInWithGoogleResponse {
   sessionId?: string;
   accessToken?: string;
 }

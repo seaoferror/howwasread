@@ -33,13 +33,11 @@ export default function LoginScreen() {
       },
       {
         onSuccess: (data) => {
-          console.log("data.emailVerified:", data?.emailVerified);
-          console.log("data.phoneNumberVerified:", data?.phoneNumberVerified);
-          if (!data.emailVerified) {
+          if (data.verificationId) {
             router.replace("/auth/otp/email");
             return;
           }
-          if (!data.phoneNumberVerified) {
+          if (data.sessionId) {
             router.replace("/auth/phone-number");
             return;
           }

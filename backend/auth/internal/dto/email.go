@@ -11,11 +11,9 @@ type SignInWithEmailRequest struct {
 }
 
 type LoginWithEmailResponse struct {
-	PhoneNumberVerified bool      `json:"phoneNumberVerified"`
-	EmailVerified       bool      `json:"emailVerified"`
-	VerificationId      uuid.UUID `json:"verificationId"`
-	SessionId           uuid.UUID `json:"sessionId"`
-	AccessToken         string    `json:"accessToken"`
+	VerificationId uuid.UUID `json:"verificationId"`
+	SessionId      uuid.UUID `json:"sessionId"`
+	AccessToken    string    `json:"accessToken"`
 }
 
 type VerifyEmailOTPRequest struct {
@@ -23,19 +21,15 @@ type VerifyEmailOTPRequest struct {
 	OTP            string    `json:"otp"`
 }
 type VerifyEmailOTPResponse struct {
-	EmailVerified bool      `json:"emailVerified"`
-	SessionId     uuid.UUID `json:"session_id"`
+	SessionId uuid.UUID `json:"session_id"`
 }
 
 type SignInWithAppleRequest struct {
-	User          string  `json:"user"`
-	Email         *string `json:"email"` //nullable
-	IdentityToken string  `json:"identityToken"`
-	Nonce         string  `json:"nonce"`
+	IsFirstSignIn bool   `json:"isFirstSignIn"`
+	IdentityToken string `json:"identityToken"`
 }
 
 type SignInWithAppleResponse struct {
-	PhoneNumberVerified bool      `json:"phoneNumberVerified"`
-	SessionId           uuid.UUID `json:"sessionId"`
-	AccessToken         string    `json:"accessToken"`
+	SessionId   uuid.UUID `json:"sessionId"`
+	AccessToken string    `json:"accessToken"`
 }

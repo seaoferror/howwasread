@@ -91,17 +91,13 @@ func (n *Network) verifyEmailOTP(c *gin.Context) {
 
 func (n *Network) signInWithApple(c *gin.Context) {
 	var req dto.SignInWithAppleRequest
-	ctx := c.Request.Context()
 	err := c.ShouldBindJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, err.Error())
 	}
 	responseBody, rt, err := n.service.SignInWithApple(
-		ctx,
-		req.User,
-		req.Nonce,
 		req.IdentityToken,
-		req.Email,
+		req.IsFirstSignIn,
 	)
 	if err != nil {
 		c.JSON(getStatusCode(err), err.Error())

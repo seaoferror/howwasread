@@ -149,8 +149,7 @@ func (s *Service) VerifySMSOTP(sessionId *uuid.UUID, verificationId uuid.UUID, o
 			return nil, "", ErrInternalServer
 		}
 		r := dto.VerifySMSOTPResponse{
-			PhoneNumberVerified: true,
-			AccessToken:         at,
+			AccessToken: at,
 		}
 		if idv7 != uuid.Nil {
 			err1 = s.repository.SaveProfileId(id)
@@ -196,8 +195,7 @@ func (s *Service) VerifySMSOTP(sessionId *uuid.UUID, verificationId uuid.UUID, o
 		return nil, "", ErrInternalServer
 	}
 	r := dto.VerifySMSOTPResponse{
-		PhoneNumberVerified: true,
-		AccessToken:         at,
+		AccessToken: at,
 	}
 	err = s.repository.SaveProfileId(id)
 	if err != nil {
