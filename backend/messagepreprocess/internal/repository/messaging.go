@@ -41,7 +41,7 @@ func (r *Repository) CreateChatRoom(ctx context.Context, roomId gocql.UUID, memb
 
 func (r *Repository) AddParticipantId(ctx context.Context, roomId gocql.UUID, participantId gocql.UUID) error {
 	err := r.session.Query(`UPDATE chat_room_by_id SET participant_ids = participant_ids + ? WHERE id = ?`,
-		participantId, roomId).ExecContext(ctx)
+		[]gocql.UUID{participantId}, roomId).ExecContext(ctx)
 	if err != nil {
 		slog.Error("fail to save participant id", "err", err,
 			"roomId", roomId,
@@ -54,7 +54,7 @@ func (r *Repository) AddParticipantId(ctx context.Context, roomId gocql.UUID, pa
 func (r *Repository) RemoveParticipantId(ctx context.Context, roomId gocql.UUID, participantId gocql.UUID) error {
 	err := r.session.Query(
 		`UPDATE chat_room_by_id SET participant_ids = participant_ids - ? WHERE id = ?`,
-		participantId, roomId).
+		[]gocql.UUID{participantId}, roomId).
 		ExecContext(ctx)
 	if err != nil {
 		slog.Error("fail to delete participant id", "err", err,
