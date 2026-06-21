@@ -123,7 +123,7 @@ public class OfflineConversationService {
             .toIdType("group")
             .toId(UUIDUtil.uuidToBytes(request.conversationId()))
             .contentType("participate")
-            .contents(null)
+            .contents(new ArrayList<>())
             .build());
   }
 
@@ -141,7 +141,7 @@ public class OfflineConversationService {
             .toIdType("group")
             .toId(UUIDUtil.uuidToBytes(request.conversationId()))
             .contentType("quit")
-            .contents(null)
+            .contents(new ArrayList<>())
             .build());
   }
 

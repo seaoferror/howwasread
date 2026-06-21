@@ -71,9 +71,10 @@ export default function MessageList() {
         const olderMsgDate = olderMessage
           ? new Date(olderMessage.createdAt).toLocaleDateString()
           : null;
+        const olderMsgFromId = olderMessage ? olderMessage.fromId : null;
         const isDayFirst = currentMsgDate !== olderMsgDate;
         const isFromChange =
-          olderMessage.fromId !== item.fromId && item.fromId !== myProfile.id;
+          olderMsgFromId !== item.fromId && item.fromId !== myProfile.id;
         return (
           <MessageItem
             message={item}

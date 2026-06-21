@@ -90,7 +90,11 @@ export function useGetSignedURLs({
             contentType,
             filename: filename,
           }),
-        enabled: contentType !== "text" && !!filename,
+        enabled:
+          (contentType === "image" ||
+            contentType === "audio" ||
+            contentType === "video") &&
+          !!filename,
         staleTime: 1000 * 60 * 60,
       };
     }),

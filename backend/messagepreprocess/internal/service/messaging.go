@@ -39,7 +39,7 @@ func (s *Service) ManageMessage(
 	}
 	if contentType == "create" {
 		err := s.repository.CreateChatRoom(ctx, gocql.UUID(roomId), gocql.UUID(fromId), contents[0])
-		contents = nil
+		contents = []string{}
 		if err != nil {
 			return
 		}
