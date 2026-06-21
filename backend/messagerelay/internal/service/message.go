@@ -66,7 +66,7 @@ func (s *Service) RelayMessage(
 			ContentType:    contentType,
 			Contents:       contents,
 		})
-		err := s.producer.PushMessage("preprocess_notification", nil, p)
+		err := s.producer.PushMessage("notification", nil, p)
 		if err != nil {
 			return
 		}
@@ -180,7 +180,7 @@ func (s *Service) RelayMessage(
 			ContentType:    contentType,
 			Contents:       contents,
 		})
-		err := s.producer.PushMessage("preprocess_notification", nil, p)
+		err := s.producer.PushMessage("notification", nil, p)
 		if err != nil {
 			return
 		}

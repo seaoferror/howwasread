@@ -8,6 +8,7 @@ interface AuthRouteProps {
 
 export default function AuthRoute({ children }: AuthRouteProps) {
   const { data: profile, isError, isLoading } = useGetMyProfile();
+  // const networkState = useNetworkState();
 
   useEffect(() => {
     console.log(profile, isError, isLoading);

@@ -150,7 +150,7 @@ func (s *Service) PublishConversationSignal(fromId uuid.UUID, toIds [][]byte, si
 		ToIds:  toIds,
 		Signal: signal,
 	})
-	err := s.producer.PushMessage("conversation.signal", nil, value)
+	err := s.producer.PushMessage("conversation-signal", nil, value)
 	if err != nil {
 		return err
 	}

@@ -98,14 +98,14 @@ func (s *Service) PreprocessNotification(
 	kafkaKey := append(messageId[:], notificationId)
 	if len(fcmtm) > 0 {
 		p.TokenMap = fcmtm
-		err = s.producer.PushMessage("fcm_notification", kafkaKey, payload.Marshal(p))
+		err = s.producer.PushMessage("fcm-notification", kafkaKey, payload.Marshal(p))
 		if err != nil {
 			return
 		}
 	}
 	if len(apntm) > 0 {
 		p.TokenMap = apntm
-		err = s.producer.PushMessage("apn_notification", kafkaKey, payload.Marshal(p))
+		err = s.producer.PushMessage("apn-notification", kafkaKey, payload.Marshal(p))
 		if err != nil {
 			return
 		}

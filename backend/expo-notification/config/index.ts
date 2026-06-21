@@ -1,4 +1,3 @@
-import { APN_NOTIFICATION } from "@/constants";
 import { GlideClusterClient } from "@valkey/valkey-glide";
 import {
   KafkaJS,
@@ -50,7 +49,7 @@ export async function createKafkaConsumer() {
     "ssl.key.location":
       process.env.PROFILE === "production" ? "/cert/kafka/user/user.key" : undefined,
 
-    "group.id": APN_NOTIFICATION,
+    "group.id": "apn_notification",
     "auto.offset.reset": "earliest",
     "group.protocol": "consumer",
     "group.remote.assignor": "uniform",
@@ -70,7 +69,7 @@ export async function createKafkaConsumer() {
 
   await consumer.connect();
   console.log("connect to Kafka");
-  await consumer.subscribe({ topics: [APN_NOTIFICATION] });
+  await consumer.subscribe({ topics: ["apn-notification"] });
 
   let isPaused = false;
   const togglePauseResume = () => {

@@ -24,7 +24,7 @@ func NewServer() {
 
 	ks := consumer.NewKafkaConsumer(s)
 
-	err := ks.GetMessage([]string{"conversation.signal"})
+	err := ks.GetMessage([]string{"conversation-signal"})
 	if err != nil {
 		panic(err)
 	}

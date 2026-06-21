@@ -157,7 +157,7 @@ func toggleConsumptionFlow(consumerGroup sarama.ConsumerGroup, isPaused *bool) {
 }
 
 func (c *Consumer) distinguishMessage(ctx context.Context, message *sarama.ConsumerMessage) {
-	if message.Topic == "preprocess_notification" {
+	if message.Topic == "notification" {
 		var p payload.PreparedMessage
 		err := json.Unmarshal(message.Value, &p)
 		if err != nil {

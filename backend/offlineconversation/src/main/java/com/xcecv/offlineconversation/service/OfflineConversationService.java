@@ -71,7 +71,7 @@ public class OfflineConversationService {
         .participantId(memberId)
         .build();
     offlineConversationParticipantRepository.save(new OfflineConversationParticipant(key, convo));
-    kafkaTemplate.send("chat_message",
+    kafkaTemplate.send("chat-message",
         ChatMessage.builder()
             .id(UUIDUtil.uuidToBytes(UuidCreator.getTimeOrderedEpoch()))
             .fromId(UUIDUtil.uuidToBytes(memberId))
@@ -116,7 +116,7 @@ public class OfflineConversationService {
         .participantId(memberId)
         .build();
     offlineConversationParticipantRepository.save(new OfflineConversationParticipant(key, conversationProxy));
-    kafkaTemplate.send("chat_message",
+    kafkaTemplate.send("chat-message",
         ChatMessage.builder()
             .id(UUIDUtil.uuidToBytes(UuidCreator.getTimeOrderedEpoch()))
             .fromId(UUIDUtil.uuidToBytes(memberId))
@@ -134,7 +134,7 @@ public class OfflineConversationService {
         .participantId(memberId)
         .build();
     offlineConversationParticipantRepository.deleteById(key);
-    kafkaTemplate.send("chat_message",
+    kafkaTemplate.send("chat-message",
         ChatMessage.builder()
             .id(UUIDUtil.uuidToBytes(UuidCreator.getTimeOrderedEpoch()))
             .fromId(UUIDUtil.uuidToBytes(memberId))

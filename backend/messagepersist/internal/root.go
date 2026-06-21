@@ -21,7 +21,7 @@ func NewServer() {
 
 	c := consumer.NewConsumer(s)
 
-	err := c.GetMessage([]string{"manage_message.prepared"})
+	err := c.GetMessage([]string{"prepared-message"})
 	if err != nil {
 		panic(err)
 	}

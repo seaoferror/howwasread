@@ -23,7 +23,7 @@ func NewServer() {
 
 	c := consumer.NewConsumer(s)
 
-	err := c.GetMessage([]string{"fcm_notification"})
+	err := c.GetMessage([]string{"fcm-notification"})
 	if err != nil {
 		panic(err)
 	}

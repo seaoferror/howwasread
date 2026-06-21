@@ -24,7 +24,7 @@ func NewServer() {
 
 	c := consumer.NewConsumer(s)
 
-	err := c.GetMessage([]string{"chat.message"})
+	err := c.GetMessage([]string{"chat-message"})
 	if err != nil {
 		panic(err)
 	}

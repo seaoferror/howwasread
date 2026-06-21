@@ -157,7 +157,7 @@ func toggleConsumptionFlow(client sarama.ConsumerGroup, isPaused *bool) {
 }
 
 func (c *Consumer) distinguishMessage(ctx context.Context, message *sarama.ConsumerMessage) {
-	if message.Topic == "conversation.signal" {
+	if message.Topic == "conversation-signal" {
 		var m payload.OnlineConversationSignal
 		err := json.Unmarshal(message.Value, &m)
 		if err != nil {
