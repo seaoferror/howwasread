@@ -7,7 +7,6 @@ export async function initDB(db: SQLiteDatabase) {
   console.log("init db");
   await db.execAsync(`
     PRAGMA journal_mode = 'wal';
-    DROP TABLE IF EXISTS message;
     CREATE TABLE IF NOT EXISTS message (
         id BLOB PRIMARY KEY NOT NULL,
         room_id BLOB NOT NULL,
@@ -99,7 +98,7 @@ export async function deleteMessagesBeforeQuit(
 ) {
   return db.runAsync(
     `DELETE FROM message
-     WHERE room_id = ? AND id < ?;`,
+     WHERE room_id = ? AND id <= ?;`,
     uuidParse(m.roomId),
     uuidParse(m.id),
   );

@@ -14,6 +14,7 @@ import { AxiosError } from "axios";
 import Toast from "react-native-toast-message";
 import { queryKey } from "@/constants";
 import {
+  deleteMessagesBeforeQuit,
   findMessagesByRoomId,
   findNewMessage,
   findPreview,
@@ -23,6 +24,7 @@ import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
 import { stringify as uuidStringify } from "uuid";
 import { useEffect, useState } from "react";
 import { Message } from "@/types/chat";
+import { useGetMyProfile } from "@/hooks/useProfile";
 
 export function useGetInfiniteMessages(db: SQLiteDatabase, roomId: string) {
   return useInfiniteQuery({
@@ -33,6 +35,8 @@ export function useGetInfiniteMessages(db: SQLiteDatabase, roomId: string) {
       const lastPost = lastPage[lastPage.length - 1];
       return lastPost ? allPages.length + 1 : undefined;
     },
+    staleTime: 0,
+    gcTime: 0,
   });
 }
 
@@ -77,7 +81,7 @@ export function useGetSignedURLs({
   contents: string[];
 }) {
   const queries = useQueries({
-    queries: contents.map((filename) => {
+    queries: (contents || []).map((filename) => {
       return {
         queryKey: [
           queryKey.CHAT,
@@ -101,13 +105,14 @@ export function useGetSignedURLs({
   });
 
   return {
-    urls: queries.map((result) => result.data?.url ?? ""),
+    urls: queries.map((result) => result.data?.url),
   };
 }
 
 export function usePreview() {
   const db = useSQLiteContext();
   const [preview, setPreview] = useState<Message[]>([]);
+  const { data: profile } = useGetMyProfile();
 
   useEffect(() => {
     const wrapper = async () => {
@@ -136,6 +141,16 @@ export function usePreview() {
           contents: JSON.parse(newMessageRaw.contents),
           createdAt: newMessageRaw.created_at,
         };
+        if (
+          newPreviewItem.contentType === "quit" &&
+          newPreviewItem.fromId === profile?.id
+        ) {
+          await deleteMessagesBeforeQuit(db, newPreviewItem);
+          setPreview((prev) =>
+            prev.filter((item) => item.roomId !== newPreviewItem.roomId),
+          );
+          return;
+        }
 
         setPreview((prev) => {
           const filtered = prev.filter(
@@ -146,6 +161,9 @@ export function usePreview() {
       });
     };
     wrapper();
-  }, [db, preview.length]); //check this work
+
+    return () => {
+    }
+  }, [profile]); //check this work
   return preview;
 }

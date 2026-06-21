@@ -22,12 +22,13 @@ export default function MessageList() {
     if (data?.pages) {
       setMessages(data.pages.flat());
     }
+  }, [data?.pages]);
+
+  useEffect(() => {
     const subscription = SQLite.addDatabaseChangeListener(async (event) => {
       const newMessageRaw = await findNewMessage(db, event.rowId);
       if (!newMessageRaw) return;
-      if (roomId !== uuidStringify(newMessageRaw.room_id)) {
-        return;
-      }
+      if (roomId !== uuidStringify(newMessageRaw.room_id)) return;
       const newMessage = {
         id: uuidStringify(newMessageRaw.id),
         fromId: uuidStringify(newMessageRaw.from_id),
@@ -41,7 +42,7 @@ export default function MessageList() {
       ) {
         setTimeout(() => {
           setMessages((prev) => [newMessage, ...prev]);
-        }, 1500);
+        }, 1000);
         return;
       }
       setMessages((prev) => [newMessage, ...prev]);
@@ -50,7 +51,7 @@ export default function MessageList() {
     return () => {
       subscription.remove();
     };
-  }, [data?.pages, db, roomId]);
+  }, [db, roomId]);
 
   const handleEndReached = () => {
     if (hasNextPage && !isFetchingNextPage) {

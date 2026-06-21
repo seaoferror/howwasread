@@ -108,21 +108,20 @@ function RootNavigator() {
       }
       const messages = await getRecentMessages(cursor);
       if (messages && messages.length > 0) {
-        const deleteQueue: MessagingResponse[] = [];
-        await Promise.all(
-          messages.map((m) => {
-            if (m.contentType === "quit" && m.fromId === profile?.id) {
-              deleteQueue.push(m);
-              return
-            }
-            return saveRecentMessage(db, m);
-          }),
-        );
-        await Promise.all(
-          deleteQueue.map((m) => {
-            return deleteMessagesBeforeQuit(db, m);
-          })
-        )
+        const quitEvents = messages.filter((m) => m.contentType === "quit");
+        const validMessagesToSave = messages.filter((m) => {
+          if (m.contentType === "quit") return false;
+          const overridingQuit = quitEvents.find(
+            (q) => q.roomId === m.roomId && q.id >= m.id,
+          );
+          return !overridingQuit;
+        });
+        for (const quitMsg of quitEvents) {
+          await deleteMessagesBeforeQuit(db, quitMsg);
+        }
+        for (const validMsg of validMessagesToSave) {
+          await saveRecentMessage(db, validMsg);
+        }
       }
 
       ws.current = new WebSocket(
@@ -138,10 +137,6 @@ function RootNavigator() {
       );
       ws.current.onmessage = async (event) => {
         const m: MessagingResponse = JSON.parse(event.data);
-        if (m.contentType === "quit" && m.fromId === profile?.id) {
-          await deleteMessagesBeforeQuit(db, m);
-          return
-        }
         await saveRecentMessage(db, m);
       };
     };

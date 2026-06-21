@@ -38,6 +38,14 @@ export default function MessageItem({
     message.contentType === "quit" ||
     message.contentType === "create";
 
+  if (
+    (message.contentType === "image" ||
+      message.contentType === "audio" ||
+      message.contentType === "video") &&
+    !urls[0]
+  ) {
+    return null;
+  }
   return (
     <View style={styles.container}>
       {isDayFirst && (
@@ -55,7 +63,7 @@ export default function MessageItem({
           <View style={styles.pillPosition}>
             <View style={styles.pill}>
               <Text style={styles.pillText}>
-                `${fromProfile.name} ${message.contentType} chat room`
+                {fromProfile.name} {message.contentType}s chat room
               </Text>
             </View>
           </View>
@@ -91,7 +99,7 @@ export default function MessageItem({
                   />
                 ))
               ) : message.contentType === "audio" ? (
-                urls.some((url) => url) && <VoiceMessage url={urls[0]} />
+                urls.some((url) => url) && <VoiceMessage url={urls[0] ?? ""} />
               ) : message.contentType === "video" ? (
                 <>
                   {urls.map(

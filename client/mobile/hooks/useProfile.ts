@@ -2,6 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { getMyProfile, getProfile, setBirthYear, setName } from "@/api/profile";
 import Toast from "react-native-toast-message";
 import { queryKey } from "@/constants";
+import queryClient from "@/api/queryClient";
 
 export function useGetMyProfile() {
   return useQuery({
@@ -21,7 +22,11 @@ export function useGetProfile(id: string) {
 export function useSetName() {
   return useMutation({
     mutationFn: setName,
-    onSuccess: async () => {},
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: [queryKey.PROFILE, queryKey.GET_MY_PROFILE],
+      });
+    },
     onError: (error) => {
       Toast.show({
         type: "error",
