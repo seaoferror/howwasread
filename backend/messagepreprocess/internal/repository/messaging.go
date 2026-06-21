@@ -51,12 +51,10 @@ func (r *Repository) AddParticipantId(ctx context.Context, roomId gocql.UUID, pa
 	return nil
 }
 
-func (r *Repository) QuitChatRoom(ctx context.Context, roomId gocql.UUID, participantId gocql.UUID) error {
-	err := r.session.Batch(gocql.LoggedBatch).
-		Query(`UPDATE chat_room_by_id SET participant_ids = participant_ids - ? WHERE id = ?`,
-			participantId, roomId).
-		Query(`DELETE FROM message_by_to_id WHERE to_id = ? AND room_id = ?`,
-			participantId, roomId).
+func (r *Repository) RemoveParticipantId(ctx context.Context, roomId gocql.UUID, participantId gocql.UUID) error {
+	err := r.session.Query(
+		`UPDATE chat_room_by_id SET participant_ids = participant_ids - ? WHERE id = ?`,
+		participantId, roomId).
 		ExecContext(ctx)
 	if err != nil {
 		slog.Error("fail to delete participant id", "err", err,

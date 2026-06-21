@@ -193,7 +193,7 @@ apps:
     routePath: /offlineconversation
     authentication: false
     aws: false
-    kafka: false
+    kafka: true
     astradb: false
     mongodb: false
     tidb: true

@@ -4,14 +4,17 @@ import queryClient from "@/api/queryClient";
 import Toast from "react-native-toast-message";
 import { ActionSheetProvider } from "@expo/react-native-action-sheet";
 import { SQLiteProvider, useSQLiteContext } from "expo-sqlite";
-import { parse as uuidParse, stringify as uuidStringify } from "uuid";
+import { stringify as uuidStringify } from "uuid";
 import { MessagingResponse } from "@/types/chat";
 import { useEffect, useRef } from "react";
 import { getSecure, getSecureAsync, setSecure } from "@/util/storage";
 import { Platform } from "react-native";
-import { getTimestamp } from "@/util/time";
 import { getRecentMessages } from "@/api/chat";
-import { initDB, saveRecentMessage } from "@/db/message";
+import {
+  deleteMessagesBeforeQuit,
+  initDB,
+  saveRecentMessage,
+} from "@/db/message";
 import { randomUUID } from "expo-crypto";
 import {
   getDevicePushTokenAsync,
@@ -105,13 +108,21 @@ function RootNavigator() {
       }
       const messages = await getRecentMessages(cursor);
       if (messages && messages.length > 0) {
+        const deleteQueue: MessagingResponse[] = [];
         await Promise.all(
           messages.map((m) => {
-            const timestamp = getTimestamp(m.id);
-            const roomId = uuidParse(m.roomId);
-            return saveRecentMessage(db, m, roomId, timestamp);
+            if (m.contentType === "quit" && m.fromId === profile?.id) {
+              deleteQueue.push(m);
+              return
+            }
+            return saveRecentMessage(db, m);
           }),
         );
+        await Promise.all(
+          deleteQueue.map((m) => {
+            return deleteMessagesBeforeQuit(db, m);
+          })
+        )
       }
 
       ws.current = new WebSocket(
@@ -126,10 +137,12 @@ function RootNavigator() {
         },
       );
       ws.current.onmessage = async (event) => {
-        const data: MessagingResponse = JSON.parse(event.data);
-        const timestamp = getTimestamp(data.id);
-        const roomId = uuidParse(data.roomId);
-        await saveRecentMessage(db, data, roomId, timestamp);
+        const m: MessagingResponse = JSON.parse(event.data);
+        if (m.contentType === "quit" && m.fromId === profile?.id) {
+          await deleteMessagesBeforeQuit(db, m);
+          return
+        }
+        await saveRecentMessage(db, m);
       };
     };
     if (profile?.name) connectMessaging();

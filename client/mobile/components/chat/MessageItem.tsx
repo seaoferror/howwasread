@@ -3,10 +3,11 @@ import { Message } from "@/types/chat";
 import { getHourMinute, getLongDate } from "@/util/time";
 import { useGetMyProfile, useGetProfile } from "@/hooks/useProfile";
 import { colors } from "@/constants";
-import { useGetSignedURLs } from "@/hooks/useChat";
+import { useGetChatRoomInfo, useGetSignedURLs } from "@/hooks/useChat";
 import { Image } from "expo-image";
 import VideoMessage from "@/components/chat/VideoMessage";
 import VoiceMessage from "@/components/chat/VoiceMessage";
+import { useLocalSearchParams } from "expo-router";
 
 interface MessageItemProps {
   message: Omit<Message, "roomId">;
@@ -21,11 +22,13 @@ export default function MessageItem({
 }: MessageItemProps) {
   const { data: myProfile } = useGetMyProfile();
   const { data: fromProfile } = useGetProfile(message.fromId);
+  const { id: roomId } = useLocalSearchParams();
+  const { data: roomInfo } = useGetChatRoomInfo(String(roomId));
   const { urls } = useGetSignedURLs({
     contentType: message.contentType,
     contents: message.contents,
   });
-  if (!myProfile || !fromProfile) {
+  if (!myProfile || !fromProfile || !roomInfo) {
     return null;
   }
 
@@ -48,13 +51,15 @@ export default function MessageItem({
       )}
 
       {isEvent ? (
-        <View style={styles.pillPosition}>
-          <View style={styles.pill}>
-            <Text style={styles.pillText}>
-              `${fromProfile.name} ${message.contentType} chat room`
-            </Text>
+        roomInfo.type === "group" && (
+          <View style={styles.pillPosition}>
+            <View style={styles.pill}>
+              <Text style={styles.pillText}>
+                `${fromProfile.name} ${message.contentType} chat room`
+              </Text>
+            </View>
           </View>
-        </View>
+        )
       ) : (
         <View style={[styles.row, isMine ? styles.rowRight : styles.rowLeft]}>
           <View

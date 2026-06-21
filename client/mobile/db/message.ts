@@ -1,6 +1,7 @@
 import { Message, MessageEntity, MessagingResponse } from "@/types/chat";
 import { parse as uuidParse, stringify as uuidStringify } from "uuid";
 import { type SQLiteDatabase } from "expo-sqlite";
+import { getTimestamp } from "@/util/time";
 
 export async function initDB(db: SQLiteDatabase) {
   console.log("init db");
@@ -78,18 +79,28 @@ export async function findNewMessage(db: SQLiteDatabase, rowId: number) {
 export async function saveRecentMessage(
   db: SQLiteDatabase,
   m: MessagingResponse,
-  roomId: Uint8Array<ArrayBufferLike>,
-  timestamp: string,
 ) {
   return db.runAsync(
     `INSERT
         OR IGNORE INTO message (id, room_id, from_id, content_type, contents, created_at)
                VALUES (?, ?, ?, ?, ?, ?);`,
     uuidParse(m.id),
-    roomId,
+    uuidParse(m.roomId),
     uuidParse(m.fromId),
     m.contentType,
     JSON.stringify(m.contents),
-    timestamp,
+    getTimestamp(m.id),
+  );
+}
+
+export async function deleteMessagesBeforeQuit(
+  db: SQLiteDatabase,
+  m: MessagingResponse,
+) {
+  return db.runAsync(
+    `DELETE FROM message
+     WHERE room_id = ? AND id < ?;`,
+    uuidParse(m.roomId),
+    uuidParse(m.id),
   );
 }

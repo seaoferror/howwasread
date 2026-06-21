@@ -25,12 +25,6 @@ func (s *Service) ManageMessage(
 		toIds = append(toIds, toId[:])
 		toIds = append(toIds, fromId[:])
 	}
-	if contentType == "quit" {
-		err := s.repository.QuitChatRoom(ctx, gocql.UUID(roomId), gocql.UUID(fromId))
-		if err != nil {
-			return
-		}
-	}
 	if toIdType == "group" && contentType != "create" {
 		participantIds, err := s.repository.FindParticipantIds(ctx, gocql.UUID(toId))
 		if errors.Is(err, gocql.ErrNotFound) {
@@ -57,6 +51,12 @@ func (s *Service) ManageMessage(
 			return
 		}
 		toIds = append(toIds, fromId[:])
+	}
+	if contentType == "quit" {
+		err := s.repository.RemoveParticipantId(ctx, gocql.UUID(roomId), gocql.UUID(fromId))
+		if err != nil {
+			return
+		}
 	}
 	if contentType == "image" || contentType == "audio" || contentType == "video" {
 		var wg sync.WaitGroup
