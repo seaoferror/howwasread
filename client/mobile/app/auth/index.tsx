@@ -1,7 +1,7 @@
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Platform, StyleSheet, View } from "react-native";
 import CustomButton from "@/components/CustomButton";
-import { Link, router, useFocusEffect } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { colors } from "@/constants";
 import AppleSignInButton from "@/components/auth/AppleSignInButton";
 import { deleteSecure } from "@/util/storage";
@@ -62,9 +62,6 @@ export default function AuthScreen() {
             label={"Start with your Email"}
             onPress={() => router.push("/auth/email/signup")}
           />
-          <Link href={"/auth/email/login"} style={styles.signupText}>
-            Do you have account? Login with your email
-          </Link>
         </View>
       </View>
     </SafeAreaView>
@@ -82,9 +79,9 @@ const styles = StyleSheet.create({
     flex: 1,
     width: "100%",
     alignItems: "center",
-    paddingHorizontal: 30,
-    marginTop: 90,
-    gap: 40,
+    paddingHorizontal: Platform.OS === "ios" ? 30 : 52,
+    marginTop: Platform.OS === "ios" ? 90 : 130,
+    gap: Platform.OS === "ios" ? 40 : 65,
   },
   icon: {
     width: 160,

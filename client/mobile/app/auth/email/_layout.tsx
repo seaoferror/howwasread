@@ -19,6 +19,14 @@ export default function EmailLayout() {
               />
             </Link>
           ),
+          headerRight: () => (
+            <Link
+              href={"/auth/email/login"}
+              style={{ fontSize: 20, color: colors.BLUE_500 }}
+            >
+              Login
+            </Link>
+          ),
         }}
       />
       <Stack.Screen
@@ -33,6 +41,14 @@ export default function EmailLayout() {
                 size={28}
                 color={colors.BLACK}
               />
+            </Link>
+          ),
+          headerRight: () => (
+            <Link
+              href={"/auth/email/signup"}
+              style={{ fontSize: 20, color: colors.BLUE_500 }}
+            >
+              Sign up
             </Link>
           ),
         }}
