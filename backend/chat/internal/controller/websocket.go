@@ -160,18 +160,3 @@ func (c *Controller) RelayMessaging(ctx context.Context, id uuid.UUID, toIds [][
 
 	return pushToIds, nil
 }
-
-// getPodIp will replace with k8s configmap pod ip
-//func getPodIP() (string, error) {
-//	addrs, err := net.InterfaceAddrs()
-//	if err != nil {
-//		return "", err
-//	}
-//	for _, addr := range addrs {
-//		ipNet, ok := addr.(*net.IPNet)
-//		if ok && !ipNet.IP.IsLoopback() && ipNet.IP.To4() != nil {
-//			return ipNet.IP.String(), nil
-//		}
-//	}
-//	return "", errors.New("IP not found")
-//}
