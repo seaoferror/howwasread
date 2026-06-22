@@ -59,6 +59,7 @@ func connectConsumer(groupID string) (sarama.ConsumerGroup, error) {
 	//cfg.Net.SASL.Handshake = true
 
 	cfg.Consumer.Return.Errors = true
+	cfg.Consumer.IsolationLevel = sarama.ReadUncommitted //default, this is for kafka transaction
 	cfg.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{sarama.NewBalanceStrategySticky()}
 	//if balance strategy need to be change flexible, use switch-case with config di
 	cfg.Consumer.Offsets.Initial = sarama.OffsetOldest

@@ -40,10 +40,8 @@ public class KafkaProducerConfig {
     config.put(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
     config.put(ProducerConfig.ACKS_CONFIG, "1");
     config.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, false);
-    config.put(ProducerConfig.LINGER_MS_CONFIG, 5);
-
-    config.put(ProducerConfig.RETRIES_CONFIG, 3);
-    config.put(ProducerConfig.RETRY_BACKOFF_MS_CONFIG, 250);
+    config.put(ProducerConfig.RETRIES_CONFIG, 100_000_000);
+    config.put(ProducerConfig.RETRY_BACKOFF_MS_CONFIG, 300);
     config.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);
 
     if ("production".equalsIgnoreCase(profile)) {

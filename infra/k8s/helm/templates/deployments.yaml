@@ -30,14 +30,18 @@ spec:
             limits:
               cpu: {{ $app.cpuLimits }}
               memory: {{ $app.memoryLimits }}
-          {{- if $app.valkey }}
           env:
+          {{- if $app.valkey }}
             - name: VALKEY_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: valkey
                   key: lule
           {{- end}}
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
           envFrom:
             - configMapRef:
                 name: config-map

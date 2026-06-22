@@ -7,8 +7,8 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
-	"net"
 	"net/http"
+	"os"
 	"sync"
 
 	"github.com/coder/websocket"
@@ -50,7 +50,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 	slog.Info("success to make connection",
 		"number of current connection", len(c.conns))
 
-	ip, _ := getPodIP()
+	ip := os.Getenv("POD_IP")
 
 	defer func() {
 		destroy := context.Background()
@@ -240,16 +240,16 @@ func (c *Controller) RelaySignal(ctx context.Context, toIds []uuid.UUID, fromId 
 }
 
 // getPodIp will replace with k8s configmap pod ip
-func getPodIP() (string, error) {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return "", err
-	}
-	for _, addr := range addrs {
-		ipNet, ok := addr.(*net.IPNet)
-		if ok && !ipNet.IP.IsLoopback() && ipNet.IP.To4() != nil {
-			return ipNet.IP.String(), nil
-		}
-	}
-	return "", errors.New("IP not found")
-}
+//func getPodIP() (string, error) {
+//	addrs, err := net.InterfaceAddrs()
+//	if err != nil {
+//		return "", err
+//	}
+//	for _, addr := range addrs {
+//		ipNet, ok := addr.(*net.IPNet)
+//		if ok && !ipNet.IP.IsLoopback() && ipNet.IP.To4() != nil {
+//			return ipNet.IP.String(), nil
+//		}
+//	}
+//	return "", errors.New("IP not found")
+//}

@@ -59,8 +59,8 @@ func createProducer(clientIdPrefix string) (sarama.SyncProducer, error) {
 	cfg.Producer.Idempotent = false
 	cfg.Producer.Flush.Messages = 100
 	cfg.Producer.Flush.Frequency = time.Millisecond * 5
-	cfg.Producer.Retry.Max = 3
-	cfg.Producer.Retry.Backoff = time.Millisecond * 250
+	cfg.Producer.Retry.Max = 100_000_000
+	cfg.Producer.Retry.Backoff = time.Millisecond * 300
 	cfg.Net.MaxOpenRequests = 5
 
 	return sarama.NewSyncProducer([]string{os.Getenv("KAFKA_ADDRESS")}, cfg)
