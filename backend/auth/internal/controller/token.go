@@ -8,9 +8,9 @@ import (
 )
 
 func tokenRouter(n *Controller) {
-	n.Router(POST, "/refresh-token", n.refreshToken)
-	n.Router(POST, "/account/logout", n.logout)
-	n.Router(DELETE, "/account/delete", n.deleteAccount)
+	n.Router(POST, "/auth/refresh-token", n.refreshToken)
+	n.Router(POST, "/auth/account/logout", n.logout)
+	n.Router(DELETE, "/auth/account/delete", n.deleteAccount)
 }
 
 func (c *Controller) refreshToken(w http.ResponseWriter, r *http.Request) {

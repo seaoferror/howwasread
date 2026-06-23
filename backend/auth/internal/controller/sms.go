@@ -11,8 +11,8 @@ import (
 )
 
 func smsRouter(n *Controller) {
-	n.Router(POST, "/sms/otp/send", n.sendSMSOTP)
-	n.Router(POST, "/sms/otp/verify", n.verifySMSOTP)
+	n.Router(POST, "/auth/sms/otp/send", n.sendSMSOTP)
+	n.Router(POST, "/auth/sms/otp/verify", n.verifySMSOTP)
 }
 
 func (c *Controller) sendSMSOTP(w http.ResponseWriter, r *http.Request) {

@@ -10,11 +10,11 @@ import (
 )
 
 func emailRouter(n *Controller) {
-	n.Router(POST, "/email/create", n.createMemberByEmail)
-	n.Router(POST, "/email/login", n.loginWithEmail)
-	n.Router(POST, "/email/otp/verify", n.verifyEmailOTP)
-	n.Router(POST, "/email/apple", n.signInWithApple)
-	n.Router(POST, "/email/google", n.signInWithGoogle)
+	n.Router(POST, "/auth/email/create", n.createMemberByEmail)
+	n.Router(POST, "/auth/email/login", n.loginWithEmail)
+	n.Router(POST, "/auth/email/otp/verify", n.verifyEmailOTP)
+	n.Router(POST, "/auth/email/apple", n.signInWithApple)
+	n.Router(POST, "/auth/email/google", n.signInWithGoogle)
 }
 
 func (c *Controller) createMemberByEmail(w http.ResponseWriter, r *http.Request) {
