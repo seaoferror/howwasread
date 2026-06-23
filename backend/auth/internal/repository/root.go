@@ -56,9 +56,9 @@ func NewRepository() *Repository {
 		`CREATE TABLE IF NOT EXISTS member_by_session_id (
 			session_id uuid PRIMARY KEY, email text
 		);`,
-		`CREATE TABLE IF NOT EXISTS profile_by_id (
-			id uuid PRIMARY KEY
-		);`,
+		`CREATE TABLE IF NOT EXISTS nonce (
+    		nonce text PRIMARY KEY
+    	);`,
 	}
 
 	for _, q := range queries {
