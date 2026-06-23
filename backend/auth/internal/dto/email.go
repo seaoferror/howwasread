@@ -11,8 +11,8 @@ type SignInWithEmailRequest struct {
 }
 
 type LoginWithEmailResponse struct {
-	VerificationId uuid.UUID `json:"verificationId,omitempty"`
-	SessionId      uuid.UUID `json:"sessionId,omitempty"`
+	VerificationId uuid.UUID `json:"verificationId,omitzero"`
+	SessionId      uuid.UUID `json:"sessionId,omitzero"`
 	AccessToken    string    `json:"accessToken,omitempty"`
 }
 
@@ -34,6 +34,6 @@ type SignInWithGoogleRequest struct {
 }
 
 type SignInWithThirdPartyResponse struct {
-	SessionId   uuid.UUID `json:"sessionId,omitempty"`
+	SessionId   uuid.UUID `json:"sessionId,omitzero"`
 	AccessToken string    `json:"accessToken,omitempty"`
 }
