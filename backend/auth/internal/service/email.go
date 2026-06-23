@@ -17,25 +17,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (s *Service) CheckEmailUsability(ctx context.Context, email string) (bool, error) {
-	if !isValidEmail(email) {
-		return false, ErrCheckEmail
-	}
-
-	isTaken, err := s.repository.EmailExists(ctx, email)
-	if err != nil {
-		return false, nil
-	}
-
-	if isTaken {
-		slog.Info("this email already exist",
-			"email", email,
-		)
-		return false, nil
-	}
-	return true, nil
-}
-
 func (s *Service) CreateMemberByEmail(ctx context.Context, email, password string) (map[string]uuid.UUID, error) {
 	if !isValidEmail(email) {
 		return nil, ErrSignUpWithEmail
@@ -114,14 +95,12 @@ func (s *Service) LoginWithEmail(email, password string) (*dto.LoginWithEmailRes
 	}
 
 	if !phoneNumberVerified {
-		sid, err := gocql.RandomUUID()
+		sid := uuid.New()
+		err = s.repository.SaveEmailBySessionId(gocql.UUID(sid), email)
 		if err != nil {
-			slog.Error("fail to make random uuid for session id")
 			return nil, "", ErrInternalServer
 		}
-
-		err = s.repository.SaveEmailBySessionId(sid, email)
-		resp.SessionId = uuid.UUID(sid)
+		resp.SessionId = sid
 		return &resp, "", nil
 	}
 

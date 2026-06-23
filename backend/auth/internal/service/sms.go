@@ -14,8 +14,8 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 )
 
-func (s *Service) SendSMSOTP(sessionId *uuid.UUID, phoneNumber string) (map[string]uuid.UUID, error) {
-	if sessionId == nil {
+func (s *Service) SendSMSOTP(sessionId uuid.UUID, phoneNumber string) (map[string]uuid.UUID, error) {
+	if sessionId == uuid.Nil {
 		email, err := s.repository.FindEmailByPhoneNumber(phoneNumber)
 		if errors.Is(err, gocql.ErrNotFound) {
 			err = nil
@@ -62,11 +62,11 @@ func (s *Service) SendSMSOTP(sessionId *uuid.UUID, phoneNumber string) (map[stri
 	return res, nil
 }
 
-func (s *Service) VerifySMSOTP(sessionId *uuid.UUID, verificationId uuid.UUID, otp string) (*dto.VerifySMSOTPResponse, string, error) {
+func (s *Service) VerifySMSOTP(sessionId uuid.UUID, verificationId uuid.UUID, otp string) (*dto.VerifySMSOTPResponse, string, error) {
 	var email string
 	var err error
-	if sessionId != nil {
-		email, err = s.repository.FindEmailBySessionId(gocql.UUID(*sessionId))
+	if sessionId != uuid.Nil {
+		email, err = s.repository.FindEmailBySessionId(gocql.UUID(sessionId))
 		if err != nil {
 			return nil, "", ErrVerifySMSOTP
 		}
@@ -75,7 +75,7 @@ func (s *Service) VerifySMSOTP(sessionId *uuid.UUID, verificationId uuid.UUID, o
 	if err != nil {
 		return nil, "", ErrVerifySMSOTP
 	}
-	if sessionId != nil {
+	if sessionId != uuid.Nil {
 		e, err := s.repository.FindEmailByPhoneNumber(phoneNumber)
 		if errors.Is(err, gocql.ErrNotFound) {
 			err = nil
@@ -113,7 +113,7 @@ func (s *Service) VerifySMSOTP(sessionId *uuid.UUID, verificationId uuid.UUID, o
 		return nil, "", ErrVerifySMSOTP
 	}
 
-	if sessionId == nil {
+	if sessionId == uuid.Nil {
 		var idv7 uuid.UUID
 		id, err1 := s.repository.FindIdByPhoneNumber(phoneNumber)
 		if errors.Is(err1, gocql.ErrNotFound) {

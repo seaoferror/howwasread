@@ -1,0 +1,57 @@
+package controller
+
+import (
+	"encoding/json"
+	"log/slog"
+	"net/http"
+	"time"
+)
+
+func tokenRouter(n *Controller) {
+	n.Router(POST, "/refresh-token", n.refreshToken)
+	n.Router(POST, "/account/logout", n.logout)
+	n.Router(DELETE, "/account/delete", n.deleteAccount)
+}
+
+func (c *Controller) refreshToken(w http.ResponseWriter, r *http.Request) {
+	rt, err := r.Cookie("refresh_token")
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	result, err := c.service.GenerateAccessToken(rt.Value)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(result)
+	if err != nil {
+		slog.Error("fail to write response body",
+			"err", err)
+	}
+}
+
+func (c *Controller) logout(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{Name: "refresh_token",
+		Value:    "",
+		Expires:  time.Now(),
+		HttpOnly: true,
+		Secure:   true,
+	})
+	w.WriteHeader(http.StatusOK)
+}
+
+func (c *Controller) deleteAccount(w http.ResponseWriter, r *http.Request) {
+	rt, err := r.Cookie("refresh_token")
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	err = c.service.DeleteAccount(rt.Value)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}

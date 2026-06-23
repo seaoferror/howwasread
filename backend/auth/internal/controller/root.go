@@ -1,10 +1,9 @@
-package network
+package controller
 
 import (
 	"backend/auth/internal/service"
+	"log/slog"
 	"net/http"
-
-	"github.com/gin-gonic/gin"
 )
 
 type HTTPMethod int
@@ -15,6 +14,49 @@ const (
 	DELETE
 	PUT
 )
+
+type Controller struct {
+	service *service.Service
+	mux     *http.ServeMux
+}
+
+func NewController(s *service.Service, m *http.ServeMux) *Controller {
+	c := &Controller{
+		service: s,
+		mux:     m,
+	}
+	emailRouter(c)
+	smsRouter(c)
+	tokenRouter(c)
+
+	return c
+}
+
+func handleError(w http.ResponseWriter, err error) {
+	w.WriteHeader(getStatusCode(err))
+	_, err = w.Write([]byte(err.Error()))
+	if err != nil {
+		slog.Error("fail to write response body", "err", err)
+	}
+}
+
+func (c *Controller) Router(httpMethod HTTPMethod, path string, handler http.HandlerFunc) {
+	m := c.mux
+
+	switch httpMethod {
+	case GET:
+		m.HandleFunc("GET "+path, handler)
+	case POST:
+		m.HandleFunc("POST "+path, handler)
+	case PUT:
+		m.HandleFunc("PUT "+path, handler)
+	case DELETE:
+		m.HandleFunc("DELETE "+path, handler)
+
+	default:
+		panic("This HTTP method is not supported")
+	}
+}
 
 func getStatusCode(err error) int {
 	switch err {
@@ -43,27 +85,4 @@ func getStatusCode(err error) int {
 		return http.StatusUnauthorized
 	}
 	return http.StatusBadRequest
-}
-
-func setGin(engine *gin.Engine) {
-	engine.Use(gin.Logger())
-	engine.Use(gin.Recovery())
-}
-
-func (n *Network) Router(httpMethod HTTPMethod, path string, handler ...gin.HandlerFunc) {
-	e := n.engine.Group("/auth")
-
-	switch httpMethod {
-	case GET:
-		e.GET(path, handler...)
-	case POST:
-		e.POST(path, handler...)
-	case PUT:
-		e.PUT(path, handler...)
-	case DELETE:
-		e.DELETE(path, handler...)
-
-	default:
-		panic("This HTTP method is not registered")
-	}
 }

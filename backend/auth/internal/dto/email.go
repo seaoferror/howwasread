@@ -21,7 +21,7 @@ type VerifyEmailOTPRequest struct {
 	OTP            string    `json:"otp"`
 }
 type VerifyEmailOTPResponse struct {
-	SessionId uuid.UUID `json:"session_id"`
+	SessionId uuid.UUID `json:"sessionId"`
 }
 
 type SignInWithAppleRequest struct {
