@@ -125,6 +125,9 @@ func (s *Service) SignInWithApple(identityToken string, isFirstSignIn bool) (*dt
 	//by adding few lines, but the advantage is also small currently and
 	//make link phone number process more complicate
 	phoneNumberVerified, err := s.repository.FindPhoneNumberVerifiedById(id)
+	if errors.Is(gocql.ErrNotFound, err) {
+		err = nil
+	}
 	if err != nil {
 		return nil, "", ErrSignInWithApple
 	}

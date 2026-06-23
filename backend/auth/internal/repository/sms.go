@@ -84,7 +84,9 @@ func (r *Repository) FindPhoneNumberVerifiedById(id gocql.UUID) (phoneNumberVeri
 		id,
 	).Scan(&phoneNumberVerified)
 	if err != nil {
-		slog.Error("fail to find phone number verified by id")
+		slog.Error("fail to find phone number verified by id",
+			"err", err,
+			"id", id.String())
 		return false, err
 	}
 	return phoneNumberVerified, nil

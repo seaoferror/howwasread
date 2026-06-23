@@ -58,14 +58,17 @@ func (s *Service) SignInWithGoogle(ctx context.Context, token string) (
 		return nil, "", ErrSignInWithGoogle
 	}
 	if emailFromDB != email {
-		err = s.repository.UpdateThirdPartyEmail(context.Background(), email, userId, "apple")
+		err = s.repository.UpdateThirdPartyEmail(context.Background(), email, userId, "google")
 		if err != nil {
 			return nil, "", ErrInternalServer
 		}
 	}
 	phoneNumberVerified, err := s.repository.FindPhoneNumberVerifiedById(id)
+	if errors.Is(gocql.ErrNotFound, err) {
+		err = nil
+	}
 	if err != nil {
-		return nil, "", ErrSignInWithApple
+		return nil, "", ErrSignInWithGoogle
 	}
 	if !phoneNumberVerified {
 		return s.provideSessionId(email)
