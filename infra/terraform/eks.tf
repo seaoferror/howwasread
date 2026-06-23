@@ -46,18 +46,12 @@ module "cluster1" {
   enable_irsa = true
 
   eks_managed_node_groups = {
-    medium_group = {
+    medium = {
       instance_types = ["t3.medium"]
       min_size       = 1
       max_size       = 1
       desired_size   = 1
     }
-    # small = {
-    #   instance_types = ["t3.small"]
-    #   min_size       = 1
-    #   max_size       = 1
-    #   desired_size   = 1
-    # }
   }
 
   node_security_group_additional_rules = {

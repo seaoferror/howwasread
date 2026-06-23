@@ -8,7 +8,6 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"os"
 	"sync"
 
 	"github.com/coder/websocket"
@@ -49,7 +48,7 @@ func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
 		"number of current connection", c.numbers)
 	c.csMutex.Unlock()
 
-	ip := os.Getenv("POD_IP")
+	ip := c.podIP
 	defer func() {
 		destroy := context.Background()
 		err = conn.Close(websocket.StatusNormalClosure, "")

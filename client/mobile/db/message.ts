@@ -17,6 +17,12 @@ export async function initDB(db: SQLiteDatabase) {
     );`);
 }
 
+export async function deleteAllMessages(db: SQLiteDatabase) {
+  await db.execAsync(`
+    DELETE FROM message;
+  `);
+}
+
 export async function findPreview(db: SQLiteDatabase) {
   return db.getAllAsync<MessageEntity>(
     `SELECT m.id,

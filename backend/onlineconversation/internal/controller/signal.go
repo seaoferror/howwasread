@@ -8,7 +8,6 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"os"
 	"sync"
 
 	"github.com/coder/websocket"
@@ -50,7 +49,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 	slog.Info("success to make connection",
 		"number of current connection", len(c.conns))
 
-	ip := os.Getenv("POD_IP")
+	ip := c.podIP
 
 	defer func() {
 		destroy := context.Background()

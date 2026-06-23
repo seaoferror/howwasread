@@ -5,6 +5,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"os"
 	"sync"
 
 	"github.com/coder/websocket"
@@ -25,6 +26,7 @@ type Controller struct {
 	mux     *http.ServeMux
 	conns   map[uuid.UUID]*websocket.Conn
 	csMutex *sync.RWMutex
+	podIP   string
 }
 
 func NewController(s *service.Service, m *http.ServeMux) *Controller {
@@ -34,6 +36,7 @@ func NewController(s *service.Service, m *http.ServeMux) *Controller {
 		mux:     m,
 		conns:   map[uuid.UUID]*websocket.Conn{},
 		csMutex: &sync.RWMutex{},
+		podIP:   os.Getenv("POD_IP"),
 	}
 
 	conversationRouter(c)
