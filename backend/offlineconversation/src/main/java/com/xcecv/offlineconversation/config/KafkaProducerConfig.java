@@ -42,6 +42,7 @@ public class KafkaProducerConfig {
     config.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, false);
     config.put(ProducerConfig.RETRIES_CONFIG, 100_000_000);
     config.put(ProducerConfig.RETRY_BACKOFF_MS_CONFIG, 300);
+    config.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 900_000);
     config.put(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, 5);
 
     if ("production".equalsIgnoreCase(profile)) {
