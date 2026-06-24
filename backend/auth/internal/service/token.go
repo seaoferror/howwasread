@@ -50,11 +50,17 @@ func (s *Service) GenerateAccessToken(refreshToken string) (map[string]string, e
 			"err", err)
 		return nil, ErrGenerateToken
 	}
-	jti, err := s.repository.FindRefreshTokenJTIById(id)
+	jtis, err := s.repository.FindRefreshTokenJTIsById(id)
 	if err != nil {
 		return nil, ErrGenerateToken
 	}
-	if rt.Claims.(jwt.MapClaims)["jti"].(string) != jti.String() {
+	var jtiValidity bool
+	for _, jti := range jtis {
+		if rt.Claims.(jwt.MapClaims)["jti"].(string) == jti.String() {
+			jtiValidity = true
+		}
+	}
+	if !jtiValidity {
 		slog.Info("refresh token jti is not same with DB")
 		return nil, ErrGenerateToken
 	}
@@ -167,11 +173,17 @@ func (s *Service) DeleteAccount(refreshToken string) error {
 			"err", err)
 		return err
 	}
-	jti, err := s.repository.FindRefreshTokenJTIById(id)
+	jtis, err := s.repository.FindRefreshTokenJTIsById(id)
 	if err != nil {
 		return err
 	}
-	if rt.Claims.(jwt.MapClaims)["jti"].(string) != jti.String() {
+	var jtiValidity bool
+	for _, jti := range jtis {
+		if rt.Claims.(jwt.MapClaims)["jti"].(string) == jti.String() {
+			jtiValidity = true
+		}
+	}
+	if !jtiValidity {
 		slog.Info("refresh token jti is not same with DB")
 		return err
 	}
