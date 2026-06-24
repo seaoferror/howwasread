@@ -16,6 +16,7 @@ import com.xcecv.offlineconversation.util.UUIDUtil;
 import glide.api.GlideClusterClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -36,7 +37,7 @@ public class OfflineConversationService {
   private final OfflineConversationParticipantRepository offlineConversationParticipantRepository;
   private final GlideClusterClient glideClusterClient;
   private final ObjectMapper objectMapper;
-  private final KafkaTemplate<byte[], Object> kafkaTemplate;
+  private final ApplicationEventPublisher applicationEventPublisher;
 
   private static final String EMPTY_CACHE_DUMMY_KEY = "_";
   private static final long CACHE_TTL_SECONDS = 3600;
@@ -71,15 +72,14 @@ public class OfflineConversationService {
         .participantId(memberId)
         .build();
     offlineConversationParticipantRepository.save(new OfflineConversationParticipant(key, convo));
-    kafkaTemplate.send("chat-message",
-        ChatMessage.builder()
-            .id(UUIDUtil.uuidToBytes(UuidCreator.getTimeOrderedEpoch()))
-            .fromId(UUIDUtil.uuidToBytes(memberId))
-            .toIdType("group")
-            .toId(UUIDUtil.uuidToBytes(conversationId))
-            .contentType("create")
-            .contents(new ArrayList<>(List.of(request.location())))
-            .build());
+    applicationEventPublisher.publishEvent(ChatMessage.builder()
+        .id(UUIDUtil.uuidToBytes(UuidCreator.getTimeOrderedEpoch()))
+        .fromId(UUIDUtil.uuidToBytes(memberId))
+        .toIdType("group")
+        .toId(UUIDUtil.uuidToBytes(conversationId))
+        .contentType("create")
+        .contents(new ArrayList<>(List.of(request.location())))
+        .build());
     try {
       Map<String, String> hashEntry = Map.of(conversationId.toString(),
           objectMapper.writeValueAsString(
@@ -116,15 +116,14 @@ public class OfflineConversationService {
         .participantId(memberId)
         .build();
     offlineConversationParticipantRepository.save(new OfflineConversationParticipant(key, conversationProxy));
-    kafkaTemplate.send("chat-message",
-        ChatMessage.builder()
-            .id(UUIDUtil.uuidToBytes(UuidCreator.getTimeOrderedEpoch()))
-            .fromId(UUIDUtil.uuidToBytes(memberId))
-            .toIdType("group")
-            .toId(UUIDUtil.uuidToBytes(request.conversationId()))
-            .contentType("participate")
-            .contents(new ArrayList<>())
-            .build());
+    applicationEventPublisher.publishEvent(ChatMessage.builder()
+        .id(UUIDUtil.uuidToBytes(UuidCreator.getTimeOrderedEpoch()))
+        .fromId(UUIDUtil.uuidToBytes(memberId))
+        .toIdType("group")
+        .toId(UUIDUtil.uuidToBytes(request.conversationId()))
+        .contentType("participate")
+        .contents(new ArrayList<>())
+        .build());
   }
 
   @Transactional
@@ -134,15 +133,14 @@ public class OfflineConversationService {
         .participantId(memberId)
         .build();
     offlineConversationParticipantRepository.deleteById(key);
-    kafkaTemplate.send("chat-message",
-        ChatMessage.builder()
-            .id(UUIDUtil.uuidToBytes(UuidCreator.getTimeOrderedEpoch()))
-            .fromId(UUIDUtil.uuidToBytes(memberId))
-            .toIdType("group")
-            .toId(UUIDUtil.uuidToBytes(request.conversationId()))
-            .contentType("quit")
-            .contents(new ArrayList<>())
-            .build());
+    applicationEventPublisher.publishEvent(ChatMessage.builder()
+        .id(UUIDUtil.uuidToBytes(UuidCreator.getTimeOrderedEpoch()))
+        .fromId(UUIDUtil.uuidToBytes(memberId))
+        .toIdType("group")
+        .toId(UUIDUtil.uuidToBytes(request.conversationId()))
+        .contentType("quit")
+        .contents(new ArrayList<>())
+        .build());
   }
 
   public List<OfflineConversationMapResponse> mapRes7Convos(
