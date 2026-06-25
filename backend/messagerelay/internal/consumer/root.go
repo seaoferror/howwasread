@@ -2,7 +2,6 @@ package consumer
 
 import (
 	"backend/common/payload"
-	"backend/common/tlsconfig"
 	"backend/messagerelay/internal/service"
 	"context"
 	"encoding/json"
@@ -44,19 +43,19 @@ func connectConsumer(groupID string) (sarama.ConsumerGroup, error) {
 	}
 	cfg.ClientID = "relay_message.consumer." + id.String()
 	if os.Getenv("PROFILE") == "production" {
-		tlsConfig, err1 := tlsconfig.Create("cert/kafka/user/user.crt", "cert/kafka/user/user.key", "cert/kafka/cluster/ca.crt")
-		if err1 != nil {
-			return nil, err1
-		}
+		//tlsConfig, err1 := tlsconfig.Create("cert/kafka/user/user.crt", "cert/kafka/user/user.key", "cert/kafka/cluster/ca.crt")
+		//if err1 != nil {
+		//	return nil, err1
+		//}
+		//cfg.Net.TLS.Config = tlsConfig
 		cfg.Net.TLS.Enable = true
-		cfg.Net.TLS.Config = tlsConfig
 	}
-	//cfg.Net.SASL.Enable = true
-	//cfg.Net.SASL.Version = 1
-	//cfg.Net.SASL.Mechanism = sarama.SASLTypePlaintext
-	//cfg.Net.SASL.User = <api-key>
-	//cfg.Net.SASL.Password = <secret>
-	//cfg.Net.SASL.Handshake = true
+	cfg.Net.SASL.Enable = true
+	cfg.Net.SASL.Version = 1
+	cfg.Net.SASL.Mechanism = sarama.SASLTypePlaintext
+	cfg.Net.SASL.User = os.Getenv("KAFKA_API_KEY")
+	cfg.Net.SASL.Password = os.Getenv("KAFKA_API_SECRET")
+	cfg.Net.SASL.Handshake = true
 
 	cfg.Consumer.Return.Errors = true
 	cfg.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{sarama.NewBalanceStrategySticky()}

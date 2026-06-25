@@ -40,14 +40,22 @@ export async function createValkeyClient() {
 export async function createKafkaConsumer() {
   const consumer = new Kafka().consumer({
     "bootstrap.servers": process.env.KAFKA_ADDRESS || "localhost:9092",
-    "security.protocol":
-      process.env.PROFILE === "production" ? "ssl" : undefined,
-    "ssl.ca.location":
-      process.env.PROFILE === "production" ? "/cert/kafka/cluster/ca.crt" : undefined,
-    "ssl.certificate.location":
-      process.env.PROFILE === "production" ? "/cert/kafka/user/user.crt" : undefined,
-    "ssl.key.location":
-      process.env.PROFILE === "production" ? "/cert/kafka/user/user.key" : undefined,
+    "security.protocol": "sasl_ssl",
+    "sasl.mechanism": "PLAIN",
+    "sasl.username": process.env.KAFKA_API_KEY,
+    "sasl.password": process.env.KAFKA_API_SECRET,
+    // "ssl.ca.location":
+    //   process.env.PROFILE === "production"
+    //     ? "/cert/kafka/cluster/ca.crt"
+    //     : undefined,
+    // "ssl.certificate.location":
+    //   process.env.PROFILE === "production"
+    //     ? "/cert/kafka/user/user.crt"
+    //     : undefined,
+    // "ssl.key.location":
+    //   process.env.PROFILE === "production"
+    //     ? "/cert/kafka/user/user.key"
+    //     : undefined,
 
     "group.id": "apn_notification",
     "auto.offset.reset": "earliest",
