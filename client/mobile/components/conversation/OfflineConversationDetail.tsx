@@ -77,7 +77,7 @@ export default function OfflineConversationDetail({
               number of participants: {data.numberOfParticipants}
             </Text>
           }
-          {location && (
+          {data.location && (
             <Text style={styles.detail}>Location: {data.location}</Text>
           )}
           <Text
