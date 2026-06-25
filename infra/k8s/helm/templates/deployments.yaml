@@ -65,6 +65,10 @@ spec:
             - secretRef:
                 name: twilio
             {{- end }}
+            {{- if $app.kafka }}
+            - secretRef:
+                name: confluent
+            {{- end }}
           volumeMounts:
             {{- if $app.valkey }}
             - name: valkey-cert-volume
@@ -76,14 +80,6 @@ spec:
               mountPath: "/cert/authentication"
               readOnly: true
             {{- end}}
-            {{- if $app.kafka }}
-            - name: kafka-user
-              mountPath: "/cert/kafka/user"
-              readOnly: true
-            - name: kafka-cluster-ca
-              mountPath: "/cert/kafka/cluster"
-              readOnly: true
-            {{- end }}
             {{- if $app.astradb }}
             - name: astradb-volume
               mountPath: "/cert/astradb"
@@ -112,14 +108,6 @@ spec:
             items:
               - key: ca.crt
                 path: ca.crt
-        {{- end }}
-        {{- if $app.kafka }}
-        - name: kafka-user
-          secret:
-            secretName: kafka-user
-        - name: kafka-cluster-ca
-          secret:
-            secretName: kafka-cluster-cluster-ca-cert
         {{- end }}
         {{- if $app.authentication}}
         - name: authentication-volume
