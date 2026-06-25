@@ -1,4 +1,6 @@
-import { Stack } from "expo-router";
+import { router, Stack } from "expo-router";
+import { Pressable } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function AuthLayout() {
   return (
@@ -8,6 +10,11 @@ export default function AuthLayout() {
         options={{
           title: "",
           headerShown: false,
+          headerLeft: () => (
+            <Pressable onPress={() => router.back()}>
+              <Ionicons name="chevron-back" size={28} color="black" />
+            </Pressable>
+          ),
         }}
       />
       <Stack.Screen
@@ -15,6 +22,11 @@ export default function AuthLayout() {
         options={{
           title: "Verify your phone number",
           headerShown: true,
+          headerLeft: () => (
+            <Pressable onPress={() => router.back()}>
+              <Ionicons name="chevron-back" size={28} color="black" />
+            </Pressable>
+          ),
         }}
       />
       <Stack.Screen

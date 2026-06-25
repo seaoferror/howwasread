@@ -5,11 +5,14 @@ import { useActionSheet } from "@expo/react-native-action-sheet";
 import { useDeleteAccount, useLogout } from "@/hooks/useAuth";
 import { colors } from "@/constants";
 import { setSecure } from "@/util/storage";
+import { deleteAllMessages } from "@/db/message";
+import { useSQLiteContext } from "expo-sqlite";
 
 export default function AccountScreen() {
   const { showActionSheetWithOptions } = useActionSheet();
   const deleteAccountMutation = useDeleteAccount();
   const logoutMutation = useLogout();
+  const db = useSQLiteContext();
   const handleDeleteAccount = () => {
     showActionSheetWithOptions(
       {
@@ -23,6 +26,7 @@ export default function AccountScreen() {
           case 0:
             deleteAccountMutation.mutate(undefined, {
               onSuccess: async () => {
+                await deleteAllMessages(db);
                 await setSecure("accessToken", "");
                 router.replace("/");
               },
@@ -35,12 +39,29 @@ export default function AccountScreen() {
     );
   };
   const handleLogout = () => {
-    logoutMutation.mutate(undefined, {
-      onSuccess: async () => {
-        await setSecure("accessToken", "");
-        router.replace("/");
+    showActionSheetWithOptions(
+      {
+        title: "This will delete your local messages.",
+        options: [`Logout`, "Cancel"],
+        cancelButtonIndex: 1,
+        destructiveButtonIndex: 0,
       },
-    });
+      (selectedIndex?: number) => {
+        switch (selectedIndex) {
+          case 0:
+            logoutMutation.mutate(undefined, {
+              onSuccess: async () => {
+                await deleteAllMessages(db);
+                await setSecure("accessToken", "");
+                router.replace("/");
+              },
+            });
+            break;
+          case 1:
+            break;
+        }
+      },
+    );
   };
   return (
     <SafeAreaView style={styles.safeArea}>

@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { FlatList, StyleSheet } from "react-native";
 import { colors } from "@/constants";
-import { useScrollToTop } from "@react-navigation/native";
+import { useScrollToTop } from "expo-router";
 import OnlineConversationItem from "@/components/conversation/OnlineConversationItem";
 import { useGetInfiniteOnlineConversations } from "@/hooks/useConversation";
 

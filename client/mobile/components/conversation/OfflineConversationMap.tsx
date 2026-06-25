@@ -8,7 +8,7 @@ import {
   PermissionStatus,
   requestForegroundPermissionsAsync,
 } from "expo-location";
-import OfflineConversationDetail from "@/components/conversation/OfflineConversationDetail";
+import { router } from "expo-router";
 
 export default function OfflineConversationMap() {
   const [h3Res5, setH3Res5] = useState<string[]>([]);
@@ -27,8 +27,6 @@ export default function OfflineConversationMap() {
     resolution: 7,
     h3Indexes: h3Res7,
   });
-  const [clickedMarkerId, setClickedMarkerId] = useState<string>("");
-  console.log(clickedMarkerId);
   useEffect(() => {
     async function wrapper() {
       const { status } = await requestForegroundPermissionsAsync();
@@ -103,11 +101,10 @@ export default function OfflineConversationMap() {
           }}
           markers={markers}
           onMarkerClick={(event) => {
-            console.log("marker clicked");
-            setClickedMarkerId(event.id ?? "");
-          }}
-          onMapClick={() => {
-            setClickedMarkerId("");
+            router.push({
+              pathname: "/offline/[id]",
+              params: { id: String(event.id) },
+            });
           }}
         />
       ) : (
@@ -125,17 +122,12 @@ export default function OfflineConversationMap() {
           }}
           markers={markers}
           onMarkerClick={(event) => {
-            setClickedMarkerId(event.id ?? "");
-          }}
-          onMapClick={() => {
-            setClickedMarkerId("");
+            router.push({
+              pathname: "/offline/[id]",
+              params: { id: String(event.id) },
+            });
           }}
         />
-      )}
-      {clickedMarkerId && (
-        <View style={styles.overlayContainer}>
-          <OfflineConversationDetail id={clickedMarkerId} />
-        </View>
       )}
     </View>
   );
@@ -143,20 +135,4 @@ export default function OfflineConversationMap() {
 
 const styles = StyleSheet.create({
   container: {},
-  overlayContainer: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "white",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingBottom: 40,
-    paddingTop: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 10,
-  },
 });
