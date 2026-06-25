@@ -28,7 +28,7 @@
       "package": "com.xcecv.mobile",
       "config": {
         "googleMaps": {
-          "apiKey": "process.env.EXPO_PUBLIC_ANDROID_GOOGLE_MAPS_API_KEY"
+          "apiKey": "AIzaSyA5LxTDMeuljrb9mhjn7BnVQT6RixKXrgM"
         }
       }
     },
