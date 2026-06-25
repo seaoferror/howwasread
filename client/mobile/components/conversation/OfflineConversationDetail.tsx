@@ -7,6 +7,7 @@ import {
 import CustomButton from "@/components/CustomButton";
 import { colors } from "@/constants";
 import { openBrowserAsync } from "expo-web-browser";
+import Toast from "react-native-toast-message";
 
 interface OfflineConversationDetailProps {
   id: string;
@@ -21,10 +22,20 @@ export default function OfflineConversationDetail({
 
   const handleButtonPress = () => {
     if (data?.isParticipant) {
-      quitOfflineConversationMutation.mutate({ conversationId: id });
+      quitOfflineConversationMutation.mutate({ conversationId: id },);
       return;
     }
-    joinOfflineConversationMutation.mutate({ conversationId: id });
+    joinOfflineConversationMutation.mutate(
+      { conversationId: String(id) },
+      {
+        onSuccess: () => {
+          Toast.show({
+            type: "success",
+            text1: "We invite you to the group chat room! Check it out!",
+          });
+        },
+      },
+    );
   };
 
   return (

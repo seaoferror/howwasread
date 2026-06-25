@@ -89,13 +89,13 @@ export interface CreateOfflineConversationRequest {
 }
 
 export interface OfflineConversationDetailResponse {
-  novel: string;
-  poem: string;
-  shortStory: string;
-  play: string;
-  film: string;
+  novel?: string | null;
+  poem?: string | null;
+  shortStory?: string | null;
+  play?: string | null;
+  film?: string | null;
   writtenBy: string;
-  rule: string;
+  rule?: string | null;
   time: string;
   length: number;
   mapsLink: string;

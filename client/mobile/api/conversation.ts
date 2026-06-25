@@ -68,6 +68,7 @@ export async function getOfflineConversationDetail(
   const { data } = await axiosInstance.get(
     `/offlineconversation/detail?conversationId=${id}`,
   );
+  console.log(data);
   return data;
 }
 

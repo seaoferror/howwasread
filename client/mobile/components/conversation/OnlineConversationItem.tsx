@@ -16,7 +16,7 @@ export default function OnlineConversationItem({
     <Pressable
       style={styles.container}
       onPress={() =>
-        router.replace({
+        router.push({
           pathname: `/online/[id]`,
           params: {
             id: conversation.id,

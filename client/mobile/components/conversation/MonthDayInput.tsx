@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0,0,0,0.35)",
   },
   picker: {

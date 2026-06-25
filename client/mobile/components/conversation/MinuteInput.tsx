@@ -134,7 +134,7 @@ const styles = StyleSheet.create({
     color: colors.RED_500,
   },
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "rgba(0,0,0,0.35)",
   },
   picker: {

@@ -90,7 +90,7 @@ export default function OfflineConversationMap() {
     <View style={{ flex: 1 }}>
       {Platform.OS === "ios" ? (
         <AppleMaps.View
-          style={{ flex: 1 }}
+          style={StyleSheet.absoluteFill}
           cameraPosition={{
             coordinates: {
               latitude: initGeoInfo?.lat,
@@ -112,7 +112,7 @@ export default function OfflineConversationMap() {
         />
       ) : (
         <GoogleMaps.View
-          style={{ flex: 1 }}
+          style={StyleSheet.absoluteFill}
           cameraPosition={{
             coordinates: {
               latitude: initGeoInfo?.lat,
@@ -132,11 +132,31 @@ export default function OfflineConversationMap() {
           }}
         />
       )}
-      {clickedMarkerId && <OfflineConversationDetail id={clickedMarkerId} />}
+      {clickedMarkerId && (
+        <View style={styles.overlayContainer}>
+          <OfflineConversationDetail id={clickedMarkerId} />
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {},
+  overlayContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "transparent",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingBottom: 40,
+    paddingTop: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 10,
+  },
 });
