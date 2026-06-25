@@ -92,46 +92,46 @@ resource "helm_release" "cert_manager" {
   ]
 }
 
-resource "helm_release" "argocd" {
-  name             = "argocd"
-  repository       = "https://argoproj.github.io/argo-helm"
-  chart            = "argo-cd"
-  namespace        = "argocd"
-  create_namespace = true
-
-  values = [
-    yamlencode({
-      server = {
-        extraArgs = ["--insecure"]
-        service = {
-          type = "ClusterIP"
-        }
-        replicas    = 1
-        autoscaling = { enabled = false }
-      }
-      repoServer = {
-        replicas    = 1
-        autoscaling = { enabled = false }
-      }
-      controller = {
-        replicas = 1
-      }
-      applicationSet = {
-        replicaCount = 1
-      }
-      redis-ha = {
-        enabled = false
-      }
-      notifications = {
-        enabled = false
-      }
-    })
-  ]
-
-  depends_on = [
-    module.cluster1.eks_managed_node_groups
-  ]
-}
+# resource "helm_release" "argocd" {
+#   name             = "argocd"
+#   repository       = "https://argoproj.github.io/argo-helm"
+#   chart            = "argo-cd"
+#   namespace        = "argocd"
+#   create_namespace = true
+#
+#   values = [
+#     yamlencode({
+#       server = {
+#         extraArgs = ["--insecure"]
+#         service = {
+#           type = "ClusterIP"
+#         }
+#         replicas    = 1
+#         autoscaling = { enabled = false }
+#       }
+#       repoServer = {
+#         replicas    = 1
+#         autoscaling = { enabled = false }
+#       }
+#       controller = {
+#         replicas = 1
+#       }
+#       applicationSet = {
+#         replicaCount = 1
+#       }
+#       redis-ha = {
+#         enabled = false
+#       }
+#       notifications = {
+#         enabled = false
+#       }
+#     })
+#   ]
+#
+#   depends_on = [
+#     module.cluster1.eks_managed_node_groups
+#   ]
+# }
 
 locals {
   cluster1 = {
@@ -256,13 +256,13 @@ resource "helm_release" "valkey_operator" {
   ]
 }
 
-resource "helm_release" "metrics_server" {
-  name       = "metrics-server"
-  repository = "https://kubernetes-sigs.github.io/metrics-server/"
-  chart      = "metrics-server"
-  namespace  = "kube-system"
-
-  depends_on = [
-    module.cluster1.eks_managed_node_groups
-  ]
-}
+# resource "helm_release" "metrics_server" {
+#   name       = "metrics-server"
+#   repository = "https://kubernetes-sigs.github.io/metrics-server/"
+#   chart      = "metrics-server"
+#   namespace  = "kube-system"
+#
+#   depends_on = [
+#     module.cluster1.eks_managed_node_groups
+#   ]
+# }
