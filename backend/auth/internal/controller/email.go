@@ -55,6 +55,8 @@ func (c *Controller) loginWithEmail(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &http.Cookie{Name: "refresh_token",
 			Value:    rt,
 			Expires:  time.Now().Add(constant.RefreshTokenTTL * time.Second),
+			Path:     "/",
+			Domain:   "",
 			HttpOnly: true,
 			Secure:   true,
 		})
@@ -136,6 +138,8 @@ func (c *Controller) signInWithGoogle(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &http.Cookie{Name: "refresh_token",
 			Value:    rt,
 			Expires:  time.Now().Add(constant.RefreshTokenTTL * time.Second),
+			Path:     "/",
+			Domain:   "",
 			HttpOnly: true,
 			Secure:   true,
 		})
