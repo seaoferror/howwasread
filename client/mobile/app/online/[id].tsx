@@ -18,7 +18,7 @@ import {
   RTCPeerConnection,
   RTCSessionDescription,
 } from "react-native-webrtc";
-import { getSecureAsync } from "@/util/storage";
+import { getSecureAsync } from "@/db/storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import OnlineConversationRoomHeader from "@/components/conversation/OnlineConversationRoomHeader";
 import { Feather, Ionicons } from "@expo/vector-icons";
@@ -106,7 +106,7 @@ export default function OnlineConversationScreen() {
         !participantMutes.current[profile.id];
       ws.current?.send(
         JSON.stringify({
-          toId: Object.keys(peers.current),
+          toIds: Object.keys(peers.current),
           signal: { type: "mute" },
         }),
       );

@@ -4,7 +4,7 @@ import { router } from "expo-router";
 import { useActionSheet } from "@expo/react-native-action-sheet";
 import { useDeleteAccount, useLogout } from "@/hooks/useAuth";
 import { colors } from "@/constants";
-import { setSecure } from "@/util/storage";
+import { setSecure } from "@/db/storage";
 import { deleteAllMessages } from "@/db/message";
 import { useSQLiteContext } from "expo-sqlite";
 

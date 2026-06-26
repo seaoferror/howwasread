@@ -4,7 +4,7 @@ import CustomButton from "@/components/CustomButton";
 import { router, useFocusEffect } from "expo-router";
 import { colors } from "@/constants";
 import AppleSignInButton from "@/components/auth/AppleSignInButton";
-import { deleteSecure } from "@/util/storage";
+import { deleteSecure } from "@/db/storage";
 import {
   GoogleSignin,
   GoogleSigninButton,

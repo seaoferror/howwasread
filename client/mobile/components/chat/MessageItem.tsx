@@ -8,6 +8,8 @@ import { Image } from "expo-image";
 import VideoMessage from "@/components/chat/VideoMessage";
 import VoiceMessage from "@/components/chat/VoiceMessage";
 import { useLocalSearchParams } from "expo-router";
+import { getKVStore, getSecure, setKVStore } from "@/db/storage";
+import { useEffect } from "react";
 
 interface MessageItemProps {
   message: Omit<Message, "roomId">;
@@ -20,28 +22,33 @@ export default function MessageItem({
   isDayFirst,
   isFromChange,
 }: MessageItemProps) {
-  const { data: myProfile } = useGetMyProfile();
-  const { data: fromProfile } = useGetProfile(message.fromId);
+  const { data: myProfile, isLoading: l1 } = useGetMyProfile();
+  const { data: fromProfile, isLoading: l2 } = useGetProfile(message.fromId);
   const { id: roomId } = useLocalSearchParams();
-  const { data: roomInfo } = useGetChatRoomInfo(String(roomId));
+  const { data: roomInfo, isLoading: l3 } = useGetChatRoomInfo(String(roomId));
   const { urls } = useGetSignedURLs({
     contentType: message.contentType,
     contents: message.contents,
   });
-  if (!myProfile || !fromProfile || !roomInfo) {
+
+  useEffect(() => {
+    if(fromProfile) {
+      setKVStore(message.fromId, fromProfile.name)
+    }
+  }, [fromProfile, message.fromId]);
+
+  if (l1 || l2 || l3) {
     return null;
   }
 
-  const isMine = myProfile.id === message.fromId;
+  const isMine = (myProfile?.id ?? getSecure("myId")) === message.fromId;
   const isEvent =
     message.contentType === "participate" ||
     message.contentType === "quit" ||
     message.contentType === "create";
 
   if (
-    (message.contentType === "image" ||
-      message.contentType === "audio" ||
-      message.contentType === "video") &&
+    (message.contentType === "audio" || message.contentType === "video") &&
     !urls[0]
   ) {
     return null;
@@ -59,11 +66,12 @@ export default function MessageItem({
       )}
 
       {isEvent ? (
-        roomInfo.type === "group" && (
+        (roomInfo?.type ?? getKVStore("type" + String(roomId))) === "group" && (
           <View style={styles.pillPosition}>
             <View style={styles.pill}>
               <Text style={styles.pillText}>
-                {fromProfile.name} {message.contentType}s chat room
+                {fromProfile?.name ?? getKVStore(message.fromId)}{" "}
+                {message.contentType}s chat room
               </Text>
             </View>
           </View>
@@ -82,7 +90,9 @@ export default function MessageItem({
                 isMine ? styles.mine : styles.theirs,
               ]}
             >
-              {isFromChange && <Text>{fromProfile.name}</Text>}
+              {isFromChange && (
+                <Text>{fromProfile?.name ?? getKVStore(message.fromId)}</Text>
+              )}
               {message.contentType === "text" ? (
                 <Text style={styles.content}>{message.contents[0]}</Text>
               ) : message.contentType === "image" ? (
@@ -90,8 +100,8 @@ export default function MessageItem({
                   <Image
                     key={idx}
                     style={styles.media}
-                    source={url}
-                    cachePolicy="memory"
+                    source={{ uri: url, cacheKey: message.contents[0] + idx }}
+                    cachePolicy="disk"
                     priority="low"
                     onError={(event) => {
                       console.log(event.error);

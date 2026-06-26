@@ -3,19 +3,30 @@ import { Message } from "@/types/chat";
 import { colors } from "@/constants";
 import { router } from "expo-router";
 import { useGetChatRoomInfo } from "@/hooks/useChat";
-import { useGetMyProfile, useGetProfile } from "@/hooks/useProfile";
+import { useGetProfile } from "@/hooks/useProfile";
 import { formatPreviewDate } from "@/util/time";
+import { useEffect } from "react";
+import { getKVStore, getSecure, setKVStore } from "@/db/storage";
 
 interface ChatPreviewItemProps {
   preview: Message;
 }
 
 export default function ChatPreviewItem({ preview }: ChatPreviewItemProps) {
-  const { data: roomInfo } = useGetChatRoomInfo(preview.roomId);
-  const { data: fromProfile } = useGetProfile(preview.fromId);
-  const { data: myProfile } = useGetMyProfile();
+  const { data: roomInfo, isLoading: l1 } = useGetChatRoomInfo(preview.roomId);
+  const { data: fromProfile, isLoading: l2 } = useGetProfile(preview.fromId);
 
-  if (!myProfile || !roomInfo || !fromProfile) {
+  useEffect(() => {
+    if (roomInfo) {
+      setKVStore(preview.roomId, roomInfo.name);
+      setKVStore("type"+preview.roomId, roomInfo.type);
+    }
+    if (fromProfile) {
+      setKVStore(preview.fromId, fromProfile.name);
+    }
+  }, [roomInfo, fromProfile, preview.roomId, preview.fromId]);
+
+  if (l1 || l2) {
     return null;
   }
 
@@ -33,21 +44,22 @@ export default function ChatPreviewItem({ preview }: ChatPreviewItemProps) {
     >
       <View style={styles.avatar}>
         <Text style={styles.avatarText}>
-          {(roomInfo.name).charAt(0)}
+          {(roomInfo?.name ?? getKVStore(preview.roomId)).charAt(0)}
         </Text>
       </View>
 
       <View style={styles.textContainer}>
         <Text style={styles.roomName} numberOfLines={1}>
-          {roomInfo.name}
+          {roomInfo?.name ?? getKVStore(preview.roomId)}
         </Text>
         <Text style={styles.messagePreview} numberOfLines={1}>
-          {preview.fromId === preview.roomId || preview.fromId === myProfile.id
+          {preview.fromId === preview.roomId ||
+          preview.fromId === getSecure("myId")
             ? ""
-            : `${fromProfile.name}: `}
+            : `${fromProfile?.name ?? getKVStore(preview.fromId)}: `}
           {preview.contentType === "text"
             ? preview.contents[0]
-            : "("+preview.contentType+")"}
+            : "(" + preview.contentType + ")"}
         </Text>
       </View>
 

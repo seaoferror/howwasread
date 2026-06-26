@@ -24,6 +24,7 @@ import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
 import { stringify as uuidStringify } from "uuid";
 import { useEffect, useState } from "react";
 import { Message } from "@/types/chat";
+import { getSecure } from "@/db/storage";
 import { useGetMyProfile } from "@/hooks/useProfile";
 
 export function useGetInfiniteMessages(db: SQLiteDatabase, roomId: string) {
@@ -143,7 +144,7 @@ export function usePreview() {
         };
         if (
           newPreviewItem.contentType === "quit" &&
-          newPreviewItem.fromId === profile?.id
+          newPreviewItem.fromId === (profile?.id ?? getSecure("myId"))
         ) {
           await deleteMessagesBeforeQuit(db, newPreviewItem);
           setPreview((prev) =>
@@ -162,8 +163,7 @@ export function usePreview() {
     };
     wrapper();
 
-    return () => {
-    }
-  }, [profile]); //check this work
+    return () => {};
+  }, []);
   return preview;
 }

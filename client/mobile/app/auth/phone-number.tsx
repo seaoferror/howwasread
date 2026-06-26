@@ -13,12 +13,18 @@ import {
 import Toast from "react-native-toast-message";
 import { useRequestSMSOTP } from "@/hooks/useAuth";
 import { router } from "expo-router";
-import { getSecureAsync, setSecure } from "@/util/storage";
+import { getSecure, setSecure } from "@/db/storage";
 
 interface FormValue {
   countryCode: CountryCode;
   phoneNumber: string;
 }
+
+const canRequestNewSMS = () => {
+  const s = getSecure("timeSmsLastSent");
+  const t = s ? Number(s) : 0;
+  return Date.now() - t > time.TEN_MINUTES;
+};
 
 export default function PhoneNumberScreen() {
   const phoneNumberForm = useForm<FormValue>({
@@ -32,9 +38,7 @@ export default function PhoneNumberScreen() {
 
   const onSubmit = async (formValues: FormValue) => {
     console.log("start submit");
-    const s = await getSecureAsync("timeSmsLastSent");
-    const t = s ? Number(s) : 0;
-    if (Date.now() - t <= time.TEN_MINUTES) {
+    if (!canRequestNewSMS()) {
       Toast.show({
         type: "info",
         text1: "Please wait",
@@ -69,7 +73,7 @@ export default function PhoneNumberScreen() {
     console.log("execute mutate");
     requestSMSOTPMutation.mutate(
       {
-        sessionId: (await getSecureAsync("sessionId")) || null,
+        sessionId: getSecure("sessionId") || null,
         phoneNumber: wholeNumber,
       },
       {

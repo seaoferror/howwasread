@@ -7,7 +7,11 @@ import { SQLiteProvider, useSQLiteContext } from "expo-sqlite";
 import { stringify as uuidStringify } from "uuid";
 import { MessagingResponse } from "@/types/chat";
 import { useEffect, useRef } from "react";
-import { getSecure, getSecureAsync, setSecure } from "@/util/storage";
+import {
+  getSecureAsync,
+  setKVStore,
+  setSecure,
+} from "@/db/storage";
 import { Platform } from "react-native";
 import { getRecentMessages } from "@/api/chat";
 import {
@@ -22,7 +26,10 @@ import {
   requestPermissionsAsync,
 } from "expo-notifications";
 import { registerNotification } from "@/api/notification";
-import { setAudioModeAsync } from "expo-audio";
+import {
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+} from "expo-audio";
 import { useGetMyProfile } from "@/hooks/useProfile";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
@@ -65,8 +72,13 @@ function RootNavigator() {
   const ws = useRef<WebSocket>(null);
 
   useEffect(() => {
-    console.log(getSecure("accessToken"));
+    if (!profile?.name) {
+      return;
+    }
     const connectMessaging = async () => {
+      setSecure("myId", profile.id);
+      setKVStore("myName", profile.name);
+      await requestRecordingPermissionsAsync();
       await setAudioModeAsync({
         allowsRecording: true,
         playsInSilentMode: true,
@@ -140,7 +152,7 @@ function RootNavigator() {
         await saveRecentMessage(db, m);
       };
     };
-    if (profile?.name) connectMessaging();
+    connectMessaging();
     return () => {
       ws.current?.close();
     };

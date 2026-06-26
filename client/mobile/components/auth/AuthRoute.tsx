@@ -1,29 +1,29 @@
 import { ReactNode, useEffect } from "react";
 import { router } from "expo-router";
+import { getKVStore, getSecure } from "@/db/storage";
 import { useGetMyProfile } from "@/hooks/useProfile";
 
 interface AuthRouteProps {
   children: ReactNode;
 }
 
-
 export default function AuthRoute({ children }: AuthRouteProps) {
-  const { data: profile, isError, isLoading } = useGetMyProfile();
+  const { data: profile, isLoading } = useGetMyProfile();
 
   useEffect(() => {
-    console.log(profile, isError, isLoading);
-    if (isLoading) {
-      return;
+    if(isLoading) {
+      return
     }
-    if (isError) {
-      router.replace("/auth");
-      return;
+    if(!!(profile?.name ?? getKVStore("myName"))){
+      router.replace("/conversations");
+      return
     }
-    if (!profile?.name) {
-      router.replace("/profile/name?newcomer=true");
-      return;
+    if(!!getSecure("accessToken")) {
+      router.replace("/profile/name")
+      return
     }
-    router.replace("/conversations");
-  }, [profile, isError, isLoading]);
+    router.replace("/auth");
+  }, [isLoading, profile?.name]);
+
   return <>{children}</>;
 }

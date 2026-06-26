@@ -10,6 +10,7 @@ import { colors } from "@/constants";
 import MessageInput from "@/components/chat/MessageInput";
 import useKeyboard from "@/hooks/useKeyboard";
 import { useEffect } from "react";
+import { getKVStore } from "@/db/storage";
 
 export default function ChatScreen() {
   const { id: roomId } = useLocalSearchParams();
@@ -20,7 +21,7 @@ export default function ChatScreen() {
 
   useEffect(() => {
     navigation.setOptions({
-      title: roomInfo?.name,
+      title: roomInfo?.name ?? getKVStore(String(roomId)),
     });
   }, [roomInfo]);
 

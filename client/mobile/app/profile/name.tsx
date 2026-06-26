@@ -1,11 +1,13 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FormProvider, useForm } from "react-hook-form";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import { useSetName } from "@/hooks/useProfile";
 import NameInput from "@/components/profile/NameInput";
 import FixedBottomCTA from "@/components/FixedBottomCTA";
 import { colors } from "@/constants";
+import { useEffect } from "react";
+import { Ionicons } from "@expo/vector-icons";
 
 interface FormValue {
   name: string;
@@ -19,6 +21,19 @@ export default function NameScreen() {
     },
   });
   const setNameMutation = useSetName();
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    if(!newcomer) {
+      navigation.setOptions({
+        headerLeft: () => (
+          <Pressable onPress={() => router.back()}>
+            <Ionicons name="chevron-back" size={28} color="black" />
+          </Pressable>
+        ),
+      });
+    }
+  }, [navigation, newcomer]);
 
   const onSubmit = async (formValue: FormValue) => {
     const { name } = formValue;

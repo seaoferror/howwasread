@@ -10,11 +10,6 @@ export default function AuthLayout() {
         options={{
           title: "",
           headerShown: false,
-          headerLeft: () => (
-            <Pressable onPress={() => router.back()}>
-              <Ionicons name="chevron-back" size={28} color="black" />
-            </Pressable>
-          ),
         }}
       />
       <Stack.Screen
@@ -23,7 +18,7 @@ export default function AuthLayout() {
           title: "Verify your phone number",
           headerShown: true,
           headerLeft: () => (
-            <Pressable onPress={() => router.back()}>
+            <Pressable onPress={() => router.replace("/auth")}>
               <Ionicons name="chevron-back" size={28} color="black" />
             </Pressable>
           ),

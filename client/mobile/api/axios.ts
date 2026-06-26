@@ -1,5 +1,5 @@
 import { create } from "axios";
-import { getSecureAsync, setSecure } from "@/util/storage";
+import { getSecureAsync, setSecure } from "@/db/storage";
 
 export const axiosInstance = create({
   adapter: "fetch",

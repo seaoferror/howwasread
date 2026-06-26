@@ -2,27 +2,30 @@ import { FlatList, StyleSheet } from "react-native";
 import { useGetInfiniteMessages } from "@/hooks/useChat";
 import * as SQLite from "expo-sqlite";
 import { useSQLiteContext } from "expo-sqlite";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Message } from "@/types/chat";
 import { stringify as uuidStringify } from "uuid";
 import MessageItem from "@/components/chat/MessageItem";
 import { useLocalSearchParams } from "expo-router";
 import { findNewMessage } from "@/db/message";
 import { useGetMyProfile } from "@/hooks/useProfile";
+import { getSecure } from "@/db/storage";
 
 export default function MessageList() {
   const db = useSQLiteContext();
   const { id: roomId } = useLocalSearchParams();
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useGetInfiniteMessages(db, String(roomId));
-  const [messages, setMessages] = useState<Omit<Message, "roomId">[]>([]);
   const { data: myProfile } = useGetMyProfile();
 
-  useEffect(() => {
-    if (data?.pages) {
-      setMessages(data.pages.flat());
-    }
-  }, [data?.pages]);
+  const [liveMessages, setLiveMessages] = useState<Omit<Message, "roomId">[]>(
+    [],
+  );
+
+  const allMessages = useMemo(() => {
+    const fetchedMessages = data?.pages?.flat() || [];
+    return [...liveMessages, ...fetchedMessages];
+  }, [data?.pages, liveMessages]);
 
   useEffect(() => {
     const subscription = SQLite.addDatabaseChangeListener(async (event) => {
@@ -41,11 +44,11 @@ export default function MessageList() {
         newMessage.contentType === "video"
       ) {
         setTimeout(() => {
-          setMessages((prev) => [newMessage, ...prev]);
+          setLiveMessages((prev) => [newMessage, ...prev]);
         }, 1000);
         return;
       }
-      setMessages((prev) => [newMessage, ...prev]);
+      setLiveMessages((prev) => [newMessage, ...prev]);
     });
 
     return () => {
@@ -59,15 +62,11 @@ export default function MessageList() {
     }
   };
 
-  if (!myProfile) {
-    return null;
-  }
-
   return (
     <FlatList
-      data={messages}
+      data={allMessages}
       renderItem={({ item, index }) => {
-        const olderMessage = messages[index + 1];
+        const olderMessage = allMessages[index + 1];
         const currentMsgDate = new Date(item.createdAt).toLocaleDateString();
         const olderMsgDate = olderMessage
           ? new Date(olderMessage.createdAt).toLocaleDateString()
@@ -75,7 +74,7 @@ export default function MessageList() {
         const olderMsgFromId = olderMessage ? olderMessage.fromId : null;
         const isDayFirst = currentMsgDate !== olderMsgDate;
         const isFromChange =
-          olderMsgFromId !== item.fromId && item.fromId !== myProfile.id;
+          olderMsgFromId !== item.fromId && item.fromId !== (myProfile?.id ?? getSecure("myId"));
         return (
           <MessageItem
             message={item}
