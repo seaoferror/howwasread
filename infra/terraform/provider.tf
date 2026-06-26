@@ -37,4 +37,5 @@ locals {
   cluster_name = "cluster1"
   region       = "ap-northeast-2"
   azs          = ["ap-northeast-2a", "ap-northeast-2b"]
+  idle_node    = "t3.micro"
 }

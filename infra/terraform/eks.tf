@@ -4,7 +4,7 @@ module "cluster1" {
 
   name               = local.cluster_name
   region             = local.region
-  kubernetes_version = "1.35"
+  kubernetes_version = "1.36"
 
   create_cloudwatch_log_group = false
   enabled_log_types           = []
@@ -46,12 +46,19 @@ module "cluster1" {
   enable_irsa = true
 
   eks_managed_node_groups = {
-    small_0 = {
-      instance_types = ["t3.small"]
-      min_size       = 2
-      max_size       = 2
-      desired_size   = 2
+    medium = {
+      instance_types = ["t3.medium"]
+      min_size       = 1
+      max_size       = 1
+      desired_size   = 1
     }
+    not_medium = {
+      instance_types = [local.idle_node]
+      min_size       = 1
+      max_size       = 1
+      desired_size   = 1
+    }
+
   }
 
   node_security_group_additional_rules = {

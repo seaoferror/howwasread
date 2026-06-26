@@ -54,6 +54,10 @@ resource "helm_release" "external_dns" {
       ]
 
       policy = "sync"
+
+      nodeSelector = {
+        "node.kubernetes.io/instance-type" = local.idle_node
+      }
     })
   ]
 
@@ -86,6 +90,24 @@ resource "helm_release" "cert_manager" {
     name  = "config.enableGatewayAPI"
     value = "true"
   }
+
+  values = [
+    yamlencode({
+      nodeSelector = {
+        "node.kubernetes.io/instance-type" = local.idle_node
+      }
+      webhook = {
+        nodeSelector = {
+          "node.kubernetes.io/instance-type" = local.idle_node
+        }
+      }
+      cainjector = {
+        nodeSelector = {
+          "node.kubernetes.io/instance-type" = local.idle_node
+        }
+      }
+    })
+  ]
 
   depends_on = [
     module.cluster1.eks_managed_node_groups
@@ -219,6 +241,14 @@ resource "helm_release" "aws_load_balancer_controller" {
     value = local.region
   }
 
+  values = [
+    yamlencode({
+      nodeSelector = {
+        "node.kubernetes.io/instance-type" = local.idle_node
+      }
+    })
+  ]
+
   depends_on = [module.cluster1.eks_managed_node_groups, module.cluster1.cluster_addons, aws_iam_role_policy_attachment.lbc_attach]
 }
 
@@ -227,6 +257,14 @@ resource "helm_release" "sealed_secrets" {
   repository = "oci://registry-1.docker.io/bitnamicharts"
   chart      = "sealed-secrets"
   namespace  = "kube-system"
+
+  values = [
+    yamlencode({
+      nodeSelector = {
+        "node.kubernetes.io/instance-type" = local.idle_node
+      }
+    })
+  ]
 
   depends_on = [
     module.cluster1.eks_managed_node_groups
@@ -238,6 +276,14 @@ resource "helm_release" "reflector" {
   repository = "oci://ghcr.io/emberstack/helm-charts"
   chart      = "reflector"
   namespace  = "kube-system"
+
+  values = [
+    yamlencode({
+      nodeSelector = {
+        "node.kubernetes.io/instance-type" = local.idle_node
+      }
+    })
+  ]
 
   depends_on = [
     module.cluster1.eks_managed_node_groups
