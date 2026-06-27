@@ -8,6 +8,7 @@ import FixedBottomCTA from "@/components/FixedBottomCTA";
 import { colors } from "@/constants";
 import { useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
+import { setKVStore } from "@/db/storage";
 
 interface FormValue {
   name: string;
@@ -24,7 +25,7 @@ export default function NameScreen() {
   const navigation = useNavigation();
 
   useEffect(() => {
-    if(!newcomer) {
+    if (!newcomer) {
       navigation.setOptions({
         headerLeft: () => (
           <Pressable onPress={() => router.back()}>
@@ -33,7 +34,7 @@ export default function NameScreen() {
         ),
       });
     }
-  }, [navigation, newcomer]);
+  }, [newcomer]);
 
   const onSubmit = async (formValue: FormValue) => {
     const { name } = formValue;
@@ -42,6 +43,7 @@ export default function NameScreen() {
       { name: name },
       {
         onSuccess: () => {
+          setKVStore("myName", name);
           if (newcomer) {
             router.push("/conversations");
             return;

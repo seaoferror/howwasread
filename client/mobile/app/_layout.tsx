@@ -7,7 +7,7 @@ import { SQLiteProvider, useSQLiteContext } from "expo-sqlite";
 import { stringify as uuidStringify } from "uuid";
 import { MessagingResponse } from "@/types/chat";
 import { useEffect, useRef } from "react";
-import { getSecureAsync, setKVStore, setSecure } from "@/db/storage";
+import { getKVStore, getSecureAsync, setKVStore, setSecure } from "@/db/storage";
 import { Platform } from "react-native";
 import { getRecentMessages } from "@/api/chat";
 import {
@@ -106,17 +106,13 @@ function RootNavigator() {
         console.log(error);
       }
 
-      const row = await db.getFirstAsync<{ id: Uint8Array }>(
-        `SELECT id FROM message ORDER BY id DESC LIMIT 1`,
-      );
-      console.log(row);
-      let cursor = "00000000-0000-7000-8000-000000000000";
-      if (row) {
-        cursor = uuidStringify(row.id);
-        console.log("last inserted ID:", cursor);
+      let cursor = getKVStore("recentMessageId");
+      if (!cursor) {
+        cursor = "00000000-0000-7000-8000-000000000000";
       }
       const messages = await getRecentMessages(cursor);
       if (messages && messages.length > 0) {
+        setKVStore("recentMessageId", messages[0].id);
         const quitEvents = messages.filter((m) => m.contentType === "quit");
         const validMessagesToSave = messages.filter((m) => {
           if (m.contentType === "quit") return false;
@@ -153,6 +149,7 @@ function RootNavigator() {
       );
       ws.current.onmessage = async (event) => {
         const m: MessagingResponse = JSON.parse(event.data);
+        setKVStore("recentMessageId", m.id);
         if (
           m.contentType === "audio" ||
           m.contentType === "image" ||
