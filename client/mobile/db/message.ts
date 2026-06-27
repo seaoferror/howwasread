@@ -2,6 +2,10 @@ import { Message, MessageEntity, MessagingResponse } from "@/types/chat";
 import { parse as uuidParse, stringify as uuidStringify } from "uuid";
 import { type SQLiteDatabase } from "expo-sqlite";
 import { getTimestamp } from "@/util/time";
+import { File, Paths } from "expo-file-system";
+import { fetch } from "expo/fetch";
+import { getSignedURL } from "@/api/chat";
+import { setKVStore } from "@/db/storage";
 
 export async function initDB(db: SQLiteDatabase) {
   console.log("init db");
@@ -108,4 +112,26 @@ export async function deleteMessagesBeforeQuit(
     uuidParse(m.roomId),
     uuidParse(m.id),
   );
+}
+
+export async function downloadFiles(m: MessagingResponse) {
+  const urls = (
+    await Promise.all(
+      m.contents.map((content) =>
+        getSignedURL({
+          contentType: m.contentType,
+          filename: content,
+        }),
+      ),
+    )
+  ).map((obj) => obj.url);
+  const responses = await Promise.all(urls.map((url) => fetch(url)));
+  const srcs = m.contents.map(
+    (content) => new File(Paths.document, `${m.contentType}/${content}`),
+  );
+  await Promise.all(
+    srcs.map(async (src, idx) => src.write(await responses[idx].bytes())),
+  );
+  const localUris = srcs.map((src) => src.uri);
+  m.contents.map((content, idx) => setKVStore(content, localUris[idx]));
 }

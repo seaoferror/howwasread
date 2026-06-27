@@ -13,8 +13,8 @@ interface ChatPreviewItemProps {
 }
 
 export default function ChatPreviewItem({ preview }: ChatPreviewItemProps) {
-  const { data: roomInfo, isLoading: l1 } = useGetChatRoomInfo(preview.roomId);
-  const { data: fromProfile, isLoading: l2 } = useGetProfile(preview.fromId);
+  const { data: roomInfo } = useGetChatRoomInfo(preview.roomId);
+  const { data: fromProfile } = useGetProfile(preview.fromId);
 
   useEffect(() => {
     if (roomInfo) {
@@ -25,10 +25,6 @@ export default function ChatPreviewItem({ preview }: ChatPreviewItemProps) {
       setKVStore(preview.fromId, fromProfile.name);
     }
   }, [roomInfo, fromProfile, preview.roomId, preview.fromId]);
-
-  if (l1 || l2) {
-    return null;
-  }
 
   return (
     <Pressable

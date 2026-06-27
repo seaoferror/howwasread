@@ -32,22 +32,13 @@ export default function MessageList() {
       const newMessageRaw = await findNewMessage(db, event.rowId);
       if (!newMessageRaw) return;
       if (roomId !== uuidStringify(newMessageRaw.room_id)) return;
-      const newMessage = {
+      const newMessage: Omit<Message, "roomId"> = {
         id: uuidStringify(newMessageRaw.id),
         fromId: uuidStringify(newMessageRaw.from_id),
         contentType: newMessageRaw.content_type,
         contents: JSON.parse(newMessageRaw.contents),
         createdAt: newMessageRaw.created_at,
       };
-      if (
-        newMessage.contentType === "image" ||
-        newMessage.contentType === "video"
-      ) {
-        setTimeout(() => {
-          setLiveMessages((prev) => [newMessage, ...prev]);
-        }, 1000);
-        return;
-      }
       setLiveMessages((prev) => [newMessage, ...prev]);
     });
 
@@ -74,7 +65,8 @@ export default function MessageList() {
         const olderMsgFromId = olderMessage ? olderMessage.fromId : null;
         const isDayFirst = currentMsgDate !== olderMsgDate;
         const isFromChange =
-          olderMsgFromId !== item.fromId && item.fromId !== (myProfile?.id ?? getSecure("myId"));
+          olderMsgFromId !== item.fromId ||
+          item.fromId !== (myProfile?.id ?? getSecure("myId"));
         return (
           <MessageItem
             message={item}

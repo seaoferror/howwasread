@@ -7,15 +7,12 @@ import { SQLiteProvider, useSQLiteContext } from "expo-sqlite";
 import { stringify as uuidStringify } from "uuid";
 import { MessagingResponse } from "@/types/chat";
 import { useEffect, useRef } from "react";
-import {
-  getSecureAsync,
-  setKVStore,
-  setSecure,
-} from "@/db/storage";
+import { getSecureAsync, setKVStore, setSecure } from "@/db/storage";
 import { Platform } from "react-native";
 import { getRecentMessages } from "@/api/chat";
 import {
   deleteMessagesBeforeQuit,
+  downloadFiles,
   initDB,
   saveRecentMessage,
 } from "@/db/message";
@@ -131,8 +128,15 @@ function RootNavigator() {
         for (const quitMsg of quitEvents) {
           await deleteMessagesBeforeQuit(db, quitMsg);
         }
-        for (const validMsg of validMessagesToSave) {
-          await saveRecentMessage(db, validMsg);
+        for (const m of validMessagesToSave) {
+          if (
+            m.contentType === "audio" ||
+            m.contentType === "image" ||
+            m.contentType === "video"
+          ) {
+            await downloadFiles(m);
+          }
+          await saveRecentMessage(db, m);
         }
       }
 
@@ -149,6 +153,15 @@ function RootNavigator() {
       );
       ws.current.onmessage = async (event) => {
         const m: MessagingResponse = JSON.parse(event.data);
+        if (
+          m.contentType === "audio" ||
+          m.contentType === "image" ||
+          m.contentType === "video"
+        ) {
+          setTimeout(async () => {
+            await downloadFiles(m);
+          }, 1000);
+        }
         await saveRecentMessage(db, m);
       };
     };

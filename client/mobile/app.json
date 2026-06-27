@@ -17,10 +17,7 @@
           "NSAllowsArbitraryLoads": false
         },
         "ITSAppUsesNonExemptEncryption": false,
-        "UIBackgroundModes": [
-          "audio",
-          "voip"
-        ]
+        "UIBackgroundModes": ["audio", "voip"]
       }
     },
     "android": {
@@ -43,9 +40,7 @@
           "icon": "./assets/images/icon.png",
           "color": "#ffffff",
           "defaultChannel": "default",
-          "sounds": [
-            "./assets/sounds/notification_sound.mp3"
-          ],
+          "sounds": ["./assets/sounds/notification_sound.mp3"],
           "enableBackgroundRemoteNotifications": false
         }
       ],
@@ -116,6 +111,13 @@
         {
           "requestLocationPermission": true,
           "locationPermission": "Allow $(PRODUCT_NAME) to use your location"
+        }
+      ],
+      [
+        "expo-file-system",
+        {
+          "supportsOpeningDocumentsInPlace": true,
+          "enableFileSharing": true
         }
       ],
       "expo-asset",

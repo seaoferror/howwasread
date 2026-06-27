@@ -3,7 +3,7 @@ import { Message } from "@/types/chat";
 import { getHourMinute, getLongDate } from "@/util/time";
 import { useGetMyProfile, useGetProfile } from "@/hooks/useProfile";
 import { colors } from "@/constants";
-import { useGetChatRoomInfo, useGetSignedURLs } from "@/hooks/useChat";
+import { useGetChatRoomInfo } from "@/hooks/useChat";
 import { Image } from "expo-image";
 import VideoMessage from "@/components/chat/VideoMessage";
 import VoiceMessage from "@/components/chat/VoiceMessage";
@@ -22,24 +22,16 @@ export default function MessageItem({
   isDayFirst,
   isFromChange,
 }: MessageItemProps) {
-  const { data: myProfile, isLoading: l1 } = useGetMyProfile();
-  const { data: fromProfile, isLoading: l2 } = useGetProfile(message.fromId);
+  const { data: myProfile } = useGetMyProfile();
+  const { data: fromProfile } = useGetProfile(message.fromId);
   const { id: roomId } = useLocalSearchParams();
-  const { data: roomInfo, isLoading: l3 } = useGetChatRoomInfo(String(roomId));
-  const { urls } = useGetSignedURLs({
-    contentType: message.contentType,
-    contents: message.contents,
-  });
+  const { data: roomInfo } = useGetChatRoomInfo(String(roomId));
 
   useEffect(() => {
-    if(fromProfile) {
-      setKVStore(message.fromId, fromProfile.name)
+    if (fromProfile) {
+      setKVStore(message.fromId, fromProfile.name);
     }
   }, [fromProfile, message.fromId]);
-
-  if (l1 || l2 || l3) {
-    return null;
-  }
 
   const isMine = (myProfile?.id ?? getSecure("myId")) === message.fromId;
   const isEvent =
@@ -47,12 +39,6 @@ export default function MessageItem({
     message.contentType === "quit" ||
     message.contentType === "create";
 
-  if (
-    (message.contentType === "audio" || message.contentType === "video") &&
-    !urls[0]
-  ) {
-    return null;
-  }
   return (
     <View style={styles.container}>
       {isDayFirst && (
@@ -91,17 +77,19 @@ export default function MessageItem({
               ]}
             >
               {isFromChange && (
-                <Text>{fromProfile?.name ?? getKVStore(message.fromId)}</Text>
+                <Text style={styles.otherName}>
+                  {fromProfile?.name ?? getKVStore(message.fromId)}
+                </Text>
               )}
               {message.contentType === "text" ? (
                 <Text style={styles.content}>{message.contents[0]}</Text>
               ) : message.contentType === "image" ? (
-                urls.map((url, idx) => (
+                message.contents.map((content, idx) => (
                   <Image
                     key={idx}
                     style={styles.media}
-                    source={{ uri: url, cacheKey: message.contents[0] + idx }}
-                    cachePolicy="disk"
+                    source={getKVStore(content)}
+                    cachePolicy="memory"
                     priority="low"
                     onError={(event) => {
                       console.log(event.error);
@@ -109,13 +97,11 @@ export default function MessageItem({
                   />
                 ))
               ) : message.contentType === "audio" ? (
-                urls.some((url) => url) && <VoiceMessage url={urls[0] ?? ""} />
+                <VoiceMessage url={getKVStore(message.contents[0])} />
               ) : message.contentType === "video" ? (
-                <>
-                  {urls.map(
-                    (url, idx) => url && <VideoMessage key={idx} url={url} />,
-                  )}
-                </>
+                message.contents.map((content, idx) => (
+                  <VideoMessage key={idx} url={getKVStore(content)} />
+                ))
               ) : null}
             </View>
             <Text style={styles.time}>{getHourMinute(message.createdAt)}</Text>
@@ -146,6 +132,10 @@ const styles = StyleSheet.create({
     alignItems: "flex-end",
     gap: 6,
     maxWidth: "85%",
+  },
+  otherName: {
+    paddingBottom: 12,
+    fontWeight: "bold",
   },
   bubbleWrapperReverse: {
     flexDirection: "row-reverse",
