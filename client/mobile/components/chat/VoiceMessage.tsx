@@ -5,7 +5,7 @@ import { colors } from "@/constants";
 import { formatToMinuteSecond } from "@/util/time";
 
 export default function VoiceMessage({ url }: { url: string }) {
-  const player = useAudioPlayer({uri: url});
+  const player = useAudioPlayer(url);
   const status = useAudioPlayerStatus(player);
   const duration = Number.isFinite(status.duration) ? status.duration : 0;
   const currentTime = Number.isFinite(status.currentTime)

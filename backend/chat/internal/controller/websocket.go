@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/coder/websocket"
 	"github.com/google/uuid"
@@ -74,24 +75,41 @@ func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
 		handleWebsocketError(init, conn, err)
 		return
 	}
-	ctx := context.Background()
-	msgType, data, err := conn.Read(ctx)
-	if websocket.CloseStatus(err) != -1 {
-		slog.Error("Connection closed",
-			"err", err)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				pingCtx, pingCancel := context.WithTimeout(ctx, 5*time.Second)
+				err1 := conn.Ping(pingCtx)
+				pingCancel()
+				if err1 != nil {
+					slog.Error("ping failed, client unresponsive", "err", err1)
+					conn.Close(websocket.StatusInternalError, "ping timeout")
+					return
+				}
+			}
+		}
+	}()
+	msgType, data, err1 := conn.Read(ctx)
+	if err1 != nil {
+		if websocket.CloseStatus(err1) != -1 || errors.Is(err1, context.Canceled) {
+			slog.Info("Connection closed smoothly", "err", err1)
+			return
+		}
+		slog.Error("read error", "err", err1)
+		handleWebsocketError(ctx, conn, errors.New("read error"))
 		return
 	}
 	if msgType != websocket.MessageText {
 		slog.Error("incorrect payload types",
 			"msgType", msgType,
 			"data", data)
-		handleWebsocketError(ctx, conn, errors.New("incorrect payload types"))
-		return
-	}
-	if err != nil {
-		slog.Error("read error",
-			"err", err)
-		handleWebsocketError(ctx, conn, errors.New("read error"))
 		return
 	}
 }

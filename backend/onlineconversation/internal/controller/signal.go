@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/coder/websocket"
 	"github.com/google/uuid"
@@ -133,33 +134,60 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				pingCtx, pingCancel := context.WithTimeout(ctx, 5*time.Second)
+				err1 := conn.Ping(pingCtx)
+				pingCancel()
+				if err1 != nil {
+					slog.Error("ping failed, client unresponsive", "err", err1)
+					conn.Close(websocket.StatusInternalError, "ping timeout")
+					return
+				}
+			}
+		}
+	}()
+
 	for {
-		ctx := context.Background()
-		msgType, data, err := conn.Read(ctx)
-		if websocket.CloseStatus(err) != -1 {
-			slog.Error("Connection closed",
-				"err", err)
+		ctx1 := context.Background()
+		msgType, data, err1 := conn.Read(ctx1)
+		if err1 != nil {
+			if websocket.CloseStatus(err1) != -1 || errors.Is(err1, context.Canceled) {
+				slog.Info("Connection closed smoothly", "err", err1)
+				return
+			}
+			slog.Error("read error", "err", err1)
+			handleWebsocketError(ctx, conn, errors.New("read error"))
 			return
 		}
 		if msgType != websocket.MessageText {
 			slog.Error("incorrect payload types",
 				"msgType", msgType,
 				"data", data)
-			handleWebsocketError(ctx, conn, errors.New("incorrect payload types"))
+			handleWebsocketError(ctx1, conn, errors.New("incorrect payload types"))
 			return
 		}
-		if err != nil {
+		if err1 != nil {
 			slog.Error("read error",
-				"err", err)
-			handleWebsocketError(ctx, conn, errors.New("read error"))
+				"err", err1)
+			handleWebsocketError(ctx1, conn, errors.New("read error"))
 			return
 		}
 		var req dto.ConversationSignalRequest
-		err = json.Unmarshal(data, &req)
-		if err != nil {
+		err1 = json.Unmarshal(data, &req)
+		if err1 != nil {
 			slog.Error("fail to unmarshalling data",
-				"err", err)
-			handleWebsocketError(ctx, conn, errors.New("incorrect data"))
+				"err", err1)
+			handleWebsocketError(ctx1, conn, errors.New("incorrect data"))
 			return
 		}
 		publishToIds = nil
@@ -175,20 +203,20 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 				c.csMutex.RLock()
 				to, ok := c.conns[toId]
 				c.csMutex.RUnlock()
-				var err1 error
+				var err2 error
 				if ok {
-					err1 = to.Write(ctx, websocket.MessageText, resRaw)
-					if err1 != nil {
+					err2 = to.Write(ctx1, websocket.MessageText, resRaw)
+					if err2 != nil {
 						slog.Error("fail to write payload",
-							"err", err1,
+							"err", err2,
 						)
-						err2 := to.CloseNow()
-						if err2 != nil {
-							slog.Error("fail to close zombie connection", "err", err2)
+						err3 := to.CloseNow()
+						if err3 != nil {
+							slog.Error("fail to close zombie connection", "err", err3)
 						}
 					}
 				}
-				if !ok || err1 != nil {
+				if !ok || err2 != nil {
 					mu.Lock()
 					publishToIds = append(publishToIds, toId[:])
 					mu.Unlock()
@@ -197,10 +225,10 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 		}
 		wg.Wait()
 		if publishToIds != nil {
-			err = c.service.PublishConversationSignal(memberId, publishToIds, req.Signal)
-			if err != nil {
-				handleWebsocketError(ctx, conn, errors.New("fail to publish"))
-				slog.Error("fail to publish", "err", err)
+			err1 = c.service.PublishConversationSignal(memberId, publishToIds, req.Signal)
+			if err1 != nil {
+				handleWebsocketError(ctx1, conn, errors.New("fail to publish"))
+				slog.Error("fail to publish", "err", err1)
 				return
 			}
 		}
