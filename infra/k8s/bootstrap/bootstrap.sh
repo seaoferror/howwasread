@@ -7,7 +7,8 @@ kubectl delete gateway cluster-gateway -n envoy-gateway-system
 
 terraform destroy -target="module.cluster1"
 
-terraform apply -target="module.vpc" # remove nat gateway
+# remove nat gateway
+terraform apply -target="module.vpc"
 
 # ariadne thread
 terraform apply -target="module.vpc"
