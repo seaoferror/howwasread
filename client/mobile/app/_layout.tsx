@@ -4,10 +4,14 @@ import queryClient from "@/api/queryClient";
 import Toast from "react-native-toast-message";
 import { ActionSheetProvider } from "@expo/react-native-action-sheet";
 import { SQLiteProvider, useSQLiteContext } from "expo-sqlite";
-import { stringify as uuidStringify } from "uuid";
 import { MessagingResponse } from "@/types/chat";
 import { useEffect, useRef } from "react";
-import { getKVStore, getSecureAsync, setKVStore, setSecure } from "@/db/storage";
+import {
+  getKVStore,
+  getSecureAsync,
+  setKVStore,
+  setSecure,
+} from "@/db/storage";
 import { Platform } from "react-native";
 import { getRecentMessages } from "@/api/chat";
 import {
@@ -151,21 +155,22 @@ function RootNavigator() {
         const m: MessagingResponse = JSON.parse(event.data);
         setKVStore("recentMessageId", m.id);
         if (
-          m.contentType === "audio" ||
           m.contentType === "image" ||
           m.contentType === "video"
         ) {
           setTimeout(async () => {
             await downloadFiles(m);
+            await saveRecentMessage(db, m);
           }, 1000);
+          return
+        }
+        if(m.contentType === "audio") {
+          await downloadFiles(m);
         }
         await saveRecentMessage(db, m);
       };
     };
     connectMessaging();
-    return () => {
-      ws.current?.close();
-    };
   }, [profile]);
   return (
     <Stack>

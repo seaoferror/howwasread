@@ -1,11 +1,4 @@
-import {
-  Alert,
-  Keyboard,
-  Platform,
-  Pressable,
-  StyleSheet,
-  View,
-} from "react-native";
+import { Alert, Keyboard, Pressable, StyleSheet, View } from "react-native";
 import InputField from "@/components/InputField";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@/constants";
@@ -19,6 +12,7 @@ import {
 import {
   launchImageLibraryAsync,
   requestMediaLibraryPermissionsAsync,
+  VideoExportPreset,
 } from "expo-image-picker";
 import { uploadToS3 } from "@/api/chat";
 import Toast from "react-native-toast-message";
@@ -61,10 +55,12 @@ export default function MessageInput() {
     }
 
     const result = await launchImageLibraryAsync({
-      mediaTypes: ["images"],
-      allowsEditing: false,
+      mediaTypes: ["images", "videos"],
+      quality: 0.9,
+      videoExportPreset: VideoExportPreset.H264_1920x1080,
+      videoMaxDuration: 30,
+      shouldDownloadFromNetwork: true,
       allowsMultipleSelection: true,
-      quality: 1,
     });
 
     console.log(result);
@@ -90,8 +86,7 @@ export default function MessageInput() {
       uploadTasks.push(
         handleFileMessage(
           "image",
-          imageAssets[0].mimeType ??
-            (Platform.OS === "ios" ? "image/heic" : "image/jpg"),
+          imageAssets[0].mimeType ?? "image/jpg",
           imageAssets.map((asset) => {
             return asset.uri;
           }),

@@ -1,4 +1,9 @@
-import { StyleSheet, Text, View } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { Message } from "@/types/chat";
 import { getHourMinute, getLongDate } from "@/util/time";
 import { useGetMyProfile, useGetProfile } from "@/hooks/useProfile";
@@ -9,7 +14,8 @@ import VideoMessage from "@/components/chat/VideoMessage";
 import VoiceMessage from "@/components/chat/VoiceMessage";
 import { useLocalSearchParams } from "expo-router";
 import { getKVStore, getSecure, setKVStore } from "@/db/storage";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import ImageModal from "@/components/ImageModal";
 
 interface MessageItemProps {
   message: Omit<Message, "roomId">;
@@ -26,6 +32,9 @@ export default function MessageItem({
   const { data: fromProfile } = useGetProfile(message.fromId);
   const { id: roomId } = useLocalSearchParams();
   const { data: roomInfo } = useGetChatRoomInfo(String(roomId));
+  const [pressedImageContent, setPressedImageContent] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     if (fromProfile) {
@@ -85,16 +94,20 @@ export default function MessageItem({
                 <Text style={styles.content}>{message.contents[0]}</Text>
               ) : message.contentType === "image" ? (
                 message.contents.map((content, idx) => (
-                  <Image
+                  <Pressable
                     key={idx}
-                    style={styles.media}
-                    source={getKVStore(content)}
-                    cachePolicy="memory"
-                    priority="low"
-                    onError={(event) => {
-                      console.log(event.error);
-                    }}
-                  />
+                    onPress={() => setPressedImageContent(content)}
+                  >
+                    <Image
+                      style={styles.media}
+                      source={getKVStore(content)}
+                      cachePolicy="memory"
+                      priority="low"
+                      onError={(event) => {
+                        console.log(event.error);
+                      }}
+                    />
+                  </Pressable>
                 ))
               ) : message.contentType === "audio" ? (
                 <VoiceMessage url={getKVStore(message.contents[0])} />
@@ -108,6 +121,10 @@ export default function MessageItem({
           </View>
         </View>
       )}
+      <ImageModal
+        imageContent={pressedImageContent}
+        onClose={() => setPressedImageContent(null)}
+      />
     </View>
   );
 }

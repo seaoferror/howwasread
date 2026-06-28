@@ -126,9 +126,12 @@ export async function downloadFiles(m: MessagingResponse) {
     )
   ).map((obj) => obj.url);
   const responses = await Promise.all(urls.map((url) => fetch(url)));
-  const srcs = m.contents.map(
-    (content) => new File(Paths.document, `${m.contentType}/${content}`),
-  );
+  const srcs = m.contents.map((content) => {
+    if (m.contentType === "audio" || m.contentType === "video") {
+      return new File(Paths.document, `${content}.mp4`);
+    }
+    return new File(Paths.document, content);
+  });
   await Promise.all(
     srcs.map(async (src, idx) => src.write(await responses[idx].bytes())),
   );

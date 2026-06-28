@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
   media: {
     width: 220,
     height: 220,
-    borderRadius: 8,
+    borderRadius: 4,
     backgroundColor: colors.GRAY_100,
   },
 });

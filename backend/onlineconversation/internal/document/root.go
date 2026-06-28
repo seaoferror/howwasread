@@ -6,17 +6,6 @@ import (
 	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
-// Member is club independent so reference
-// since we use uuid in token claim subject we use bson.Binary instead of bson.ObjectID
-type Member struct {
-	Id       bson.Binary `bson:"_id"`
-	Name     string      `bson:"name"`
-	ServerIP string      `bson:"server_ip"`
-
-	ModeratorConversationIds  []bson.ObjectID `bson:"m_c_ids"`
-	RegistrantConversationIds []bson.ObjectID `bson:"r_c_ids"`
-}
-
 type Conversation struct {
 	Id         bson.ObjectID `bson:"_id"`
 	Novel      string        `bson:"novel,omitempty"`
