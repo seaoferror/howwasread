@@ -66,7 +66,7 @@ func (r *Repository) RemoveParticipantId(ctx context.Context, roomId gocql.UUID,
 	return nil
 }
 
-func (r *Repository) WasBlocked(ctx context.Context, blockerId gocql.UUID, blockedId gocql.UUID) (bool, error) {
+func (r *Repository) IsBlocked(ctx context.Context, blockerId gocql.UUID, blockedId gocql.UUID) (bool, error) {
 	var a gocql.UUID
 	err := r.session.Query(
 		`SELECT blocked_id FROM block WHERE blocker_id = ? AND blocked_id = ?`, blockerId, blockedId,

@@ -24,7 +24,7 @@ func (s *Service) ManageMessage(
 	if toIdType == "personal" {
 		toIds = append(toIds, fromId[:])
 		if contentType != "block" && contentType != "unblock" && contentType != "quit" {
-			w, err := s.repository.WasBlocked(ctx, gocql.UUID(toId), gocql.UUID(fromId))
+			w, err := s.repository.IsBlocked(ctx, gocql.UUID(toId), gocql.UUID(fromId))
 			if err != nil {
 				return
 			}

@@ -58,7 +58,7 @@ func (s *Service) GetChatRoomInfo(ctx context.Context, id uuid.UUID) (*dto.GetCh
 }
 
 func (s *Service) CheckBlock(ctx context.Context, blockerId uuid.UUID, blockedId uuid.UUID) (map[string]bool, error) {
-	w, err := s.repository.WasBlocked(ctx, gocql.UUID(blockerId), gocql.UUID(blockedId))
+	w, err := s.repository.IsBlocked(ctx, gocql.UUID(blockerId), gocql.UUID(blockedId))
 	if err != nil {
 		return nil, err
 	}

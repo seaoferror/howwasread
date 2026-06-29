@@ -36,14 +36,17 @@ export default function ChatPreviewItem({ preview }: ChatPreviewItemProps) {
   }, [roomInfo, fromProfile, preview.roomId, preview.fromId]);
 
   function handleLongPress() {
-    const roomType = roomInfo?.type ?? getKVStore("type" + preview.roomId);
-    const opponentName = fromProfile?.name ?? getKVStore(preview.roomId);
+    if (!roomInfo || !fromProfile) {
+      return;
+    }
+    const roomType = roomInfo.type;
+    const opponentName = fromProfile.name;
     showActionSheetWithOptions(
       {
         title:
           roomType === "personal"
             ? opponentName
-            : `Quit from the group chat room of ${roomInfo?.name ?? getKVStore(preview.roomId)}`,
+            : `Quit from the group chat room of ${roomInfo.name}`,
         options:
           roomType === "personal"
             ? ["Quit", data?.isBlocked ? "Unblock" : "Block", "Cancel"]
