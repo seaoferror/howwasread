@@ -5,6 +5,7 @@ import { colors } from "@/constants";
 import { useState } from "react";
 import { useLocalSearchParams } from "expo-router";
 import {
+  useCheckBlock,
   useGeneratePresignedURL,
   useGetChatRoomInfo,
   useSendMessage,
@@ -21,6 +22,7 @@ import VoiceInput from "@/components/chat/VoiceInput";
 export default function MessageInput() {
   const { id: roomId } = useLocalSearchParams();
   const { data: roomInfo } = useGetChatRoomInfo(String(roomId));
+  const { data } = useCheckBlock(String(roomId));
   const sendMessageMutation = useSendMessage();
   const presignedURLMutation = useGeneratePresignedURL();
   const [textContent, setTextContent] = useState("");
@@ -134,6 +136,10 @@ export default function MessageInput() {
       },
     );
   };
+  if (data?.isBlocked) {
+    return null;
+  }
+
   return (
     <View style={styles.container}>
       {isVoice ? (

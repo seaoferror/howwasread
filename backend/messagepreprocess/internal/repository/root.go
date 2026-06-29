@@ -42,6 +42,14 @@ func NewRepository() *Repository {
 	if err != nil {
 		log.Panicf("fail to create table ids_by_filename: %v", err)
 	}
+	err = session.Query(`CREATE TABLE IF NOT EXISTS block (
+    blocker_id uuid,
+    blocked_id uuid,
+    PRIMARY KEY ((blocker_id), blocked_id)
+	);`).Exec()
+	if err != nil {
+		log.Panicf("fail to create table block: %v", err)
+	}
 
 	log.Print("success to connect cassandra")
 

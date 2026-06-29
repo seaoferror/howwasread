@@ -117,15 +117,17 @@ function RootNavigator() {
       const messages = await getRecentMessages(cursor);
       if (messages && messages.length > 0) {
         setKVStore("recentMessageId", messages[0].id);
-        const quitEvents = messages.filter((m) => m.contentType === "quit");
+        const myQuitMessages = messages.filter((m) => m.contentType === "quit");
         const validMessagesToSave = messages.filter((m) => {
-          if (m.contentType === "quit") return false;
-          const overridingQuit = quitEvents.find(
-            (q) => q.roomId === m.roomId && q.id >= m.id,
+          if (m.contentType === "quit") {
+            return false;
+          }
+          const wipedByQuit = myQuitMessages.some(
+            (q) => q.roomId === m.roomId && q.id > m.id,
           );
-          return !overridingQuit;
+          return !wipedByQuit;
         });
-        for (const quitMsg of quitEvents) {
+        for (const quitMsg of myQuitMessages) {
           await deleteMessagesBeforeQuit(db, quitMsg);
         }
         for (const m of validMessagesToSave) {
@@ -154,17 +156,14 @@ function RootNavigator() {
       ws.current.onmessage = async (event) => {
         const m: MessagingResponse = JSON.parse(event.data);
         setKVStore("recentMessageId", m.id);
-        if (
-          m.contentType === "image" ||
-          m.contentType === "video"
-        ) {
+        if (m.contentType === "image" || m.contentType === "video") {
           setTimeout(async () => {
             await downloadFiles(m);
             await saveRecentMessage(db, m);
           }, 1000);
-          return
+          return;
         }
-        if(m.contentType === "audio") {
+        if (m.contentType === "audio") {
           await downloadFiles(m);
         }
         await saveRecentMessage(db, m);

@@ -1,13 +1,12 @@
 import {
   useInfiniteQuery,
   useMutation,
-  useQueries,
   useQuery,
 } from "@tanstack/react-query";
 import {
+  checkBlock,
   generatePresignedURL,
   getChatRoomInfo,
-  getSignedURL,
   sendMessage,
 } from "@/api/chat";
 import { AxiosError } from "axios";
@@ -24,8 +23,7 @@ import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
 import { stringify as uuidStringify } from "uuid";
 import { useEffect, useState } from "react";
 import { Message } from "@/types/chat";
-import { getSecure } from "@/db/storage";
-import { useGetMyProfile } from "@/hooks/useProfile";
+import { getKVStore } from "@/db/storage";
 
 export function useGetInfiniteMessages(db: SQLiteDatabase, roomId: string) {
   return useInfiniteQuery({
@@ -74,46 +72,9 @@ export function useGeneratePresignedURL() {
   });
 }
 
-export function useGetSignedURLs({
-  contentType,
-  contents,
-}: {
-  contentType: string;
-  contents: string[];
-}) {
-  const queries = useQueries({
-    queries: (contents || []).map((filename) => {
-      return {
-        queryKey: [
-          queryKey.CHAT,
-          queryKey.GET_SIGNED_URL,
-          contentType,
-          filename,
-        ],
-        queryFn: () =>
-          getSignedURL({
-            contentType,
-            filename: filename,
-          }),
-        enabled:
-          (contentType === "image" ||
-            contentType === "audio" ||
-            contentType === "video") &&
-          !!filename,
-        staleTime: 1000 * 60 * 60,
-      };
-    }),
-  });
-
-  return {
-    urls: queries.map((result) => result.data?.url),
-  };
-}
-
 export function usePreview() {
   const db = useSQLiteContext();
   const [preview, setPreview] = useState<Message[]>([]);
-  const { data: profile } = useGetMyProfile();
 
   useEffect(() => {
     const wrapper = async () => {
@@ -142,10 +103,7 @@ export function usePreview() {
           contents: JSON.parse(newMessageRaw.contents),
           createdAt: newMessageRaw.created_at,
         };
-        if (
-          newPreviewItem.contentType === "quit" &&
-          newPreviewItem.fromId === (profile?.id ?? getSecure("myId"))
-        ) {
+        if (newPreviewItem.contentType === "quit") {
           await deleteMessagesBeforeQuit(db, newPreviewItem);
           setPreview((prev) =>
             prev.filter((item) => item.roomId !== newPreviewItem.roomId),
@@ -166,4 +124,12 @@ export function usePreview() {
     return () => {};
   }, []);
   return preview;
+}
+
+export function useCheckBlock(id: string) {
+  return useQuery({
+    queryFn: () => checkBlock(id),
+    queryKey: [queryKey.CHAT, queryKey.CHECK_BLOCK],
+    enabled: getKVStore("type" + id) === "personal",
+  });
 }

@@ -1,9 +1,4 @@
-import {
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Message } from "@/types/chat";
 import { getHourMinute, getLongDate } from "@/util/time";
 import { useGetMyProfile, useGetProfile } from "@/hooks/useProfile";
@@ -45,8 +40,9 @@ export default function MessageItem({
   const isMine = (myProfile?.id ?? getSecure("myId")) === message.fromId;
   const isEvent =
     message.contentType === "participate" ||
-    message.contentType === "quit" ||
-    message.contentType === "create";
+    message.contentType === "create" ||
+    message.contentType === "block" ||
+    message.contentType === "unblock";
 
   return (
     <View style={styles.container}>
@@ -61,16 +57,20 @@ export default function MessageItem({
       )}
 
       {isEvent ? (
-        (roomInfo?.type ?? getKVStore("type" + String(roomId))) === "group" && (
-          <View style={styles.pillPosition}>
-            <View style={styles.pill}>
-              <Text style={styles.pillText}>
-                {fromProfile?.name ?? getKVStore(message.fromId)}{" "}
-                {message.contentType}s chat room
-              </Text>
-            </View>
+        <View style={styles.pillPosition}>
+          <View style={styles.pill}>
+            <Text style={styles.pillText}>
+              {message.contentType === "participate" &&
+                (fromProfile?.name ??
+                  getKVStore(message.fromId) + "participates chatroom")}
+              {message.contentType === "create" && "You create chat room"}
+              {message.contentType === "block" &&
+                `You block ${roomInfo?.name ?? getKVStore(String(roomId))}`}
+              {message.contentType === "unblock" &&
+                `You unblock ${roomInfo?.name ?? getKVStore(String(roomId))}`}
+            </Text>
           </View>
-        )
+        </View>
       ) : (
         <View style={[styles.row, isMine ? styles.rowRight : styles.rowLeft]}>
           <View

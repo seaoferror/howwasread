@@ -11,13 +11,16 @@ export async function initDB(db: SQLiteDatabase) {
   console.log("init db");
   await db.execAsync(`
     PRAGMA journal_mode = 'wal';
+    CREATE TABLE IF NOT EXISTS blacklist (
+      id BLOB PRIMARY KEY NOT NULL
+    );
     CREATE TABLE IF NOT EXISTS message (
-        id BLOB PRIMARY KEY NOT NULL,
-        room_id BLOB NOT NULL,
-        from_id BLOB NOT NULL,
-        content_type TEXT NOT NULL,
-        contents TEXT NOT NULL,
-        created_at TEXT NOT NULL
+      id BLOB PRIMARY KEY NOT NULL,
+      room_id BLOB NOT NULL,
+      from_id BLOB NOT NULL,
+      content_type TEXT NOT NULL,
+      contents TEXT NOT NULL,
+      created_at TEXT NOT NULL
     );`);
 }
 
@@ -137,4 +140,20 @@ export async function downloadFiles(m: MessagingResponse) {
   );
   const localUris = srcs.map((src) => src.uri);
   m.contents.map((content, idx) => setKVStore(content, localUris[idx]));
+}
+
+export async function addBlockId(db: SQLiteDatabase, m: MessagingResponse) {
+  return db.runAsync(
+    `INSERT OR IGNORE INTO blacklist (id) VALUES (?)`,
+    uuidParse(m.roomId),
+  );
+}
+
+export function wasBlocked(db: SQLiteDatabase, id: string): boolean {
+  return !!db.getFirstSync(
+    `SELECT 1
+     FROM blacklist
+     WHERE id = ?`,
+    uuidParse(id),
+  );
 }

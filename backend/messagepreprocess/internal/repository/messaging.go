@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
@@ -60,6 +61,49 @@ func (r *Repository) RemoveParticipantId(ctx context.Context, roomId gocql.UUID,
 		slog.Error("fail to delete participant id", "err", err,
 			"roomId", roomId,
 			"participantId", participantId)
+		return err
+	}
+	return nil
+}
+
+func (r *Repository) WasBlocked(ctx context.Context, blockerId gocql.UUID, blockedId gocql.UUID) (bool, error) {
+	var a gocql.UUID
+	err := r.session.Query(
+		`SELECT blocked_id FROM block WHERE blocker_id = ? AND blocked_id = ?`, blockerId, blockedId,
+	).ScanContext(ctx, &a)
+	if errors.Is(gocql.ErrNotFound, err) {
+		return false, nil
+	}
+	if err != nil {
+		slog.Error("fail to check block", "err", err,
+			"toId", blockerId,
+			"fromId", blockedId)
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *Repository) AddBlock(ctx context.Context, blockerId gocql.UUID, blockedId gocql.UUID) error {
+	err := r.session.Query(
+		`INSERT INTO block (blocker_id, blocked_id) VALUES (?, ?)`,
+		blockerId, blockedId).ExecContext(ctx)
+	if err != nil {
+		slog.Error("fail to add block", "err", err,
+			"fromId", blockerId,
+			"toId", blockedId)
+		return err
+	}
+	return nil
+}
+
+func (r *Repository) RemoveBlock(ctx context.Context, blockerId gocql.UUID, blockedId gocql.UUID) error {
+	err := r.session.Query(
+		`DELETE FROM block WHERE blocker_id = ? AND blocked_id = ?`,
+		blockerId, blockedId).ExecContext(ctx)
+	if err != nil {
+		slog.Error("fail to remove block", "err", err,
+			"fromId", blockerId,
+			"toId", blockedId)
 		return err
 	}
 	return nil

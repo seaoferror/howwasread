@@ -15,6 +15,7 @@ func infoRouter(c *Controller) {
 	c.Router(PUT, "/chat/profile/name", c.setName)
 	c.Router(GET, "/chat/profile", c.getProfile)
 	c.Router(GET, "/chat/room/info", c.getChatRoomInfo)
+	c.Router(GET, "/chat/block/check", c.checkBlock)
 }
 
 func (c *Controller) getChatRoomInfo(w http.ResponseWriter, r *http.Request) {
@@ -101,4 +102,32 @@ func (c *Controller) setName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func (c *Controller) checkBlock(w http.ResponseWriter, r *http.Request) {
+	memberId, err := uuid.Parse(r.Header.Get("X-User-Id"))
+	if err != nil {
+		slog.Error("fail to parse userId from X-User-Id header",
+			"err", err)
+		handleError(w, errors.New("fail to parse"))
+		return
+	}
+	checkingId, err := uuid.Parse(r.URL.Query().Get("id"))
+	if err != nil {
+		slog.Error("fail to parse checkingId from query param",
+			"err", err)
+		handleError(w, errors.New("fail to parse"))
+		return
+	}
+	result, err := c.service.CheckBlock(r.Context(), memberId, checkingId)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(result)
+	if err != nil {
+		slog.Error("fail to write response body",
+			"err", err)
+	}
 }

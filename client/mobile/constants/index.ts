@@ -46,7 +46,8 @@ export const queryKey = {
   FIND_MESSAGES_BY_ROOM_ID: "findMessagesByRoomId",
   GET_SIGNED_URL: "getSignedURL",
   MAP_OFFLINE_CONVERSATION: "mapOfflineConversation",
-  GET_OFFLINE_CONVERSATION_DETAIL: "getOfflineConversationDetail"
+  GET_OFFLINE_CONVERSATION_DETAIL: "getOfflineConversationDetail",
+  CHECK_BLOCK: "checkBlock"
 };
 
 export const time = {

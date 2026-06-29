@@ -2,11 +2,16 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Message } from "@/types/chat";
 import { colors } from "@/constants";
 import { router } from "expo-router";
-import { useGetChatRoomInfo } from "@/hooks/useChat";
+import {
+  useCheckBlock,
+  useGetChatRoomInfo,
+  useSendMessage,
+} from "@/hooks/useChat";
 import { useGetProfile } from "@/hooks/useProfile";
 import { formatPreviewDate } from "@/util/time";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { getKVStore, getSecure, setKVStore } from "@/db/storage";
+import { useActionSheet } from "@expo/react-native-action-sheet";
 
 interface ChatPreviewItemProps {
   preview: Message;
@@ -15,16 +20,68 @@ interface ChatPreviewItemProps {
 export default function ChatPreviewItem({ preview }: ChatPreviewItemProps) {
   const { data: roomInfo } = useGetChatRoomInfo(preview.roomId);
   const { data: fromProfile } = useGetProfile(preview.fromId);
+  const { data } = useCheckBlock(preview.roomId);
+  const { showActionSheetWithOptions } = useActionSheet();
+  const sendMessageMutation = useSendMessage();
+  const [isQuit, setIsQuit] = useState(false);
 
   useEffect(() => {
     if (roomInfo) {
       setKVStore(preview.roomId, roomInfo.name);
-      setKVStore("type"+preview.roomId, roomInfo.type);
+      setKVStore("type" + preview.roomId, roomInfo.type);
     }
     if (fromProfile) {
       setKVStore(preview.fromId, fromProfile.name);
     }
   }, [roomInfo, fromProfile, preview.roomId, preview.fromId]);
+
+  function handleLongPress() {
+    const roomType = roomInfo?.type ?? getKVStore("type" + preview.roomId);
+    const opponentName = fromProfile?.name ?? getKVStore(preview.roomId);
+    showActionSheetWithOptions(
+      {
+        title:
+          roomType === "personal"
+            ? opponentName
+            : `Quit from the group chat room of ${roomInfo?.name ?? getKVStore(preview.roomId)}`,
+        options:
+          roomType === "personal"
+            ? ["Quit", data?.isBlocked ? "Unblock" : "Block", "Cancel"]
+            : [`Quit`, "Cancel"],
+        destructiveButtonIndex: roomType === "personal" ? [0, 1] : 0,
+        cancelButtonIndex: 2,
+      },
+      (selectedIndex?: number) => {
+        console.log(selectedIndex);
+        switch (selectedIndex) {
+          case 0:
+            sendMessageMutation.mutate(
+              {
+                toIdType: roomType,
+                toId: preview.roomId,
+                contentType: "quit",
+                contents: [],
+              },
+              {
+                onSuccess: () => setIsQuit(true),
+              },
+            );
+            break;
+          case 1:
+            roomType === "personal" &&
+              sendMessageMutation.mutate({
+                toIdType: roomType,
+                toId: preview.roomId,
+                contentType: data?.isBlocked ? "unblock" : "block",
+                contents: [],
+              });
+            break;
+          case 2:
+            break;
+        }
+      },
+    );
+  }
 
   return (
     <Pressable
@@ -37,6 +94,8 @@ export default function ChatPreviewItem({ preview }: ChatPreviewItemProps) {
           },
         })
       }
+      disabled={isQuit}
+      onLongPress={() => handleLongPress()}
     >
       <View style={styles.avatar}>
         <Text style={styles.avatarText}>

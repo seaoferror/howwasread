@@ -15,7 +15,7 @@ export async function getRecentMessages(
   const { data } = await axiosInstance.get(
     `/chat/messaging/recent?cursor=${cursor}`,
   );
-  console.log(data)
+  console.log(data);
   return data;
 }
 
@@ -61,7 +61,7 @@ export async function uploadToS3({
       "Content-Type": "multipart/form-data",
     },
   });
-  console.log(data.status)
+  console.log(data.status);
   return data;
 }
 
@@ -78,5 +78,10 @@ export async function getSignedURL({
       filename,
     },
   });
+  return data;
+}
+
+export async function checkBlock(id: string): Promise<{ isBlocked: boolean }> {
+  const { data } = await axiosInstance.get(`/chat/block/check?id=${id}`);
   return data;
 }

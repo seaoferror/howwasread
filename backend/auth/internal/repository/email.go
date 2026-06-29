@@ -3,6 +3,7 @@ package repository
 import (
 	"backend/auth/internal/constant"
 	"context"
+	"errors"
 	"log/slog"
 
 	"github.com/apache/cassandra-gocql-driver/v2"
@@ -45,13 +46,13 @@ func (r *Repository) FindEmailById(id gocql.UUID) (email string, err error) {
 	return email, nil
 }
 
-func (r *Repository) EmailExists(ctx context.Context, email string) (bool, error) {
-	var c int64
+func (r *Repository) VerifiedEmailExists(ctx context.Context, email string) (bool, error) {
+	var emailVerified bool
 	err := r.session.Query(
-		`SELECT COUNT(1) FROM member_by_email WHERE email = ?`,
+		`SELECT email_verified FROM member_by_email WHERE email = ?`,
 		email,
-	).ScanContext(ctx, &c)
-	if c == 0 {
+	).ScanContext(ctx, &emailVerified)
+	if errors.Is(gocql.ErrNotFound, err) {
 		return false, nil
 	}
 	if err != nil {
@@ -61,7 +62,7 @@ func (r *Repository) EmailExists(ctx context.Context, email string) (bool, error
 		)
 		return true, err
 	}
-	return true, nil
+	return emailVerified, nil
 }
 
 func (r *Repository) FindLoginInfoByEmail(email string) (emailVerified, phoneNumberVerified bool, id gocql.UUID, password, role string, err error) {

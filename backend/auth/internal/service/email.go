@@ -29,11 +29,10 @@ func (s *Service) CreateMemberByEmail(ctx context.Context, email, password strin
 		return nil, ErrSignUpWithEmail
 	}
 
-	exist, err := s.repository.EmailExists(ctx, email)
+	exist, err := s.repository.VerifiedEmailExists(ctx, email)
 	if err != nil {
 		return nil, ErrSignUpWithEmail
 	}
-
 	if exist {
 		slog.Info("this email already exist",
 			"email", email,
