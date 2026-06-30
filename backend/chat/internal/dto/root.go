@@ -31,8 +31,8 @@ type SetNameRequest struct {
 }
 
 type GetProfileResponse struct {
-	Id   uuid.UUID `json:"id"`
-	Name string    `json:"name"`
+	Id   uuid.UUID `json:"id,omitzero"`
+	Name string    `json:"name,omitempty"`
 }
 
 type GeneratePresignedURLRequest struct {

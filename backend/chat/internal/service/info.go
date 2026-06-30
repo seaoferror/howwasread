@@ -39,7 +39,6 @@ func (s *Service) GetProfile(ctx context.Context, id uuid.UUID) (*dto.GetProfile
 		return nil, err
 	}
 	res := dto.GetProfileResponse{
-		Id:   id,
 		Name: name,
 	}
 	return &res, nil
@@ -58,9 +57,21 @@ func (s *Service) GetChatRoomInfo(ctx context.Context, id uuid.UUID) (*dto.GetCh
 }
 
 func (s *Service) CheckBlock(ctx context.Context, blockerId uuid.UUID, blockedId uuid.UUID) (map[string]bool, error) {
-	w, err := s.repository.IsBlocked(ctx, gocql.UUID(blockerId), gocql.UUID(blockedId))
+	w, err := s.repository.DidBlock(ctx, gocql.UUID(blockerId), gocql.UUID(blockedId))
 	if err != nil {
 		return nil, err
 	}
-	return map[string]bool{"isBlocked": w}, nil
+	return map[string]bool{"didBlock": w}, nil
+}
+
+func (s *Service) GetChatParticipants(ctx context.Context, roomId uuid.UUID) ([]dto.GetProfileResponse, error) {
+	ps, err := s.repository.FindChatParticipantIds(ctx, gocql.UUID(roomId))
+	if err != nil {
+		return nil, err
+	}
+	res := make([]dto.GetProfileResponse, len(ps))
+	for _, p := range ps {
+		res = append(res, dto.GetProfileResponse{Id: uuid.UUID(p)})
+	}
+	return res, nil
 }

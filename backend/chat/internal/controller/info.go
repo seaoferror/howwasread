@@ -16,6 +16,7 @@ func infoRouter(c *Controller) {
 	c.Router(GET, "/chat/profile", c.getProfile)
 	c.Router(GET, "/chat/room/info", c.getChatRoomInfo)
 	c.Router(GET, "/chat/block/check", c.checkBlock)
+	c.Router(GET, "/chat/participants", c.getChatParticipants)
 }
 
 func (c *Controller) getChatRoomInfo(w http.ResponseWriter, r *http.Request) {
@@ -120,6 +121,27 @@ func (c *Controller) checkBlock(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	result, err := c.service.CheckBlock(r.Context(), memberId, checkingId)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(result)
+	if err != nil {
+		slog.Error("fail to write response body",
+			"err", err)
+	}
+}
+
+func (c *Controller) getChatParticipants(w http.ResponseWriter, r *http.Request) {
+	roomId, err := uuid.Parse(r.URL.Query().Get("roomId"))
+	if err != nil {
+		slog.Error("fail to parse roomId from query param",
+			"err", err)
+		handleError(w, errors.New("fail to parse"))
+		return
+	}
+	result, err := c.service.GetChatParticipants(r.Context(), roomId)
 	if err != nil {
 		handleError(w, err)
 		return

@@ -46,7 +46,7 @@ func (r *Repository) SaveNameById(ctx context.Context, id gocql.UUID, name strin
 	return nil
 }
 
-func (r *Repository) IsBlocked(ctx context.Context, blockerId gocql.UUID, blockedId gocql.UUID) (bool, error) {
+func (r *Repository) DidBlock(ctx context.Context, blockerId gocql.UUID, blockedId gocql.UUID) (bool, error) {
 	var a gocql.UUID
 	err := r.session.Query(
 		`SELECT blocked_id FROM block WHERE blocker_id = ? AND blocked_id = ?`, blockerId, blockedId,
@@ -61,4 +61,16 @@ func (r *Repository) IsBlocked(ctx context.Context, blockerId gocql.UUID, blocke
 		return false, err
 	}
 	return true, nil
+}
+
+func (r *Repository) FindChatParticipantIds(ctx context.Context, roomId gocql.UUID) (ids []gocql.UUID, err error) {
+	err = r.session.Query(
+		`SELECT participant_ids FROM chat_room_by_id WHERE id = ?`, roomId).
+		ScanContext(ctx, &ids)
+	if err != nil {
+		slog.Error("fail to find chat participant ids", "err", err,
+			"roomId", roomId)
+		return nil, err
+	}
+	return ids, nil
 }
