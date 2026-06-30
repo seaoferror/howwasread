@@ -1,9 +1,6 @@
-import { KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from "react-native-safe-area-context";
-import { useLocalSearchParams, useNavigation } from "expo-router";
+import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import { useGetChatRoomInfo } from "@/hooks/useChat";
 import MessageList from "@/components/chat/MessageList";
 import { colors } from "@/constants";
@@ -18,10 +15,25 @@ export default function ChatScreen() {
   const { isKeyboardVisible } = useKeyboard();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
+  const roomName = (roomInfo?.name ?? getKVStore(String(roomId)))
 
   useEffect(() => {
     navigation.setOptions({
-      title: roomInfo?.name ?? getKVStore(String(roomId)),
+      headerTitle: () => (
+        <Pressable
+          onPress={() =>
+            router.push({
+              pathname: "/chat/detail/[id]",
+              params: { id: String(roomId) },
+            })
+          }
+          disabled={(roomInfo?.type ?? getKVStore("type"+String(roomId))) === "personal"}
+        >
+          <Text style={{ fontSize: 17 }}>
+            {roomName.length > 15 ? roomName.slice(0, 15) + "..." : roomName}
+          </Text>
+        </Pressable>
+      ),
     });
   }, [roomInfo]);
 

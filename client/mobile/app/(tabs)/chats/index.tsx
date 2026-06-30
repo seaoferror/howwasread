@@ -4,7 +4,7 @@ import ChatList from "@/components/chat/ChatList";
 export default function ChatsScreen() {
   return (
     <SafeAreaView>
-      <ChatList/>
+      <ChatList />
     </SafeAreaView>
   );
 }

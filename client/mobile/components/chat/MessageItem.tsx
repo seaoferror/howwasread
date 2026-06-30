@@ -15,13 +15,13 @@ import ImageModal from "@/components/ImageModal";
 interface MessageItemProps {
   message: Omit<Message, "roomId">;
   isDayFirst: boolean;
-  isFromChange: boolean;
+  showName: boolean;
 }
 
 export default function MessageItem({
   message,
   isDayFirst,
-  isFromChange,
+  showName,
 }: MessageItemProps) {
   const { data: myProfile } = useGetMyProfile();
   const { data: fromProfile } = useGetProfile(message.fromId);
@@ -62,7 +62,7 @@ export default function MessageItem({
             <Text style={styles.pillText}>
               {message.contentType === "participate" &&
                 (fromProfile?.name ??
-                  getKVStore(message.fromId) + "participates chatroom")}
+                  getKVStore(message.fromId) + " participates chatroom")}
               {message.contentType === "create" && "You create chat room"}
               {message.contentType === "block" &&
                 `You block ${roomInfo?.name ?? getKVStore(String(roomId))}`}
@@ -85,7 +85,7 @@ export default function MessageItem({
                 isMine ? styles.mine : styles.theirs,
               ]}
             >
-              {isFromChange && (
+              {showName && (
                 <Text style={styles.otherName}>
                   {fromProfile?.name ?? getKVStore(message.fromId)}
                 </Text>

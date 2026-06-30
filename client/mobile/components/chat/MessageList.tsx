@@ -1,5 +1,5 @@
 import { FlatList, StyleSheet } from "react-native";
-import { useGetInfiniteMessages } from "@/hooks/useChat";
+import { useGetChatRoomInfo, useGetInfiniteMessages } from "@/hooks/useChat";
 import * as SQLite from "expo-sqlite";
 import { useSQLiteContext } from "expo-sqlite";
 import { useEffect, useMemo, useState } from "react";
@@ -9,7 +9,7 @@ import MessageItem from "@/components/chat/MessageItem";
 import { useLocalSearchParams } from "expo-router";
 import { findNewMessage } from "@/db/message";
 import { useGetMyProfile } from "@/hooks/useProfile";
-import { getSecure } from "@/db/storage";
+import { getKVStore, getSecure } from "@/db/storage";
 
 export default function MessageList() {
   const db = useSQLiteContext();
@@ -17,6 +17,10 @@ export default function MessageList() {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useGetInfiniteMessages(db, String(roomId));
   const { data: myProfile } = useGetMyProfile();
+  const { data: roomInfo } = useGetChatRoomInfo(String(roomId));
+
+  const isGroup =
+    (roomInfo?.type ?? getKVStore("type" + String(roomId))) === "group";
 
   const [liveMessages, setLiveMessages] = useState<Omit<Message, "roomId">[]>(
     [],
@@ -58,20 +62,28 @@ export default function MessageList() {
       data={allMessages}
       renderItem={({ item, index }) => {
         const olderMessage = allMessages[index + 1];
+        if (!olderMessage) {
+          return (
+            <MessageItem message={item} isDayFirst={true} showName={isGroup} />
+          );
+        }
         const currentMsgDate = new Date(item.createdAt).toLocaleDateString();
-        const olderMsgDate = olderMessage
-          ? new Date(olderMessage.createdAt).toLocaleDateString()
-          : null;
-        const olderMsgFromId = olderMessage ? olderMessage.fromId : null;
+        const olderMsgDate = new Date(
+          olderMessage.createdAt,
+        ).toLocaleDateString();
+        const olderMsgFromId = olderMessage.fromId;
         const isDayFirst = currentMsgDate !== olderMsgDate;
-        const isFromChange =
-          olderMsgFromId !== item.fromId ||
-          item.fromId !== (myProfile?.id ?? getSecure("myId"));
+        const isFromChange = olderMsgFromId !== item.fromId;
+        const isMyId = item.fromId === (myProfile?.id ?? getSecure("myId"));
+        const wasEvent =
+          olderMessage.contentType === "participate" ||
+          olderMessage.contentType === "create" ||
+          olderMessage.contentType === "unblock";
         return (
           <MessageItem
             message={item}
             isDayFirst={isDayFirst}
-            isFromChange={isFromChange}
+            showName={(wasEvent || isFromChange || isDayFirst) && !isMyId && isGroup}
           />
         );
       }}
