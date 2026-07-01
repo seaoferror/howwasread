@@ -14,7 +14,7 @@ export async function createValkeyClient() {
     addresses: [
       {
         host: process.env.VALKEY_HOST || "localhost",
-        port: 6379,
+        port: Number(process.env.VALKEY_PORT) || 6379,
       },
     ],
     credentials:
