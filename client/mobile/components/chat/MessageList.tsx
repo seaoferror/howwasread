@@ -74,7 +74,7 @@ export default function MessageList() {
         const olderMsgFromId = olderMessage.fromId;
         const isDayFirst = currentMsgDate !== olderMsgDate;
         const isFromChange = olderMsgFromId !== item.fromId;
-        const isMyId = item.fromId === (myProfile?.id ?? getSecure("myId"));
+        const isMyId = item.fromId === (myProfile?.id ?? getKVStore("myId"));
         const wasEvent =
           olderMessage.contentType === "participate" ||
           olderMessage.contentType === "create" ||

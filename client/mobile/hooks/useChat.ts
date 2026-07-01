@@ -1,11 +1,8 @@
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQuery,
-} from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery } from "@tanstack/react-query";
 import {
   checkBlock,
   generatePresignedURL,
+  getChatParticipants,
   getChatRoomInfo,
   sendMessage,
 } from "@/api/chat";
@@ -132,4 +129,11 @@ export function useCheckBlock(id: string) {
     queryKey: [queryKey.CHAT, queryKey.CHECK_BLOCK],
     enabled: getKVStore("type" + id) === "personal",
   });
+}
+
+export function useGetChatParticipants(roomId: string) {
+  return useQuery({
+    queryFn: () => getChatParticipants(roomId),
+    queryKey: [queryKey.CHAT, queryKey.GET_CHAT_PARTICIPANT_IDS]
+  })
 }

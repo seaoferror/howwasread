@@ -1,6 +1,6 @@
 import { ReactNode, useEffect } from "react";
 import { router } from "expo-router";
-import { getKVStore, getSecure } from "@/db/storage";
+import { getKVStore } from "@/db/storage";
 
 interface AuthRouteProps {
   children: ReactNode;
@@ -13,7 +13,7 @@ export default function AuthRoute({ children }: AuthRouteProps) {
       router.replace("/conversations");
       return
     }
-    if(!!getSecure("accessToken")) {
+    if(!!getKVStore("myId")) {
       router.replace("/profile/name")
       return
     }

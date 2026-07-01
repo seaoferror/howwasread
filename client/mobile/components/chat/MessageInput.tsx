@@ -136,7 +136,7 @@ export default function MessageInput() {
       },
     );
   };
-  if (data?.isBlocked) {
+  if (data?.didBlock) {
     return null;
   }
 

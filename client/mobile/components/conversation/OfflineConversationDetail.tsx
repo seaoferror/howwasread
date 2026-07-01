@@ -8,6 +8,7 @@ import CustomButton from "@/components/CustomButton";
 import { colors } from "@/constants";
 import { openBrowserAsync } from "expo-web-browser";
 import Toast from "react-native-toast-message";
+import { router } from "expo-router";
 
 interface OfflineConversationDetailProps {
   id: string;
@@ -22,7 +23,10 @@ export default function OfflineConversationDetail({
 
   const handleButtonPress = () => {
     if (data?.isParticipant) {
-      quitOfflineConversationMutation.mutate({ conversationId: id },);
+      quitOfflineConversationMutation.mutate(
+        { conversationId: id },
+        { onSuccess: () => router.push("/conversations") },
+      );
       return;
     }
     joinOfflineConversationMutation.mutate(
@@ -94,6 +98,11 @@ export default function OfflineConversationDetail({
               : "Join offline conversation"
           }
           onPress={handleButtonPress}
+          style={{ paddingHorizontal: 20 }}
+          disabled={
+            joinOfflineConversationMutation.isPending ||
+            quitOfflineConversationMutation.isPending
+          }
         />
       </View>
     )
@@ -103,6 +112,7 @@ const styles = StyleSheet.create({
   container: { backgroundColor: colors.SAND_110 },
   content: {
     padding: 16,
+    gap: 17,
   },
   when: {
     fontSize: 19,

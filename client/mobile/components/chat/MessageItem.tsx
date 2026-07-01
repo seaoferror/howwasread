@@ -37,7 +37,7 @@ export default function MessageItem({
     }
   }, [fromProfile, message.fromId]);
 
-  const isMine = (myProfile?.id ?? getSecure("myId")) === message.fromId;
+  const isMine = (myProfile?.id ?? getKVStore("myId")) === message.fromId;
   const isEvent =
     message.contentType === "participate" ||
     message.contentType === "create" ||
@@ -61,8 +61,8 @@ export default function MessageItem({
           <View style={styles.pill}>
             <Text style={styles.pillText}>
               {message.contentType === "participate" &&
-                (fromProfile?.name ??
-                  getKVStore(message.fromId) + " participates chatroom")}
+                ((fromProfile?.name ??
+                  getKVStore(message.fromId)) + " participates chatroom")}
               {message.contentType === "create" && "You create chat room"}
               {message.contentType === "block" &&
                 `You block ${roomInfo?.name ?? getKVStore(String(roomId))}`}

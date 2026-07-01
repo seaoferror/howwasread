@@ -81,7 +81,17 @@ export async function getSignedURL({
   return data;
 }
 
-export async function checkBlock(id: string): Promise<{ isBlocked: boolean }> {
+export async function checkBlock(id: string): Promise<{ didBlock: boolean }> {
   const { data } = await axiosInstance.get(`/chat/block/check?id=${id}`);
+  return data;
+}
+
+export async function getChatParticipants(
+  roomId: string,
+): Promise<{ id: string }[]> {
+  const { data } = await axiosInstance.get(
+    `/chat/participants?roomId=${roomId}`,
+  );
+  console.log(data)
   return data;
 }

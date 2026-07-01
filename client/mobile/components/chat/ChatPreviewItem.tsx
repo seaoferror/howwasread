@@ -10,7 +10,7 @@ import {
 import { useGetProfile } from "@/hooks/useProfile";
 import { formatPreviewDate } from "@/util/time";
 import { useEffect, useState } from "react";
-import { getKVStore, getSecure, setKVStore } from "@/db/storage";
+import { getKVStore, setKVStore } from "@/db/storage";
 import { useActionSheet } from "@expo/react-native-action-sheet";
 
 interface ChatPreviewItemProps {
@@ -49,7 +49,7 @@ export default function ChatPreviewItem({ preview }: ChatPreviewItemProps) {
             : `Quit from the group chat room of ${roomInfo.name}`,
         options:
           roomType === "personal"
-            ? ["Quit", data?.isBlocked ? "Unblock" : "Block", "Cancel"]
+            ? ["Quit", data?.didBlock ? "Unblock" : "Block", "Cancel"]
             : [`Quit`, "Cancel"],
         destructiveButtonIndex: roomType === "personal" ? [0, 1] : 0,
         cancelButtonIndex: 2,
@@ -75,7 +75,7 @@ export default function ChatPreviewItem({ preview }: ChatPreviewItemProps) {
               sendMessageMutation.mutate({
                 toIdType: roomType,
                 toId: preview.roomId,
-                contentType: data?.isBlocked ? "unblock" : "block",
+                contentType: data?.didBlock ? "unblock" : "block",
                 contents: [],
               });
             break;
@@ -112,7 +112,7 @@ export default function ChatPreviewItem({ preview }: ChatPreviewItemProps) {
         </Text>
         <Text style={styles.messagePreview} numberOfLines={1}>
           {preview.fromId === preview.roomId ||
-          preview.fromId === getSecure("myId")
+          preview.fromId === getKVStore("myId")
             ? ""
             : `${fromProfile?.name ?? getKVStore(preview.fromId)}: `}
           {preview.contentType === "text"

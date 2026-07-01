@@ -1,5 +1,14 @@
-import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+} from "react-native";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import { useGetChatRoomInfo } from "@/hooks/useChat";
 import MessageList from "@/components/chat/MessageList";
@@ -15,7 +24,9 @@ export default function ChatScreen() {
   const { isKeyboardVisible } = useKeyboard();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const roomName = (roomInfo?.name ?? getKVStore(String(roomId)))
+  const roomName = roomInfo?.name ?? getKVStore(String(roomId));
+  const isPersonal =
+    (roomInfo?.type ?? getKVStore("type" + String(roomId))) === "personal";
 
   useEffect(() => {
     navigation.setOptions({
@@ -27,9 +38,17 @@ export default function ChatScreen() {
               params: { id: String(roomId) },
             })
           }
-          disabled={(roomInfo?.type ?? getKVStore("type"+String(roomId))) === "personal"}
+          disabled={isPersonal}
         >
-          <Text style={{ fontSize: 17 }}>
+          <Text
+            style={[
+              { fontSize: 17 },
+              !isPersonal && {
+                fontWeight: "bold",
+                textDecorationLine: "underline",
+              },
+            ]}
+          >
             {roomName.length > 15 ? roomName.slice(0, 15) + "..." : roomName}
           </Text>
         </Pressable>
