@@ -1,14 +1,14 @@
 import { Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import AuthRoute from "@/components/auth/AuthRoute";
+import InitRoute from "@/components/auth/InitRoute";
 
 export default function InitScreen() {
   return (
-    <AuthRoute>
+    <InitRoute>
       <SafeAreaView>
         <Text>loading</Text>
       </SafeAreaView>
-    </AuthRoute>
+    </InitRoute>
   );
 }
 //

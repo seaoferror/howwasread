@@ -5,9 +5,10 @@ import FixedBottomCTA from "@/components/FixedBottomCTA";
 import { FormProvider, useForm } from "react-hook-form";
 import { useVerifySMSOTP } from "@/hooks/useAuth";
 import { router } from "expo-router";
-import { getSecureAsync } from "@/db/storage";
+import { getSecureAsync, setKVStore } from "@/db/storage";
 import Toast from "react-native-toast-message";
 import OTPInput from "@/components/auth/OTPInput";
+import { getMyProfile } from "@/api/profile";
 
 interface FormValue {
   otp: string;
@@ -40,11 +41,18 @@ export default function SMSScreen() {
         sessionId: (await getSecureAsync("sessionId")) || null,
       },
       {
-        onSuccess: (data) => {
-          if(data.accessToken) {
-            router.replace("/")
+        onSuccess: async (data) => {
+          if (data.accessToken) {
+            const my = await getMyProfile();
+            setKVStore("myId", my.id);
+            if (!my.name) {
+              router.replace("/profile/name");
+              return
+            }
+            setKVStore("myName", my.name);
+            router.replace("/conversations");
           }
-        }
+        },
       },
     );
   };

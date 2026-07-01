@@ -6,7 +6,7 @@ interface AuthRouteProps {
   children: ReactNode;
 }
 
-export default function AuthRoute({ children }: AuthRouteProps) {
+export default function InitRoute({ children }: AuthRouteProps) {
 
   useEffect(() => {
     if(!!getKVStore("myName")){

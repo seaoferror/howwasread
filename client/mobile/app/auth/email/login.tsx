@@ -6,6 +6,8 @@ import PasswordInput from "@/components/auth/PasswordInput";
 import { useLoginWithEmail } from "@/hooks/useAuth";
 import { colors } from "@/constants";
 import { router } from "expo-router";
+import { getMyProfile } from "@/api/profile";
+import { setKVStore } from "@/db/storage";
 
 interface FormValue {
   email: string;
@@ -32,7 +34,7 @@ export default function LoginScreen() {
         password,
       },
       {
-        onSuccess: (data) => {
+        onSuccess: async (data) => {
           if (data.verificationId) {
             router.replace("/auth/otp/email");
             return;
@@ -42,7 +44,14 @@ export default function LoginScreen() {
             return;
           }
           if (data.accessToken) {
-            router.replace("/");
+            const my = await getMyProfile();
+            setKVStore("myId", my.id);
+            if (!my.name) {
+              router.replace("/profile/name");
+              return;
+            }
+            setKVStore("myName", my.name);
+            router.replace("/conversations");
           }
         },
       },

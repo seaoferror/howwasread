@@ -4,7 +4,7 @@ import { router } from "expo-router";
 import { useActionSheet } from "@expo/react-native-action-sheet";
 import { useDeleteAccount, useLogout } from "@/hooks/useAuth";
 import { colors } from "@/constants";
-import { setSecure } from "@/db/storage";
+import { deleteSecure, removeKVStore } from "@/db/storage";
 import { deleteAllMessages } from "@/db/message";
 import { useSQLiteContext } from "expo-sqlite";
 
@@ -27,7 +27,10 @@ export default function AccountScreen() {
             deleteAccountMutation.mutate(undefined, {
               onSuccess: async () => {
                 await deleteAllMessages(db);
-                await setSecure("accessToken", "");
+                await deleteSecure("accessToken");
+                removeKVStore("myId");
+                removeKVStore("myName");
+                removeKVStore("recentMessageId");
                 router.replace("/");
               },
             });
@@ -52,7 +55,10 @@ export default function AccountScreen() {
             logoutMutation.mutate(undefined, {
               onSuccess: async () => {
                 await deleteAllMessages(db);
-                await setSecure("accessToken", "");
+                await deleteSecure("accessToken");
+                removeKVStore("myId");
+                removeKVStore("myName");
+                removeKVStore("recentMessageId");
                 router.replace("/");
               },
             });

@@ -35,3 +35,7 @@ export function getKVStore(key: string): string {
 export function setKVStore(key: string, value: string) {
   Storage.setItemSync(key, value);
 }
+
+export function removeKVStore(key: string) {
+  Storage.removeItemSync(key)
+}

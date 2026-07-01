@@ -9,6 +9,8 @@ import {
 import { useSignInWithApple } from "@/hooks/useAuth";
 import { randomUUID } from "expo-crypto";
 import { router } from "expo-router";
+import { getMyProfile } from "@/api/profile";
+import { setKVStore } from "@/db/storage";
 
 export default function AppleSignInButton() {
   const signInWithAppleMutation = useSignInWithApple();
@@ -35,7 +37,14 @@ export default function AppleSignInButton() {
             return;
           }
           if (data.accessToken){
-            router.replace("/");
+            const my = await getMyProfile()
+            setKVStore("myId", my.id)
+            if (!my.name) {
+              router.replace("/profile/name")
+              return
+            }
+            setKVStore("myName", my.name);
+            router.replace("/conversations");
           }
         },
       },

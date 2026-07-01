@@ -4,13 +4,14 @@ import CustomButton from "@/components/CustomButton";
 import { router, useFocusEffect } from "expo-router";
 import { colors } from "@/constants";
 import AppleSignInButton from "@/components/auth/AppleSignInButton";
-import { deleteSecure } from "@/db/storage";
+import { deleteSecure, setKVStore } from "@/db/storage";
 import {
   GoogleSignin,
   GoogleSigninButton,
 } from "@react-native-google-signin/google-signin";
 import { useSignInWithGoogle } from "@/hooks/useAuth";
 import { Image } from "expo-image";
+import { getMyProfile } from "@/api/profile";
 
 const AppIcon = require("@/assets/images/icon_transparent_background.png");
 
@@ -30,12 +31,19 @@ export default function AuthScreen() {
           idToken: response.idToken,
         },
         {
-          onSuccess: (data) => {
+          onSuccess: async (data) => {
             if (data.sessionId) {
               router.push("/auth/phone-number");
             }
             if (data.accessToken) {
-              router.push("/");
+              const my = await getMyProfile();
+              setKVStore("myId", my.id);
+              if (!my.name) {
+                router.replace("/profile/name");
+                return
+              }
+              setKVStore("myName", my.name)
+              router.push("/conversations");
             }
           },
         },
@@ -51,11 +59,13 @@ export default function AuthScreen() {
           label={"Start with your Phone number"}
           onPress={() => router.push("/auth/phone-number")}
         />
-        <GoogleSigninButton
-          size={GoogleSigninButton.Size.Wide}
-          color={GoogleSigninButton.Color.Dark}
-          onPress={handleGoogleSignInButtonPress}
-        />
+        {Platform.OS === "ios" && (
+          <GoogleSigninButton
+            size={GoogleSigninButton.Size.Wide}
+            color={GoogleSigninButton.Color.Dark}
+            onPress={handleGoogleSignInButtonPress}
+          />
+        )}
         {Platform.OS === "ios" && <AppleSignInButton />}
         <View style={styles.emailContainer}>
           <CustomButton

@@ -77,7 +77,8 @@ function RootNavigator() {
       return;
     }
     const connectMessaging = async () => {
-      setSecure("myId", profile.id);
+      console.log("myId",profile.id)
+      setKVStore("myId", profile.id);
       setKVStore("myName", profile.name);
       await requestRecordingPermissionsAsync();
       await setAudioModeAsync({
@@ -155,6 +156,7 @@ function RootNavigator() {
       );
       ws.current.onmessage = async (event) => {
         const m: MessagingResponse = JSON.parse(event.data);
+        console.log(m)
         setKVStore("recentMessageId", m.id);
         if (m.contentType === "image" || m.contentType === "video") {
           setTimeout(async () => {

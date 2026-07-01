@@ -47,7 +47,8 @@ export const queryKey = {
   GET_SIGNED_URL: "getSignedURL",
   MAP_OFFLINE_CONVERSATION: "mapOfflineConversation",
   GET_OFFLINE_CONVERSATION_DETAIL: "getOfflineConversationDetail",
-  CHECK_BLOCK: "checkBlock"
+  CHECK_BLOCK: "checkBlock",
+  GET_CHAT_PARTICIPANT_IDS: "getChatParticipantIds"
 };
 
 export const time = {
