@@ -2,7 +2,6 @@ package repository
 
 import (
 	"crypto/tls"
-	"crypto/x509"
 	"log"
 	"os"
 
@@ -19,19 +18,19 @@ func NewRepository() *Repository {
 		InitAddress: []string{os.Getenv("VALKEY_ADDRESS")},
 	}
 	if os.Getenv("PROFILE") == "production" {
-		caCertPEM, err1 := os.ReadFile("/cert/valkey/ca.crt")
-		if err1 != nil {
-			log.Fatalf("Failed to read CA certificate: %v", err1)
-		}
-		rootCAs := x509.NewCertPool()
-		ok := rootCAs.AppendCertsFromPEM(caCertPEM)
-		if !ok {
-			log.Fatalf("Failed to parse root certificate")
-		}
+		//caCertPEM, err1 := os.ReadFile("/cert/valkey/ca.crt")
+		//if err1 != nil {
+		//	log.Fatalf("Failed to read CA certificate: %v", err1)
+		//}
+		//rootCAs := x509.NewCertPool()
+		//ok := rootCAs.AppendCertsFromPEM(caCertPEM)
+		//if !ok {
+		//	log.Fatalf("Failed to parse root certificate")
+		//}
 		clientOption.Username = os.Getenv("VALKEY_USERNAME")
 		clientOption.Password = os.Getenv("VALKEY_PASSWORD")
 		clientOption.TLSConfig = &tls.Config{
-			RootCAs:            rootCAs,
+			//RootCAs:            rootCAs,
 			InsecureSkipVerify: false,
 			ServerName:         os.Getenv("VALKEY_HOST"),
 		}

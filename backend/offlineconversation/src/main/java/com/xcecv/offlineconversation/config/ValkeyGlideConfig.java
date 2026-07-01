@@ -30,20 +30,20 @@ public class ValkeyGlideConfig {
 
   @Bean(destroyMethod = "close")
   public GlideClusterClient glideClusterClient() throws IOException {
-    byte[] caCertBytes = Files.readAllBytes(Paths.get("/cert/valkey/ca.crt"));
+//     byte[] caCertBytes = Files.readAllBytes(Paths.get("/cert/valkey/ca.crt"));
 
-    TlsAdvancedConfiguration tlsConfig = TlsAdvancedConfiguration.builder()
-        .rootCertificates(caCertBytes)
-        .build();
+//     TlsAdvancedConfiguration tlsConfig = TlsAdvancedConfiguration.builder()
+//         .rootCertificates(caCertBytes)
+//         .build();
 
-    AdvancedGlideClusterClientConfiguration advancedConfig = AdvancedGlideClusterClientConfiguration.builder()
-        .tlsAdvancedConfiguration(tlsConfig)
-        .build();
+//     AdvancedGlideClusterClientConfiguration advancedConfig = AdvancedGlideClusterClientConfiguration.builder()
+//         .tlsAdvancedConfiguration(tlsConfig)
+//         .build();
 
     GlideClusterClientConfiguration config = GlideClusterClientConfiguration.builder()
         .address(NodeAddress.builder().host(host).port(port).build())
         .useTLS(true)
-        .advancedConfiguration(advancedConfig)
+//         .advancedConfiguration(advancedConfig)
         .credentials(ServerCredentials.builder()
             .username(username)
             .password(password)

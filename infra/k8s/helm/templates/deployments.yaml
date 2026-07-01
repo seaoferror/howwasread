@@ -23,21 +23,14 @@ spec:
           imagePullPolicy: Always
           ports:
             - containerPort: {{ $app.port }}
-          resources:
-            requests:
-              cpu: {{ $app.cpuRequests }}
-              memory: {{ $app.memoryRequests }}
-            limits:
-              cpu: {{ $app.cpuLimits }}
-              memory: {{ $app.memoryLimits }}
+{{/*          resources:*/}}
+{{/*            requests:*/}}
+{{/*              cpu: {{ $app.cpuRequests }}*/}}
+{{/*              memory: {{ $app.memoryRequests }}*/}}
+{{/*            limits:*/}}
+{{/*              cpu: {{ $app.cpuLimits }}*/}}
+{{/*              memory: {{ $app.memoryLimits }}*/}}
           env:
-          {{- if $app.valkey }}
-            - name: VALKEY_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: valkey
-                  key: lule
-          {{- end}}
             - name: POD_IP
               valueFrom:
                 fieldRef:
@@ -69,12 +62,11 @@ spec:
             - secretRef:
                 name: confluent
             {{- end }}
-          volumeMounts:
             {{- if $app.valkey }}
-            - name: valkey-cert-volume
-              mountPath: "/cert/valkey"
-              readOnly: true
+            - secretRef:
+                name: valkey
             {{- end }}
+          volumeMounts:
             {{- if $app.authentication}}
             - name: authentication-volume
               mountPath: "/cert/authentication"
@@ -101,14 +93,6 @@ spec:
               readOnly: true
             {{- end }}
       volumes:
-        {{- if $app.valkey }}
-        - name: valkey-cert-volume
-          secret:
-            secretName: valkey-cert
-            items:
-              - key: ca.crt
-                path: ca.crt
-        {{- end }}
         {{- if $app.authentication}}
         - name: authentication-volume
           secret:

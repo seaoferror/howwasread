@@ -5,12 +5,11 @@ import {
   type TopicPartition,
 } from "@confluentinc/kafka-javascript";
 import cassandra from "cassandra-driver";
-import { readFileSync } from "node:fs";
 
 const { Kafka, ErrorCodes } = KafkaJS;
 
 export async function createValkeyClient() {
-  const caCertBuffer = readFileSync("/cert/valkey/ca.crt");
+  // const caCertBuffer = readFileSync("/cert/valkey/ca.crt");
   return GlideClusterClient.createClient({
     addresses: [
       {
@@ -26,11 +25,11 @@ export async function createValkeyClient() {
           }
         : undefined,
     useTLS: process.env.PROFILE === "production" ? true : undefined,
-    advancedConfiguration: {
-      tlsAdvancedConfiguration: {
-        rootCertificates: caCertBuffer
-      }
-    },
+    // advancedConfiguration: {
+    //   tlsAdvancedConfiguration: {
+    //     rootCertificates: caCertBuffer
+    //   }
+    // },
     compression: {
       enabled: true,
     },

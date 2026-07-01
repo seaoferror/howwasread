@@ -5,8 +5,20 @@ resource "helm_release" "envoy_gateway" {
   namespace        = "envoy-gateway-system"
   create_namespace = true
 
+  values = [
+    yamlencode({
+      deployment = {
+        pod = {
+          nodeSelector = {
+            "node.kubernetes.io/instance-type" = local.idle_node
+          }
+        }
+      }
+    })
+  ]
+
   depends_on = [
-    module.cluster1.eks_managed_node_groups
+    module.cluster0.eks_managed_node_groups
   ]
 }
 
@@ -37,7 +49,7 @@ resource "helm_release" "external_dns" {
         "gateway-httproute",
       ]
 
-      txtOwnerId = module.cluster1.cluster_name
+      txtOwnerId = module.cluster0.cluster_name
 
       serviceAccount = {
         annotations = {
@@ -61,7 +73,7 @@ resource "helm_release" "external_dns" {
     })
   ]
 
-  depends_on = [aws_iam_role_policy_attachment.external_dns_attach,  module.cluster1.eks_managed_node_groups]
+  depends_on = [aws_iam_role_policy_attachment.external_dns_attach,  module.cluster0.eks_managed_node_groups]
 }
 
 resource "helm_release" "cert_manager" {
@@ -110,7 +122,7 @@ resource "helm_release" "cert_manager" {
   ]
 
   depends_on = [
-    module.cluster1.eks_managed_node_groups
+    module.cluster0.eks_managed_node_groups
   ]
 }
 
@@ -157,7 +169,7 @@ resource "helm_release" "cert_manager" {
 
 locals {
   cluster1 = {
-    oidc_url = replace(module.cluster1.oidc_provider_arn, "/^(.*provider/)/", "")
+    oidc_url = replace(module.cluster0.oidc_provider_arn, "/^(.*provider/)/", "")
   }
 }
 
@@ -168,7 +180,7 @@ data "aws_iam_policy_document" "lbc_trust_policy" {
 
     principals {
       type        = "Federated"
-      identifiers = [module.cluster1.oidc_provider_arn]
+      identifiers = [module.cluster0.oidc_provider_arn]
     }
 
     condition {
@@ -213,7 +225,7 @@ resource "helm_release" "aws_load_balancer_controller" {
 
   set {
     name  = "clusterName"
-    value = module.cluster1.cluster_name
+    value = module.cluster0.cluster_name
   }
 
   set {
@@ -249,7 +261,7 @@ resource "helm_release" "aws_load_balancer_controller" {
     })
   ]
 
-  depends_on = [module.cluster1.eks_managed_node_groups, module.cluster1.cluster_addons, aws_iam_role_policy_attachment.lbc_attach]
+  depends_on = [module.cluster0.eks_managed_node_groups, module.cluster0.cluster_addons, aws_iam_role_policy_attachment.lbc_attach]
 }
 
 resource "helm_release" "sealed_secrets" {
@@ -267,7 +279,7 @@ resource "helm_release" "sealed_secrets" {
   ]
 
   depends_on = [
-    module.cluster1.eks_managed_node_groups
+    module.cluster0.eks_managed_node_groups
   ]
 }
 
@@ -286,21 +298,29 @@ resource "helm_release" "reflector" {
   ]
 
   depends_on = [
-    module.cluster1.eks_managed_node_groups
+    module.cluster0.eks_managed_node_groups
   ]
 }
 
-resource "helm_release" "valkey_operator" {
-  name             = "valkey-operator"
-  repository       = "https://valkey.io/valkey-helm"
-  chart            = "valkey-operator"
-  namespace        = "valkey-system"
-  create_namespace = true
-
-  depends_on = [
-    module.cluster1.eks_managed_node_groups
-  ]
-}
+# resource "helm_release" "valkey_operator" {
+#   name             = "valkey-operator"
+#   repository       = "https://valkey.io/valkey-helm"
+#   chart            = "valkey-operator"
+#   namespace        = "valkey-system"
+#   create_namespace = true
+#
+#   values = [
+#     yamlencode({
+#       nodeSelector = {
+#         "node.kubernetes.io/instance-type" = local.idle_node
+#       }
+#     })
+#   ]
+#
+#   depends_on = [
+#     module.cluster0.eks_managed_node_groups
+#   ]
+# }
 
 # resource "helm_release" "metrics_server" {
 #   name       = "metrics-server"
