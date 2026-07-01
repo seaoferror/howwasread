@@ -2,15 +2,13 @@ package com.xcecv.offlineconversation.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import glide.api.GlideClusterClient;
+import glide.api.GlideClient;
 import glide.api.models.configuration.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 
 @Configuration
 public class ValkeyGlideConfig {
@@ -29,7 +27,7 @@ public class ValkeyGlideConfig {
 
 
   @Bean(destroyMethod = "close")
-  public GlideClusterClient glideClusterClient() throws IOException {
+  public GlideClient glideClient() throws IOException {
 //     byte[] caCertBytes = Files.readAllBytes(Paths.get("/cert/valkey/ca.crt"));
 
 //     TlsAdvancedConfiguration tlsConfig = TlsAdvancedConfiguration.builder()
@@ -40,7 +38,7 @@ public class ValkeyGlideConfig {
 //         .tlsAdvancedConfiguration(tlsConfig)
 //         .build();
 
-    GlideClusterClientConfiguration config = GlideClusterClientConfiguration.builder()
+    GlideClientConfiguration config = GlideClientConfiguration.builder()
         .address(NodeAddress.builder().host(host).port(port).build())
         .useTLS(true)
 //         .advancedConfiguration(advancedConfig)
@@ -51,7 +49,7 @@ public class ValkeyGlideConfig {
         )
         .requestTimeout(2000)
         .build();
-    return GlideClusterClient.createClient(config).join();
+    return GlideClient.createClient(config).join();
   }
 
   @Bean

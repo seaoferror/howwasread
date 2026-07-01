@@ -1,4 +1,4 @@
-import { GlideClusterClient } from "@valkey/valkey-glide";
+import { GlideClient } from "@valkey/valkey-glide";
 import {
   KafkaJS,
   LibrdKafkaError,
@@ -10,7 +10,7 @@ const { Kafka, ErrorCodes } = KafkaJS;
 
 export async function createValkeyClient() {
   // const caCertBuffer = readFileSync("/cert/valkey/ca.crt");
-  return GlideClusterClient.createClient({
+  return GlideClient.createClient({
     addresses: [
       {
         host: process.env.VALKEY_HOST || "localhost",
