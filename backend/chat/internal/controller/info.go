@@ -72,6 +72,7 @@ func (c *Controller) getMyProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+	result.Id = memberId
 	err = json.NewEncoder(w).Encode(result)
 	if err != nil {
 		slog.Error("fail to write response body",
