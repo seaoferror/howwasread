@@ -69,8 +69,11 @@ func (s *Service) GetChatParticipants(ctx context.Context, roomId uuid.UUID) ([]
 	if err != nil {
 		return nil, err
 	}
-	res := make([]dto.GetProfileResponse, len(ps))
+	res := make([]dto.GetProfileResponse, 0)
 	for _, p := range ps {
+		if p == (gocql.UUID{}) {
+			continue
+		}
 		res = append(res, dto.GetProfileResponse{Id: uuid.UUID(p)})
 	}
 	return res, nil
