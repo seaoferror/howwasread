@@ -21,9 +21,10 @@ export default function MemberItem({ id }: { id: string }) {
           {displayName.charAt(0).toUpperCase()}
         </Text>
       </View>
-      <Text style={styles.nameText}>
-        {getKVStore("myId") === id ? displayName + "<- you" : displayName}
-      </Text>
+      <View style={styles.nameRow}>
+        {getKVStore("myId") === id && <Text style={styles.youText}>you</Text>}
+        <Text style={styles.nameText}>{displayName}</Text>
+      </View>
     </Pressable>
   );
 }
@@ -53,6 +54,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
     color: colors.GRAY_700,
+  },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  youText: {
+    fontSize: 13,
+    fontWeight: "400",
+    color: "#9CA3AF",
+    marginRight: 6,
   },
   nameText: {
     fontSize: 16,
