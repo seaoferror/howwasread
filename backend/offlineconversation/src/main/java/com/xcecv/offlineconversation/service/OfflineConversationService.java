@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -39,7 +40,7 @@ public class OfflineConversationService {
   private final ApplicationEventPublisher applicationEventPublisher;
 
   private static final String EMPTY_CACHE_DUMMY_KEY = "_";
-  private static final long CACHE_TTL_SECONDS = 3600;
+  private static final long CACHE_TTL_SECONDS = 300;
 
   @Transactional
   public Map<String, UUID> create(
@@ -149,13 +150,13 @@ public class OfflineConversationService {
       if (cache != null && !cache.isEmpty()) {
         return unmarshalH3Cache(cache);
       }
-      var convos = offlineConversationRepository.findByH3Res7(h3Res7);
+      var convos = offlineConversationRepository.findByH3Res7AndTimeAfter(h3Res7, Instant.now());
       var response = buildOfflineConversationMapResponse(convos);
       setH3Cache(h3Res7, response);
       return response;
     } catch (Exception e) {
       log.error("Failed to read from cache for h3Index {}. Falling back to DB.", h3Res7, e);
-      var convos = offlineConversationRepository.findByH3Res7(h3Res7);
+      var convos = offlineConversationRepository.findByH3Res7AndTimeAfter(h3Res7, Instant.now());
       return buildOfflineConversationMapResponse(convos);
     }
   }
@@ -167,13 +168,13 @@ public class OfflineConversationService {
       if (cacheRaw != null && !cacheRaw.isEmpty()) {
         return unmarshalH3Cache(cacheRaw);
       }
-      var convos = offlineConversationRepository.findTop2ByH3Res5(h3Res5);
+      var convos = offlineConversationRepository.findTop2ByH3Res5AndTimeAfter(h3Res5, Instant.now());
       var response = buildOfflineConversationMapResponse(convos);
       setH3Cache(h3Res5, response);
       return response;
     } catch (Exception e) {
       log.error("Failed to read from cache for h3Index {}. Falling back to DB.", h3Res5, e);
-      var convos = offlineConversationRepository.findTop2ByH3Res5(h3Res5);
+      var convos = offlineConversationRepository.findTop2ByH3Res5AndTimeAfter(h3Res5, Instant.now());
       return buildOfflineConversationMapResponse(convos);
     }
   }

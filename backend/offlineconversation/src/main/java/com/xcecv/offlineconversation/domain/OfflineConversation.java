@@ -20,8 +20,8 @@ import java.util.UUID;
 @AllArgsConstructor
 @Table(
     indexes = {
-        @Index(name = "h3_res5", columnList = "h3_res5"),
-        @Index(name = "h3_res7", columnList = "h3_res7")
+        @Index(name = "idx_h3_res5_time", columnList = "h3_res5, time"),
+        @Index(name = "idx_h3_res7_time", columnList = "h3_res7, time")
     }
 )
 public class OfflineConversation {
