@@ -96,21 +96,17 @@ func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}()
-	msgType, data, err1 := conn.Read(ctx)
-	if err1 != nil {
-		if websocket.CloseStatus(err1) != -1 || errors.Is(err1, context.Canceled) {
-			slog.Info("Connection closed smoothly", "err", err1)
+	for {
+		msgType, data, err1 := conn.Read(ctx)
+		if err1 != nil {
+			if websocket.CloseStatus(err1) != -1 || errors.Is(err1, context.Canceled) {
+				slog.Info("Connection closed smoothly", "err", err1)
+				return
+			}
+			slog.Error("read error", "err", err1)
+			handleWebsocketError(ctx, conn, errors.New("read error"))
 			return
 		}
-		slog.Error("read error", "err", err1)
-		handleWebsocketError(ctx, conn, errors.New("read error"))
-		return
-	}
-	if msgType != websocket.MessageText {
-		slog.Error("incorrect payload types",
-			"msgType", msgType,
-			"data", data)
-		return
 	}
 }
 
