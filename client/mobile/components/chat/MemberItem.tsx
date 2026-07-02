@@ -11,7 +11,6 @@ export default function MemberItem({ id }: { id: string }) {
 
   return (
     <Pressable
-      // 2. Add visual feedback when the item is pressed
       style={({ pressed }) => [styles.container, pressed && styles.pressed]}
       onPress={() =>
         router.push({ pathname: "/chat/[id]", params: { id: id } })
@@ -22,7 +21,9 @@ export default function MemberItem({ id }: { id: string }) {
           {displayName.charAt(0).toUpperCase()}
         </Text>
       </View>
-      <Text style={styles.nameText}>{displayName}</Text>
+      <Text style={styles.nameText}>
+        {getKVStore("myId") === id ? displayName + "<- you" : displayName}
+      </Text>
     </Pressable>
   );
 }

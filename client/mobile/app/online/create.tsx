@@ -83,7 +83,6 @@ export default function OnlineConversationCreateScreen() {
       length,
     } = formValues;
     const when = makeTime(now, year, monthDay, hour, minute)
-    console.log("when", when);
     createOnlineConversationMutation.mutate(
       {
         novel: novel,

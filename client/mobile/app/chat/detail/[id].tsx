@@ -46,7 +46,7 @@ export default function ChatRoomDetailScreen() {
             <Text style={styles.listTitle}>Member list</Text>
             <View style={styles.memberContainer}>
               {ps.map((p, idx) => (
-                p.id !== getKVStore("myId") && <MemberItem key={idx} id={p.id} />
+                <MemberItem key={idx} id={p.id} />
               ))}
             </View>
           </View>
