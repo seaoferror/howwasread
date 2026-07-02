@@ -96,23 +96,21 @@ func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}()
-	for {
-		_, _, err1 := conn.Read(ctx)
-		if err1 != nil {
-			if websocket.CloseStatus(err1) != -1 || errors.Is(err1, context.Canceled) {
-				slog.Info("Connection closed smoothly", "err", err1)
-				return
-			}
-			slog.Error("read error", "err", err1)
-			handleWebsocketError(ctx, conn, errors.New("read error"))
+	msgType, data, err1 := conn.Read(ctx)
+	if err1 != nil {
+		if websocket.CloseStatus(err1) != -1 || errors.Is(err1, context.Canceled) {
+			slog.Info("Connection closed smoothly", "err", err1)
 			return
 		}
-		//if msgType != websocket.MessageText {
-		//	slog.Error("incorrect payload types",
-		//		"msgType", msgType,
-		//		"data", data)
-		//	return
-		//}
+		slog.Error("read error", "err", err1)
+		handleWebsocketError(ctx, conn, errors.New("read error"))
+		return
+	}
+	if msgType != websocket.MessageText {
+		slog.Error("incorrect payload types",
+			"msgType", msgType,
+			"data", data)
+		return
 	}
 }
 
@@ -174,7 +172,7 @@ func (c *Controller) RelayMessaging(
 				wg1.Wait()
 			}
 			c.csMutex.RUnlock()
-			if (!ok || !success) && !bytes.Equal(toId[:], fromId[:]) {
+			if !ok || !success {
 				mu.Lock()
 				pushToIds = append(pushToIds, toId[:])
 				mu.Unlock()

@@ -143,6 +143,7 @@ func (s *Service) RelayMessage(
 				return
 			}
 			if contentType != "quit" && contentType != "participate" && contentType != "create" {
+				slog.Info("add push id", "res.PushToIds", res.PushToIds)
 				pm.Lock()
 				pushToIds = append(pushToIds, res.PushToIds...)
 				pm.Unlock()
@@ -163,6 +164,7 @@ func (s *Service) RelayMessage(
 	var filteredIds [][]byte
 	for _, ptid := range pushToIds {
 		if !bytes.Equal(ptid, fromId[:]) {
+			slog.Info("add push id", "tid", uuid.UUID(ptid))
 			filteredIds = append(filteredIds, ptid)
 		}
 	}
