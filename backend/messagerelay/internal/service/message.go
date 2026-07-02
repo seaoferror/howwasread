@@ -66,10 +66,7 @@ func (s *Service) RelayMessage(
 			ContentType:    contentType,
 			Contents:       contents,
 		})
-		err := s.producer.PushMessage("notification", nil, p)
-		if err != nil {
-			return
-		}
+		s.producer.PushMessage("notification", nil, p)
 		pushToIds = nil
 	}
 
@@ -180,10 +177,7 @@ func (s *Service) RelayMessage(
 			ContentType:    contentType,
 			Contents:       contents,
 		})
-		err := s.producer.PushMessage("notification", nil, p)
-		if err != nil {
-			return
-		}
+		s.producer.PushMessage("notification", nil, p)
 	}
 	return
 }

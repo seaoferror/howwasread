@@ -122,9 +122,6 @@ func (s *Service) ManageMessage(
 		Contents:    contents,
 	})
 
-	err := s.producer.PushMessage("prepared-message", nil, p)
-	if err != nil {
-		return
-	}
+	s.producer.PushMessage("prepared-message", nil, p)
 	return
 }

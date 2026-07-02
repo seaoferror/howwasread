@@ -11,11 +11,11 @@ import (
 )
 
 type Producer struct {
-	syncProducer sarama.SyncProducer
+	asyncProducer sarama.AsyncProducer
 }
 
 func NewProducer(clientIdPrefix string) *Producer {
-	syncProducer, err := createProducer(clientIdPrefix)
+	asyncProducer, err := createProducer(clientIdPrefix)
 	if err != nil {
 		slog.Error("fail to create producer",
 			"err", err,
@@ -23,11 +23,14 @@ func NewProducer(clientIdPrefix string) *Producer {
 		panic(err)
 	}
 	log.Print("success to create kafka producer")
-	kp := Producer{syncProducer}
+	kp := Producer{asyncProducer}
+
+	go kp.drainChannels()
+
 	return &kp
 }
 
-func createProducer(clientIdPrefix string) (sarama.SyncProducer, error) {
+func createProducer(clientIdPrefix string) (sarama.AsyncProducer, error) {
 	cfg := sarama.NewConfig()
 	id, err := uuid.NewV7()
 	if err != nil {
@@ -50,21 +53,21 @@ func createProducer(clientIdPrefix string) (sarama.SyncProducer, error) {
 	cfg.Net.SASL.Password = os.Getenv("KAFKA_API_SECRET")
 	cfg.Net.SASL.Handshake = true
 
-	cfg.Producer.Return.Successes = true
+	cfg.Producer.Return.Successes = false
 	cfg.Producer.Return.Errors = true
 	cfg.Producer.Compression = sarama.CompressionSnappy
-	cfg.Producer.RequiredAcks = sarama.WaitForLocal
+	cfg.Producer.RequiredAcks = sarama.WaitForAll
 	cfg.Producer.Idempotent = false
 	cfg.Producer.Flush.Messages = 100
 	cfg.Producer.Flush.Frequency = time.Millisecond * 5
-	cfg.Producer.Retry.Max = 100_000_000
+	cfg.Producer.Retry.Max = 5
 	cfg.Producer.Retry.Backoff = time.Millisecond * 300
 	cfg.Net.MaxOpenRequests = 5
 
-	return sarama.NewSyncProducer([]string{os.Getenv("KAFKA_ADDRESS")}, cfg)
+	return sarama.NewAsyncProducer([]string{os.Getenv("KAFKA_ADDRESS")}, cfg)
 }
 
-func (p *Producer) PushMessage(topic string, key, value []byte) error {
+func (p *Producer) PushMessage(topic string, key, value []byte) {
 	msg := sarama.ProducerMessage{
 		Topic: topic,
 		Value: sarama.ByteEncoder(value),
@@ -73,13 +76,7 @@ func (p *Producer) PushMessage(topic string, key, value []byte) error {
 		msg.Key = sarama.ByteEncoder(key)
 	}
 
-	partition, _, err := p.syncProducer.SendMessage(&msg)
-	if err != nil {
-		log.Print("Failed to produce payload", "err", err)
-		return err
-	}
-	log.Print("Success to produce payload", "partition", partition)
-	return nil
+	p.asyncProducer.Input() <- &msg
 }
 
 //func (p *Producer) PushRetryMessage(
@@ -90,7 +87,18 @@ func (p *Producer) PushMessage(topic string, key, value []byte) error {
 //}
 
 func (p *Producer) Close() error {
-	return p.syncProducer.Close()
+	return p.asyncProducer.Close()
+}
+
+func (p *Producer) drainChannels() {
+	for err := range p.asyncProducer.Errors() {
+		log.Print(
+			"Failed to produce payload",
+			"err", err.Err,
+			"topic", err.Msg.Topic,
+		)
+		//TODO: dlq?
+	}
 }
 
 //func (p *Producer) PushDeadLetter(reason error, originalTopic string, value []byte) error {
