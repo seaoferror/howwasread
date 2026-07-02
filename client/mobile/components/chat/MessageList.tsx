@@ -1,7 +1,6 @@
 import { FlatList, StyleSheet } from "react-native";
 import { useGetChatRoomInfo, useGetInfiniteMessages } from "@/hooks/useChat";
-import * as SQLite from "expo-sqlite";
-import { useSQLiteContext } from "expo-sqlite";
+import { addDatabaseChangeListener, useSQLiteContext } from "expo-sqlite";
 import { useEffect, useMemo, useState } from "react";
 import { Message } from "@/types/chat";
 import { stringify as uuidStringify } from "uuid";
@@ -9,7 +8,7 @@ import MessageItem from "@/components/chat/MessageItem";
 import { useLocalSearchParams } from "expo-router";
 import { findNewMessage } from "@/db/message";
 import { useGetMyProfile } from "@/hooks/useProfile";
-import { getKVStore, getSecure } from "@/db/storage";
+import { getKVStore } from "@/db/storage";
 
 export default function MessageList() {
   const db = useSQLiteContext();
@@ -32,7 +31,7 @@ export default function MessageList() {
   }, [data?.pages, liveMessages]);
 
   useEffect(() => {
-    const subscription = SQLite.addDatabaseChangeListener(async (event) => {
+    const subscription = addDatabaseChangeListener(async (event) => {
       const newMessageRaw = await findNewMessage(db, event.rowId);
       if (!newMessageRaw) return;
       if (roomId !== uuidStringify(newMessageRaw.room_id)) return;
@@ -83,7 +82,9 @@ export default function MessageList() {
           <MessageItem
             message={item}
             isDayFirst={isDayFirst}
-            showName={(wasEvent || isFromChange || isDayFirst) && !isMyId && isGroup}
+            showName={
+              (wasEvent || isFromChange || isDayFirst) && !isMyId && isGroup
+            }
           />
         );
       }}

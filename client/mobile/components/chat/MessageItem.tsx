@@ -8,7 +8,7 @@ import { Image } from "expo-image";
 import VideoMessage from "@/components/chat/VideoMessage";
 import VoiceMessage from "@/components/chat/VoiceMessage";
 import { useLocalSearchParams } from "expo-router";
-import { getKVStore, getSecure, setKVStore } from "@/db/storage";
+import { getKVStore, setKVStore } from "@/db/storage";
 import { useEffect, useState } from "react";
 import ImageModal from "@/components/ImageModal";
 
@@ -61,8 +61,8 @@ export default function MessageItem({
           <View style={styles.pill}>
             <Text style={styles.pillText}>
               {message.contentType === "participate" &&
-                ((fromProfile?.name ??
-                  getKVStore(message.fromId)) + " participates chatroom")}
+                (fromProfile?.name ?? getKVStore(message.fromId)) +
+                  " participates chatroom"}
               {message.contentType === "create" && "You create chat room"}
               {message.contentType === "block" &&
                 `You block ${roomInfo?.name ?? getKVStore(String(roomId))}`}

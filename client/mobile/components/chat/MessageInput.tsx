@@ -136,7 +136,7 @@ export default function MessageInput() {
       },
     );
   };
-  if (data?.didBlock) {
+  if (data?.didBlock || !roomInfo) {
     return null;
   }
 

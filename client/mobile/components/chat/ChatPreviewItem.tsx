@@ -9,21 +9,24 @@ import {
 } from "@/hooks/useChat";
 import { useGetProfile } from "@/hooks/useProfile";
 import { formatPreviewDate } from "@/util/time";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { getKVStore, setKVStore } from "@/db/storage";
 import { useActionSheet } from "@expo/react-native-action-sheet";
 
 interface ChatPreviewItemProps {
   preview: Message;
+  successQuit: (roomId: string) => void;
 }
 
-export default function ChatPreviewItem({ preview }: ChatPreviewItemProps) {
+export default function ChatPreviewItem({
+  preview,
+  successQuit,
+}: ChatPreviewItemProps) {
   const { data: roomInfo } = useGetChatRoomInfo(preview.roomId);
   const { data: fromProfile } = useGetProfile(preview.fromId);
   const { data } = useCheckBlock(preview.roomId);
   const { showActionSheetWithOptions } = useActionSheet();
   const sendMessageMutation = useSendMessage();
-  const [isQuit, setIsQuit] = useState(false);
 
   useEffect(() => {
     if (roomInfo) {
@@ -66,7 +69,9 @@ export default function ChatPreviewItem({ preview }: ChatPreviewItemProps) {
                 contents: [],
               },
               {
-                onSuccess: () => setIsQuit(true),
+                onSuccess: () => {
+                  successQuit(preview.roomId);
+                },
               },
             );
             break;
@@ -97,7 +102,6 @@ export default function ChatPreviewItem({ preview }: ChatPreviewItemProps) {
           },
         })
       }
-      disabled={isQuit}
       onLongPress={() => handleLongPress()}
     >
       <View style={styles.avatar}>

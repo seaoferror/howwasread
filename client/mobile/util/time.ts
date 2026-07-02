@@ -71,8 +71,8 @@ export function formatToMinuteSecond(seconds: number) {
 
 export function makeTime(
   now: Date,
-  monthDay: string,
   year: string,
+  monthDay: string,
   hour: string,
   minute: string,
 ) {

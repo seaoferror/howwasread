@@ -117,6 +117,14 @@ export async function deleteMessagesBeforeQuit(
   );
 }
 
+export async function quitLive(db: SQLiteDatabase, roomId: string) {
+  return db.runAsync(
+    `DELETE
+     FROM message WHERE room_id = ?;`,
+    uuidParse(roomId),
+  );
+}
+
 export async function downloadFiles(m: MessagingResponse) {
   const urls = (
     await Promise.all(

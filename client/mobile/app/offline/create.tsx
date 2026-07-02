@@ -103,7 +103,7 @@ export default function OfflineConversationScreen() {
       mapsLink,
       location,
     } = formValues;
-    const time = makeTime(now, monthDay, year, hour, minute);
+    const time = makeTime(now, year, monthDay, hour, minute);
     if (resolvedGeoInfo === null) {
       Toast.show({
         type: "error",

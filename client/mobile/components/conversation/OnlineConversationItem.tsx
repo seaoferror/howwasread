@@ -59,29 +59,29 @@ export default function OnlineConversationItem({
             .replace(/\sat\s/, " ")}
           {` For ${conversation.length.replace("0s", "")}`}
         </Text>
-        {conversation.novel && (
+        {!!conversation.novel && (
           <Text style={styles.detail}>Novel: {conversation.novel}</Text>
         )}
-        {conversation.shortStory && (
+        {!!conversation.shortStory && (
           <Text style={styles.detail}>
             Short story: {conversation.shortStory}
           </Text>
         )}
-        {conversation.poem && (
+        {!!conversation.poem && (
           <Text style={styles.detail}>Poem: {conversation.poem}</Text>
         )}
-        {conversation.play && (
+        {!!conversation.play && (
           <Text style={styles.detail}>Play: {conversation.play}</Text>
         )}
-        {conversation.film && (
+        {!!conversation.film && (
           <Text style={styles.detail}>Film: {conversation.film}</Text>
         )}
-        {conversation.by && (
+        {!!conversation.by && (
           <Text style={styles.detail}>By: {conversation.by}</Text>
         )}
-        {conversation.rule ? (
+        {!!conversation.rule ? (
           <View>
-            <Text style={styles.ruleHeader}>Rule</Text>{" "}
+            <Text style={styles.ruleHeader}>Rule</Text>
             <Text style={styles.detail}>{conversation.rule}</Text>
           </View>
         ) : (

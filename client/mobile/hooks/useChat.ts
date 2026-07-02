@@ -9,17 +9,8 @@ import {
 import { AxiosError } from "axios";
 import Toast from "react-native-toast-message";
 import { queryKey } from "@/constants";
-import {
-  deleteMessagesBeforeQuit,
-  findMessagesByRoomId,
-  findNewMessage,
-  findPreview,
-} from "@/db/message";
-import * as SQLite from "expo-sqlite";
-import { SQLiteDatabase, useSQLiteContext } from "expo-sqlite";
-import { stringify as uuidStringify } from "uuid";
-import { useEffect, useState } from "react";
-import { Message } from "@/types/chat";
+import { findMessagesByRoomId } from "@/db/message";
+import { SQLiteDatabase } from "expo-sqlite";
 import { getKVStore } from "@/db/storage";
 
 export function useGetInfiniteMessages(db: SQLiteDatabase, roomId: string) {
@@ -69,60 +60,6 @@ export function useGeneratePresignedURL() {
   });
 }
 
-export function usePreview() {
-  const db = useSQLiteContext();
-  const [preview, setPreview] = useState<Message[]>([]);
-
-  useEffect(() => {
-    const wrapper = async () => {
-      const previewRaw = await findPreview(db);
-
-      const p = previewRaw.map((row) => ({
-        id: uuidStringify(row.id),
-        roomId: uuidStringify(row.room_id),
-        fromId: uuidStringify(row.from_id),
-        contentType: row.content_type,
-        contents: JSON.parse(row.contents),
-        createdAt: row.created_at,
-      }));
-      setPreview(p);
-
-      SQLite.addDatabaseChangeListener(async (event) => {
-        const newMessageRaw = await findNewMessage(db, event.rowId);
-
-        if (!newMessageRaw) return;
-
-        const newPreviewItem: Message = {
-          id: uuidStringify(newMessageRaw.id),
-          roomId: uuidStringify(newMessageRaw.room_id),
-          fromId: uuidStringify(newMessageRaw.from_id),
-          contentType: newMessageRaw.content_type,
-          contents: JSON.parse(newMessageRaw.contents),
-          createdAt: newMessageRaw.created_at,
-        };
-        if (newPreviewItem.contentType === "quit") {
-          await deleteMessagesBeforeQuit(db, newPreviewItem);
-          setPreview((prev) =>
-            prev.filter((item) => item.roomId !== newPreviewItem.roomId),
-          );
-          return;
-        }
-
-        setPreview((prev) => {
-          const filtered = prev.filter(
-            (item) => item.roomId !== newPreviewItem.roomId,
-          );
-          return [newPreviewItem, ...filtered];
-        });
-      });
-    };
-    wrapper();
-
-    return () => {};
-  }, []);
-  return preview;
-}
-
 export function useCheckBlock(id: string) {
   return useQuery({
     queryFn: () => checkBlock(id),
@@ -134,6 +71,6 @@ export function useCheckBlock(id: string) {
 export function useGetChatParticipants(roomId: string) {
   return useQuery({
     queryFn: () => getChatParticipants(roomId),
-    queryKey: [queryKey.CHAT, queryKey.GET_CHAT_PARTICIPANT_IDS]
-  })
+    queryKey: [queryKey.CHAT, queryKey.GET_CHAT_PARTICIPANT_IDS],
+  });
 }
