@@ -38,7 +38,7 @@ func NewServer() {
 
 	c := consumer.NewConsumer(s)
 
-	err := c.GetMessage([]string{"preprocess_notification"})
+	err := c.GetMessage([]string{"notification"})
 	if err != nil {
 		panic(err)
 	}
