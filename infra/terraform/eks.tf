@@ -1,4 +1,4 @@
-module "cluster0" {
+module "cluster1" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 21.0"
 
@@ -22,12 +22,12 @@ module "cluster0" {
     kube-proxy = {}
     vpc-cni = {
       before_compute = true
-      configuration_values = jsonencode({
-        env = {
-          ENABLE_PREFIX_DELEGATION = "true"
-          WARM_PREFIX_TARGET       = "1"
-        }
-      })
+      # configuration_values = jsonencode({
+      #   env = {
+      #     ENABLE_PREFIX_DELEGATION = "true"
+      #     WARM_PREFIX_TARGET       = "1"
+      #   }
+      # })
     }
     # aws-ebs-csi-driver = {
     #   most_recent              = true
@@ -46,19 +46,12 @@ module "cluster0" {
   enable_irsa = true
 
   eks_managed_node_groups = {
-    medium = {
-      instance_types = ["t3.medium"]
+    large = {
+      instance_types = ["t3.large"]
       min_size       = 1
       max_size       = 1
       desired_size   = 1
     }
-    not_medium = {
-      instance_types = [local.idle_node]
-      min_size       = 1
-      max_size       = 1
-      desired_size   = 1
-    }
-
   }
 
   node_security_group_additional_rules = {

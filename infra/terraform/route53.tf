@@ -38,13 +38,13 @@ data "aws_iam_policy_document" "external_dns_trust" {
 
     principals {
       type        = "Federated"
-      identifiers = [module.cluster0.oidc_provider_arn]
+      identifiers = [module.cluster1.oidc_provider_arn]
     }
 
     condition {
       test     = "StringEquals"
       # Strips https:// from the OIDC URL
-      variable = "${replace(module.cluster0.cluster_oidc_issuer_url, "https://", "")}:sub"
+      variable = "${replace(module.cluster1.cluster_oidc_issuer_url, "https://", "")}:sub"
       # Restricts assumption to ONLY the external-dns service account
       values   = ["system:serviceaccount:external-dns:external-dns"]
     }
