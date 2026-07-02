@@ -114,7 +114,13 @@ func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (c *Controller) RelayMessaging(ctx context.Context, id uuid.UUID, toIds [][]byte, roomId, fromId uuid.UUID, contentType string, contents []string) ([][]byte, error) {
+func (c *Controller) RelayMessaging(
+	ctx context.Context,
+	id uuid.UUID,
+	toIds [][]byte,
+	roomId, fromId uuid.UUID,
+	contentType string, contents []string,
+) ([][]byte, error) {
 	var wg sync.WaitGroup
 	var pushToIds [][]byte
 	var mu sync.Mutex
@@ -166,7 +172,7 @@ func (c *Controller) RelayMessaging(ctx context.Context, id uuid.UUID, toIds [][
 				wg1.Wait()
 			}
 			c.csMutex.RUnlock()
-			if !ok || !success {
+			if (!ok || !success) && !bytes.Equal(toId[:], fromId[:]) {
 				mu.Lock()
 				pushToIds = append(pushToIds, toId[:])
 				mu.Unlock()
