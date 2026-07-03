@@ -30,14 +30,13 @@ func (c *Controller) registerNotification(w http.ResponseWriter, r *http.Request
 			"err", err)
 		handleError(w, errors.New("incorrect body"))
 	}
-	err = c.service.RegisterNotification(r.Context(), memberId, req.DeviceId, req.OS, req.DevicePushToken)
+	err = c.service.RegisterNotification(r.Context(), memberId, req.OS, req.DevicePushToken)
 	if err != nil {
 		handleError(w, err)
 	}
 	w.WriteHeader(http.StatusOK)
 	slog.Info("200 OK device push token",
 		"id", memberId,
-		"deviceId", req.DeviceId,
 		"os", req.OS,
 		"devicePushToken", req.DevicePushToken)
 }

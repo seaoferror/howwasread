@@ -30,12 +30,18 @@ func NewRepository() *Repository {
 		log.Panicf("fail to create session from cassandra cluster: %v", err)
 	}
 
-	err = session.Query(`CREATE TABLE IF NOT EXISTS device_push_token_by_id (
+	err = session.Query(`CREATE TABLE IF NOT EXISTS notification_info_by_id (
     id uuid,
-    device_id uuid,
     os text,
     device_push_token text,
-    PRIMARY KEY (id, device_id));`).Exec()
+    PRIMARY KEY (id, device_push_token));`).Exec()
+	if err != nil {
+		panic(err)
+	}
+	err = session.Query(`CREATE TABLE IF NOT EXISTS id_by_device_push_token (
+    device_push_token text,
+    id uuid,
+    PRIMARY KEY (device_push_token));`).Exec()
 	if err != nil {
 		panic(err)
 	}

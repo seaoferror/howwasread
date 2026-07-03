@@ -55,7 +55,6 @@ func (s *Service) SendNotification(
 	var em sync.Mutex
 	var es []error
 	var ts []string
-	var failedIds []uuid.UUIDs
 	for t := range tokenMap {
 		ts = append(ts, t)
 	}
@@ -85,22 +84,19 @@ func (s *Service) SendNotification(
 	if br.FailureCount > 0 {
 		for i, resp := range br.Responses {
 			if messaging.IsUnregistered(resp.Error) || messaging.IsInvalidArgument(resp.Error) {
-				failedIds = append(failedIds, tokenMap[ts[i]])
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					err2 := s.repository.RemoveNotificationInfoByIdAndToken(
+						ctx, gocql.UUID(tokenMap[ts[i]]), ts[i])
+					if err2 != nil {
+						em.Lock()
+						es = append(es, err2)
+						em.Unlock()
+					}
+				}()
 			}
 		}
-	}
-	for _, failedId := range failedIds {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			err2 := s.repository.RemovePushTokenByIdAndDeviceId(
-				ctx, gocql.UUID(failedId[0]), gocql.UUID(failedId[1]))
-			if err2 != nil {
-				em.Lock()
-				es = append(es, err2)
-				em.Unlock()
-			}
-		}()
 	}
 	wg.Wait()
 	err = errors.Join(es...)

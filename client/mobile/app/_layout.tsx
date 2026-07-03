@@ -100,7 +100,6 @@ function RootNavigator() {
           },
         });
         await registerNotification({
-          deviceId: deviceId,
           os: Platform.OS,
           devicePushToken:
             Platform.OS === "android"

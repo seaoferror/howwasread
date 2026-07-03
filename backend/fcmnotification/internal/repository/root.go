@@ -33,15 +33,6 @@ func NewRepository() *Repository {
 		log.Panicf("fail to create session from cassandra cluster: %v", err)
 	}
 
-	err = session.Query(`CREATE TABLE IF NOT EXISTS device_push_token_by_id (
-    id uuid,
-    device_id uuid,
-    os text,
-    device_push_token text,
-    PRIMARY KEY (id, device_id));`).Exec()
-	if err != nil {
-		panic(err)
-	}
 	log.Print("success to connect cassandra")
 
 	clientOption := valkey.ClientOption{

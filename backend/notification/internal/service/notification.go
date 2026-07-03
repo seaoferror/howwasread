@@ -28,9 +28,9 @@ func (s *Service) PreprocessNotification(
 	var em sync.Mutex
 	var es []error
 	var wg sync.WaitGroup
-	apntm := make(map[string]uuid.UUIDs)
+	apntm := make(map[string]uuid.UUID)
 	var am sync.Mutex
-	fcmtm := make(map[string]uuid.UUIDs)
+	fcmtm := make(map[string]uuid.UUID)
 	var fm sync.Mutex
 	for _, toId := range toIds {
 		wg.Add(1)
@@ -48,12 +48,12 @@ func (s *Service) PreprocessNotification(
 			for _, d := range result {
 				if d.OS == "ios" {
 					am.Lock()
-					apntm[d.DevicePushToken] = uuid.UUIDs{uuid.UUID(d.Id), uuid.UUID(d.DeviceId)}
+					apntm[d.DevicePushToken] = uuid.UUID(d.Id)
 					am.Unlock()
 					return
 				}
 				fm.Lock()
-				fcmtm[d.DevicePushToken] = uuid.UUIDs{uuid.UUID(d.Id), uuid.UUID(d.DeviceId)}
+				fcmtm[d.DevicePushToken] = uuid.UUID(d.Id)
 				fm.Unlock()
 			}
 		}()

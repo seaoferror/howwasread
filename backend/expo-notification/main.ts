@@ -6,7 +6,7 @@ import {
 import { extractData } from "@/util";
 import { sendPushNotification } from "@/service";
 import Expo from "expo-server-sdk";
-import { removePushTokenByIdAndDeviceId } from "@/db";
+import { removeNotificationInfoByIdAndToken } from "@/db";
 
 async function main() {
   const expo = new Expo();
@@ -36,7 +36,7 @@ async function main() {
         if (did) {
           return;
         }
-        const failedIdPairs = await sendPushNotification(
+        const failedTokenMap = await sendPushNotification(
           expo,
           () => valkey.sadd(key, [member]),
           value.tokenMap,
@@ -45,19 +45,19 @@ async function main() {
           value.text,
           value.imageURL,
         );
-        if (failedIdPairs.length > 0) {
+        if (Object.keys(failedTokenMap).length > 0) {
           await Promise.all(
-            failedIdPairs.map((failedIdPair) => {
-              return removePushTokenByIdAndDeviceId(
+            Object.entries(failedTokenMap).map(([token, id]) => {
+              return removeNotificationInfoByIdAndToken(
                 cassandra,
-                failedIdPair[0],
-                failedIdPair[1],
+                id,
+                token,
               );
             }),
           );
         }
       } catch (error) {
-        console.log("Error message: ",error);
+        console.log("Error message: ", error);
       }
     },
   });

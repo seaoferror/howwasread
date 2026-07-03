@@ -1,16 +1,16 @@
 import { type Client } from "cassandra-driver";
 
-export async function removePushTokenByIdAndDeviceId(
+export async function removeNotificationInfoByIdAndToken(
   cassandra: Client,
   id: string,
-  deviceId: string,
+  token: string,
 ) {
   await cassandra.execute(
     `DELETE
-         FROM device_push_token_by_id
+         FROM notification_info_by_id
          WHERE id = ?
-           AND device_id = ?`,
-    [id, deviceId],
+           AND device_push_token = ?`,
+    [id, token],
     {
       prepare: true,
     },

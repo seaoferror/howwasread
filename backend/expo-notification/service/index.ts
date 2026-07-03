@@ -4,12 +4,12 @@ import { makeMessage } from "@/util";
 export async function sendPushNotification(
   expo: Expo,
   markNotification: () => Promise<number>,
-  tokenMap: Record<string, string[]>,
+  tokenMap: Record<string, string>,
   roomName: string | undefined,
   senderName: string,
   text: string,
   imageURL: string | undefined,
-) {
+): Promise<Record<string, string>> {
   const message = makeMessage(senderName, text, imageURL, roomName);
   const tickets = await expo.sendPushNotificationsAsync(
     Object.keys(tokenMap).map((token) => {
@@ -18,17 +18,17 @@ export async function sendPushNotification(
     }),
   );
   await markNotification();
-  return tickets.flatMap((ticket) => {
+  const failedTokenMap: Record<string, string> = {}
+  tickets.flatMap((ticket) => {
     if (
-      ticket.status !== "ok" &&
-      ticket.details &&
-      ticket.details.error === "DeviceNotRegistered"
+      ticket.status != "ok" &&
+      ticket.details?.error === "DeviceNotRegistered"
     ) {
-      const failedToken = ticket.details.expoPushToken;
-      return failedToken && tokenMap[failedToken]
-        ? [tokenMap[failedToken]]
-        : [];
+      if(ticket.details.expoPushToken) {
+        const failedToken = ticket.details.expoPushToken;
+        failedTokenMap[failedToken] = tokenMap[failedToken];
+      }
     }
-    return [];
   });
+  return failedTokenMap;
 }

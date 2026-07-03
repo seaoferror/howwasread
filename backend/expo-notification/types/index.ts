@@ -1,5 +1,5 @@
 export interface NotificationMessage {
-  tokenMap: Record<string, string[]>;
+  tokenMap: Record<string, string>;
   roomName?: string;
   senderName: string;
   text: string;

@@ -33,11 +33,11 @@ type PreparedMessage struct {
 }
 
 type NotificationMessage struct {
-	TokenMap   map[string]uuid.UUIDs `json:"tokenMap"`
-	RoomName   string                `json:"roomName,omitempty"`
-	SenderName string                `json:"senderName"`
-	Text       string                `json:"text"`
-	ImageURL   string                `json:"imageURL,omitempty"`
+	TokenMap   map[string]uuid.UUID `json:"tokenMap"`
+	RoomName   string               `json:"roomName,omitempty"`
+	SenderName string               `json:"senderName"`
+	Text       string               `json:"text"`
+	ImageURL   string               `json:"imageURL,omitempty"`
 }
 
 func Marshal(v any) []byte {
