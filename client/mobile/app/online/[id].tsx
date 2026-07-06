@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import {
   colors,
   queryKey,
@@ -57,12 +57,14 @@ export default function OnlineConversationScreen() {
     when,
     length,
     isModerator,
+    isPersonal,
   } = useLocalSearchParams();
   const { showActionSheetWithOptions } = useActionSheet();
   const coordinates = SEAT_COORDINATES[Number(capacity)];
   const fillOrder = SEAT_FILL_ORDER[Number(capacity)];
   const sendMessageMutation = useSendMessage();
   const banParticipantMutation = useBanParticipant();
+  const navigation = useNavigation();
 
   const [seatAssignments, setSeatAssignments] = useState<SeatAssignment[]>([]);
   const [mute, setMute] = useState<boolean>(false);
@@ -389,23 +391,33 @@ export default function OnlineConversationScreen() {
     };
   }, [profile]);
 
+  useEffect(() => {
+    navigation.setOptions({
+      title: isPersonal && "Voice call",
+      headerTransparent: !isPersonal,
+      headerShown: true
+    });
+  }, [isPersonal]);
+
   if (!profile) {
     return null;
   }
 
   return (
     <SafeAreaView style={styles.container}>
-      <OnlineConversationRoomHeader
-        novel={String(novel)}
-        shortStory={String(shortStory)}
-        poem={String(poem)}
-        play={String(play)}
-        film={String(film)}
-        by={String(by)}
-        rule={String(rule)}
-        when={String(when)}
-        length={String(length)}
-      />
+      {!isPersonal && (
+        <OnlineConversationRoomHeader
+          novel={String(novel)}
+          shortStory={String(shortStory)}
+          poem={String(poem)}
+          play={String(play)}
+          film={String(film)}
+          by={String(by)}
+          rule={String(rule)}
+          when={String(when)}
+          length={String(length)}
+        />
+      )}
       <View style={styles.participantContainer}>
         <View style={styles.participantArea}>
           {seatAssignments.map((seat, idx) => (

@@ -17,10 +17,13 @@ import MessageInput from "@/components/chat/MessageInput";
 import useKeyboard from "@/hooks/useKeyboard";
 import { useEffect } from "react";
 import { getKVStore } from "@/db/storage";
+import { Ionicons } from "@expo/vector-icons";
+import { useGetMyProfile } from "@/hooks/useProfile";
 
 export default function ChatScreen() {
   const { id: roomId } = useLocalSearchParams();
   const { data: roomInfo } = useGetChatRoomInfo(String(roomId));
+  const { data: myProfile } = useGetMyProfile();
   const { isKeyboardVisible } = useKeyboard();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -53,6 +56,27 @@ export default function ChatScreen() {
           </Text>
         </Pressable>
       ),
+      headerRight: () =>
+        isPersonal &&
+        myProfile && (
+          <Pressable
+            onPress={() => {
+              const conversationId =
+                myProfile.id > roomId
+                  ? `${roomId}${myProfile.id}`
+                  : `${myProfile.id}${roomId}`;
+              router.push({
+                pathname: "/online/[id]",
+                params: {
+                  id: conversationId,
+                  capacity: "2",
+                },
+              });
+            }}
+          >
+            <Ionicons name="call-outline" size={28} color="black" />
+          </Pressable>
+        ),
     });
   }, [roomInfo]);
 

@@ -21,7 +21,6 @@ export default function OnlineLayout() {
         name="[id]"
         options={{
           title: "",
-          headerShown: false,
           headerLeft: () => (
             <Pressable onPress={() => router.back()}>
               <Ionicons name="chevron-back" size={28} color="black" />
