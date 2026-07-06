@@ -107,18 +107,18 @@ func (s *Service) GetConversations(ctx context.Context, memberId uuid.UUID, page
 	return resp, nil
 }
 
-func (s *Service) GetParticipants(ctx context.Context, conversationId bson.ObjectID, memberId uuid.UUID) (pids []uuid.UUID, err error) {
-	pidsRaw, err := s.repository.FindParticipantIds(ctx, conversationId)
+func (s *Service) GetParticipantsWithoutMe(ctx context.Context, conversationId string, memberId uuid.UUID) (pids []uuid.UUID, err error) {
+	pidRaws, err := s.repository.FindParticipantIds(ctx, conversationId)
 	if err != nil {
 		return nil, err
 	}
-	for _, pidRaw := range pidsRaw {
-		pid, err := uuid.FromBytes(pidRaw.Data)
-		if err != nil {
+	for _, pidRaw := range pidRaws {
+		pid, err1 := uuid.Parse(pidRaw)
+		if err1 != nil {
 			slog.Error("fail to parse uuid from pidRaw",
-				"err", err,
-				"pidRaw.Data", pidRaw.Data)
-			return nil, err
+				"err", err1,
+				"pidRaw", pidRaw)
+			return nil, err1
 		}
 		if memberId == pid {
 			continue
@@ -128,7 +128,7 @@ func (s *Service) GetParticipants(ctx context.Context, conversationId bson.Objec
 	return pids, nil
 }
 
-func (s *Service) AddParticipant(ctx context.Context, conversationId bson.ObjectID, memberId uuid.UUID) error {
+func (s *Service) AddParticipant(ctx context.Context, conversationId string, memberId uuid.UUID) error {
 	err := s.repository.AddParticipantId(ctx, conversationId, memberId)
 	if err != nil {
 		return err
@@ -136,7 +136,7 @@ func (s *Service) AddParticipant(ctx context.Context, conversationId bson.Object
 	return nil
 }
 
-func (s *Service) RemoveParticipant(ctx context.Context, conversationId bson.ObjectID, memberId uuid.UUID) error {
+func (s *Service) RemoveParticipant(ctx context.Context, conversationId string, memberId uuid.UUID) error {
 	err := s.repository.RemoveParticipantId(ctx, conversationId, memberId)
 	if err != nil {
 		return err

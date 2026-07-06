@@ -110,41 +110,39 @@ func (r *Repository) FindConversations(ctx context.Context, page int) ([]documen
 	return items, nil
 }
 
-func (r *Repository) FindParticipantIds(ctx context.Context, conversationId bson.ObjectID) ([]bson.Binary, error) {
-	opts := options.FindOne().SetProjection(bson.M{"p_ids": 1})
-
-	var d document.Conversation
-	err := r.db.Collection("conversation").FindOne(ctx, bson.M{"_id": conversationId}, opts).Decode(&d)
-	if err != nil {
-		slog.Error("fail to find p", "err", err)
+func (r *Repository) FindParticipantIds(ctx context.Context, conversationId string) ([]string, error) {
+	result := r.valkeyClient.Do(ctx, r.valkeyClient.B().Smembers().Key(conversationId).Build())
+	if result.Error() != nil {
+		slog.Error("fail to get member ip", "err", result.Error())
+		return nil, result.Error()
 	}
-	return d.ParticipantIds, nil
+	value, err := result.AsStrSlice()
+	if err != nil {
+		slog.Error("fail to get ips value string slice", "err", err)
+	}
+	return value, nil
 }
 
-func (r *Repository) AddParticipantId(ctx context.Context, conversationId bson.ObjectID, memberId uuid.UUID) error {
-	_, err := r.db.Collection("conversation").
-		UpdateOne(ctx, bson.M{"_id": conversationId},
-			bson.M{"$push": bson.M{"p_ids": bson.Binary{4, memberId[:]}}})
-	if err != nil {
+func (r *Repository) AddParticipantId(ctx context.Context, conversationId string, memberId uuid.UUID) error {
+	result := r.valkeyClient.Do(ctx, r.valkeyClient.B().Sadd().Key(conversationId).Member(string(memberId[:])).Build())
+	if result.Error() != nil {
 		slog.Error("fail to add participant member id to conversation",
-			"err", err,
+			"err", result.Error(),
 			"conversationId", conversationId,
 			"memberId", memberId)
-		return err
+		return result.Error()
 	}
 	return nil
 }
 
-func (r *Repository) RemoveParticipantId(ctx context.Context, conversationId bson.ObjectID, memberId uuid.UUID) error {
-	_, err := r.db.Collection("conversation").
-		UpdateOne(ctx, bson.M{"_id": conversationId},
-			bson.M{"$pull": bson.M{"p_ids": bson.Binary{4, memberId[:]}}})
-	if err != nil {
+func (r *Repository) RemoveParticipantId(ctx context.Context, conversationId string, memberId uuid.UUID) error {
+	result := r.valkeyClient.Do(ctx, r.valkeyClient.B().Srem().Key(conversationId).Member(string(memberId[:])).Build())
+	if result.Error() != nil {
 		slog.Error("fail to remove participant member id to conversation",
-			"err", err,
+			"err", result.Error(),
 			"conversationId", conversationId,
 			"memberId", memberId)
-		return err
+		return result.Error()
 	}
 	return nil
 }

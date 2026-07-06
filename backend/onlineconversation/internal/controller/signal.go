@@ -13,7 +13,6 @@ import (
 
 	"github.com/coder/websocket"
 	"github.com/google/uuid"
-	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
@@ -27,15 +26,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 		handleError(w, errors.New("fail to parse"))
 		return
 	}
-	conversationIdRaw := r.URL.Query().Get("id")
-	conversationId, err := bson.ObjectIDFromHex(conversationIdRaw)
-	if err != nil {
-		slog.Error("fail to parse conversation object id from raw string",
-			"conversationIdRaw", conversationIdRaw)
-		handleError(w, errors.New("fail to parse"))
-		return
-	}
-
+	conversationId := r.URL.Query().Get("id")
 	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 		InsecureSkipVerify: false,
 	})
@@ -71,7 +62,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 		handleWebsocketError(init, conn, err)
 		return
 	}
-	pids, err := c.service.GetParticipants(init, conversationId, memberId)
+	pids, err := c.service.GetParticipantsWithoutMe(init, conversationId, memberId)
 	if err != nil {
 		handleWebsocketError(init, conn, err)
 		return
