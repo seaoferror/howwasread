@@ -70,6 +70,7 @@ export default function ChatScreen() {
                 params: {
                   id: conversationId,
                   capacity: "2",
+                  isPersonal: "true"
                 },
               });
             }}

@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import {
   colors,
@@ -392,10 +392,17 @@ export default function OnlineConversationScreen() {
   }, [profile]);
 
   useEffect(() => {
+    if (!isPersonal){
+      return
+    }
     navigation.setOptions({
-      title: isPersonal && "Voice call",
-      headerTransparent: !isPersonal,
-      headerShown: true
+      title: "Voice call",
+      headerShown: true,
+      headerLeft: () => (
+        <Pressable onPress={() => router.back()}>
+          <Ionicons name="chevron-back" size={28} color="black" />
+        </Pressable>
+      ),
     });
   }, [isPersonal]);
 

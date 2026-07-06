@@ -1,11 +1,4 @@
-import {
-  Platform,
-  Pressable,
-  StatusBar,
-  StyleSheet,
-  Text,
-  View,
-} from "react-native";
+import { Platform, StatusBar, StyleSheet, Text, View } from "react-native";
 import { useState } from "react";
 import { colors } from "@/constants";
 import { Feather, SimpleLineIcons } from "@expo/vector-icons";
@@ -87,7 +80,7 @@ export default function OnlineConversationRoomHeader({
                 name="arrow-left"
                 size={28}
                 color={colors.BLACK}
-                onPress={() => router.replace("/conversations")}
+                onPress={() => router.back()}
               />
             </View>
             <View style={styles.headerCenter}>
