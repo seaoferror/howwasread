@@ -16,6 +16,7 @@ spec:
     metadata:
       labels:
         app: {{ $name }}
+        framework: {{ $app.framework | default "none" }}
     spec:
       containers:
         - name: {{ $name }}

@@ -201,10 +201,8 @@ apps:
     twilio: false
     firebase: false
     valkey: true
+    framework: spring-boot
 #    cpuRequests: "0.3"
 #    memoryRequests: "100Mi"
 #    cpuLimits: "0.4"
 #    memoryLimits: "100Mi"
-
-
-
