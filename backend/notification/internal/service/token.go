@@ -14,7 +14,7 @@ func (s *Service) RegisterNotification(ctx context.Context, id uuid.UUID, os, to
 	old, err := s.repository.FindMemberIdByToken(ctx, token)
 	if errors.Is(err, gocql.ErrNotFound) {
 		err = nil
-		err = s.repository.UpdateMemberIdByToken(ctx, token, id)
+		err = s.repository.UpdateMemberIdByToken(ctx, token, gocql.UUID(id))
 		if err != nil {
 			return err
 		}
@@ -29,7 +29,7 @@ func (s *Service) RegisterNotification(ctx context.Context, id uuid.UUID, os, to
 		if err != nil {
 			return err
 		}
-		err = s.repository.UpdateMemberIdByToken(ctx, token, id)
+		err = s.repository.UpdateMemberIdByToken(ctx, token, gocql.UUID(id))
 		if err != nil {
 			return err
 		}

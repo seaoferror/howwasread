@@ -6,7 +6,6 @@ import (
 	"log/slog"
 
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
-	"github.com/google/uuid"
 )
 
 func (r *Repository) SaveNotificationInfoById(ctx context.Context, id gocql.UUID, os, token string) error {
@@ -39,16 +38,16 @@ func (r *Repository) FindPushTokensById(ctx context.Context, id gocql.UUID) (res
 	return result, nil
 }
 
-func (r *Repository) FindMemberIdByToken(ctx context.Context, token string) (id uuid.UUID, err error) {
+func (r *Repository) FindMemberIdByToken(ctx context.Context, token string) (id gocql.UUID, err error) {
 	err = r.session.Query(`SELECT id FROM id_by_device_push_token WHERE device_push_token = ?`, token).
 		ScanContext(ctx, &id)
 	if err != nil {
-		return uuid.Nil, err
+		return gocql.UUID{}, err
 	}
 	return id, nil
 }
 
-func (r *Repository) UpdateMemberIdByToken(ctx context.Context, token string, id uuid.UUID) error {
+func (r *Repository) UpdateMemberIdByToken(ctx context.Context, token string, id gocql.UUID) error {
 	err := r.session.Query(`INSERT INTO id_by_device_push_token (id, device_push_token) VALUES (?, ?)`, id, token).
 		ExecContext(ctx)
 	if err != nil {
@@ -60,7 +59,7 @@ func (r *Repository) UpdateMemberIdByToken(ctx context.Context, token string, id
 	return nil
 }
 
-func (r *Repository) DeleteNotificationInfoByIdAndToken(ctx context.Context, id uuid.UUID, token string) error {
+func (r *Repository) DeleteNotificationInfoByIdAndToken(ctx context.Context, id gocql.UUID, token string) error {
 	err := r.session.Query(`DELETE FROM notification_info_by_id WHERE id = ? AND device_push_token = ?`, id, token).
 		ExecContext(ctx)
 	if err != nil {

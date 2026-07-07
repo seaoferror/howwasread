@@ -107,13 +107,14 @@ func (s *Service) GetConversations(ctx context.Context, memberId uuid.UUID, page
 	return resp, nil
 }
 
-func (s *Service) GetParticipantsWithoutMe(ctx context.Context, conversationId string, memberId uuid.UUID) (pids []uuid.UUID, err error) {
+func (s *Service) GetParticipantsWithoutMe(ctx context.Context, conversationId string, memberId uuid.UUID) ([]uuid.UUID, error) {
 	pidRaws, err := s.repository.FindParticipantIds(ctx, conversationId)
 	if err != nil {
 		return nil, err
 	}
+	pids := make([]uuid.UUID, 0, len(pidRaws))
 	for _, pidRaw := range pidRaws {
-		pid, err1 := uuid.Parse(pidRaw)
+		pid, err1 := uuid.FromBytes([]byte(pidRaw))
 		if err1 != nil {
 			slog.Error("fail to parse uuid from pidRaw",
 				"err", err1,
