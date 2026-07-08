@@ -2,6 +2,7 @@ package service
 
 import (
 	"backend/auth/internal/constant"
+	"context"
 	"crypto/rsa"
 	"log/slog"
 	"time"
@@ -133,7 +134,7 @@ func createTokenWithJTI(id, jti, role string, secretKey *rsa.PrivateKey, ttl int
 	return token, nil
 }
 
-func (s *Service) DeleteAccount(refreshToken string) error {
+func (s *Service) DeleteAccount(ctx context.Context, refreshToken string) error {
 	rt, err := jwt.Parse(refreshToken, func(token *jwt.Token) (any, error) {
 		if token.Method.Alg() != jwt.SigningMethodRS256.Alg() {
 			slog.Info("unexpected signing method")
@@ -187,7 +188,11 @@ func (s *Service) DeleteAccount(refreshToken string) error {
 		slog.Info("refresh token jti is not same with DB")
 		return err
 	}
-	err = s.repository.DeleteAccount(id)
+	phoneNumber, email, err := s.repository.FindEmailAndPhoneNumberById(ctx, id)
+	if err != nil {
+		return err
+	}
+	err = s.repository.DeleteAccount(ctx, id, email, phoneNumber)
 	if err != nil {
 		return err
 	}

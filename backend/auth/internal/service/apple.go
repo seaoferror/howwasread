@@ -13,7 +13,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) SignInWithApple(identityToken string, isFirstSignIn bool) (*dto.SignInWithThirdPartyResponse, string, error) {
+func (s *Service) SignInWithApple(ctx context.Context, identityToken string) (*dto.SignInWithThirdPartyResponse, string, error) {
 	idt, err := jwt.Parse(identityToken, s.appleKeyFunc)
 	if err != nil {
 		slog.Info("fail to parse identityToken with apple JWKs", "err", err)
@@ -73,63 +73,31 @@ func (s *Service) SignInWithApple(identityToken string, isFirstSignIn bool) (*dt
 	if err != nil {
 		return nil, "", ErrInternalServer
 	}
-	user, err := idt.Claims.GetSubject()
-	if err != nil {
-		slog.Info("fail to get subject",
-			"err", err,
-		)
-	}
 	email, ok := idt.Claims.(jwt.MapClaims)["email"].(string)
 	if !ok {
 		slog.Info("no email in claims")
 		return nil, "", ErrSignInWithApple
 	}
-	if isFirstSignIn {
-		emailVerified, phoneNumberVerified, id, _, role, err1 := s.repository.FindLoginInfoByEmail(email)
-		if errors.Is(err1, gocql.ErrNotFound) {
-			err1 = nil
-			idv7, err2 := uuid.NewV7()
-			if err2 != nil {
-				slog.Error("fail to create uuid v7 for apple sign in user")
-				return nil, "", ErrInternalServer
-			}
-			err = s.repository.SaveThirdPartySignInInfo(context.Background(), gocql.UUID(idv7), user, email, false, true, "apple")
-			if err != nil {
-				return nil, "", ErrInternalServer
-			}
-			return s.provideSessionId(email)
+	emailVerified, phoneNumberVerified, id, _, role, err1 := s.repository.FindLoginInfoByEmail(email)
+	if errors.Is(err1, gocql.ErrNotFound) {
+		err1 = nil
+		idv7, err2 := uuid.NewV7()
+		if err2 != nil {
+			slog.Error("fail to create uuid v7 for apple sign in user")
+			return nil, "", ErrInternalServer
 		}
-		if err1 != nil {
-			return nil, "", ErrSignInWithApple
-		}
-		err = s.repository.SaveThirdPartySignInInfo(context.Background(), id, user, email, phoneNumberVerified, emailVerified, "apple")
+		err = s.repository.SaveThirdPartySignInInfo(ctx, gocql.UUID(idv7), email, false, true)
 		if err != nil {
 			return nil, "", ErrInternalServer
 		}
-		if !phoneNumberVerified {
-			return s.provideSessionId(email)
-		}
-		return s.provideTokens(id, role)
+		return s.provideSessionId(email)
 	}
-	id, emailFromDB, role, err := s.repository.FindThirdPartySignInInfo(context.Background(), user, "apple")
-	if err != nil {
+	if err1 != nil {
 		return nil, "", ErrSignInWithApple
 	}
-	if emailFromDB != email {
-		err = s.repository.UpdateThirdPartyEmail(context.Background(), email, user, "apple")
-		if err != nil {
-			return nil, "", ErrInternalServer
-		}
-	}
-	//this additional fetching can be removed to improve speed little bit
-	//by adding few lines, but the advantage is also small currently and
-	//make link phone number process more complicate
-	phoneNumberVerified, err := s.repository.FindPhoneNumberVerifiedById(id)
-	if errors.Is(gocql.ErrNotFound, err) {
-		err = nil
-	}
+	err = s.repository.SaveThirdPartySignInInfo(ctx, id, email, phoneNumberVerified, emailVerified)
 	if err != nil {
-		return nil, "", ErrSignInWithApple
+		return nil, "", ErrInternalServer
 	}
 	if !phoneNumberVerified {
 		return s.provideSessionId(email)

@@ -78,20 +78,6 @@ func (r *Repository) LinkAndMarkVerifiedPhoneNumber(id gocql.UUID, email, phoneN
 	return nil
 }
 
-func (r *Repository) FindPhoneNumberVerifiedById(id gocql.UUID) (phoneNumberVerified bool, err error) {
-	err = r.session.Query(
-		"SELECT phone_number_verified FROM member_by_id WHERE id = ?",
-		id,
-	).Scan(&phoneNumberVerified)
-	if err != nil {
-		slog.Error("fail to find phone number verified by id",
-			"err", err,
-			"id", id.String())
-		return false, err
-	}
-	return phoneNumberVerified, nil
-}
-
 func (r *Repository) FindIdByPhoneNumber(phoneNumber string) (id gocql.UUID, err error) {
 	err = r.session.Query(
 		"SELECT id FROM member_by_phone_number WHERE phone_number = ?",
@@ -102,25 +88,6 @@ func (r *Repository) FindIdByPhoneNumber(phoneNumber string) (id gocql.UUID, err
 		return gocql.UUID{}, err
 	}
 	return id, nil
-}
-
-func (r *Repository) PhoneNumberExist(phoneNumber string) (bool, error) {
-	var c int64
-	err := r.session.Query(
-		"SELECT COUNT(1) FROM member_by_phone_number WHERE phone_number = ?",
-		phoneNumber,
-	).Scan(&c)
-	if c == 0 {
-		return false, nil
-	}
-	if err != nil {
-		slog.Error("fail to check phone number existence",
-			"err", err,
-			"phoneNumber", phoneNumber,
-		)
-		return true, err
-	}
-	return true, nil
 }
 
 func (r *Repository) FindEmailByPhoneNumber(phoneNumber string) (email string, err error) {

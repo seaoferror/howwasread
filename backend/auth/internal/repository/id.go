@@ -2,6 +2,7 @@ package repository
 
 import (
 	"backend/auth/internal/constant"
+	"context"
 	"log/slog"
 
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
@@ -35,11 +36,25 @@ func (r *Repository) SaveRefreshTokenJTIById(id, jti gocql.UUID) error {
 	return nil
 }
 
-func (r *Repository) DeleteAccount(id gocql.UUID) error {
+func (r *Repository) FindEmailAndPhoneNumberById(ctx context.Context, id gocql.UUID) (email, phoneNumber string, err error) {
+	err = r.session.Query("SELECT email, phone_number FROM member_by_id WHERE id = ?", id).
+		ScanContext(ctx, &email, &phoneNumber)
+	if err != nil {
+		slog.Error("fail to find email and phone number by id",
+			"err", err,
+			"id", id)
+		return "", "", err
+	}
+	return email, phoneNumber, nil
+}
+
+func (r *Repository) DeleteAccount(ctx context.Context, id gocql.UUID, email, phoneNumber string) error {
 	err := r.session.Batch(gocql.CounterBatch).
 		Query("DELETE FROM member_by_id WHERE id = ?", id).
 		Query("DELETE FROM profile_by_id WHERE id = ?", id).
-		Exec()
+		Query("DELETE FROM member_by_email WHERE email = ?", email).
+		Query("DELETE FROM member_by_phone_number WHERE phone_number = ?", phoneNumber).
+		ExecContext(ctx)
 	if err != nil {
 		slog.Error("fail to delete account",
 			"err", err,

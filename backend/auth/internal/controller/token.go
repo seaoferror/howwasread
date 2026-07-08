@@ -48,7 +48,7 @@ func (c *Controller) deleteAccount(w http.ResponseWriter, r *http.Request) {
 		handleError(w, err)
 		return
 	}
-	err = c.service.DeleteAccount(rt.Value)
+	err = c.service.DeleteAccount(r.Context(), rt.Value)
 	if err != nil {
 		handleError(w, err)
 		return

@@ -32,20 +32,6 @@ func (r *Repository) SaveEmailLoginInfo(id gocql.UUID, email, password string) e
 	return nil
 }
 
-func (r *Repository) FindEmailById(id gocql.UUID) (email string, err error) {
-	err = r.session.Query(
-		`SELECT email FROM member_by_id WHERE id = ?`,
-		id,
-	).Scan(&email)
-	if err != nil {
-		slog.Info("fail to get email from member_by_id",
-			"err", err,
-			"id", id)
-		return "", err
-	}
-	return email, nil
-}
-
 func (r *Repository) VerifiedEmailExists(ctx context.Context, email string) (bool, error) {
 	var emailVerified bool
 	err := r.session.Query(
@@ -177,18 +163,4 @@ func (r *Repository) FindEmailBySessionId(sessionId gocql.UUID) (email string, e
 		)
 	}
 	return email, nil
-}
-
-func (r *Repository) FindMemberInfoByEmail(email string) (id gocql.UUID, role string, err error) {
-	err = r.session.Query("SELECT id, role FROM member_by_email WHERE email = ?",
-		email,
-	).Scan(&id, &role)
-	if err != nil {
-		slog.Error("fail to select id at member_by_email",
-			"err", err,
-			"email", email,
-		)
-		return gocql.UUID{}, "", err
-	}
-	return id, role, nil
 }

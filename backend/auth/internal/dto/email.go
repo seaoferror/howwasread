@@ -2,9 +2,6 @@ package dto
 
 import "github.com/google/uuid"
 
-type CheckEmailRequest struct {
-	Email string `json:"email"`
-}
 type SignInWithEmailRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -25,7 +22,6 @@ type VerifyEmailOTPResponse struct {
 }
 
 type SignInWithAppleRequest struct {
-	IsFirstSignIn bool   `json:"isFirstSignIn"`
 	IdentityToken string `json:"identityToken"`
 }
 

@@ -97,8 +97,8 @@ func (c *Controller) signInWithApple(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	responseBody, rt, err := c.service.SignInWithApple(
+		r.Context(),
 		req.IdentityToken,
-		req.IsFirstSignIn,
 	)
 	if err != nil {
 		handleError(w, err)

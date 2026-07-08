@@ -42,14 +42,6 @@ func NewRepository() *Repository {
 		`CREATE TABLE IF NOT EXISTS member_by_phone_number (
 			phone_number text PRIMARY KEY, id uuid, email text, phone_number_verified boolean, role text
 		);`,
-		`CREATE TABLE IF NOT EXISTS member_by_third_party (
-    		provider_name text,
-    		third_party_id text,
-    		id uuid,
-    		email text,
-    		role text,
-    		PRIMARY KEY ((provider_name, third_party_id))
-		);`,
 		`CREATE TABLE IF NOT EXISTS member_by_verification_id (
 			verification_id uuid PRIMARY KEY, email text, phone_number text, otp text
 		);`,
