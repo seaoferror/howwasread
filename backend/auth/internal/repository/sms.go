@@ -124,3 +124,14 @@ func (r *Repository) ReplaceAndLinkMemberWithOldAccount(newId, oldAccountId gocq
 	}
 	return nil
 }
+
+func (r *Repository) WasBanned(phoneNumber string) error {
+	var p string
+	err := r.session.Query(`SELECT phone_number FROM banned_phone_number WHERE phone_number = ?`, phoneNumber).Scan(&p)
+	if err != nil {
+		slog.Info("fail to check whether phone number was banned",
+			"err", err)
+		return err
+	}
+	return nil
+}

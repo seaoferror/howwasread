@@ -17,6 +17,7 @@ func infoRouter(c *Controller) {
 	c.Router(GET, "/chat/room/info", c.getChatRoomInfo)
 	c.Router(GET, "/chat/block/check", c.checkBlock)
 	c.Router(GET, "/chat/participants", c.getChatParticipants)
+	c.Router(POST, "/chat/report/user", c.handleReportUser)
 }
 
 func (c *Controller) getChatRoomInfo(w http.ResponseWriter, r *http.Request) {
@@ -153,4 +154,29 @@ func (c *Controller) getChatParticipants(w http.ResponseWriter, r *http.Request)
 		slog.Error("fail to write response body",
 			"err", err)
 	}
+}
+
+func (c *Controller) handleReportUser(w http.ResponseWriter, r *http.Request) {
+	reporterId, err := uuid.Parse(r.Header.Get("X-User-Id"))
+	if err != nil {
+		slog.Error("fail to parse userId from X-User-Id header",
+			"err", err)
+		handleError(w, errors.New("fail to parse"))
+		return
+	}
+	var req dto.ReportUserRequest
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		slog.Info("incorrect body",
+			"err", err,
+		)
+		handleError(w, errors.New("fail to parse"))
+		return
+	}
+	err = c.service.HandleReportUser(r.Context(), reporterId, req.Id)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }

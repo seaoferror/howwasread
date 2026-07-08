@@ -55,26 +55,3 @@ func (s *Service) GetChatRoomInfo(ctx context.Context, id uuid.UUID) (*dto.GetCh
 	}
 	return &res, nil
 }
-
-func (s *Service) CheckBlock(ctx context.Context, blockerId uuid.UUID, blockedId uuid.UUID) (map[string]bool, error) {
-	w, err := s.repository.DidBlock(ctx, gocql.UUID(blockerId), gocql.UUID(blockedId))
-	if err != nil {
-		return nil, err
-	}
-	return map[string]bool{"didBlock": w}, nil
-}
-
-func (s *Service) GetChatParticipants(ctx context.Context, roomId uuid.UUID) ([]dto.GetProfileResponse, error) {
-	ps, err := s.repository.FindChatParticipantIds(ctx, gocql.UUID(roomId))
-	if err != nil {
-		return nil, err
-	}
-	res := make([]dto.GetProfileResponse, 0)
-	for _, p := range ps {
-		if p == (gocql.UUID{}) {
-			continue
-		}
-		res = append(res, dto.GetProfileResponse{Id: uuid.UUID(p)})
-	}
-	return res, nil
-}

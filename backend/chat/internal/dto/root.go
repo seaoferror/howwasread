@@ -45,3 +45,7 @@ type GeneratePresignedURLResponse struct {
 	URL      string            `json:"url"`
 	Fields   map[string]string `json:"fields"`
 }
+
+type ReportUserRequest struct {
+	Id uuid.UUID `json:"id"`
+}

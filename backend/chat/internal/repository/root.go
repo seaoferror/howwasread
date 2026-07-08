@@ -64,6 +64,10 @@ func NewRepository() *Repository {
 	if err != nil {
 		log.Panicf("fail to create table chat_room_by_id: %v", err)
 	}
+	err = session.Query(`CREATE TABLE IF NOT EXISTS banned_phone_number (
+    phone_number string,
+    PRIMARY KEY (phone_number)
+    );`).Exec()
 	log.Print("success to connect cassandra")
 
 	clientOption := valkey.ClientOption{

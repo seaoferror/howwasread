@@ -15,6 +15,16 @@ import (
 )
 
 func (s *Service) SendSMSOTP(sessionId uuid.UUID, phoneNumber string) (map[string]uuid.UUID, error) {
+	err := s.repository.WasBanned(phoneNumber)
+	if err == nil {
+		return nil, errors.New("this phone number is not usable")
+	}
+	if errors.Is(err, gocql.ErrNotFound) {
+		err = nil
+	}
+	if err != nil {
+		return nil, ErrInternalServer
+	}
 	if sessionId == uuid.Nil {
 		email, err := s.repository.FindEmailByPhoneNumber(phoneNumber)
 		if errors.Is(err, gocql.ErrNotFound) {

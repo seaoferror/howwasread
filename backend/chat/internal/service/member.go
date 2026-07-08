@@ -1,8 +1,10 @@
 package service
 
 import (
+	"backend/chat/internal/dto"
 	"context"
 
+	gocql "github.com/apache/cassandra-gocql-driver/v2"
 	"github.com/google/uuid"
 )
 
@@ -18,6 +20,55 @@ func (s *Service) RemoveServerIP(ctx context.Context, memberId []byte, ip string
 	err := s.repository.RemoveServerIP(ctx, string(memberId), ip)
 	if err != nil {
 		return err
+	}
+	return nil
+}
+
+func (s *Service) CheckBlock(ctx context.Context, blockerId uuid.UUID, blockedId uuid.UUID) (map[string]bool, error) {
+	w, err := s.repository.DidBlock(ctx, gocql.UUID(blockerId), gocql.UUID(blockedId))
+	if err != nil {
+		return nil, err
+	}
+	return map[string]bool{"didBlock": w}, nil
+}
+
+func (s *Service) GetChatParticipants(ctx context.Context, roomId uuid.UUID) ([]dto.GetProfileResponse, error) {
+	ps, err := s.repository.FindChatParticipantIds(ctx, gocql.UUID(roomId))
+	if err != nil {
+		return nil, err
+	}
+	res := make([]dto.GetProfileResponse, 0)
+	for _, p := range ps {
+		if p == (gocql.UUID{}) {
+			continue
+		}
+		res = append(res, dto.GetProfileResponse{Id: uuid.UUID(p)})
+	}
+	return res, nil
+}
+
+func (s *Service) HandleReportUser(ctx context.Context, reporterId, reportedId uuid.UUID) error {
+	err := s.repository.AddReporterIdByReportedId(ctx, gocql.UUID(reporterId), gocql.UUID(reportedId))
+	if err != nil {
+		return err
+	}
+	rc, err := s.repository.FindReportCountById(ctx, gocql.UUID(reportedId))
+	if err != nil {
+		return err
+	}
+	if rc > 5 {
+		email, phoneNumber, err1 := s.repository.FindEmailAndPhoneNumberById(ctx, gocql.UUID(reportedId))
+		if err1 != nil {
+			return err1
+		}
+		err = s.repository.DeleteAccount(ctx, gocql.UUID(reportedId), email, phoneNumber)
+		if err != nil {
+			return err
+		}
+		err = s.repository.BanPhoneNumber(ctx, phoneNumber)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
