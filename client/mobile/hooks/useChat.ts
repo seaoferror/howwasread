@@ -3,7 +3,7 @@ import {
   checkBlock,
   generatePresignedURL,
   getChatParticipants,
-  getChatRoomInfo,
+  getChatRoomInfo, reportUser,
   sendMessage,
 } from "@/api/chat";
 import { AxiosError } from "axios";
@@ -72,5 +72,18 @@ export function useGetChatParticipants(roomId: string) {
   return useQuery({
     queryFn: () => getChatParticipants(roomId),
     queryKey: [queryKey.CHAT, queryKey.GET_CHAT_PARTICIPANT_IDS],
+  });
+}
+
+export function useReportUser() {
+  return useMutation({
+    mutationFn: reportUser,
+    onError: (error: AxiosError) => {
+      console.log(error?.response?.data);
+      Toast.show({
+        type: "error",
+        text1: String(error?.response?.data),
+      });
+    },
   });
 }

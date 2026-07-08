@@ -92,6 +92,11 @@ export async function getChatParticipants(
   const { data } = await axiosInstance.get(
     `/chat/participants?roomId=${roomId}`,
   );
-  console.log(data)
+  console.log(data);
+  return data;
+}
+
+export async function reportUser(body: { id: string }): Promise<void> {
+  const { data } = await axiosInstance.post(`/chat/report/user`, body);
   return data;
 }

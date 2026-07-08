@@ -10,6 +10,12 @@ export default function ProfileLayout() {
           headerShown: true,
         }}
       />
+      <Stack.Screen
+        name="term-of-use"
+        options={{
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }

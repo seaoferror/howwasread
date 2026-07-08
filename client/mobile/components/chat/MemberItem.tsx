@@ -3,11 +3,49 @@ import { useGetProfile } from "@/hooks/useProfile";
 import { getKVStore } from "@/db/storage";
 import { colors } from "@/constants";
 import { router } from "expo-router";
+import { useActionSheet } from "@expo/react-native-action-sheet";
+import { useReportUser } from "@/hooks/useChat";
+import Toast from "react-native-toast-message";
 
 export default function MemberItem({ id }: { id: string }) {
   const { data } = useGetProfile(id);
+  const { showActionSheetWithOptions } = useActionSheet();
+  const reportUserMutation = useReportUser();
 
   const displayName = data?.name || getKVStore(id);
+
+  function handleLongPress() {
+    showActionSheetWithOptions(
+      {
+        options: ["Report", "Cancel"],
+        destructiveButtonIndex: 0,
+        cancelButtonIndex: 1,
+      },
+      (selectedIndex?: number) => {
+        console.log(selectedIndex);
+        switch (selectedIndex) {
+          case 0:
+            reportUserMutation.mutate(
+              {
+                id,
+              },
+              {
+                onSuccess: () => {
+                  Toast.show({
+                    type: "info",
+                    text1: "Success report",
+                    text2: "We will review this user, sorry for inconvenience.",
+                  });
+                },
+              },
+            );
+            break;
+          case 1:
+            break;
+        }
+      },
+    );
+  }
 
   return (
     <Pressable
@@ -15,6 +53,7 @@ export default function MemberItem({ id }: { id: string }) {
       onPress={() =>
         router.push({ pathname: "/chat/[id]", params: { id: id } })
       }
+      onLongPress={() => handleLongPress()}
     >
       <View style={styles.avatar}>
         <Text style={styles.avatarText}>

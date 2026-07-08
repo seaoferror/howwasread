@@ -34,7 +34,6 @@ export interface LoginWithEmailResponse {
 }
 
 export interface SignInWithAppleRequest {
-  isFirstSignIn: boolean;
   identityToken: string;
 }
 

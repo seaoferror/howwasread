@@ -27,7 +27,6 @@ export default function AppleSignInButton() {
     }
     signInWithAppleMutation.mutate(
       {
-        isFirstSignIn: !!credential.email,
         identityToken: idt,
       },
       {

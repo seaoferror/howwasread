@@ -82,19 +82,19 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "The app accesses your photos to let you share them with your friends."
+          "photosPermission": "We accesses your photos to let you share them with your friends."
         }
       ],
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
+          "locationAlwaysAndWhenInUsePermission": "We accesses your location to let you see around nearby conversations."
         }
       ],
       [
         "expo-audio",
         {
-          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone.",
+          "microphonePermission": "We accesses your microphone to let you able to call or send voice message to your friends.",
           "enableBackgroundPlayback": true,
           "enableBackgroundRecording": true
         }
@@ -127,7 +127,7 @@
         "@config-plugins/react-native-webrtc",
         {
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
-          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
+          "microphonePermission": "We accesses your microphone to let you exchange ideas with your friends over voice calls.",
           "enableBackgroundPlayback": true,
           "enableBackgroundRecording": true
         }
@@ -145,7 +145,7 @@
         "expo-maps",
         {
           "requestLocationPermission": true,
-          "locationPermission": "Allow $(PRODUCT_NAME) to use your location"
+          "locationPermission": "We accesses your location to let you see around nearby conversations."
         }
       ],
       [

@@ -5,6 +5,7 @@ import { router } from "expo-router";
 import {
   useCheckBlock,
   useGetChatRoomInfo,
+  useReportUser,
   useSendMessage,
 } from "@/hooks/useChat";
 import { useGetProfile } from "@/hooks/useProfile";
@@ -12,6 +13,7 @@ import { formatPreviewDate } from "@/util/time";
 import { useEffect } from "react";
 import { getKVStore, setKVStore } from "@/db/storage";
 import { useActionSheet } from "@expo/react-native-action-sheet";
+import Toast from "react-native-toast-message";
 
 interface ChatPreviewItemProps {
   preview: Message;
@@ -27,6 +29,7 @@ export default function ChatPreviewItem({
   const { data } = useCheckBlock(preview.roomId);
   const { showActionSheetWithOptions } = useActionSheet();
   const sendMessageMutation = useSendMessage();
+  const reportUserMutation = useReportUser();
 
   useEffect(() => {
     if (roomInfo) {
@@ -43,19 +46,19 @@ export default function ChatPreviewItem({
       return;
     }
     const roomType = roomInfo.type;
-    const opponentName = fromProfile.name;
     showActionSheetWithOptions(
       {
-        title:
-          roomType === "personal"
-            ? opponentName
-            : `Quit from the group chat room of ${roomInfo.name}`,
         options:
           roomType === "personal"
-            ? ["Quit", data?.didBlock ? "Unblock" : "Block", "Cancel"]
+            ? [
+                "Delete",
+                data?.didBlock ? "Report" : "Block and Report",
+                data?.didBlock ? "Unblock" : "Block",
+                "Cancel",
+              ]
             : [`Quit`, "Cancel"],
         destructiveButtonIndex: roomType === "personal" ? [0, 1] : 0,
-        cancelButtonIndex: 2,
+        cancelButtonIndex: roomType === "personal" ? 4 : 3,
       },
       (selectedIndex?: number) => {
         console.log(selectedIndex);
@@ -76,6 +79,33 @@ export default function ChatPreviewItem({
             );
             break;
           case 1:
+            if (roomType !== "personal") {
+              return;
+            }
+            if (!data?.didBlock) {
+              sendMessageMutation.mutate({
+                toIdType: roomType,
+                toId: preview.roomId,
+                contentType: "block",
+                contents: [],
+              });
+            }
+            reportUserMutation.mutate(
+              {
+                id: preview.roomId,
+              },
+              {
+                onSuccess: () => {
+                  Toast.show({
+                    type: "info",
+                    text1: "Success report",
+                    text2: "We will review this user, sorry for inconvenience.",
+                  });
+                },
+              },
+            );
+            break;
+          case 2:
             roomType === "personal" &&
               sendMessageMutation.mutate({
                 toIdType: roomType,
@@ -84,7 +114,7 @@ export default function ChatPreviewItem({
                 contents: [],
               });
             break;
-          case 2:
+          case 3:
             break;
         }
       },
