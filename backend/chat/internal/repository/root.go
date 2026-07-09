@@ -49,6 +49,7 @@ func NewRepository() *Repository {
 	err = session.Query(`CREATE TABLE IF NOT EXISTS profile_by_id (
     id uuid,
     name text,
+    reporter_ids set<uuid>,
     PRIMARY KEY (id)
     );`).Exec()
 	if err != nil {

@@ -73,7 +73,7 @@ func (r *Repository) FindChatParticipantIds(ctx context.Context, roomId gocql.UU
 }
 
 func (r *Repository) AddReporterIdByReportedId(ctx context.Context, reporterId gocql.UUID, reportedId gocql.UUID) error {
-	err := r.session.Query(`UPDATE reporter_ids USING TTL ? SET reporter_ids = reporter_ids + ? WHERE reported_id = ?`,
+	err := r.session.Query(`UPDATE profile_by_id USING TTL ? SET reporter_ids = reporter_ids + ? WHERE id = ?`,
 		30*24*60*60, []gocql.UUID{reporterId}, reportedId).ExecContext(ctx)
 	if err != nil {
 		slog.Error("fail to add reporter id by reported id",
@@ -87,7 +87,7 @@ func (r *Repository) AddReporterIdByReportedId(ctx context.Context, reporterId g
 
 func (r *Repository) FindReportCountById(ctx context.Context, reportedId gocql.UUID) (count int, err error) {
 	err = r.session.Query(
-		`SELECT collection_count(reporter_ids) FROM reporter_ids WHERE reported_id = ?`,
+		`SELECT collection_count(reporter_ids) FROM profile_by_id WHERE id = ?`,
 		reportedId,
 	).ScanContext(ctx, &count)
 	if err != nil {
