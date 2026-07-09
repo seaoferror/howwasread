@@ -1,59 +1,54 @@
 import { StyleSheet, View } from "react-native";
 import { FormProvider, useForm } from "react-hook-form";
-import EmailInput from "@/components/auth/EmailInput";
 import PasswordInput from "@/components/auth/PasswordInput";
 import PasswordConfirmInput from "@/components/auth/PasswordConfirmInput";
-import { useSignupWithEmail } from "@/hooks/useAuth";
 import { colors } from "@/constants";
 import { router } from "expo-router";
 import CustomButton from "@/components/CustomButton";
+import { getSecureAsync } from "@/db/storage";
+import { useSetNewPassword } from "@/hooks/useAuth";
 
 interface FormValue {
-  email: string;
   password: string;
   passwordConfirm: string;
 }
 
-export default function SignupScreen() {
-  const signUpWithEmailMutation = useSignupWithEmail();
+export default function SetNewPasswordScreen() {
+  const setNewPasswordMutation = useSetNewPassword();
 
-  const emailSignupForm = useForm<FormValue>({
+  const passwordForm = useForm<FormValue>({
     defaultValues: {
-      email: "",
       password: "",
       passwordConfirm: "",
     },
   });
 
-  const onSubmit = (formValues: FormValue) => {
-    const { email, password } = formValues;
+  const onSubmit = async (formValues: FormValue) => {
+    const { password } = formValues;
 
-    signUpWithEmailMutation.mutate(
+    setNewPasswordMutation.mutate(
       {
-        email,
+        sessionId: await getSecureAsync("sessionId"),
         password,
       },
       {
-        onSuccess: (data) => {
-          if (data.verificationId) {
-            router.replace("/auth/otp/email");
-          }
+        onSuccess: () => {
+          router.replace("/auth/email/login");
         },
       },
     );
   };
   return (
-    <FormProvider {...emailSignupForm}>
+    <FormProvider {...passwordForm}>
       <View style={styles.container}>
         <View style={styles.content}>
-          <EmailInput />
           <PasswordInput submitBehavior="submit" />
           <PasswordConfirmInput />
         </View>
         <CustomButton
           label="Sign up"
-          onPress={emailSignupForm.handleSubmit(onSubmit)}
-          disabled={signUpWithEmailMutation.isPending}
+          onPress={passwordForm.handleSubmit(onSubmit)}
+          disabled={setNewPasswordMutation.isPending}
         />
       </View>
     </FormProvider>

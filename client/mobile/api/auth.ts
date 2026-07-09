@@ -79,3 +79,21 @@ export async function deleteAccount() {
   const { data } = await axiosInstance.delete("/auth/account/delete");
   return data;
 }
+
+export async function forgetPassword(body: {
+  email: string;
+}): Promise<{ verificationId: string }> {
+  const { data } = await axiosInstance.post("/auth/email/password/forget", body);
+  return data;
+}
+
+export async function setNewPassword(body: {
+  password: string;
+  sessionId: string;
+}): Promise<void> {
+  const { data } = await axiosInstance.put(
+    "/auth/email/password/set-new",
+    body,
+  );
+  return data
+}

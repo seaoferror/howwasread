@@ -4,9 +4,11 @@ import { AxiosError } from "axios";
 import Toast from "react-native-toast-message";
 import {
   deleteAccount,
+  forgetPassword,
   loginInWithEmail,
   logout,
   requestSMSOTP,
+  setNewPassword,
   signInWithApple,
   signInWithGoogle,
   signUpWithEmail,
@@ -171,6 +173,36 @@ export function useDeleteAccount() {
       });
       await deleteSecure("accessToken");
     },
+    onError: (error: AxiosError) => {
+      Toast.show({
+        type: "error",
+        text1: String(error?.response?.data),
+      });
+    },
+  });
+}
+
+export function useForgetPassword() {
+  return useMutation({
+    mutationFn: forgetPassword,
+    onSuccess: async (data) => {
+      if (data.verificationId) {
+        await setSecure("verificationId", data.verificationId);
+      }
+      console.log("success to save verification Id");
+    },
+    onError: (error: AxiosError) => {
+      Toast.show({
+        type: "error",
+        text1: String(error?.response?.data),
+      });
+    },
+  });
+}
+
+export function useSetNewPassword() {
+  return useMutation({
+    mutationFn: setNewPassword,
     onError: (error: AxiosError) => {
       Toast.show({
         type: "error",

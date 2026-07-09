@@ -9,12 +9,13 @@ import { getSecureAsync, setKVStore } from "@/db/storage";
 import Toast from "react-native-toast-message";
 import OTPInput from "@/components/auth/OTPInput";
 import { getMyProfile } from "@/api/profile";
+import CustomButton from "@/components/CustomButton";
 
 interface FormValue {
   otp: string;
 }
 
-export default function SMSScreen() {
+export default function SMSOTPScreen() {
   const verifySMSOTPMutation = useVerifySMSOTP();
   const smsOTPForm = useForm<FormValue>({
     defaultValues: {
@@ -63,7 +64,7 @@ export default function SMSScreen() {
         <View style={styles.content}>
           <OTPInput />
         </View>
-        <FixedBottomCTA
+        <CustomButton
           label="Confirm"
           onPress={smsOTPForm.handleSubmit(onSubmit)}
           disabled={verifySMSOTPMutation.isPending}

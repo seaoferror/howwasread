@@ -29,6 +29,18 @@ export default function OTPLayout() {
           ),
         }}
       />
+      <Stack.Screen
+        name="password"
+        options={{
+          title: "Verify your email",
+          headerShown: true,
+          headerLeft: () => (
+            <Pressable onPress={() => router.back()}>
+              <Ionicons name="chevron-back" size={28} color="black" />
+            </Pressable>
+          ),
+        }}
+      />
     </Stack>
   );
 }

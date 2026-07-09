@@ -13,7 +13,7 @@ interface FormValue {
   otp: string;
 }
 
-export default function EmailOTPScreen() {
+export default function PasswordOTPScreen() {
   const verifyEmailOTPMutation = useVerifyEmailOTP();
 
   const emailOTPForm = useForm<FormValue>({
@@ -40,7 +40,7 @@ export default function EmailOTPScreen() {
         otp,
       },
       {
-        onSuccess: () => router.replace("/auth/phone-number"),
+        onSuccess: () => router.replace("/auth/email/set-new-password"),
       },
     );
   };

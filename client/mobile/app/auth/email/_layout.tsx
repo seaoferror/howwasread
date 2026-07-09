@@ -1,6 +1,7 @@
-import { Link, Stack } from "expo-router";
-import { MaterialIcons } from "@expo/vector-icons";
+import { Link, router, Stack } from "expo-router";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { colors } from "@/constants";
+import { Pressable } from "react-native";
 
 export default function EmailLayout() {
   return (
@@ -11,13 +12,9 @@ export default function EmailLayout() {
           title: "   Sign up with your email",
           headerShown: true,
           headerLeft: () => (
-            <Link href={"/"} replace style={{ paddingRight: 5 }}>
-              <MaterialIcons
-                name="arrow-back-ios-new"
-                size={28}
-                color={colors.BLACK}
-              />
-            </Link>
+            <Pressable onPress={() => router.replace("/auth")}>
+              <Ionicons name="chevron-back" size={28} color="black" />
+            </Pressable>
           ),
           headerRight: () => (
             <Link
@@ -35,13 +32,9 @@ export default function EmailLayout() {
           title: "   Login",
           headerShown: true,
           headerLeft: () => (
-            <Link href={"/"} replace style={{ paddingRight: 5 }}>
-              <MaterialIcons
-                name="arrow-back-ios-new"
-                size={28}
-                color={colors.BLACK}
-              />
-            </Link>
+            <Pressable onPress={() => router.replace("/auth")}>
+              <Ionicons name="chevron-back" size={28} color="black" />
+            </Pressable>
           ),
           headerRight: () => (
             <Link
@@ -50,6 +43,30 @@ export default function EmailLayout() {
             >
               Sign up
             </Link>
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="forget-password"
+        options={{
+          title: "   Verify your email",
+          headerShown: true,
+          headerLeft: () => (
+            <Pressable onPress={() => router.back()}>
+              <Ionicons name="chevron-back" size={28} color="black" />
+            </Pressable>
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="set-new-password"
+        options={{
+          title: "   Set your new password",
+          headerShown: true,
+          headerLeft: () => (
+            <Pressable onPress={() => router.replace("/auth")}>
+              <Ionicons name="chevron-back" size={28} color="black" />
+            </Pressable>
           ),
         }}
       />

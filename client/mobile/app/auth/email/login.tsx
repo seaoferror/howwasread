@@ -5,14 +5,14 @@ import EmailInput from "@/components/auth/EmailInput";
 import PasswordInput from "@/components/auth/PasswordInput";
 import { useLoginWithEmail } from "@/hooks/useAuth";
 import { colors } from "@/constants";
-import { router } from "expo-router";
+import { Link, router } from "expo-router";
 import { getMyProfile } from "@/api/profile";
 import { setKVStore } from "@/db/storage";
+import CustomButton from "@/components/CustomButton";
 
 interface FormValue {
   email: string;
   password: string;
-  passwordConfirm: string;
 }
 
 export default function LoginScreen() {
@@ -64,11 +64,12 @@ export default function LoginScreen() {
           <EmailInput />
           <PasswordInput />
         </View>
-        <FixedBottomCTA
+        <CustomButton
           label="login"
           onPress={emailLoginForm.handleSubmit(onSubmit)}
           disabled={loginWithEmailMutation.isPending}
         />
+        <Link href="/auth/email/forget-password">Forget your password?</Link>
       </View>
     </FormProvider>
   );

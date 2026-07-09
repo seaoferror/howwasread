@@ -15,6 +15,8 @@ func emailRouter(n *Controller) {
 	n.Router(POST, "/auth/email/otp/verify", n.verifyEmailOTP)
 	n.Router(POST, "/auth/email/apple", n.signInWithApple)
 	n.Router(POST, "/auth/email/google", n.signInWithGoogle)
+	n.Router(POST, "/auth/email/password/forget", n.forgetPassword)
+	n.Router(PATCH, "/auth/email/password/set-new", n.setNewPassword)
 }
 
 func (c *Controller) createMemberByEmail(w http.ResponseWriter, r *http.Request) {
@@ -150,4 +152,39 @@ func (c *Controller) signInWithGoogle(w http.ResponseWriter, r *http.Request) {
 		slog.Error("fail to write response body",
 			"err", err)
 	}
+}
+
+func (c *Controller) forgetPassword(w http.ResponseWriter, r *http.Request) {
+	var req dto.ForgetPasswordRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	result, err := c.service.ForgetPassword(r.Context(), req.Email)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(result)
+	if err != nil {
+		slog.Error("fail to write response body",
+			"err", err)
+	}
+}
+
+func (c *Controller) setNewPassword(w http.ResponseWriter, r *http.Request) {
+	var req dto.SetNewPasswordRequest
+	err := json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	err = c.service.SetNewPassword(r.Context(), req.Password, req.SessionId)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }

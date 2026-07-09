@@ -14,6 +14,7 @@ import Toast from "react-native-toast-message";
 import { useRequestSMSOTP } from "@/hooks/useAuth";
 import { router } from "expo-router";
 import { getSecure, setSecure } from "@/db/storage";
+import CustomButton from "@/components/CustomButton";
 
 interface FormValue {
   countryCode: CountryCode;
@@ -94,7 +95,7 @@ export default function PhoneNumberScreen() {
             <PhoneNumberInput />
           </View>
         </View>
-        <FixedBottomCTA
+        <CustomButton
           label={"Send Code"}
           onPress={phoneNumberForm.handleSubmit(onSubmit)}
           disabled={requestSMSOTPMutation.isPending}

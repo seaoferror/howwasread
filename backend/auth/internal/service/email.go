@@ -195,6 +195,41 @@ func (s *Service) VerifyEmailOTP(otp string, verificationId uuid.UUID) (*dto.Ver
 	return &resp, nil
 }
 
+func (s *Service) ForgetPassword(ctx context.Context, email string) (map[string]uuid.UUID, error) {
+	e, err := s.repository.VerifiedEmailExists(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	if !e {
+		return nil, err
+	}
+	vid, err := s.sendEmailOTP(email)
+	if err != nil {
+		return nil, ErrInternalServer
+	}
+	return map[string]uuid.UUID{"verificationId": vid}, nil
+}
+
+func (s *Service) SetNewPassword(ctx context.Context, password string, sessionId uuid.UUID) error {
+	email, err := s.repository.FindEmailBySessionId(gocql.UUID(sessionId))
+	if err != nil {
+		return err
+	}
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		slog.Error("fail to hash password",
+			"err", err,
+		)
+		return err
+	}
+	password = string(hashedPassword)
+	err = s.repository.UpdatePasswordByEmail(ctx, password, email)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 var emailRegex = regexp.MustCompile(`^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$`)
 
 func isValidEmail(email string) bool {

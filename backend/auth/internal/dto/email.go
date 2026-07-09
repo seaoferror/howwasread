@@ -33,3 +33,12 @@ type SignInWithThirdPartyResponse struct {
 	SessionId   uuid.UUID `json:"sessionId,omitzero"`
 	AccessToken string    `json:"accessToken,omitempty"`
 }
+
+type ForgetPasswordRequest struct {
+	Email string `json:"email"`
+}
+
+type SetNewPasswordRequest struct {
+	Password  string    `json:"password"`
+	SessionId uuid.UUID `json:"sessionId"`
+}

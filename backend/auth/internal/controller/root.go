@@ -13,6 +13,7 @@ const (
 	POST
 	DELETE
 	PUT
+	PATCH
 )
 
 type Controller struct {
@@ -50,6 +51,8 @@ func (c *Controller) Router(httpMethod HTTPMethod, path string, handler http.Han
 		m.HandleFunc("POST "+path, handler)
 	case PUT:
 		m.HandleFunc("PUT "+path, handler)
+	case PATCH:
+		m.HandleFunc("PATCH "+path, handler)
 	case DELETE:
 		m.HandleFunc("DELETE "+path, handler)
 

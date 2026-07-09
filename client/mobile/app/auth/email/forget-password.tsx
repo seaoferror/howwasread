@@ -1,59 +1,49 @@
 import { StyleSheet, View } from "react-native";
 import { FormProvider, useForm } from "react-hook-form";
-import EmailInput from "@/components/auth/EmailInput";
-import PasswordInput from "@/components/auth/PasswordInput";
-import PasswordConfirmInput from "@/components/auth/PasswordConfirmInput";
-import { useSignupWithEmail } from "@/hooks/useAuth";
-import { colors } from "@/constants";
 import { router } from "expo-router";
+import EmailInput from "@/components/auth/EmailInput";
+import { colors } from "@/constants";
 import CustomButton from "@/components/CustomButton";
+import { useForgetPassword } from "@/hooks/useAuth";
 
 interface FormValue {
   email: string;
-  password: string;
-  passwordConfirm: string;
 }
 
-export default function SignupScreen() {
-  const signUpWithEmailMutation = useSignupWithEmail();
+export default function ForgetPasswordScreen() {
+  const forgetPasswordMutation = useForgetPassword();
 
-  const emailSignupForm = useForm<FormValue>({
+  const forgetPasswordForm = useForm<FormValue>({
     defaultValues: {
       email: "",
-      password: "",
-      passwordConfirm: "",
     },
   });
-
   const onSubmit = (formValues: FormValue) => {
-    const { email, password } = formValues;
+    const { email } = formValues;
 
-    signUpWithEmailMutation.mutate(
+    forgetPasswordMutation.mutate(
       {
         email,
-        password,
       },
       {
-        onSuccess: (data) => {
+        onSuccess: async (data) => {
           if (data.verificationId) {
-            router.replace("/auth/otp/email");
+            router.replace("/auth/otp/password");
           }
         },
       },
     );
   };
   return (
-    <FormProvider {...emailSignupForm}>
+    <FormProvider {...forgetPasswordForm}>
       <View style={styles.container}>
         <View style={styles.content}>
           <EmailInput />
-          <PasswordInput submitBehavior="submit" />
-          <PasswordConfirmInput />
         </View>
         <CustomButton
-          label="Sign up"
-          onPress={emailSignupForm.handleSubmit(onSubmit)}
-          disabled={signUpWithEmailMutation.isPending}
+          label="login"
+          onPress={forgetPasswordForm.handleSubmit(onSubmit)}
+          disabled={forgetPasswordMutation.isPending}
         />
       </View>
     </FormProvider>
@@ -71,6 +61,7 @@ const styles = StyleSheet.create({
     flex: 1,
     margin: 16,
     gap: 16,
+    paddingHorizontal: 20,
     backgroundColor: colors.SAND_110,
   },
 });

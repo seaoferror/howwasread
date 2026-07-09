@@ -164,3 +164,14 @@ func (r *Repository) FindEmailBySessionId(sessionId gocql.UUID) (email string, e
 	}
 	return email, nil
 }
+
+func (r *Repository) UpdatePasswordByEmail(ctx context.Context, password string, email string) error {
+	err := r.session.Query(`UPDATE member_by_email SET password = ? WHERE email = ?`, password, email).ExecContext(ctx)
+	if err != nil {
+		slog.Error("fail to update password by email",
+			"err", err,
+			"email", email)
+		return err
+	}
+	return nil
+}
