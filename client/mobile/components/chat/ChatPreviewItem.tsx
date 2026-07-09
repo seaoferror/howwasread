@@ -49,7 +49,7 @@ export default function ChatPreviewItem({
     showActionSheetWithOptions(
       {
         options:
-          roomType === "personal"
+          roomType === "personal" && preview.roomId !== getKVStore("myId")
             ? [
                 "Delete",
                 data?.didBlock ? "Report" : "Block and Report",
@@ -79,7 +79,10 @@ export default function ChatPreviewItem({
             );
             break;
           case 1:
-            if (roomType !== "personal") {
+            if (
+              roomType !== "personal" &&
+              preview.roomId === getKVStore("myId")
+            ) {
               return;
             }
             if (!data?.didBlock) {
@@ -107,6 +110,7 @@ export default function ChatPreviewItem({
             break;
           case 2:
             roomType === "personal" &&
+              preview.roomId !== getKVStore("myId") &&
               sendMessageMutation.mutate({
                 toIdType: roomType,
                 toId: preview.roomId,

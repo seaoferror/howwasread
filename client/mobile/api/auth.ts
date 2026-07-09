@@ -76,6 +76,6 @@ export async function logout() {
 }
 
 export async function deleteAccount() {
-  const { data } = await axiosInstance.post("/auth/account/delete");
+  const { data } = await axiosInstance.delete("/auth/account/delete");
   return data;
 }

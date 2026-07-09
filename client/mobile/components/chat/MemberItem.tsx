@@ -15,36 +15,36 @@ export default function MemberItem({ id }: { id: string }) {
   const displayName = data?.name || getKVStore(id);
 
   function handleLongPress() {
-    showActionSheetWithOptions(
-      {
-        options: ["Report", "Cancel"],
-        destructiveButtonIndex: 0,
-        cancelButtonIndex: 1,
-      },
-      (selectedIndex?: number) => {
-        console.log(selectedIndex);
-        switch (selectedIndex) {
-          case 0:
-            reportUserMutation.mutate(
-              {
-                id,
-              },
-              {
-                onSuccess: () => {
-                  Toast.show({
-                    type: "info",
-                    text1: "Success report",
-                    text2: "We will review this user, sorry for inconvenience.",
-                  });
+    id !== getKVStore("myId") &&
+      showActionSheetWithOptions(
+        {
+          options: ["Report", "Cancel"],
+          destructiveButtonIndex: 0,
+          cancelButtonIndex: 2,
+        },
+        (selectedIndex?: number) => {
+          console.log(selectedIndex);
+          switch (selectedIndex) {
+            case 0:
+              reportUserMutation.mutate(
+                {
+                  id,
                 },
-              },
-            );
-            break;
-          case 1:
-            break;
-        }
-      },
-    );
+                {
+                  onSuccess: () => {
+                    Toast.show({
+                      type: "info",
+                      text1: "Success report",
+                      text2:
+                        "We will review this user, sorry for inconvenience.",
+                    });
+                  },
+                },
+              );
+              break;
+          }
+        },
+      );
   }
 
   return (

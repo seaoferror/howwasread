@@ -27,10 +27,7 @@ import {
   requestPermissionsAsync,
 } from "expo-notifications";
 import { registerNotification } from "@/api/notification";
-import {
-  requestRecordingPermissionsAsync,
-  setAudioModeAsync,
-} from "expo-audio";
+import { setAudioModeAsync } from "expo-audio";
 import { useGetMyProfile } from "@/hooks/useProfile";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
@@ -77,10 +74,9 @@ function RootNavigator() {
       return;
     }
     const connectMessaging = async () => {
-      console.log("myId",profile.id)
+      console.log("myId", profile.id);
       setKVStore("myId", profile.id);
       setKVStore("myName", profile.name);
-      await requestRecordingPermissionsAsync();
       await setAudioModeAsync({
         allowsRecording: true,
         playsInSilentMode: true,
@@ -155,7 +151,7 @@ function RootNavigator() {
       );
       ws.current.onmessage = async (event) => {
         const m: MessagingResponse = JSON.parse(event.data);
-        console.log(m)
+        console.log(m);
         setKVStore("recentMessageId", m.id);
         if (m.contentType === "image" || m.contentType === "video") {
           setTimeout(async () => {
