@@ -86,17 +86,18 @@ func (r *Repository) AddReporterIdByReportedId(ctx context.Context, reporterId g
 }
 
 func (r *Repository) FindReportCountById(ctx context.Context, reportedId gocql.UUID) (count int, err error) {
+	var reporterIds []gocql.UUID
 	err = r.session.Query(
-		`SELECT collection_count(reporter_ids) FROM profile_by_id WHERE id = ?`,
+		`SELECT reporter_ids FROM profile_by_id WHERE id = ?`,
 		reportedId,
-	).ScanContext(ctx, &count)
+	).ScanContext(ctx, &reporterIds)
 	if err != nil {
 		slog.Error("fail to find report count by id",
 			"err", err,
 			"reportedId", reportedId)
 		return 0, err
 	}
-	return count, nil
+	return len(reporterIds), nil
 }
 
 func (r *Repository) FindEmailAndPhoneNumberById(ctx context.Context, id gocql.UUID) (email, phoneNumber string, err error) {
