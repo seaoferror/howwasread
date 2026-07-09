@@ -49,12 +49,16 @@ func (r *Repository) FindEmailAndPhoneNumberById(ctx context.Context, id gocql.U
 }
 
 func (r *Repository) DeleteAccount(ctx context.Context, id gocql.UUID, email, phoneNumber string) error {
-	err := r.session.Batch(gocql.LoggedBatch).
-		Query("DELETE FROM member_by_id WHERE id = ?", id).
-		Query("DELETE FROM profile_by_id WHERE id = ?", id).
-		Query("DELETE FROM member_by_email WHERE email = ?", email).
-		Query("DELETE FROM member_by_phone_number WHERE phone_number = ?", phoneNumber).
-		ExecContext(ctx)
+	batch := r.session.Batch(gocql.LoggedBatch)
+	batch.Query("DELETE FROM member_by_id WHERE id = ?", id)
+	batch.Query("DELETE FROM profile_by_id WHERE id = ?", id)
+	if email != "" {
+		batch.Query("DELETE FROM member_by_email WHERE email = ?", email)
+	}
+	if phoneNumber != "" {
+		batch.Query("DELETE FROM member_by_phone_number WHERE phone_number = ?", phoneNumber)
+	}
+	err := batch.ExecContext(ctx)
 	if err != nil {
 		slog.Error("fail to delete account",
 			"err", err,
