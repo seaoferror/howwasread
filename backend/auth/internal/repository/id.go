@@ -49,7 +49,7 @@ func (r *Repository) FindEmailAndPhoneNumberById(ctx context.Context, id gocql.U
 }
 
 func (r *Repository) DeleteAccount(ctx context.Context, id gocql.UUID, email, phoneNumber string) error {
-	err := r.session.Batch(gocql.CounterBatch).
+	err := r.session.Batch(gocql.LoggedBatch).
 		Query("DELETE FROM member_by_id WHERE id = ?", id).
 		Query("DELETE FROM profile_by_id WHERE id = ?", id).
 		Query("DELETE FROM member_by_email WHERE email = ?", email).
