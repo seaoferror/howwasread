@@ -43,5 +43,5 @@ type GeneratePresignedURLResponse struct {
 }
 
 type BlockReport struct {
-	Id string `json:"id"`
+	Id uuid.UUID `json:"id"`
 }
