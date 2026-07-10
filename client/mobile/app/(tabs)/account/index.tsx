@@ -46,7 +46,7 @@ export default function AccountScreen() {
       {
         title: "This will delete your local messages.",
         options: [`Logout`, "Cancel"],
-        cancelButtonIndex: 1,
+        cancelButtonIndex: 2,
         destructiveButtonIndex: 0,
       },
       (selectedIndex?: number) => {

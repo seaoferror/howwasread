@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import OfflineConversationDetail from "@/components/conversation/OfflineConversationDetail";
 import { colors } from "@/constants";
 import { reportUser } from "@/api/chat";
@@ -23,7 +23,7 @@ export default function OfflineConversationDetailScreen() {
       {
         options: [`Report and Delete from map`, "Cancel"],
         destructiveButtonIndex: 0,
-        cancelButtonIndex: 1,
+        cancelButtonIndex: 4,
       },
       async (selectedIndex?: number) => {
         switch (selectedIndex) {
@@ -46,6 +46,7 @@ export default function OfflineConversationDetailScreen() {
                 text2:
                   "We will review this conversation, sorry for inconvenience.",
               });
+              router.replace("/conversations");
             }
         }
       },

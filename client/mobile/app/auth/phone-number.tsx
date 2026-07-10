@@ -1,7 +1,6 @@
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, time } from "@/constants";
-import FixedBottomCTA from "@/components/FixedBottomCTA";
 import CountryCodeBox from "@/components/auth/CountryCodeBox";
 import PhoneNumberInput from "@/components/auth/PhoneNumberInput";
 import { FormProvider, useForm } from "react-hook-form";
@@ -94,12 +93,12 @@ export default function PhoneNumberScreen() {
             <CountryCodeBox />
             <PhoneNumberInput />
           </View>
+          <CustomButton
+            label={"Send Code"}
+            onPress={phoneNumberForm.handleSubmit(onSubmit)}
+            disabled={requestSMSOTPMutation.isPending}
+          />
         </View>
-        <CustomButton
-          label={"Send Code"}
-          onPress={phoneNumberForm.handleSubmit(onSubmit)}
-          disabled={requestSMSOTPMutation.isPending}
-        />
       </FormProvider>
     </SafeAreaView>
   );
@@ -117,6 +116,7 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingHorizontal: 20,
     paddingTop: 120,
+    gap: 50,
   },
   phoneRow: {
     flexDirection: "row",

@@ -49,12 +49,14 @@ export default function SignupScreen() {
           <EmailInput />
           <PasswordInput submitBehavior="submit" />
           <PasswordConfirmInput />
+          <View style={{marginTop: 30}}>
+            <CustomButton
+              label="Sign up"
+              onPress={emailSignupForm.handleSubmit(onSubmit)}
+              disabled={signUpWithEmailMutation.isPending}
+            />
+          </View>
         </View>
-        <CustomButton
-          label="Sign up"
-          onPress={emailSignupForm.handleSubmit(onSubmit)}
-          disabled={signUpWithEmailMutation.isPending}
-        />
       </View>
     </FormProvider>
   );

@@ -63,13 +63,17 @@ export default function LoginScreen() {
         <View style={styles.content}>
           <EmailInput />
           <PasswordInput />
+          <View style={{ marginTop: 50, gap: 40, alignItems: "center" }}>
+            <CustomButton
+              label="login"
+              onPress={emailLoginForm.handleSubmit(onSubmit)}
+              disabled={loginWithEmailMutation.isPending}
+            />
+            <Link href="/auth/email/forget-password" style={{color: colors.GRAY_500, textDecorationLine: "underline"}}>
+              Forgot your password?
+            </Link>
+          </View>
         </View>
-        <CustomButton
-          label="login"
-          onPress={emailLoginForm.handleSubmit(onSubmit)}
-          disabled={loginWithEmailMutation.isPending}
-        />
-        <Link href="/auth/email/forget-password">Forget your password?</Link>
       </View>
     </FormProvider>
   );

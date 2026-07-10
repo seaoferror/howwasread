@@ -35,7 +35,7 @@ export default function OfflineConversationDetail({
         onSuccess: () => {
           Toast.show({
             type: "success",
-            text1: "We invite you to the group chat room! Check it out!",
+            text1: "We invite you to the group chat room!",
           });
         },
       },

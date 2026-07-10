@@ -50,12 +50,12 @@ export default function EmailOTPScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.content}>
           <OTPInput />
+          <CustomButton
+            label="Confirm"
+            onPress={emailOTPForm.handleSubmit(onSubmit)}
+            disabled={verifyEmailOTPMutation.isPending}
+          />
         </View>
-        <CustomButton
-          label="Confirm"
-          onPress={emailOTPForm.handleSubmit(onSubmit)}
-          disabled={verifyEmailOTPMutation.isPending}
-        />
       </SafeAreaView>
     </FormProvider>
   );
@@ -73,5 +73,6 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingHorizontal: 100,
     paddingTop: 120,
+    gap: 50,
   },
 });

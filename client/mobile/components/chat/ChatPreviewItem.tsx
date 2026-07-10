@@ -59,7 +59,7 @@ export default function ChatPreviewItem({
               ]
             : [`Quit`, "Cancel"],
         destructiveButtonIndex: roomType === "personal" ? [0, 1] : 0,
-        cancelButtonIndex: roomType === "personal" ? 4 : 3,
+        cancelButtonIndex: roomType === "personal" ? 3 : 2,
       },
       (selectedIndex?: number) => {
         console.log(selectedIndex);
@@ -81,10 +81,10 @@ export default function ChatPreviewItem({
             break;
           case 1:
             if (
-              roomType !== "personal" &&
+              roomType === "group" ||
               preview.roomId === getKVStore("myId")
             ) {
-              return;
+              return
             }
             if (!data?.didBlock) {
               sendMessageMutation.mutate(

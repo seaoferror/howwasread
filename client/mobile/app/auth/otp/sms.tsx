@@ -1,7 +1,6 @@
 import { StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "@/constants";
-import FixedBottomCTA from "@/components/FixedBottomCTA";
 import { FormProvider, useForm } from "react-hook-form";
 import { useVerifySMSOTP } from "@/hooks/useAuth";
 import { router } from "expo-router";
@@ -48,7 +47,7 @@ export default function SMSOTPScreen() {
             setKVStore("myId", my.id);
             if (!my.name) {
               router.replace("/profile/name");
-              return
+              return;
             }
             setKVStore("myName", my.name);
             router.replace("/conversations");
@@ -63,12 +62,12 @@ export default function SMSOTPScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.content}>
           <OTPInput />
+          <CustomButton
+            label="Confirm"
+            onPress={smsOTPForm.handleSubmit(onSubmit)}
+            disabled={verifySMSOTPMutation.isPending}
+          />
         </View>
-        <CustomButton
-          label="Confirm"
-          onPress={smsOTPForm.handleSubmit(onSubmit)}
-          disabled={verifySMSOTPMutation.isPending}
-        />
       </SafeAreaView>
     </FormProvider>
   );
@@ -86,5 +85,6 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingHorizontal: 100,
     paddingTop: 120,
+    gap: 50,
   },
 });

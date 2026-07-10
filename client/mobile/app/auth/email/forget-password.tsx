@@ -39,12 +39,12 @@ export default function ForgetPasswordScreen() {
       <View style={styles.container}>
         <View style={styles.content}>
           <EmailInput />
+          <CustomButton
+            label="Send OTP"
+            onPress={forgetPasswordForm.handleSubmit(onSubmit)}
+            disabled={forgetPasswordMutation.isPending}
+          />
         </View>
-        <CustomButton
-          label="login"
-          onPress={forgetPasswordForm.handleSubmit(onSubmit)}
-          disabled={forgetPasswordMutation.isPending}
-        />
       </View>
     </FormProvider>
   );
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     margin: 16,
-    gap: 16,
+    gap: 50,
     paddingHorizontal: 20,
     backgroundColor: colors.SAND_110,
   },
