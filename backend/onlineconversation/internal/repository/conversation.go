@@ -136,7 +136,7 @@ func (r *Repository) RemoveParticipantId(ctx context.Context, conversationId str
 }
 
 func (r *Repository) GetConversation(ctx context.Context, conversationId bson.ObjectID) (*document.Conversation, error) {
-	opts := options.FindOne().SetProjection(bson.M{"p_ids": 0, "r_ids": 0})
+	opts := options.FindOne().SetProjection(bson.M{"participant_ids": 0, "registrant_ids": 0})
 
 	var d document.Conversation
 	err := r.db.Collection("conversation").FindOne(ctx, bson.M{"_id": conversationId}, opts).Decode(&d)
@@ -148,7 +148,7 @@ func (r *Repository) GetConversation(ctx context.Context, conversationId bson.Ob
 }
 
 func (r *Repository) FindModeratorIds(ctx context.Context, conversationId bson.ObjectID) ([]bson.Binary, error) {
-	opt := options.FindOne().SetProjection(bson.M{"m_ids": 1})
+	opt := options.FindOne().SetProjection(bson.M{"moderator_ids": 1})
 
 	var d document.Conversation
 	err := r.db.Collection("conversation").
@@ -163,7 +163,7 @@ func (r *Repository) FindModeratorIds(ctx context.Context, conversationId bson.O
 func (r *Repository) AddBanId(ctx context.Context, conversationId bson.ObjectID, banId uuid.UUID) error {
 	_, err := r.db.Collection("conversation").
 		UpdateOne(ctx, bson.M{"_id": conversationId},
-			bson.M{"$push": bson.M{"b_ids": bson.Binary{4, banId[:]}}})
+			bson.M{"$push": bson.M{"ban_ids": bson.Binary{4, banId[:]}}})
 	if err != nil {
 		slog.Error("fail to add participant member id to conversation",
 			"err", err,
@@ -175,7 +175,7 @@ func (r *Repository) AddBanId(ctx context.Context, conversationId bson.ObjectID,
 }
 
 func (r *Repository) FindReporterIdsByConversationId(ctx context.Context, conversationId bson.ObjectID) ([]bson.Binary, error) {
-	opt := options.FindOne().SetProjection(bson.M{"r_ids": 1})
+	opt := options.FindOne().SetProjection(bson.M{"reporter_ids": 1})
 
 	var d document.Conversation
 	err := r.db.Collection("conversation").
@@ -204,7 +204,7 @@ func (r *Repository) AddReporterIdByConversationId(
 	filter := bson.M{"_id": conversationId}
 	update := bson.M{
 		"$addToSet": bson.M{
-			"r_ids": bson.Binary{
+			"reporter_ids": bson.Binary{
 				Subtype: 4,
 				Data:    memberId[:],
 			},

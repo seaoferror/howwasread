@@ -20,11 +20,11 @@ type Conversation struct {
 	Length     time.Duration `bson:"length"`
 	Expired    bool          `bson:"expired"`
 
-	ModeratorIds   []bson.Binary `bson:"m_ids"`
-	RegistrantIds  []bson.Binary `bson:"r_ids"`
-	ParticipantIds []bson.Binary `bson:"p_ids"`
-	BanIds         []bson.Binary `bson:"b_ids"`
-	ReporterIds    []bson.Binary `bson:"r_ids"`
+	ModeratorIds   []bson.Binary `bson:"moderator_ids"`
+	RegistrantIds  []bson.Binary `bson:"registrant_ids"`
+	ParticipantIds []bson.Binary `bson:"participant_ids"`
+	BanIds         []bson.Binary `bson:"ban_ids"`
+	ReporterIds    []bson.Binary `bson:"reporter_ids"`
 }
 
 //types Org struct {

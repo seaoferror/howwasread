@@ -21,18 +21,13 @@ export default function OfflineConversationDetailScreen() {
   const handlePress = () => {
     showActionSheetWithOptions(
       {
-        options: ["Delete from map", `Report and Delete from map`, "Cancel"],
-        destructiveButtonIndex: 1,
-        cancelButtonIndex: 2,
+        options: [`Report and Delete from map`, "Cancel"],
+        destructiveButtonIndex: 0,
+        cancelButtonIndex: 1,
       },
       async (selectedIndex?: number) => {
         switch (selectedIndex) {
           case 0:
-            blockConversationMutation.mutate({
-              id: String(id),
-            });
-            break;
-          case 1:
             blockConversationMutation.mutate({
               id: String(id),
             });
