@@ -50,7 +50,7 @@ func NewRepository() *Repository {
     id uuid,
     name text,
     reporter_ids set<uuid>,
-    blocked_conversations set<text>,
+    blocked_conversations set<uuid>,
     PRIMARY KEY (id)
     );`).Exec()
 	if err != nil {

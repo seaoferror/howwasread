@@ -4,6 +4,7 @@ import (
 	"backend/auth/internal/constant"
 	"context"
 	"crypto/rsa"
+	"errors"
 	"log/slog"
 	"time"
 
@@ -150,7 +151,7 @@ func (s *Service) DeleteAccount(ctx context.Context, refreshToken string) error 
 	if !rt.Valid {
 		slog.Info("invalid token",
 			"rt", rt)
-		return err
+		return errors.New("something went wrong")
 	}
 	exp, err := rt.Claims.GetExpirationTime()
 	if err != nil {
@@ -159,7 +160,7 @@ func (s *Service) DeleteAccount(ctx context.Context, refreshToken string) error 
 	}
 	if exp.Unix() < time.Now().Unix() {
 		slog.Info("stale token")
-		return err
+		return errors.New("something went wrong")
 	}
 	rawId, err := rt.Claims.GetSubject()
 	if err != nil {
@@ -186,7 +187,7 @@ func (s *Service) DeleteAccount(ctx context.Context, refreshToken string) error 
 	}
 	if !jtiValidity {
 		slog.Info("refresh token jti is not same with DB")
-		return err
+		return errors.New("something went wrong")
 	}
 	phoneNumber, email, err := s.repository.FindEmailAndPhoneNumberById(ctx, id)
 	if err != nil {

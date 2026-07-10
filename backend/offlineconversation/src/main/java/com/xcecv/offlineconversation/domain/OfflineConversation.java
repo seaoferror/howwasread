@@ -78,10 +78,10 @@ public class OfflineConversation {
   private String h3Res7;
 
   @JdbcTypeCode(SqlTypes.JSON)
-  @Column(columnDefinition = "JSON")
+  @Column(columnDefinition = "JSON", nullable = false)
   private Set<UUID> moderatorIds = new HashSet<>();
 
   @JdbcTypeCode(SqlTypes.JSON)
-  @Column(columnDefinition = "JSON")
+  @Column(columnDefinition = "JSON", nullable = false)
   private Set<UUID> reporterIds = new HashSet<>();
 }
