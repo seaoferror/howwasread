@@ -189,7 +189,7 @@ func (s *Service) DeleteAccount(ctx context.Context, refreshToken string) error 
 		slog.Info("refresh token jti is not same with DB")
 		return errors.New("something went wrong")
 	}
-	phoneNumber, email, err := s.repository.FindEmailAndPhoneNumberById(ctx, id)
+	email, phoneNumber, err := s.repository.FindEmailAndPhoneNumberById(ctx, id)
 	if err != nil {
 		return err
 	}
