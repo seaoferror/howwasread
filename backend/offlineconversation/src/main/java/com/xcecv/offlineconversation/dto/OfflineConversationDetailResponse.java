@@ -3,6 +3,9 @@ package com.xcecv.offlineconversation.dto;
 import lombok.Builder;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 @Builder
 public record OfflineConversationDetailResponse(
@@ -19,6 +22,7 @@ public record OfflineConversationDetailResponse(
     String location,
     boolean isModerator,
     boolean isParticipant,
-    int numberOfParticipants
+    int numberOfParticipants,
+    Set<UUID> moderatorIds
 ) {
 }

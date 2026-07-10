@@ -49,7 +49,8 @@ export const queryKey = {
   GET_OFFLINE_CONVERSATION_DETAIL: "getOfflineConversationDetail",
   CHECK_BLOCK: "checkBlock",
   GET_CHAT_PARTICIPANT_IDS: "getChatParticipantIds",
-  REPORT_USER: "reportUser"
+  REPORT_USER: "reportUser",
+  BLOCKED_CONVERSATIONS: "blockedConversations"
 };
 
 export const time = {

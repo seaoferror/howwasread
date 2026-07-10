@@ -38,12 +38,7 @@ func (r *Repository) SaveConversation(
 		},
 		ParticipantIds: []bson.Binary{},
 		BanIds:         []bson.Binary{},
-	}
-	filter := bson.M{"_id": bson.Binary{Subtype: 4, Data: memberId[:]}}
-	update := bson.M{
-		"$push": bson.M{
-			"m_c_ids": conversationId,
-		},
+		ReporterIds:    []bson.Binary{},
 	}
 
 	session, err := r.mongoClient.StartSession()
@@ -57,13 +52,6 @@ func (r *Repository) SaveConversation(
 		_, err = r.db.Collection("conversation").InsertOne(ctx, newConversation)
 		if err != nil {
 			slog.Error("fail to insert new conversation",
-				"err", err)
-			return nil, err
-		}
-
-		_, err = r.db.Collection("member").UpdateOne(ctx, filter, update)
-		if err != nil {
-			slog.Error("fail to insert new conversation id to moderator conversation member array",
 				"err", err)
 			return nil, err
 		}
@@ -181,6 +169,54 @@ func (r *Repository) AddBanId(ctx context.Context, conversationId bson.ObjectID,
 			"err", err,
 			"conversationId", conversationId,
 			"memberId", banId.String())
+		return err
+	}
+	return nil
+}
+
+func (r *Repository) FindReporterIdsByConversationId(ctx context.Context, conversationId bson.ObjectID) ([]bson.Binary, error) {
+	opt := options.FindOne().SetProjection(bson.M{"r_ids": 1})
+
+	var d document.Conversation
+	err := r.db.Collection("conversation").
+		FindOne(ctx, bson.M{"_id": conversationId}, opt).Decode(&d)
+	if err != nil {
+		slog.Error("fail to find reporter ids", "err", err)
+		return nil, err
+	}
+	return d.ReporterIds, nil
+}
+
+func (r *Repository) DeleteOnlineConversation(ctx context.Context, id bson.ObjectID) error {
+	convFilter := bson.M{"_id": id}
+	_, err := r.db.Collection("conversation").DeleteOne(ctx, convFilter)
+	if err != nil {
+		slog.Error("fail to delete conversation",
+			"err", err)
+		return err
+	}
+	return nil
+}
+
+func (r *Repository) AddReporterIdByConversationId(
+	ctx context.Context, conversationId bson.ObjectID, memberId uuid.UUID,
+) error {
+	filter := bson.M{"_id": conversationId}
+	update := bson.M{
+		"$addToSet": bson.M{
+			"r_ids": bson.Binary{
+				Subtype: 4,
+				Data:    memberId[:],
+			},
+		},
+	}
+	_, err := r.db.Collection("conversation").UpdateOne(ctx, filter, update)
+	if err != nil {
+		slog.Error("fail to update reporter ids for conversation",
+			"conversationId", conversationId,
+			"memberId", memberId,
+			"err", err,
+		)
 		return err
 	}
 	return nil

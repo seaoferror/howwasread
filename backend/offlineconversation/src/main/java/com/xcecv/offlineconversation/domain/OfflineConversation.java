@@ -80,4 +80,8 @@ public class OfflineConversation {
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(columnDefinition = "JSON")
   private Set<UUID> moderatorIds = new HashSet<>();
+
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(columnDefinition = "JSON")
+  private Set<UUID> reporterIds = new HashSet<>();
 }

@@ -77,4 +77,13 @@ public class OfflineConversationController {
     var response = offlineConversationService.detail(conversationId, memberId);
     return ResponseEntity.ok(response);
   }
+
+  @PostMapping("/report")
+  public ResponseEntity<?> report(
+      @NotNull @RequestHeader("X-User-Id") UUID memberId,
+      @Valid @RequestBody JoinOfflineConversationRequest request
+  ) {
+    offlineConversationService.report(request.conversationId(), memberId);
+    return ResponseEntity.ok("ok");
+  }
 }

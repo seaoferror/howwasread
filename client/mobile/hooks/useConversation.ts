@@ -6,8 +6,10 @@ import {
 } from "@tanstack/react-query";
 import {
   banParticipant,
+  blockConversation,
   createOfflineConversation,
   createOnlineConversation,
+  getBlockedConversations,
   getOfflineConversationDetail,
   getOnlineConversations,
   joinOfflineConversation,
@@ -154,4 +156,22 @@ export function useQuitOfflineConversation() {
       });
     },
   });
+}
+
+export function useBlockConversation() {
+  return useMutation({
+    mutationFn: blockConversation,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: [queryKey.CONVERSATION, queryKey.BLOCKED_CONVERSATIONS],
+      });
+    },
+  });
+}
+
+export function useGetBlockedConversations() {
+  return useQuery({
+    queryFn: getBlockedConversations,
+    queryKey: [queryKey.CONVERSATION, queryKey.BLOCKED_CONVERSATIONS]
+  })
 }

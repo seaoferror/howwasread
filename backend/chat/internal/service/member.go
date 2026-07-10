@@ -47,7 +47,7 @@ func (s *Service) GetChatParticipants(ctx context.Context, roomId uuid.UUID) ([]
 	return res, nil
 }
 
-func (s *Service) HandleReportUser(ctx context.Context, reporterId, reportedId uuid.UUID) error {
+func (s *Service) ReportUser(ctx context.Context, reporterId, reportedId uuid.UUID) error {
 	err := s.repository.AddReporterIdByReportedId(ctx, gocql.UUID(reporterId), gocql.UUID(reportedId))
 	if err != nil {
 		return err
@@ -71,4 +71,24 @@ func (s *Service) HandleReportUser(ctx context.Context, reporterId, reportedId u
 		}
 	}
 	return nil
+}
+
+func (s *Service) BlockConversation(ctx context.Context, memberId uuid.UUID, conversationId uuid.UUID) error {
+	err := s.repository.AddBlockedConversation(ctx, gocql.UUID(memberId), gocql.UUID(conversationId))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Service) GetBlockedConversations(ctx context.Context, id uuid.UUID) ([]dto.BlockReport, error) {
+	ids, err := s.repository.FindBlockedConversations(ctx, gocql.UUID(id))
+	if err != nil {
+		return nil, err
+	}
+	res := make([]dto.BlockReport, 0, len(ids))
+	for _, i := range ids {
+		res = append(res, dto.BlockReport{Id: uuid.UUID(i)})
+	}
+	return res, nil
 }

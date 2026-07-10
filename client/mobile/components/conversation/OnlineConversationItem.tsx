@@ -2,6 +2,11 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { colors } from "@/constants";
 import { router } from "expo-router";
 import { OnlineConversationFeedResponse } from "@/types/conversation";
+import { useActionSheet } from "@expo/react-native-action-sheet";
+import { reportUser } from "@/api/chat";
+import { useBlockConversation } from "@/hooks/useConversation";
+import { reportOnlineConversation } from "@/api/conversation";
+import Toast from "react-native-toast-message";
 
 interface OnlineConversationItemProps {
   conversation: OnlineConversationFeedResponse;
@@ -11,6 +16,42 @@ export default function OnlineConversationItem({
   conversation,
 }: OnlineConversationItemProps) {
   console.log(conversation.id);
+  const { showActionSheetWithOptions } = useActionSheet();
+  const blockConversationMutation = useBlockConversation();
+
+  const handleLongPress = () => {
+    showActionSheetWithOptions(
+      {
+        options: ["Delete from feed", `Report and Delete from feed`, "Cancel"],
+        cancelButtonIndex: 2,
+      },
+      async (selectedIndex?: number) => {
+        switch (selectedIndex) {
+          case 0:
+            blockConversationMutation.mutate({
+              id: conversation.id,
+            });
+            break;
+          case 1:
+            blockConversationMutation.mutate({
+              id: conversation.id,
+            });
+            const reportPromises = [
+              reportOnlineConversation({ id: conversation.id }),
+              ...conversation.moderatorIds.map((mid) =>
+                reportUser({ id: mid }),
+              ),
+            ];
+            await Promise.all(reportPromises);
+            Toast.show({
+              type: "info",
+              text1: "Success report",
+              text2: "We will review this conversation, sorry for inconvenience.",
+            });
+        }
+      },
+    );
+  };
 
   return (
     <Pressable
@@ -34,6 +75,7 @@ export default function OnlineConversationItem({
           },
         })
       }
+      onLongPress={() => handleLongPress()}
     >
       <View
         style={[

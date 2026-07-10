@@ -2,10 +2,6 @@ package dto
 
 import "github.com/google/uuid"
 
-type SendLikeRequest struct {
-	ToId uuid.UUID `json:"toId"`
-}
-
 type SendMessagingRequest struct {
 	ToIdType    string    `json:"toIdType"`
 	ToId        uuid.UUID `json:"toId"`
@@ -46,6 +42,6 @@ type GeneratePresignedURLResponse struct {
 	Fields   map[string]string `json:"fields"`
 }
 
-type ReportUserRequest struct {
+type BlockReport struct {
 	Id uuid.UUID `json:"id"`
 }

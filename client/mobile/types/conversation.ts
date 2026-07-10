@@ -26,6 +26,7 @@ export interface OnlineConversationFeedResponse {
   ongoing: boolean;
   isModerator: boolean;
   isRegistrant: boolean;
+  moderatorIds: string[];
 }
 
 export interface BanParticipantRequest {
@@ -103,4 +104,5 @@ export interface OfflineConversationDetailResponse {
   isModerator: boolean;
   isParticipant: boolean;
   numberOfParticipants: number;
+  moderatorIds: string[];
 }

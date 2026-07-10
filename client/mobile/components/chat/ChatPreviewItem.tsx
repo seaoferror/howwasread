@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Message } from "@/types/chat";
-import { colors } from "@/constants";
+import { colors, queryKey } from "@/constants";
 import { router } from "expo-router";
 import {
   useCheckBlock,
@@ -14,6 +14,7 @@ import { useEffect } from "react";
 import { getKVStore, setKVStore } from "@/db/storage";
 import { useActionSheet } from "@expo/react-native-action-sheet";
 import Toast from "react-native-toast-message";
+import queryClient from "@/api/queryClient";
 
 interface ChatPreviewItemProps {
   preview: Message;
@@ -86,12 +87,21 @@ export default function ChatPreviewItem({
               return;
             }
             if (!data?.didBlock) {
-              sendMessageMutation.mutate({
-                toIdType: roomType,
-                toId: preview.roomId,
-                contentType: "block",
-                contents: [],
-              });
+              sendMessageMutation.mutate(
+                {
+                  toIdType: roomType,
+                  toId: preview.roomId,
+                  contentType: "block",
+                  contents: [],
+                },
+                {
+                  onSuccess: async () => {
+                    await queryClient.invalidateQueries({
+                      queryKey: [queryKey.CHAT, queryKey.CHECK_BLOCK],
+                    });
+                  },
+                },
+              );
             }
             reportUserMutation.mutate(
               {
@@ -111,12 +121,21 @@ export default function ChatPreviewItem({
           case 2:
             roomType === "personal" &&
               preview.roomId !== getKVStore("myId") &&
-              sendMessageMutation.mutate({
-                toIdType: roomType,
-                toId: preview.roomId,
-                contentType: data?.didBlock ? "unblock" : "block",
-                contents: [],
-              });
+              sendMessageMutation.mutate(
+                {
+                  toIdType: roomType,
+                  toId: preview.roomId,
+                  contentType: data?.didBlock ? "unblock" : "block",
+                  contents: [],
+                },
+                {
+                  onSuccess: async () => {
+                    await queryClient.invalidateQueries({
+                      queryKey: [queryKey.CHAT, queryKey.CHECK_BLOCK],
+                    });
+                  },
+                },
+              );
             break;
           case 3:
             break;

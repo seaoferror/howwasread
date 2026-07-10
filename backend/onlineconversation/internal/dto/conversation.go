@@ -21,20 +21,21 @@ type CreateConversationRequest struct {
 }
 
 type ConversationFeedResponse struct {
-	Id           string    `json:"id"`
-	Novel        string    `json:"novel,omitempty"`
-	ShortStory   string    `json:"shortStory,omitempty"`
-	Poem         string    `json:"poem,omitempty"`
-	Play         string    `json:"play,omitempty"`
-	Film         string    `json:"film,omitempty"`
-	By           string    `json:"by"`
-	Rule         string    `json:"rule,omitempty"`
-	Capacity     int       `json:"capacity"`
-	When         time.Time `json:"when"`
-	Length       string    `json:"length"`
-	Ongoing      bool      `json:"ongoing"`
-	IsModerator  bool      `json:"isModerator"`
-	IsRegistrant bool      `json:"isRegistrant"`
+	Id           string      `json:"id"`
+	Novel        string      `json:"novel,omitempty"`
+	ShortStory   string      `json:"shortStory,omitempty"`
+	Poem         string      `json:"poem,omitempty"`
+	Play         string      `json:"play,omitempty"`
+	Film         string      `json:"film,omitempty"`
+	By           string      `json:"by"`
+	Rule         string      `json:"rule,omitempty"`
+	Capacity     int         `json:"capacity"`
+	When         time.Time   `json:"when"`
+	Length       string      `json:"length"`
+	Ongoing      bool        `json:"ongoing"`
+	IsModerator  bool        `json:"isModerator"`
+	IsRegistrant bool        `json:"isRegistrant"`
+	ModeratorIds []uuid.UUID `json:"moderatorIds"`
 }
 
 type ConversationSignalResponse struct {
@@ -65,4 +66,8 @@ type GetConversationResponse struct {
 type BanParticipantRequest struct {
 	ConversationId string    `json:"conversationId"`
 	BanId          uuid.UUID `json:"banId"`
+}
+
+type ReportConversationRequest struct {
+	Id string `json:"id"`
 }

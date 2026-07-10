@@ -19,6 +19,7 @@ func conversationRouter(c *Controller) {
 	c.Router(GET, "/onlineconversation/conversation/join", c.joinConversation)
 	c.Router(GET, "/onlineconversation/conversation", c.getConversation)
 	c.Router(POST, "/onlineconversation/conversation/ban", c.banParticipant)
+	c.Router(POST, "/onlineconversation/conversation/report", c.reportOnlineConversation)
 }
 
 func (c *Controller) createConversation(w http.ResponseWriter, r *http.Request) {
@@ -167,6 +168,34 @@ func (c *Controller) banParticipant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = c.service.BanParticipant(r.Context(), memberId, conversationId, req.BanId)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func (c *Controller) reportOnlineConversation(w http.ResponseWriter, r *http.Request) {
+	memberId, err := uuid.Parse(r.Header.Get("X-User-Id"))
+	if err != nil {
+		slog.Error("fail to parse member id from raw string",
+			"err", err)
+		handleError(w, errors.New("fail to parse"))
+		return
+	}
+	var req dto.ReportConversationRequest
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		handleError(w, errors.New("fail to parse"))
+		return
+	}
+	conversationId, err := bson.ObjectIDFromHex(req.Id)
+	if err != nil {
+		slog.Error("fail to parse conversation id from raw string", "err", err)
+		handleError(w, errors.New("fail to parse"))
+		return
+	}
+	err = c.service.ReportOnlineConversation(r.Context(), memberId, conversationId)
 	if err != nil {
 		handleError(w, err)
 		return

@@ -2,7 +2,10 @@ import { Platform, StyleSheet, View } from "react-native";
 import { AppleMaps, type CameraMoveEvent, GoogleMaps } from "expo-maps";
 import { useEffect, useMemo, useState } from "react";
 import { gridDisk, latLngToCell } from "h3-js";
-import { useMapOfflineConversations } from "@/hooks/useConversation";
+import {
+  useGetBlockedConversations,
+  useMapOfflineConversations,
+} from "@/hooks/useConversation";
 import {
   getCurrentPositionAsync,
   PermissionStatus,
@@ -27,6 +30,8 @@ export default function OfflineConversationMap() {
     resolution: 7,
     h3Indexes: h3Res7,
   });
+  const { data: blockedConversations } = useGetBlockedConversations();
+
   useEffect(() => {
     async function wrapper() {
       const { status } = await requestForegroundPermissionsAsync();
@@ -42,10 +47,14 @@ export default function OfflineConversationMap() {
     }
     wrapper();
   }, []);
-  const markers = useMemo(
-    () =>
-      zoom >= (Platform.OS === "ios" ? 12 : 14)
-        ? res7Datas.map((data) => ({
+  const markers = useMemo(() => {
+    const blockedIds = new Set(
+      blockedConversations?.map((block) => block.id) || [],
+    );
+    return zoom >= (Platform.OS === "ios" ? 12 : 14)
+      ? res7Datas
+          .filter((data) => !blockedIds.has(data.id))
+          .map((data) => ({
             id: data.id,
             coordinates: {
               latitude: data.lat,
@@ -53,8 +62,10 @@ export default function OfflineConversationMap() {
             },
             title: data.writtenBy,
           }))
-        : zoom >= (Platform.OS === "ios" ? 10 : 12)
-          ? res5Datas.map((data) => ({
+      : zoom >= (Platform.OS === "ios" ? 10 : 12)
+        ? res5Datas
+            .filter((data) => !blockedIds.has(data.id))
+            .map((data) => ({
               id: data.id,
               coordinates: {
                 latitude: data.lat,
@@ -62,9 +73,8 @@ export default function OfflineConversationMap() {
               },
               title: data.writtenBy,
             }))
-          : [],
-    [zoom, res7Datas, res5Datas],
-  );
+        : [];
+  }, [blockedConversations, zoom, res7Datas, res5Datas]);
 
   const handleCameraMove = (event: CameraMoveEvent) => {
     // console.log(event.zoom);

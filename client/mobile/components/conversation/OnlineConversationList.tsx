@@ -3,11 +3,15 @@ import { FlatList, StyleSheet } from "react-native";
 import { colors } from "@/constants";
 import { useScrollToTop } from "expo-router";
 import OnlineConversationItem from "@/components/conversation/OnlineConversationItem";
-import { useGetInfiniteOnlineConversations } from "@/hooks/useConversation";
+import {
+  useGetBlockedConversations,
+  useGetInfiniteOnlineConversations,
+} from "@/hooks/useConversation";
 
 export default function OnlineConversationList() {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
     useGetInfiniteOnlineConversations();
+  const { data: blockedConversations } = useGetBlockedConversations();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const ref = useRef<FlatList | null>(null);
   useScrollToTop(ref);
@@ -28,7 +32,16 @@ export default function OnlineConversationList() {
     <FlatList
       ref={ref}
       data={data?.pages.flat()}
-      renderItem={({ item }) => <OnlineConversationItem conversation={item} />}
+      renderItem={({ item }) => {
+        if (blockedConversations) {
+          for (const c of blockedConversations) {
+            if (c.id === String(item.id)) {
+              return null;
+            }
+          }
+        }
+        return <OnlineConversationItem conversation={item} />;
+      }}
       keyExtractor={(item) => String(item.id)}
       contentContainerStyle={styles.contentContainer}
       onEndReached={handleEndReached}

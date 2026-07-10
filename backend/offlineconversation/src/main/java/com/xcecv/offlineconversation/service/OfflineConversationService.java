@@ -10,6 +10,7 @@ import com.xcecv.offlineconversation.dto.*;
 import com.xcecv.offlineconversation.projection.OfflineConversationDetailProjection;
 import com.xcecv.offlineconversation.projection.OfflineConversationMapProjection;
 import com.xcecv.offlineconversation.projection.OfflineConversationPinProjection;
+import com.xcecv.offlineconversation.projection.OfflineConversationReportProjection;
 import com.xcecv.offlineconversation.repository.OfflineConversationParticipantRepository;
 import com.xcecv.offlineconversation.repository.OfflineConversationRepository;
 import com.xcecv.offlineconversation.util.UUIDUtil;
@@ -257,6 +258,29 @@ public class OfflineConversationService {
         .isModerator(convo.getModeratorIds().contains(memberId))
         .isParticipant(participantIds.contains(memberId))
         .numberOfParticipants(participantIds.size())
+        .moderatorIds(convo.getModeratorIds())
         .build();
+  }
+
+  @Transactional
+  public void report(UUID conversationId, UUID memberId) {
+    var conversation = offlineConversationRepository.findById(conversationId, OfflineConversationReportProjection.class)
+        .orElseThrow(() -> new ResponseStatusException(
+            HttpStatus.NOT_FOUND,
+            "Conversation not found"
+        ));
+    if (conversation.getReporterIds().contains(memberId)) {
+      return;
+    }
+    if (conversation.getReporterIds().size() > 5) {
+      offlineConversationRepository.deleteById(conversationId);
+      return;
+    }
+    var c = offlineConversationRepository.findById(conversationId)
+        .orElseThrow(() -> new ResponseStatusException(
+            HttpStatus.NOT_FOUND,
+            "Conversation not found"
+        ));
+    c.getReporterIds().add(memberId);
   }
 }

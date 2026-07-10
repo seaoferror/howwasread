@@ -69,10 +69,11 @@ func (s *Service) GetConversations(ctx context.Context, memberId uuid.UUID, page
 		}
 		var isModerator bool
 		var isRegistrant bool
+		mIds := make([]uuid.UUID, 0, len(item.ModeratorIds))
 		for _, mId := range item.ModeratorIds {
+			mIds = append(mIds, uuid.UUID(mId.Data))
 			if bytes.Equal(mId.Data, memberId[:]) {
 				isModerator = true
-				break
 			}
 		}
 		for _, rId := range item.RegistrantIds {
@@ -101,6 +102,7 @@ func (s *Service) GetConversations(ctx context.Context, memberId uuid.UUID, page
 			Ongoing:      ongoing,
 			IsModerator:  isModerator,
 			IsRegistrant: isRegistrant,
+			ModeratorIds: mIds,
 		})
 	}
 	slog.Info("success to get conversation")
@@ -201,6 +203,31 @@ func (s *Service) BanParticipant(ctx context.Context, modId uuid.UUID, conversat
 		return errors.New("you cannot ban")
 	}
 	err = s.repository.AddBanId(ctx, conversationId, banId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Service) ReportOnlineConversation(
+	ctx context.Context, memberId uuid.UUID, conversationId bson.ObjectID,
+) error {
+	ids, err := s.repository.FindReporterIdsByConversationId(ctx, conversationId)
+	if err != nil {
+		return err
+	}
+	for _, id := range ids {
+		if bytes.Equal(id.Data, memberId[:]) {
+			return nil
+		}
+	}
+	if len(ids) > 5 {
+		err = s.repository.DeleteOnlineConversation(ctx, conversationId)
+		if err != nil {
+			return err
+		}
+	}
+	err = s.repository.AddReporterIdByConversationId(ctx, conversationId, memberId)
 	if err != nil {
 		return err
 	}

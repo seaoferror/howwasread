@@ -72,12 +72,42 @@ export async function getOfflineConversationDetail(
   return data;
 }
 
-export async function joinOfflineConversation(body: { conversationId: string }) {
+export async function joinOfflineConversation(body: {
+  conversationId: string;
+}) {
   const { data } = await axiosInstance.patch("/offlineconversation/join", body);
   return data;
 }
 
-export async function quitOfflineConversation(body: { conversationId: string }) {
+export async function quitOfflineConversation(body: {
+  conversationId: string;
+}) {
   const { data } = await axiosInstance.patch("/offlineconversation/quit", body);
+  return data;
+}
+
+export async function blockConversation(body: { id: string }) {
+  const { data } = await axiosInstance.post("/chat/block/conversation", body);
+  return data;
+}
+
+export async function getBlockedConversations(): Promise<{ id: string }[]> {
+  const { data } = await axiosInstance.get("/chat/block/conversations");
+  return data;
+}
+
+export async function reportOnlineConversation(body: { id: string }) {
+  const { data } = await axiosInstance.post(
+    "/onlineconversation/conversation/report",
+    body,
+  );
+  return data;
+}
+
+export async function reportOfflineConversation(body: { id: string }) {
+  const { data } = await axiosInstance.post(
+    "/offlineconversation/report",
+    body,
+  );
   return data;
 }
