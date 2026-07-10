@@ -170,7 +170,7 @@ func (s *Service) VerifySMSOTP(sessionId uuid.UUID, verificationId uuid.UUID, ot
 		return &r, rt, nil
 	}
 
-	_, _, id, password, role, err := s.repository.FindLoginInfoByEmail(email)
+	_, _, id, _, role, err := s.repository.FindLoginInfoByEmail(email)
 	if err != nil {
 		slog.Warn("fail to find login info by email which is selected by sessionId",
 			"err", err,
@@ -180,7 +180,7 @@ func (s *Service) VerifySMSOTP(sessionId uuid.UUID, verificationId uuid.UUID, ot
 
 	oldAccountId, err := s.repository.FindIdByPhoneNumber(phoneNumber)
 	if err == nil {
-		err = s.repository.ReplaceAndLinkMemberWithOldAccount(id, oldAccountId, email, password, phoneNumber)
+		err = s.repository.ReplaceAndLinkMemberWithOldAccount(id, oldAccountId, email, phoneNumber)
 		id = oldAccountId
 	}
 	if errors.Is(err, gocql.ErrNotFound) {

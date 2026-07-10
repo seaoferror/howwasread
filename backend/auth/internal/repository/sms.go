@@ -105,12 +105,12 @@ func (r *Repository) FindEmailByPhoneNumber(phoneNumber string) (email string, e
 	return email, nil
 }
 
-func (r *Repository) ReplaceAndLinkMemberWithOldAccount(newId, oldAccountId gocql.UUID, email, password, phoneNumber string) error {
+func (r *Repository) ReplaceAndLinkMemberWithOldAccount(newId, oldAccountId gocql.UUID, email, phoneNumber string) error {
 	err := r.session.Batch(gocql.LoggedBatch).
 		Query("DELETE FROM member_by_id WHERE id = ?",
 			newId).
-		Query("UPDATE member_by_id SET email = ?, password = ?, email_verified = ? WHERE id = ?",
-			email, password, true, oldAccountId,
+		Query("UPDATE member_by_id SET email = ?, email_verified = ? WHERE id = ?",
+			email, true, oldAccountId,
 		).
 		Query("UPDATE member_by_email SET id = ?, phone_number = ?, phone_number_verified = ? WHERE email = ?",
 			oldAccountId, phoneNumber, true, email,

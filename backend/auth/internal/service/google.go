@@ -24,7 +24,7 @@ func (s *Service) SignInWithGoogle(ctx context.Context, token string) (
 	if !ok {
 		return nil, "", ErrSignInWithGoogle
 	}
-	emailVerified, phoneNumberVerified, id1, _, role1, err1 := s.repository.FindLoginInfoByEmail(email)
+	emailVerified, phoneNumberVerified, id, _, role1, err1 := s.repository.FindLoginInfoByEmail(email)
 	if errors.Is(err1, gocql.ErrNotFound) {
 		err1 = nil
 		idv7, err2 := uuid.NewV7()
@@ -41,12 +41,12 @@ func (s *Service) SignInWithGoogle(ctx context.Context, token string) (
 	if err1 != nil {
 		return nil, "", ErrInternalServer
 	}
-	err = s.repository.SaveThirdPartySignInInfo(ctx, id1, email, phoneNumberVerified, emailVerified)
+	err = s.repository.SaveThirdPartySignInInfo(ctx, id, email, phoneNumberVerified, emailVerified)
 	if err != nil {
 		return nil, "", ErrInternalServer
 	}
 	if !phoneNumberVerified {
 		return s.provideSessionId(email)
 	}
-	return s.provideTokens(id1, role1)
+	return s.provideTokens(id, role1)
 }
