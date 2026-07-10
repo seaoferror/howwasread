@@ -193,6 +193,10 @@ func (s *Service) DeleteAccount(ctx context.Context, refreshToken string) error 
 	if err != nil {
 		return err
 	}
+	slog.Info("find email and phone number for account deletion",
+		"id", id,
+		"email", email,
+		"phone number", phoneNumber)
 	err = s.repository.DeleteAccount(ctx, id, email, phoneNumber)
 	if err != nil {
 		return err
