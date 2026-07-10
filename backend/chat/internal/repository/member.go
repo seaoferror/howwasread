@@ -123,7 +123,7 @@ func (r *Repository) BanPhoneNumber(ctx context.Context, phoneNumber string) err
 }
 
 func (r *Repository) AddBlockedConversation(ctx context.Context, memberId gocql.UUID, conversationId gocql.UUID) error {
-	err := r.session.Query(`UPDATE profile_by_id USING TTL = ? SET blocked_conversations = blocked_conversations + ? WHERE id = ?`,
+	err := r.session.Query(`UPDATE profile_by_id USING TTL ? SET blocked_conversations = blocked_conversations + ? WHERE id = ?`,
 		360*24*60*60, []gocql.UUID{conversationId}, memberId).ExecContext(ctx)
 	if err != nil {
 		slog.Error("fail to add blocked conversation", "err", err,
