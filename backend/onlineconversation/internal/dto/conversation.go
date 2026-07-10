@@ -21,7 +21,7 @@ type CreateConversationRequest struct {
 }
 
 type ConversationFeedResponse struct {
-	Id           string      `json:"id"`
+	Id           uuid.UUID   `json:"id"`
 	Novel        string      `json:"novel,omitempty"`
 	ShortStory   string      `json:"shortStory,omitempty"`
 	Poem         string      `json:"poem,omitempty"`
@@ -49,7 +49,7 @@ type ConversationSignalRequest struct {
 }
 
 type GetConversationResponse struct {
-	Id         string    `json:"id"`
+	Id         uuid.UUID `json:"id"`
 	Novel      string    `json:"novel,omitempty"`
 	ShortStory string    `json:"shortStory,omitempty"`
 	Poem       string    `json:"poem,omitempty"`
@@ -64,10 +64,10 @@ type GetConversationResponse struct {
 }
 
 type BanParticipantRequest struct {
-	ConversationId string    `json:"conversationId"`
+	ConversationId uuid.UUID `json:"conversationId"`
 	BanId          uuid.UUID `json:"banId"`
 }
 
 type ReportConversationRequest struct {
-	Id string `json:"id"`
+	Id uuid.UUID `json:"id"`
 }

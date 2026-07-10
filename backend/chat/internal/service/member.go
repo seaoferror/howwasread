@@ -73,22 +73,22 @@ func (s *Service) ReportUser(ctx context.Context, reporterId, reportedId uuid.UU
 	return nil
 }
 
-func (s *Service) BlockConversation(ctx context.Context, memberId uuid.UUID, conversationId uuid.UUID) error {
-	err := s.repository.AddBlockedConversation(ctx, gocql.UUID(memberId), gocql.UUID(conversationId))
+func (s *Service) BlockConversation(ctx context.Context, memberId uuid.UUID, conversationId string) error {
+	err := s.repository.AddBlockedConversation(ctx, gocql.UUID(memberId), conversationId)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *Service) GetBlockedConversations(ctx context.Context, id uuid.UUID) ([]dto.BlockReport, error) {
-	ids, err := s.repository.FindBlockedConversations(ctx, gocql.UUID(id))
+func (s *Service) GetBlockedConversations(ctx context.Context, memberId uuid.UUID) ([]dto.BlockReport, error) {
+	ids, err := s.repository.FindBlockedConversations(ctx, gocql.UUID(memberId))
 	if err != nil {
 		return nil, err
 	}
 	res := make([]dto.BlockReport, 0, len(ids))
-	for _, i := range ids {
-		res = append(res, dto.BlockReport{Id: uuid.UUID(i)})
+	for _, id := range ids {
+		res = append(res, dto.BlockReport{Id: id})
 	}
 	return res, nil
 }

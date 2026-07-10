@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func (s *Service) CreateConversation(
@@ -26,9 +25,13 @@ func (s *Service) CreateConversation(
 	capacity int,
 	when time.Time,
 	length time.Duration,
-) (map[string]string, error) {
-	conversationId := bson.NewObjectID()
-	err := s.repository.SaveConversation(
+) (map[string]uuid.UUID, error) {
+	conversationId, err := uuid.NewV7()
+	if err != nil {
+		slog.Error("fail to create uuid v7 for online conversation id", "err", err)
+		return nil, err
+	}
+	err = s.repository.SaveConversation(
 		ctx,
 		memberId,
 		conversationId,
@@ -47,7 +50,7 @@ func (s *Service) CreateConversation(
 		return nil, err
 	}
 	slog.Info("success to create conversation")
-	return map[string]string{"conversationId": conversationId.Hex()}, nil
+	return map[string]uuid.UUID{"conversationId": conversationId}, nil
 }
 
 func (s *Service) GetConversations(ctx context.Context, memberId uuid.UUID, page int) ([]dto.ConversationFeedResponse, error) {
@@ -88,7 +91,7 @@ func (s *Service) GetConversations(ctx context.Context, memberId uuid.UUID, page
 		}
 
 		resp = append(resp, dto.ConversationFeedResponse{
-			Id:           item.Id.Hex(),
+			Id:           uuid.UUID(item.Id.Data),
 			Novel:        item.Novel,
 			ShortStory:   item.ShortStory,
 			Poem:         item.Poem,
@@ -157,7 +160,7 @@ func (s *Service) PublishConversationSignal(fromId uuid.UUID, toIds [][]byte, si
 	return nil
 }
 
-func (s *Service) GetConversation(ctx context.Context, conversationId bson.ObjectID, memberId uuid.UUID) (*dto.GetConversationResponse, error) {
+func (s *Service) GetConversation(ctx context.Context, conversationId, memberId uuid.UUID) (*dto.GetConversationResponse, error) {
 	c, err := s.repository.GetConversation(ctx, conversationId)
 	if err != nil {
 		return nil, err
@@ -171,7 +174,7 @@ func (s *Service) GetConversation(ctx context.Context, conversationId bson.Objec
 	}
 
 	resp := dto.GetConversationResponse{
-		Id:          c.Id.Hex(),
+		Id:          uuid.UUID(c.Id.Data),
 		Novel:       c.Novel,
 		ShortStory:  c.ShortStory,
 		Poem:        c.Poem,
@@ -187,7 +190,7 @@ func (s *Service) GetConversation(ctx context.Context, conversationId bson.Objec
 	return &resp, nil
 }
 
-func (s *Service) BanParticipant(ctx context.Context, modId uuid.UUID, conversationId bson.ObjectID, banId uuid.UUID) error {
+func (s *Service) BanParticipant(ctx context.Context, modId, conversationId, banId uuid.UUID) error {
 	mIds, err := s.repository.FindModeratorIds(ctx, conversationId)
 	if err != nil {
 		return err
@@ -209,9 +212,7 @@ func (s *Service) BanParticipant(ctx context.Context, modId uuid.UUID, conversat
 	return nil
 }
 
-func (s *Service) ReportOnlineConversation(
-	ctx context.Context, memberId uuid.UUID, conversationId bson.ObjectID,
-) error {
+func (s *Service) ReportOnlineConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {
 	ids, err := s.repository.FindReporterIdsByConversationId(ctx, conversationId)
 	if err != nil {
 		return err

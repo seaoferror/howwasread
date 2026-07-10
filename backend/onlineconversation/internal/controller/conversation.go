@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 func conversationRouter(c *Controller) {
@@ -124,11 +123,9 @@ func (c *Controller) getConversation(w http.ResponseWriter, r *http.Request) {
 		handleError(w, errors.New("fail to parse"))
 		return
 	}
-	conversationIdRaw := r.URL.Query().Get("id")
-	conversationId, err := bson.ObjectIDFromHex(conversationIdRaw)
+	conversationId, err := uuid.Parse(r.URL.Query().Get("id"))
 	if err != nil {
-		slog.Error("fail to parse conversation object id from raw string",
-			"conversationIdRaw", conversationIdRaw)
+		slog.Error("fail to parse conversation object id from raw string", "err", err)
 		handleError(w, errors.New("fail to parse"))
 		return
 	}
@@ -161,13 +158,7 @@ func (c *Controller) banParticipant(w http.ResponseWriter, r *http.Request) {
 		handleError(w, errors.New("fail to parse"))
 		return
 	}
-	conversationId, err := bson.ObjectIDFromHex(req.ConversationId)
-	if err != nil {
-		slog.Error("fail to parse conversation id from raw string", "err", err)
-		handleError(w, errors.New("fail to parse"))
-		return
-	}
-	err = c.service.BanParticipant(r.Context(), memberId, conversationId, req.BanId)
+	err = c.service.BanParticipant(r.Context(), memberId, req.ConversationId, req.BanId)
 	if err != nil {
 		handleError(w, err)
 		return
@@ -189,13 +180,7 @@ func (c *Controller) reportOnlineConversation(w http.ResponseWriter, r *http.Req
 		handleError(w, errors.New("fail to parse"))
 		return
 	}
-	conversationId, err := bson.ObjectIDFromHex(req.Id)
-	if err != nil {
-		slog.Error("fail to parse conversation id from raw string", "err", err)
-		handleError(w, errors.New("fail to parse"))
-		return
-	}
-	err = c.service.ReportOnlineConversation(r.Context(), memberId, conversationId)
+	err = c.service.ReportOnlineConversation(r.Context(), memberId, req.Id)
 	if err != nil {
 		handleError(w, err)
 		return

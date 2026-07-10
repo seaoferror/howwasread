@@ -32,10 +32,14 @@ export default function OfflineConversationDetailScreen() {
               id: String(id),
             });
             if (data) {
-              await Promise.all([
-                data.moderatorIds.map((modId) => reportUser({ id: modId })),
-              ]);
-              await reportOfflineConversation({ id: String(id) });
+              try {
+                await Promise.all([
+                  data.moderatorIds.map((modId) => reportUser({ id: modId })),
+                ]);
+                await reportOfflineConversation({ id: String(id) });
+              } catch (e) {
+                console.log(e)
+              }
               Toast.show({
                 type: "info",
                 text1: "Success report",

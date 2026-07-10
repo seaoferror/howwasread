@@ -23,6 +23,7 @@ export default function OnlineConversationItem({
     showActionSheetWithOptions(
       {
         options: ["Delete from feed", `Report and Delete from feed`, "Cancel"],
+        destructiveButtonIndex: 1,
         cancelButtonIndex: 2,
       },
       async (selectedIndex?: number) => {
@@ -42,7 +43,11 @@ export default function OnlineConversationItem({
                 reportUser({ id: mid }),
               ),
             ];
-            await Promise.all(reportPromises);
+            try {
+              await Promise.all(reportPromises);
+            } catch (e) {
+              console.log(e);
+            }
             Toast.show({
               type: "info",
               text1: "Success report",

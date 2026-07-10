@@ -7,7 +7,7 @@ import (
 )
 
 type Conversation struct {
-	Id         bson.ObjectID `bson:"_id"`
+	Id         bson.Binary   `bson:"_id"`
 	Novel      string        `bson:"novel,omitempty"`
 	ShortStory string        `bson:"short_story,omitempty"`
 	Poem       string        `bson:"poem,omitempty"`

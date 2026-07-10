@@ -13,16 +13,9 @@ import (
 
 const Limit = 10
 
-func (r *Repository) SaveConversation(
-	ctx context.Context,
-	memberId uuid.UUID,
-	conversationId bson.ObjectID,
-	novel, shortStory, poem, play, film, by, rule string,
-	capacity int,
-	when time.Time,
-	length time.Duration) error {
+func (r *Repository) SaveConversation(ctx context.Context, memberId, conversationId uuid.UUID, novel, shortStory, poem, play, film, by, rule string, capacity int, when time.Time, length time.Duration) error {
 	newConversation := document.Conversation{
-		Id:         conversationId,
+		Id:         bson.Binary{4, conversationId[:]},
 		Novel:      novel,
 		ShortStory: shortStory,
 		Poem:       poem,
@@ -135,11 +128,11 @@ func (r *Repository) RemoveParticipantId(ctx context.Context, conversationId str
 	return nil
 }
 
-func (r *Repository) GetConversation(ctx context.Context, conversationId bson.ObjectID) (*document.Conversation, error) {
+func (r *Repository) GetConversation(ctx context.Context, conversationId uuid.UUID) (*document.Conversation, error) {
 	opts := options.FindOne().SetProjection(bson.M{"participant_ids": 0, "registrant_ids": 0})
 
 	var d document.Conversation
-	err := r.db.Collection("conversation").FindOne(ctx, bson.M{"_id": conversationId}, opts).Decode(&d)
+	err := r.db.Collection("conversation").FindOne(ctx, bson.M{"_id": bson.Binary{4, conversationId[:]}}, opts).Decode(&d)
 	if err != nil {
 		slog.Error("fail to find conversation", "err", err)
 		return nil, err
@@ -147,12 +140,12 @@ func (r *Repository) GetConversation(ctx context.Context, conversationId bson.Ob
 	return &d, nil
 }
 
-func (r *Repository) FindModeratorIds(ctx context.Context, conversationId bson.ObjectID) ([]bson.Binary, error) {
+func (r *Repository) FindModeratorIds(ctx context.Context, conversationId uuid.UUID) ([]bson.Binary, error) {
 	opt := options.FindOne().SetProjection(bson.M{"moderator_ids": 1})
 
 	var d document.Conversation
 	err := r.db.Collection("conversation").
-		FindOne(ctx, bson.M{"_id": conversationId}, opt).Decode(&d)
+		FindOne(ctx, bson.M{"_id": bson.Binary{4, conversationId[:]}}, opt).Decode(&d)
 	if err != nil {
 		slog.Error("fail to find mod ids", "err", err)
 		return nil, err
@@ -160,9 +153,9 @@ func (r *Repository) FindModeratorIds(ctx context.Context, conversationId bson.O
 	return d.ModeratorIds, nil
 }
 
-func (r *Repository) AddBanId(ctx context.Context, conversationId bson.ObjectID, banId uuid.UUID) error {
+func (r *Repository) AddBanId(ctx context.Context, conversationId uuid.UUID, banId uuid.UUID) error {
 	_, err := r.db.Collection("conversation").
-		UpdateOne(ctx, bson.M{"_id": conversationId},
+		UpdateOne(ctx, bson.M{"_id": bson.Binary{4, conversationId[:]}},
 			bson.M{"$push": bson.M{"ban_ids": bson.Binary{4, banId[:]}}})
 	if err != nil {
 		slog.Error("fail to add participant member id to conversation",
@@ -174,12 +167,12 @@ func (r *Repository) AddBanId(ctx context.Context, conversationId bson.ObjectID,
 	return nil
 }
 
-func (r *Repository) FindReporterIdsByConversationId(ctx context.Context, conversationId bson.ObjectID) ([]bson.Binary, error) {
+func (r *Repository) FindReporterIdsByConversationId(ctx context.Context, conversationId uuid.UUID) ([]bson.Binary, error) {
 	opt := options.FindOne().SetProjection(bson.M{"reporter_ids": 1})
 
 	var d document.Conversation
 	err := r.db.Collection("conversation").
-		FindOne(ctx, bson.M{"_id": conversationId}, opt).Decode(&d)
+		FindOne(ctx, bson.M{"_id": bson.Binary{4, conversationId[:]}}, opt).Decode(&d)
 	if err != nil {
 		slog.Error("fail to find reporter ids", "err", err)
 		return nil, err
@@ -187,9 +180,8 @@ func (r *Repository) FindReporterIdsByConversationId(ctx context.Context, conver
 	return d.ReporterIds, nil
 }
 
-func (r *Repository) DeleteOnlineConversation(ctx context.Context, id bson.ObjectID) error {
-	convFilter := bson.M{"_id": id}
-	_, err := r.db.Collection("conversation").DeleteOne(ctx, convFilter)
+func (r *Repository) DeleteOnlineConversation(ctx context.Context, id uuid.UUID) error {
+	_, err := r.db.Collection("conversation").DeleteOne(ctx, bson.M{"_id": bson.Binary{4, id[:]}})
 	if err != nil {
 		slog.Error("fail to delete conversation",
 			"err", err)
@@ -198,10 +190,8 @@ func (r *Repository) DeleteOnlineConversation(ctx context.Context, id bson.Objec
 	return nil
 }
 
-func (r *Repository) AddReporterIdByConversationId(
-	ctx context.Context, conversationId bson.ObjectID, memberId uuid.UUID,
-) error {
-	filter := bson.M{"_id": conversationId}
+func (r *Repository) AddReporterIdByConversationId(ctx context.Context, conversationId, memberId uuid.UUID) error {
+	filter := bson.M{"_id": bson.Binary{4, conversationId[:]}}
 	update := bson.M{
 		"$addToSet": bson.M{
 			"reporter_ids": bson.Binary{
