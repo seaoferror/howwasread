@@ -45,10 +45,10 @@ export default function NameScreen() {
         onSuccess: () => {
           setKVStore("myName", name);
           if (newcomer) {
-            router.push("/conversations");
+            router.replace("/conversations");
             return;
           }
-          router.push("/account");
+          router.replace("/account");
         },
       },
     );
