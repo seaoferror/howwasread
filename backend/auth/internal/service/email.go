@@ -3,6 +3,7 @@ package service
 import (
 	"backend/auth/internal/dto"
 	"context"
+	"errors"
 	"log"
 	"log/slog"
 	"math/rand"
@@ -74,7 +75,7 @@ func (s *Service) LoginWithEmail(email, password string) (*dto.LoginWithEmailRes
 	emailVerified, phoneNumberVerified, id, dbPassword, role, err :=
 		s.repository.FindLoginInfoByEmail(email)
 	if err != nil {
-		return nil, "", ErrLoginWithEmail
+		return nil, "", errors.New("this account does not exist")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(dbPassword), []byte(password))
