@@ -17,7 +17,7 @@
           "NSAllowsArbitraryLoads": false
         },
         "ITSAppUsesNonExemptEncryption": false,
-        "UIBackgroundModes": ["audio", "voip"]
+        "UIBackgroundModes": ["audio"]
       },
       "bitcode": false
     },
