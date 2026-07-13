@@ -5,7 +5,6 @@ import { router } from "expo-router";
 import {
   useCheckBlock,
   useGetChatRoomInfo,
-  useReportUser,
   useSendMessage,
 } from "@/hooks/useChat";
 import { useGetProfile } from "@/hooks/useProfile";
@@ -15,6 +14,7 @@ import { getKVStore, setKVStore } from "@/db/storage";
 import { useActionSheet } from "@expo/react-native-action-sheet";
 import Toast from "react-native-toast-message";
 import queryClient from "@/api/queryClient";
+import { checkBlock, reportUser } from "@/api/chat";
 
 interface ChatPreviewItemProps {
   preview: Message;
@@ -27,10 +27,8 @@ export default function ChatPreviewItem({
 }: ChatPreviewItemProps) {
   const { data: roomInfo } = useGetChatRoomInfo(preview.roomId);
   const { data: fromProfile } = useGetProfile(preview.fromId);
-  const { data } = useCheckBlock(preview.roomId);
   const { showActionSheetWithOptions } = useActionSheet();
   const sendMessageMutation = useSendMessage();
-  const reportUserMutation = useReportUser();
 
   useEffect(() => {
     if (roomInfo) {
@@ -42,26 +40,29 @@ export default function ChatPreviewItem({
     }
   }, [roomInfo, fromProfile, preview.roomId, preview.fromId]);
 
-  function handleLongPress() {
+  async function handleLongPress() {
     if (!roomInfo || !fromProfile) {
       return;
     }
     const roomType = roomInfo.type;
+    const freshBlockcheck = await checkBlock(preview.roomId);
     showActionSheetWithOptions(
       {
         options:
-          roomType === "personal" && preview.roomId !== getKVStore("myId")
+          roomType === "personal" &&
+          preview.roomId !== getKVStore("myId") &&
+          freshBlockcheck
             ? [
                 "Delete",
-                data?.didBlock ? "Report" : "Block and Report",
-                data?.didBlock ? "Unblock" : "Block",
+                freshBlockcheck.didBlock ? "Report" : "Block and Report",
+                freshBlockcheck.didBlock ? "Unblock" : "Block",
                 "Cancel",
               ]
             : [`Quit`, "Cancel"],
         destructiveButtonIndex: roomType === "personal" ? [0, 1] : 0,
         cancelButtonIndex: roomType === "personal" ? 3 : 2,
       },
-      (selectedIndex?: number) => {
+      async (selectedIndex?: number) => {
         console.log(selectedIndex);
         switch (selectedIndex) {
           case 0:
@@ -80,62 +81,41 @@ export default function ChatPreviewItem({
             );
             break;
           case 1:
-            if (
-              roomType === "group" ||
-              preview.roomId === getKVStore("myId")
-            ) {
-              return
+            if (roomType === "group" || preview.roomId === getKVStore("myId")) {
+              return;
             }
-            if (!data?.didBlock) {
-              sendMessageMutation.mutate(
-                {
-                  toIdType: roomType,
-                  toId: preview.roomId,
-                  contentType: "block",
-                  contents: [],
-                },
-                {
-                  onSuccess: async () => {
-                    await queryClient.invalidateQueries({
-                      queryKey: [queryKey.CHAT, queryKey.CHECK_BLOCK],
-                    });
-                  },
-                },
-              );
+            if (!freshBlockcheck.didBlock) {
+              sendMessageMutation.mutate({
+                toIdType: roomType,
+                toId: preview.roomId,
+                contentType: "block",
+                contents: [],
+              });
             }
-            reportUserMutation.mutate(
-              {
-                id: preview.roomId,
-              },
-              {
-                onSuccess: () => {
-                  Toast.show({
-                    type: "info",
-                    text1: "Success report",
-                    text2: "We will review this user, sorry for inconvenience.",
-                  });
-                },
-              },
-            );
+            await queryClient.invalidateQueries({
+              queryKey: [queryKey.CHAT, queryKey.CHECK_BLOCK],
+            });
+            await reportUser({
+              id: preview.roomId,
+            });
+            Toast.show({
+              type: "info",
+              text1: "Success report",
+              text2: "We will review this user, sorry for inconvenience.",
+            });
             break;
           case 2:
             roomType === "personal" &&
               preview.roomId !== getKVStore("myId") &&
-              sendMessageMutation.mutate(
-                {
-                  toIdType: roomType,
-                  toId: preview.roomId,
-                  contentType: data?.didBlock ? "unblock" : "block",
-                  contents: [],
-                },
-                {
-                  onSuccess: async () => {
-                    await queryClient.invalidateQueries({
-                      queryKey: [queryKey.CHAT, queryKey.CHECK_BLOCK],
-                    });
-                  },
-                },
-              );
+              sendMessageMutation.mutate({
+                toIdType: roomType,
+                toId: preview.roomId,
+                contentType: freshBlockcheck.didBlock ? "unblock" : "block",
+                contents: [],
+              });
+            await queryClient.invalidateQueries({
+              queryKey: [queryKey.CHAT, queryKey.CHECK_BLOCK],
+            });
             break;
           case 3:
             break;

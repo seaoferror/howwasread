@@ -108,9 +108,6 @@ func (s *Service) PreprocessNotification(
 }
 
 func (s *Service) generateSignedURL(contentType, filename string) (string, error) {
-	if contentType == "image" {
-		contentType = "resized-image"
-	}
 	signedURL, err := s.signer.Sign(
 		fmt.Sprintf("%s/%s/%s",
 			s.cloudfrontURL, contentType, filename),

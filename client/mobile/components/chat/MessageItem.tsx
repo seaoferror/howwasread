@@ -3,11 +3,7 @@ import { Message } from "@/types/chat";
 import { getHourMinute, getLongDate } from "@/util/time";
 import { useGetMyProfile, useGetProfile } from "@/hooks/useProfile";
 import { colors } from "@/constants";
-import {
-  useGetChatRoomInfo,
-  useReportUser,
-  useSendMessage,
-} from "@/hooks/useChat";
+import { useGetChatRoomInfo, useSendMessage } from "@/hooks/useChat";
 import { Image } from "expo-image";
 import VideoMessage from "@/components/chat/VideoMessage";
 import VoiceMessage from "@/components/chat/VoiceMessage";
@@ -17,19 +13,22 @@ import { useEffect, useState } from "react";
 import ImageModal from "@/components/ImageModal";
 import { useActionSheet } from "@expo/react-native-action-sheet";
 import { useSQLiteContext } from "expo-sqlite";
-import Toast from "react-native-toast-message";
 import { deleteMessage } from "@/db/message";
+import { reportUser } from "@/api/chat";
+import Toast from "react-native-toast-message";
 
 interface MessageItemProps {
   message: Omit<Message, "roomId">;
   isDayFirst: boolean;
   showName: boolean;
+  successDelete: (id: string) => void;
 }
 
 export default function MessageItem({
   message,
   isDayFirst,
   showName,
+  successDelete,
 }: MessageItemProps) {
   const { data: myProfile } = useGetMyProfile();
   const { data: fromProfile } = useGetProfile(message.fromId);
@@ -40,7 +39,6 @@ export default function MessageItem({
   );
   const { showActionSheetWithOptions } = useActionSheet();
   const db = useSQLiteContext();
-  const reportUserMutation = useReportUser();
   const sendMessageMutation = useSendMessage();
 
   useEffect(() => {
@@ -67,9 +65,11 @@ export default function MessageItem({
         destructiveButtonIndex: 0,
       },
       async (selectedIndex?: number) => {
+        console.log(selectedIndex);
         switch (selectedIndex) {
           case 0:
             await deleteMessage(db, message.id);
+            successDelete(message.id);
             if (roomInfo) {
               sendMessageMutation.mutate({
                 toId: String(roomId),
@@ -81,6 +81,8 @@ export default function MessageItem({
             break;
           case 1:
             await deleteMessage(db, message.id);
+            successDelete(message.id);
+            console.log(roomInfo);
             if (roomInfo) {
               sendMessageMutation.mutate({
                 toId: String(roomId),
@@ -89,18 +91,14 @@ export default function MessageItem({
                 contents: [message.id],
               });
             }
-            reportUserMutation.mutate(
-              { id: message.fromId },
-              {
-                onSuccess: () =>
-                  Toast.show({
-                    type: "info",
-                    text1: "Success report",
-                    text2:
-                      "We will review this message, sorry for inconvenience.",
-                  }),
-              },
-            );
+            console.log("start report...");
+            await reportUser({ id: message.fromId });
+            console.log("success report");
+            Toast.show({
+              type: "info",
+              text1: "Success report",
+              text2: "We will review this message, sorry for inconvenience.",
+            });
         }
       },
     );

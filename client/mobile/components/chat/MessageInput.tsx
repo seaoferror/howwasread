@@ -5,7 +5,6 @@ import { colors } from "@/constants";
 import { useState } from "react";
 import { useLocalSearchParams } from "expo-router";
 import {
-  useCheckBlock,
   useGeneratePresignedURL,
   useGetChatRoomInfo,
   useSendMessage,
@@ -23,7 +22,6 @@ import { requestRecordingPermissionsAsync } from "expo-audio";
 export default function MessageInput() {
   const { id: roomId } = useLocalSearchParams();
   const { data: roomInfo } = useGetChatRoomInfo(String(roomId));
-  const { data } = useCheckBlock(String(roomId));
   const sendMessageMutation = useSendMessage();
   const presignedURLMutation = useGeneratePresignedURL();
   const [textContent, setTextContent] = useState("");
@@ -59,7 +57,7 @@ export default function MessageInput() {
 
     const result = await launchImageLibraryAsync({
       mediaTypes: ["images", "videos"],
-      quality: 0.9,
+      quality: 0.5,
       videoExportPreset: VideoExportPreset.H264_1920x1080,
       videoMaxDuration: 30,
       shouldDownloadFromNetwork: true,
@@ -137,7 +135,7 @@ export default function MessageInput() {
       },
     );
   };
-  if (data?.didBlock || !roomInfo) {
+  if (!roomInfo) {
     return null;
   }
 

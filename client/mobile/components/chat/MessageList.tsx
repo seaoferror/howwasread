@@ -43,9 +43,9 @@ export default function MessageList() {
         createdAt: newMessageRaw.created_at,
       };
       if (newMessage.contentType === "delete") {
-        setLiveMessages((prev) => [
-          ...prev.filter((m) => m.id !== newMessage.contents[0]),
-        ]);
+        setLiveMessages((prev) =>
+          prev.filter((m) => m.id !== newMessage.contents[0]),
+        );
         return;
       }
       setLiveMessages((prev) => [newMessage, ...prev]);
@@ -69,7 +69,14 @@ export default function MessageList() {
         const olderMessage = allMessages[index + 1];
         if (!olderMessage) {
           return (
-            <MessageItem message={item} isDayFirst={true} showName={isGroup} />
+            <MessageItem
+              message={item}
+              isDayFirst={true}
+              showName={isGroup}
+              successDelete={(id) => {
+                setLiveMessages((prev) => prev.filter((m) => m.id !== id));
+              }}
+            />
           );
         }
         const currentMsgDate = new Date(item.createdAt).toLocaleDateString();
@@ -91,6 +98,9 @@ export default function MessageList() {
             showName={
               (wasEvent || isFromChange || isDayFirst) && !isMyId && isGroup
             }
+            successDelete={(id) => {
+              setLiveMessages((prev) => prev.filter((m) => m.id !== id));
+            }}
           />
         );
       }}

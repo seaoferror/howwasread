@@ -161,14 +161,7 @@ function RootNavigator() {
         const m: MessagingResponse = JSON.parse(event.data);
         console.log(m);
         setKVStore("recentMessageId", m.id);
-        if (m.contentType === "image" || m.contentType === "video") {
-          setTimeout(async () => {
-            await downloadFiles(m);
-            await saveRecentMessage(db, m);
-          }, 1000);
-          return;
-        }
-        if (m.contentType === "audio") {
+        if (m.contentType === "audio" || m.contentType === "image" || m.contentType === "video") {
           await downloadFiles(m);
         }
         await saveRecentMessage(db, m);
