@@ -42,6 +42,12 @@ export default function MessageList() {
         contents: JSON.parse(newMessageRaw.contents),
         createdAt: newMessageRaw.created_at,
       };
+      if (newMessage.contentType === "delete") {
+        setLiveMessages((prev) => [
+          ...prev.filter((m) => m.id !== newMessage.contents[0]),
+        ]);
+        return;
+      }
       setLiveMessages((prev) => [newMessage, ...prev]);
     });
 

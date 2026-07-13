@@ -3,7 +3,11 @@ import { Message } from "@/types/chat";
 import { getHourMinute, getLongDate } from "@/util/time";
 import { useGetMyProfile, useGetProfile } from "@/hooks/useProfile";
 import { colors } from "@/constants";
-import { useGetChatRoomInfo } from "@/hooks/useChat";
+import {
+  useGetChatRoomInfo,
+  useReportUser,
+  useSendMessage,
+} from "@/hooks/useChat";
 import { Image } from "expo-image";
 import VideoMessage from "@/components/chat/VideoMessage";
 import VoiceMessage from "@/components/chat/VoiceMessage";
@@ -11,6 +15,10 @@ import { useLocalSearchParams } from "expo-router";
 import { getKVStore, setKVStore } from "@/db/storage";
 import { useEffect, useState } from "react";
 import ImageModal from "@/components/ImageModal";
+import { useActionSheet } from "@expo/react-native-action-sheet";
+import { useSQLiteContext } from "expo-sqlite";
+import Toast from "react-native-toast-message";
+import { deleteMessage } from "@/db/message";
 
 interface MessageItemProps {
   message: Omit<Message, "roomId">;
@@ -30,6 +38,10 @@ export default function MessageItem({
   const [pressedImageContent, setPressedImageContent] = useState<string | null>(
     null,
   );
+  const { showActionSheetWithOptions } = useActionSheet();
+  const db = useSQLiteContext();
+  const reportUserMutation = useReportUser();
+  const sendMessageMutation = useSendMessage();
 
   useEffect(() => {
     if (fromProfile) {
@@ -44,6 +56,56 @@ export default function MessageItem({
     message.contentType === "block" ||
     message.contentType === "unblock";
 
+  const handleLongPress = () => {
+    showActionSheetWithOptions(
+      {
+        options:
+          message.fromId === (myProfile?.id ?? getKVStore("myId"))
+            ? [`Delete`, "Cancel"]
+            : ["Delete", "Report and Delete", "Cancel"],
+        cancelButtonIndex: 2,
+        destructiveButtonIndex: 0,
+      },
+      async (selectedIndex?: number) => {
+        switch (selectedIndex) {
+          case 0:
+            await deleteMessage(db, message.id);
+            if (roomInfo) {
+              sendMessageMutation.mutate({
+                toId: String(roomId),
+                toIdType: roomInfo.type,
+                contentType: "delete",
+                contents: [message.id],
+              });
+            }
+            break;
+          case 1:
+            await deleteMessage(db, message.id);
+            if (roomInfo) {
+              sendMessageMutation.mutate({
+                toId: String(roomId),
+                toIdType: roomInfo.type,
+                contentType: "delete",
+                contents: [message.id],
+              });
+            }
+            reportUserMutation.mutate(
+              { id: message.fromId },
+              {
+                onSuccess: () =>
+                  Toast.show({
+                    type: "info",
+                    text1: "Success report",
+                    text2:
+                      "We will review this message, sorry for inconvenience.",
+                  }),
+              },
+            );
+        }
+      },
+    );
+  };
+
   return (
     <View style={styles.container}>
       {isDayFirst && (
@@ -56,75 +118,79 @@ export default function MessageItem({
         </View>
       )}
 
-      {isEvent ? (
-        <View style={styles.pillPosition}>
-          <View style={styles.pill}>
-            <Text style={styles.pillText}>
-              {message.contentType === "participate" &&
-                (fromProfile?.name ?? getKVStore(message.fromId)) +
-                  " participates chatroom"}
-              {message.contentType === "create" && "You create chat room"}
-              {message.contentType === "block" &&
-                `You block ${roomInfo?.name ?? getKVStore(String(roomId))}`}
-              {message.contentType === "unblock" &&
-                `You unblock ${roomInfo?.name ?? getKVStore(String(roomId))}`}
-            </Text>
+      <Pressable onLongPress={() => handleLongPress()} disabled={isEvent}>
+        {isEvent ? (
+          <View style={styles.pillPosition}>
+            <View style={styles.pill}>
+              <Text style={styles.pillText}>
+                {message.contentType === "participate" &&
+                  (fromProfile?.name ?? getKVStore(message.fromId)) +
+                    " participates chatroom"}
+                {message.contentType === "create" && "You create chat room"}
+                {message.contentType === "block" &&
+                  `You block ${roomInfo?.name ?? getKVStore(String(roomId))}`}
+                {message.contentType === "unblock" &&
+                  `You unblock ${roomInfo?.name ?? getKVStore(String(roomId))}`}
+              </Text>
+            </View>
           </View>
-        </View>
-      ) : (
-        <View style={[styles.row, isMine ? styles.rowRight : styles.rowLeft]}>
-          <View
-            style={[
-              styles.bubbleWrapper,
-              isMine ? styles.bubbleWrapperReverse : null,
-            ]}
-          >
+        ) : (
+          <View style={[styles.row, isMine ? styles.rowRight : styles.rowLeft]}>
             <View
               style={[
-                styles.messageContainer,
-                isMine ? styles.mine : styles.theirs,
+                styles.bubbleWrapper,
+                isMine ? styles.bubbleWrapperReverse : null,
               ]}
             >
-              {showName && (
-                <Text style={styles.otherName}>
-                  {fromProfile?.name ?? getKVStore(message.fromId)}
-                </Text>
-              )}
-              {message.contentType === "text" ? (
-                <Text style={styles.content}>{message.contents[0]}</Text>
-              ) : message.contentType === "image" ? (
-                message.contents.map((content, idx) => (
-                  <Pressable
-                    key={idx}
-                    onPress={() => setPressedImageContent(content)}
-                  >
-                    <Image
-                      style={styles.media}
-                      source={getKVStore(content)}
-                      cachePolicy="memory"
-                      priority="low"
-                      onError={(event) => {
-                        console.log(event.error);
-                      }}
-                    />
-                  </Pressable>
-                ))
-              ) : message.contentType === "audio" ? (
-                <VoiceMessage url={getKVStore(message.contents[0])} />
-              ) : message.contentType === "video" ? (
-                message.contents.map((content, idx) => (
-                  <VideoMessage key={idx} url={getKVStore(content)} />
-                ))
-              ) : null}
+              <View
+                style={[
+                  styles.messageContainer,
+                  isMine ? styles.mine : styles.theirs,
+                ]}
+              >
+                {showName && (
+                  <Text style={styles.otherName}>
+                    {fromProfile?.name ?? getKVStore(message.fromId)}
+                  </Text>
+                )}
+                {message.contentType === "text" ? (
+                  <Text style={styles.content}>{message.contents[0]}</Text>
+                ) : message.contentType === "image" ? (
+                  message.contents.map((content, idx) => (
+                    <Pressable
+                      key={idx}
+                      onPress={() => setPressedImageContent(content)}
+                    >
+                      <Image
+                        style={styles.media}
+                        source={getKVStore(content)}
+                        cachePolicy="memory"
+                        priority="low"
+                        onError={(event) => {
+                          console.log(event.error);
+                        }}
+                      />
+                    </Pressable>
+                  ))
+                ) : message.contentType === "audio" ? (
+                  <VoiceMessage url={getKVStore(message.contents[0])} />
+                ) : message.contentType === "video" ? (
+                  message.contents.map((content, idx) => (
+                    <VideoMessage key={idx} url={getKVStore(content)} />
+                  ))
+                ) : null}
+              </View>
+              <Text style={styles.time}>
+                {getHourMinute(message.createdAt)}
+              </Text>
             </View>
-            <Text style={styles.time}>{getHourMinute(message.createdAt)}</Text>
           </View>
-        </View>
-      )}
-      <ImageModal
-        imageContent={pressedImageContent}
-        onClose={() => setPressedImageContent(null)}
-      />
+        )}
+        <ImageModal
+          imageContent={pressedImageContent}
+          onClose={() => setPressedImageContent(null)}
+        />
+      </Pressable>
     </View>
   );
 }

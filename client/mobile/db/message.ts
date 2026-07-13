@@ -150,18 +150,22 @@ export async function downloadFiles(m: MessagingResponse) {
   m.contents.map((content, idx) => setKVStore(content, localUris[idx]));
 }
 
-export async function addBlockId(db: SQLiteDatabase, m: MessagingResponse) {
+export async function deleteMessage(db: SQLiteDatabase, id: string) {
   return db.runAsync(
-    `INSERT OR IGNORE INTO blacklist (id) VALUES (?)`,
-    uuidParse(m.roomId),
+    `DELETE FROM message
+     WHERE id = ?;`,
+    uuidParse(id),
   );
 }
 
-export function wasBlocked(db: SQLiteDatabase, id: string): boolean {
-  return !!db.getFirstSync(
-    `SELECT 1
-     FROM blacklist
-     WHERE id = ?`,
+export async function getBeforeMessage(
+  db: SQLiteDatabase,
+  id: string,
+  roomId: string,
+) {
+  return db.getFirstAsync<MessageEntity>(
+    `SELECT * FROM message WHERE id < ? AND roomId = ?;`,
     uuidParse(id),
+    uuidParse(roomId),
   );
 }

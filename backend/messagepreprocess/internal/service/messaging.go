@@ -23,7 +23,7 @@ func (s *Service) ManageMessage(
 	roomId := toId
 	if toIdType == "personal" {
 		toIds = append(toIds, fromId[:])
-		if contentType != "block" && contentType != "unblock" && contentType != "quit" {
+		if contentType != "block" && contentType != "unblock" && contentType != "quit" && contentType != "delete" {
 			b, err := s.repository.IsBlocked(ctx, gocql.UUID(toId), gocql.UUID(fromId))
 			if err != nil {
 				return
@@ -45,7 +45,7 @@ func (s *Service) ManageMessage(
 			return
 		}
 	}
-	if toIdType == "group" && contentType != "create" && contentType != "quit" {
+	if toIdType == "group" && contentType != "create" && contentType != "quit" && contentType != "delete" {
 		participantIds, err := s.repository.FindParticipantIds(ctx, gocql.UUID(toId))
 		if errors.Is(err, gocql.ErrNotFound) {
 			err = nil
@@ -63,20 +63,20 @@ func (s *Service) ManageMessage(
 		if err != nil {
 			return
 		}
-		toIds = append(toIds, fromId[:])
 	}
 	if contentType == "participate" {
 		err := s.repository.AddParticipantId(ctx, gocql.UUID(roomId), gocql.UUID(fromId))
 		if err != nil {
 			return
 		}
-		toIds = append(toIds, fromId[:])
 	}
 	if toIdType == "group" && contentType == "quit" {
 		err := s.repository.RemoveParticipantId(ctx, gocql.UUID(roomId), gocql.UUID(fromId))
 		if err != nil {
 			return
 		}
+	}
+	if toIdType == "group" && (contentType == "create" || contentType == "participate" || contentType == "quit" || contentType == "delete") {
 		toIds = append(toIds, fromId[:])
 	}
 	if contentType == "image" || contentType == "audio" || contentType == "video" {

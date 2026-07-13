@@ -101,9 +101,9 @@ export default function OnlineConversationScreen() {
     if (!profile) {
       return;
     }
-    if (localAudio.current) {
+    if (localAudio.current && localAudio.current.active) {
       const audioTrack = localAudio.current.getAudioTracks()[0];
-      audioTrack.enabled = !audioTrack.enabled;
+      audioTrack.enabled = !audioTrack.enabled
       participantMutes.current[profile.id] =
         !participantMutes.current[profile.id];
       ws.current?.send(

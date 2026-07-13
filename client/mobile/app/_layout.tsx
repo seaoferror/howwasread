@@ -15,6 +15,7 @@ import {
 import { Platform } from "react-native";
 import { getRecentMessages } from "@/api/chat";
 import {
+  deleteMessage,
   deleteMessagesBeforeQuit,
   downloadFiles,
   initDB,
@@ -114,17 +115,24 @@ function RootNavigator() {
       if (messages && messages.length > 0) {
         setKVStore("recentMessageId", messages[0].id);
         const myQuitMessages = messages.filter((m) => m.contentType === "quit");
+        const myDeleteMessages = messages.filter((m) => m.contentType === "delete");
         const validMessagesToSave = messages.filter((m) => {
-          if (m.contentType === "quit") {
+          if (m.contentType === "quit" || m.contentType === "delete") {
             return false;
           }
           const wipedByQuit = myQuitMessages.some(
             (q) => q.roomId === m.roomId && q.id > m.id,
           );
-          return !wipedByQuit;
+          const wipedByDelete = myDeleteMessages.some(
+            (d) => d.contents[0] === m.id
+          )
+          return !wipedByQuit && !wipedByDelete;
         });
-        for (const quitMsg of myQuitMessages) {
-          await deleteMessagesBeforeQuit(db, quitMsg);
+        for (const q of myQuitMessages) {
+          await deleteMessagesBeforeQuit(db, q);
+        }
+        for (const d of myDeleteMessages) {
+          await deleteMessage(db, d.contents[0]);
         }
         for (const m of validMessagesToSave) {
           if (
