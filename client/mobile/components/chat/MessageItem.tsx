@@ -80,6 +80,9 @@ export default function MessageItem({
             }
             break;
           case 1:
+            if (message.fromId === (myProfile?.id ?? getKVStore("myId"))){
+              return;
+            }
             await deleteMessage(db, message.id);
             successDelete(message.id);
             console.log(roomInfo);
@@ -158,6 +161,7 @@ export default function MessageItem({
                     <Pressable
                       key={idx}
                       onPress={() => setPressedImageContent(content)}
+                      onLongPress={() => handleLongPress()}
                     >
                       <Image
                         style={styles.media}
@@ -171,10 +175,17 @@ export default function MessageItem({
                     </Pressable>
                   ))
                 ) : message.contentType === "audio" ? (
-                  <VoiceMessage url={getKVStore(message.contents[0])} />
+                  <VoiceMessage
+                    url={getKVStore(message.contents[0])}
+                    onLongPress={() => handleLongPress()}
+                  />
                 ) : message.contentType === "video" ? (
                   message.contents.map((content, idx) => (
-                    <VideoMessage key={idx} url={getKVStore(content)} />
+                    <VideoMessage
+                      key={idx}
+                      url={getKVStore(content)}
+                      onLongPress={() => handleLongPress()}
+                    />
                   ))
                 ) : null}
               </View>

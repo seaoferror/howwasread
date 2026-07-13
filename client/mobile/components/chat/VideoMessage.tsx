@@ -3,7 +3,7 @@ import { useVideoPlayer, VideoView } from "expo-video";
 import { useState } from "react";
 import { colors } from "@/constants";
 
-export default function VideoMessage({ url }: { url: string }) {
+export default function VideoMessage({ url, onLongPress }: { url: string, onLongPress: () => void }) {
   const player = useVideoPlayer(url, (player) => {
     player.loop = true;
   });
@@ -20,6 +20,7 @@ export default function VideoMessage({ url }: { url: string }) {
         player.seekBy(0);
         player.play();
       }}
+      onLongPress={onLongPress}
     >
       <VideoView style={styles.media} player={player} />
     </Pressable>

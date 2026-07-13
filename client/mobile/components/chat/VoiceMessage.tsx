@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@/constants";
 import { formatToMinuteSecond } from "@/util/time";
 
-export default function VoiceMessage({ url }: { url: string }) {
+export default function VoiceMessage({ url, onLongPress }: { url: string , onLongPress: () => void }) {
   const player = useAudioPlayer(url);
   const status = useAudioPlayerStatus(player);
   const duration = Number.isFinite(status.duration) ? status.duration : 0;
@@ -26,6 +26,7 @@ export default function VoiceMessage({ url }: { url: string }) {
               player.play();
             }
       }
+      onLongPress={onLongPress}
     >
       <View style={styles.iconBox}>
         <Ionicons

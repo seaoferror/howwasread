@@ -24,11 +24,14 @@ export default function MessageList() {
   const [liveMessages, setLiveMessages] = useState<Omit<Message, "roomId">[]>(
     [],
   );
+  const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
 
   const allMessages = useMemo(() => {
     const fetchedMessages = data?.pages?.flat() || [];
-    return [...liveMessages, ...fetchedMessages];
-  }, [data?.pages, liveMessages]);
+    return [...liveMessages, ...fetchedMessages].filter(
+      (m) => !deletedIds.has(m.id),
+    );
+  }, [data?.pages, liveMessages, deletedIds]);
 
   useEffect(() => {
     const subscription = addDatabaseChangeListener(async (event) => {
@@ -75,6 +78,7 @@ export default function MessageList() {
               showName={isGroup}
               successDelete={(id) => {
                 setLiveMessages((prev) => prev.filter((m) => m.id !== id));
+                setDeletedIds((prev) => new Set(prev).add(id));
               }}
             />
           );
@@ -99,7 +103,9 @@ export default function MessageList() {
               (wasEvent || isFromChange || isDayFirst) && !isMyId && isGroup
             }
             successDelete={(id) => {
+              console.log("success delete change live messages state ...")
               setLiveMessages((prev) => prev.filter((m) => m.id !== id));
+              setDeletedIds((prev) => new Set(prev).add(id));
             }}
           />
         );
