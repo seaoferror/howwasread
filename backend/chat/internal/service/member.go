@@ -3,6 +3,7 @@ package service
 import (
 	"backend/chat/internal/dto"
 	"context"
+	"log"
 
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
 	"github.com/google/uuid"
@@ -56,6 +57,7 @@ func (s *Service) ReportUser(ctx context.Context, reporterId, reportedId uuid.UU
 	if err != nil {
 		return err
 	}
+	log.Printf("report count of %v : %v", reportedId, rc)
 	if rc > 5 {
 		email, phoneNumber, err1 := s.repository.FindEmailAndPhoneNumberById(ctx, gocql.UUID(reportedId))
 		if err1 != nil {
