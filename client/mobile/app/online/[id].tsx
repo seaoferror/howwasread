@@ -231,10 +231,6 @@ export default function OnlineConversationScreen() {
         },
       );
       ws.current.onopen = () => {
-        Toast.show({
-          type: "success",
-          text1: `Now you are ready for conversation! Enjoy!`,
-        });
         setIsWebSocketOpen(true);
       };
       console.log(
@@ -484,15 +480,15 @@ export default function OnlineConversationScreen() {
             </View>
           ))}
         </View>
-        {isWebSocketOpen && (
-          <View style={styles.controls}>
-            {mute ? (
-              <CustomButton label="turn on your mic" onPress={toggleAudio} />
-            ) : (
-              <CustomButton label="turn off your mic" onPress={toggleAudio} />
-            )}
-          </View>
-        )}
+        <View style={styles.controls}>
+          {!isWebSocketOpen ? (
+            <CustomButton label="Connecting..." disabled={true} />
+          ) : mute ? (
+            <CustomButton label="turn on your mic" onPress={toggleAudio} />
+          ) : (
+            <CustomButton label="turn off your mic" onPress={toggleAudio} />
+          )}
+        </View>
       </View>
     </SafeAreaView>
   );
