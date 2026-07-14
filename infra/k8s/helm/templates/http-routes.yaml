@@ -63,6 +63,11 @@ spec:
   jwt:
     providers:
       - name: jwt-provider
+{{/*        extractFrom:*/}}
+{{/*          headers:*/}}
+{{/*            - name: Authorization*/}}
+{{/*              valuePrefix: "Bearer "*/}}
+{{/*            - name: Sec-WebSocket-Protocol*/}}
         claimToHeaders:
           - claim: sub
             header: X-User-Id

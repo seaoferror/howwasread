@@ -101,19 +101,41 @@ export default function OnlineConversationScreen() {
     if (!profile) {
       return;
     }
-    if (localAudio.current && localAudio.current.active) {
-      const audioTrack = localAudio.current.getAudioTracks()[0];
-      audioTrack.enabled = !audioTrack.enabled
-      participantMutes.current[profile.id] =
-        !participantMutes.current[profile.id];
-      ws.current?.send(
-        JSON.stringify({
-          toIds: Object.keys(peers.current),
-          signal: { type: "mute" },
-        }),
-      );
-      coordinateSeat();
-      setMute(!mute);
+    try {
+      if (localAudio.current && localAudio.current.active) {
+        const audioTracks = localAudio.current.getAudioTracks();
+        console.log(
+          "local audio length",
+          audioTracks.length,
+        );
+        console.log("WebSocket ready state:", ws.current?.readyState);
+        if (
+          ws.current &&
+          ws.current.readyState === 1 &&
+          audioTracks.length > 0
+        ) {
+          const audioTrack = audioTracks[0];
+          audioTrack.enabled = !audioTrack.enabled;
+          participantMutes.current[profile.id] =
+            !participantMutes.current[profile.id];
+          ws.current.send(
+            JSON.stringify({
+              toIds: Object.keys(peers.current),
+              signal: { type: "mute" },
+            }),
+          );
+          coordinateSeat();
+          setMute(!mute);
+          return;
+        }
+        console.log(
+          "local audio length",
+          localAudio.current.getAudioTracks().length,
+        );
+        console.log("WebSocket ready state:", ws.current?.readyState);
+      }
+    } catch (error) {
+      console.error("Failed to toggle audio:", error);
     }
   };
 
@@ -392,8 +414,8 @@ export default function OnlineConversationScreen() {
   }, [profile]);
 
   useEffect(() => {
-    if (!isPersonal){
-      return
+    if (!isPersonal) {
+      return;
     }
     navigation.setOptions({
       title: "Voice call",
