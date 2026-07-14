@@ -1,11 +1,97 @@
 package com.xcecv.offlineconversation.repository;
 
 import com.xcecv.offlineconversation.domain.OfflineConversationDocument;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.elasticsearch.annotations.Query;
+import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface OfflineConversationDocumentRepository extends CrudRepository<OfflineConversationDocument, UUID> {
+public interface OfflineConversationDocumentRepository extends ElasticsearchRepository<OfflineConversationDocument, UUID> {
+  @Query("""
+        {
+          "bool": {
+            "must": [
+              {
+                "multi_match": {
+                  "query": "?0",
+                  "fields": [
+                    "novel", "novel.keyword^5",
+                    "poem", "poem.keyword^5",
+                    "shortStory", "shortStory.keyword^5",
+                    "play", "play.keyword^5",
+                    "film", "film.keyword^5",
+                    "writtenBy", "writtenBy.keyword^5"
+                  ],
+                  "fuzziness": "AUTO"
+                }
+              }
+            ],
+            "filter": [
+              {
+                "term": {
+                  "h3Res7": "?1"
+                }
+              },
+              {
+                "range": {
+                  "time": {
+                    "gt": "?2"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      """)
+  List<OfflineConversationDocument> findByInputAndH3Res7(
+      String input,
+      String h3Res7,
+      Instant time
+  );
+
+  @Query("""
+        {
+          "bool": {
+            "must": [
+              {
+                "multi_match": {
+                  "query": "?0",
+                  "fields": [
+                    "novel", "novel.keyword^5",
+                    "poem", "poem.keyword^5",
+                    "shortStory", "shortStory.keyword^5",
+                    "play", "play.keyword^5",
+                    "film", "film.keyword^5",
+                    "writtenBy", "writtenBy.keyword^5"
+                  ],
+                  "fuzziness": "AUTO"
+                }
+              }
+            ],
+            "filter": [
+              {
+                "term": {
+                  "h3Res5": "?1"
+                }
+              },
+              {
+                "range": {
+                  "time": {
+                    "gt": "?2"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      """)
+  List<OfflineConversationDocument> findByInputAndH3Res5(
+      String input,
+      String h3Res5,
+      Instant time
+  );
 }

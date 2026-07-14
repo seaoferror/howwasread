@@ -3,6 +3,7 @@ package com.xcecv.offlineconversation.controller;
 import com.xcecv.offlineconversation.dto.CreateOfflineConversationRequest;
 import com.xcecv.offlineconversation.dto.JoinOfflineConversationRequest;
 import com.xcecv.offlineconversation.dto.OfflineConversationMapResponse;
+import com.xcecv.offlineconversation.dto.OfflineConversationSearchResponse;
 import com.xcecv.offlineconversation.service.OfflineConversationService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -85,5 +86,21 @@ public class OfflineConversationController {
   ) {
     offlineConversationService.report(request.conversationId(), memberId);
     return ResponseEntity.ok("ok");
+  }
+
+  @GetMapping("/search")
+  public ResponseEntity<?> search(
+      @NotBlank @RequestParam String input,
+      @NotBlank @RequestParam String resolution,
+      @NotBlank @RequestParam String h3Index
+  ) {
+    List<OfflineConversationSearchResponse> response = null;
+    if (resolution.equals("5")) {
+      response = offlineConversationService.searchH3Res5(input, h3Index);
+    }
+    if (resolution.equals("7")) {
+      response = offlineConversationService.searchH3Res7(input, h3Index);
+    }
+    return ResponseEntity.ok(response);
   }
 }

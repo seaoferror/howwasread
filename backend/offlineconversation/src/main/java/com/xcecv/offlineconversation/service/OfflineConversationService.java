@@ -12,6 +12,7 @@ import com.xcecv.offlineconversation.projection.OfflineConversationDetailProject
 import com.xcecv.offlineconversation.projection.OfflineConversationMapProjection;
 import com.xcecv.offlineconversation.projection.OfflineConversationPinProjection;
 import com.xcecv.offlineconversation.projection.OfflineConversationReportProjection;
+import com.xcecv.offlineconversation.repository.OfflineConversationDocumentRepository;
 import com.xcecv.offlineconversation.repository.OfflineConversationParticipantRepository;
 import com.xcecv.offlineconversation.repository.OfflineConversationRepository;
 import com.xcecv.offlineconversation.util.UUIDUtil;
@@ -37,6 +38,8 @@ public class OfflineConversationService {
 
   private final OfflineConversationRepository offlineConversationRepository;
   private final OfflineConversationParticipantRepository offlineConversationParticipantRepository;
+  private final OfflineConversationDocumentRepository offlineConversationDocumentRepository;
+
   private final GlideClient glideClient;
   private final ObjectMapper objectMapper;
   private final ApplicationEventPublisher applicationEventPublisher;
@@ -300,5 +303,39 @@ public class OfflineConversationService {
             "Conversation not found"
         ));
     c.getReporterIds().add(memberId);
+  }
+
+  public List<OfflineConversationSearchResponse> searchH3Res5(String input, String h3Index) {
+    var conversations =
+        offlineConversationDocumentRepository
+            .findByInputAndH3Res5(input, h3Index, Instant.now());
+    return buildSearchResponses(conversations);
+  }
+
+  public List<OfflineConversationSearchResponse> searchH3Res7(String input, String h3Index) {
+    var conversations =
+        offlineConversationDocumentRepository
+            .findByInputAndH3Res7(input, h3Index, Instant.now());
+    return buildSearchResponses(conversations);
+  }
+
+  private List<OfflineConversationSearchResponse> buildSearchResponses(List<OfflineConversationDocument> conversations) {
+    List<OfflineConversationSearchResponse> response = new ArrayList<>();
+    for (var conversation : conversations) {
+      response.add(OfflineConversationSearchResponse.builder()
+          .novel(conversation.getNovel())
+          .play(conversation.getPlay())
+          .poem(conversation.getPoem())
+          .shortStory(conversation.getShortStory())
+          .film(conversation.getFilm())
+          .writtenBy(conversation.getWrittenBy())
+          .rule(conversation.getRule())
+          .location(conversation.getLocation())
+          .time(conversation.getTime())
+          .lat(conversation.getLatitude())
+          .lng(conversation.getLongitude())
+          .build());
+    }
+    return response;
   }
 }

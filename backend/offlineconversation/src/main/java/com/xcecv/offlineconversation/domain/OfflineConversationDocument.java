@@ -2,10 +2,7 @@ package com.xcecv.offlineconversation.domain;
 
 import jakarta.persistence.Id;
 import lombok.*;
-import org.springframework.data.elasticsearch.annotations.Document;
-import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldType;
-import org.springframework.data.elasticsearch.annotations.Setting;
+import org.springframework.data.elasticsearch.annotations.*;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -22,22 +19,47 @@ public class OfflineConversationDocument {
   @Id
   private UUID id;
 
-  @Field(type = FieldType.Text, analyzer = "standard_lowercase_analyzer")
+  @MultiField(
+      mainField = @Field(type = FieldType.Text, analyzer = "standard_lowercase_analyzer"),
+      otherFields = {
+          @InnerField(suffix = "keyword", type = FieldType.Keyword)
+      }
+  )
   private String novel;
-
-  @Field(type = FieldType.Text, analyzer = "standard_lowercase_analyzer")
+  @MultiField(
+      mainField = @Field(type = FieldType.Text, analyzer = "standard_lowercase_analyzer"),
+      otherFields = {
+          @InnerField(suffix = "keyword", type = FieldType.Keyword)
+      }
+  )
   private String poem;
-
-  @Field(type = FieldType.Text, analyzer = "standard_lowercase_analyzer")
+  @MultiField(
+      mainField = @Field(type = FieldType.Text, analyzer = "standard_lowercase_analyzer"),
+      otherFields = {
+          @InnerField(suffix = "keyword", type = FieldType.Keyword)
+      }
+  )
   private String shortStory;
-
-  @Field(type = FieldType.Text, analyzer = "standard_lowercase_analyzer")
+  @MultiField(
+      mainField = @Field(type = FieldType.Text, analyzer = "standard_lowercase_analyzer"),
+      otherFields = {
+          @InnerField(suffix = "keyword", type = FieldType.Keyword)
+      }
+  )
   private String play;
-
-  @Field(type = FieldType.Text, analyzer = "standard_lowercase_analyzer")
+  @MultiField(
+      mainField = @Field(type = FieldType.Text, analyzer = "standard_lowercase_analyzer"),
+      otherFields = {
+          @InnerField(suffix = "keyword", type = FieldType.Keyword)
+      }
+  )
   private String film;
-
-  @Field(type = FieldType.Text, analyzer = "standard_lowercase_analyzer")
+  @MultiField(
+      mainField = @Field(type = FieldType.Text, analyzer = "standard_lowercase_analyzer"),
+      otherFields = {
+          @InnerField(suffix = "keyword", type = FieldType.Keyword)
+      }
+  )
   private String writtenBy;
 
   @Field(type = FieldType.Date, format = {}, pattern = "uuuu-MM-dd'T'HH:mm:ss.SSSX")
