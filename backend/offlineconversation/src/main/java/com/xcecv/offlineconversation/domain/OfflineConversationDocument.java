@@ -12,7 +12,7 @@ import java.util.UUID;
 
 
 @Document(indexName = "offline_conversation")
-@Setting(settingPath = "standard-settings.json")
+@Setting(settingPath = "opensearch/standard-settings.json")
 @Getter
 @Setter
 @Builder
