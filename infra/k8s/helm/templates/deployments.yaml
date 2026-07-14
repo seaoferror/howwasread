@@ -67,6 +67,10 @@ spec:
             - secretRef:
                 name: valkey
             {{- end }}
+            {{- if $app.opensearch }}
+            - secretRef:
+                name: opensearch
+            {{- end }}
           volumeMounts:
             {{- if $app.authentication}}
             - name: authentication-volume

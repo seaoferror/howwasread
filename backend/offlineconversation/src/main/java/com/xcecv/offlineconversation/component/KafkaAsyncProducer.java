@@ -1,6 +1,8 @@
 package com.xcecv.offlineconversation.component;
 
+import com.xcecv.offlineconversation.domain.OfflineConversationDocument;
 import com.xcecv.offlineconversation.dto.ChatMessage;
+import com.xcecv.offlineconversation.repository.OfflineConversationDocumentRepository;
 import com.xcecv.offlineconversation.util.UUIDUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +19,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class KafkaAsyncProducer {
 
   private final KafkaTemplate<byte[], Object> kafkaTemplate;
+  private final OfflineConversationDocumentRepository offlineConversationDocumentRepository;
 
   @Async
   @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
@@ -32,5 +35,11 @@ public class KafkaAsyncProducer {
             message.contents());
       }
     });
+  }
+
+  @Async
+  @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+  public void handleCreateConversation(OfflineConversationDocument document) {
+    offlineConversationDocumentRepository.save(document);
   }
 }

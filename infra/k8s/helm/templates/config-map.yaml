@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: config-map
-  namespace: {{.Values.namespace}}
+  namespace: backend
 data:
   GOOGLE_SIGN_IN_WEB_CLIENT_ID: "151293957834-1j7mtcqmis9o9rsbt8hnv5jpmd7mi0au.apps.googleusercontent.com"
   PROFILE: "production"
@@ -19,3 +19,6 @@ data:
   FROM_EMAIL_SMTP: "smtp.gmail.com"
   SMTP_ADDR: "smtp.gmail.com:587"
   BUNDLE_IDENTIFIER: "com.xcecv.mobile"
+  OPENSEARCH_HOST: "os-38802b4a-wsxc20xx-2877.a.aivencloud.com"
+  OPENSEARCH_PORT: "15327"
+  OPENSEARCH_USERNAME: "avnadmin"

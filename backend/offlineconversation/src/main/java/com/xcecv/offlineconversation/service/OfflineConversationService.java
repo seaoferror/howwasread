@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.f4b6a3.uuid.UuidCreator;
 import com.xcecv.offlineconversation.domain.OfflineConversation;
+import com.xcecv.offlineconversation.domain.OfflineConversationDocument;
 import com.xcecv.offlineconversation.domain.OfflineConversationParticipant;
 import com.xcecv.offlineconversation.domain.ParticipantCompositeKey;
 import com.xcecv.offlineconversation.dto.*;
@@ -80,6 +81,23 @@ public class OfflineConversationService {
         .toId(UUIDUtil.uuidToBytes(conversationId))
         .contentType("create")
         .contents(new ArrayList<>(List.of(request.location())))
+        .build());
+    applicationEventPublisher.publishEvent(OfflineConversationDocument.builder()
+        .id(conversationId)
+        .novel(request.novel())
+        .shortStory(request.shortStory())
+        .poem(request.poem())
+        .play(request.play())
+        .film(request.film())
+        .writtenBy(request.writtenBy())
+        .time(request.time())
+        .h3Res5(request.h3Res5())
+        .h3Res7(request.h3Res7())
+        .mapsLink(request.mapsLink())
+        .rule(request.rule())
+        .location(request.location())
+        .latitude(request.lat())
+        .longitude(request.lng())
         .build());
     try {
       Map<String, String> hashEntry = Map.of(conversationId.toString(),

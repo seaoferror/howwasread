@@ -1,0 +1,13 @@
+{
+  "analysis": {
+    "analyzer": {
+      "standard_lowercase_analyzer": {
+        "type": "custom",
+        "tokenizer": "standard",
+        "filter": [
+          "lowercase"
+        ]
+      }
+    }
+  }
+}

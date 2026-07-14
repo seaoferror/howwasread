@@ -23,6 +23,7 @@ apps:
     twilio: true
     firebase: false
     valkey: false
+    opensearch: false
 #    cpuRequests: "0.03"
 #    memoryRequests: "10Mi"
 #    cpuLimits: "0.1"
@@ -165,6 +166,7 @@ apps:
     twilio: false
     firebase: false
     valkey: true
+    opensearch: true
 #    cpuRequests: "0.03"
 #    memoryRequests: "10Mi"
 #    cpuLimits: "0.1"
@@ -201,6 +203,7 @@ apps:
     twilio: false
     firebase: false
     valkey: true
+    opensearch: true
     framework: spring-boot
 #    cpuRequests: "0.3"
 #    memoryRequests: "100Mi"
