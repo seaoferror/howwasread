@@ -2,6 +2,7 @@ package com.xcecv.offlineconversation.repository;
 
 import com.xcecv.offlineconversation.domain.OfflineConversationDocument;
 import org.springframework.data.elasticsearch.annotations.Query;
+import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.stereotype.Repository;
 
@@ -44,10 +45,22 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
                 }
               }
             ]
+          },
+          "highlight": {
+            "pre_tags": ["<em>"],
+            "post_tags": ["</em>"],
+            "fields": {
+              "novel": {},
+              "poem": {},
+              "shortStory": {},
+              "play": {},
+              "film": {},
+              "writtenBy": {}
+            }
           }
         }
       """)
-  List<OfflineConversationDocument> findByInputAndH3Res7(
+  List<SearchHit<OfflineConversationDocument>> findByInputAndH3Res7(
       String input,
       String h3Res7,
       Instant time
@@ -86,10 +99,22 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
                 }
               }
             ]
+          },
+          "highlight": {
+            "pre_tags": ["<em>"],
+            "post_tags": ["</em>"],
+            "fields": {
+              "novel": {},
+              "poem": {},
+              "shortStory": {},
+              "play": {},
+              "film": {},
+              "writtenBy": {}
+            }
           }
         }
       """)
-  List<OfflineConversationDocument> findByInputAndH3Res5(
+  List<SearchHit<OfflineConversationDocument>> findByInputAndH3Res5(
       String input,
       String h3Res5,
       Instant time

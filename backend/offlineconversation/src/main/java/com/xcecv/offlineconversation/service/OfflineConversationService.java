@@ -20,6 +20,7 @@ import glide.api.GlideClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -306,29 +307,31 @@ public class OfflineConversationService {
   }
 
   public List<OfflineConversationSearchResponse> searchH3Res5(String input, String h3Index) {
-    var conversations =
+    var searchHits =
         offlineConversationDocumentRepository
             .findByInputAndH3Res5(input, h3Index, Instant.now());
-    return buildSearchResponses(conversations);
+    return buildSearchResponses(searchHits);
   }
 
   public List<OfflineConversationSearchResponse> searchH3Res7(String input, String h3Index) {
-    var conversations =
+    var searchHits =
         offlineConversationDocumentRepository
             .findByInputAndH3Res7(input, h3Index, Instant.now());
-    return buildSearchResponses(conversations);
+    return buildSearchResponses(searchHits);
   }
 
-  private List<OfflineConversationSearchResponse> buildSearchResponses(List<OfflineConversationDocument> conversations) {
+  private List<OfflineConversationSearchResponse> buildSearchResponses(List<SearchHit<OfflineConversationDocument>> searchHits) {
     List<OfflineConversationSearchResponse> response = new ArrayList<>();
-    for (var conversation : conversations) {
+    for (var searchHit : searchHits) {
+      var conversation = searchHit.getContent();
+      Map<String, List<String>> highlightFields = searchHit.getHighlightFields();
       response.add(OfflineConversationSearchResponse.builder()
-          .novel(conversation.getNovel())
-          .play(conversation.getPlay())
-          .poem(conversation.getPoem())
-          .shortStory(conversation.getShortStory())
-          .film(conversation.getFilm())
-          .writtenBy(conversation.getWrittenBy())
+          .novel(getHighlightOrOriginal(highlightFields, "novel", conversation.getNovel()))
+          .play(getHighlightOrOriginal(highlightFields, "play", conversation.getPlay()))
+          .poem(getHighlightOrOriginal(highlightFields, "poem", conversation.getPoem()))
+          .shortStory(getHighlightOrOriginal(highlightFields, "shortStory", conversation.getShortStory()))
+          .film(getHighlightOrOriginal(highlightFields, "film", conversation.getFilm()))
+          .writtenBy(getHighlightOrOriginal(highlightFields, "writtenBy", conversation.getWrittenBy()))
           .rule(conversation.getRule())
           .location(conversation.getLocation())
           .time(conversation.getTime())
@@ -337,5 +340,9 @@ public class OfflineConversationService {
           .build());
     }
     return response;
+  }
+
+  private String getHighlightOrOriginal(Map<String, List<String>> highlights, String fieldName, String originalValue) {
+    return highlights.containsKey(fieldName) ? highlights.get(fieldName).getFirst() : originalValue;
   }
 }
