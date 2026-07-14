@@ -75,6 +75,7 @@ export default function OnlineConversationScreen() {
   const peers = useRef<Record<string, RTCPeerConnection>>({});
   const localAudio = useRef<MediaStream>(null);
   const remoteAudios = useRef<Record<string, MediaStream>>({});
+  const [isWebSocketOpen, setIsWebSocketOpen] = useState(false);
 
   const coordinateSeat = () => {
     const unique = [...new Set(participantIds.current)].sort((a, b) =>
@@ -104,10 +105,6 @@ export default function OnlineConversationScreen() {
     try {
       if (localAudio.current && localAudio.current.active) {
         const audioTracks = localAudio.current.getAudioTracks();
-        console.log(
-          "local audio length",
-          audioTracks.length,
-        );
         console.log("WebSocket ready state:", ws.current?.readyState);
         if (
           ws.current &&
@@ -128,10 +125,6 @@ export default function OnlineConversationScreen() {
           setMute(!mute);
           return;
         }
-        console.log(
-          "local audio length",
-          localAudio.current.getAudioTracks().length,
-        );
         console.log("WebSocket ready state:", ws.current?.readyState);
       }
     } catch (error) {
@@ -208,7 +201,7 @@ export default function OnlineConversationScreen() {
                 onSuccess: () => {
                   Toast.show({
                     type: "success",
-                    text1: `${name} will know you sent like after this conversation`,
+                    text1: `You send like to ${name}`,
                   });
                 },
               },
@@ -237,6 +230,13 @@ export default function OnlineConversationScreen() {
           },
         },
       );
+      ws.current.onopen = () => {
+        Toast.show({
+          type: "success",
+          text1: `Now you are ready for conversation! Enjoy!`,
+        });
+        setIsWebSocketOpen(true);
+      };
       console.log(
         `wss://${process.env.EXPO_PUBLIC_API_URL}/onlineconversation/conversation/join?id=${conversationId}`,
       );
@@ -484,13 +484,15 @@ export default function OnlineConversationScreen() {
             </View>
           ))}
         </View>
-        <View style={styles.controls}>
-          {mute ? (
-            <CustomButton label="turn on your mic" onPress={toggleAudio} />
-          ) : (
-            <CustomButton label="turn off your mic" onPress={toggleAudio} />
-          )}
-        </View>
+        {isWebSocketOpen && (
+          <View style={styles.controls}>
+            {mute ? (
+              <CustomButton label="turn on your mic" onPress={toggleAudio} />
+            ) : (
+              <CustomButton label="turn off your mic" onPress={toggleAudio} />
+            )}
+          </View>
+        )}
       </View>
     </SafeAreaView>
   );

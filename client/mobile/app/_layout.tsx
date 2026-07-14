@@ -31,6 +31,26 @@ import { registerNotification } from "@/api/notification";
 import { setAudioModeAsync } from "expo-audio";
 import { useGetMyProfile } from "@/hooks/useProfile";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import * as Sentry from '@sentry/react-native';
+
+Sentry.init({
+  dsn: 'https://4d3c893e931b2ee0c936c646d22033bc@o4511734928572416.ingest.de.sentry.io/4511734931783760',
+
+  // Adds more context data to events (IP address, cookies, user, etc.)
+  // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
+  sendDefaultPii: true,
+
+  // Enable Logs
+  enableLogs: true,
+
+  // Configure Session Replay
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1,
+  integrations: [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()],
+
+  // uncomment the line below to enable Spotlight (https://spotlightjs.com)
+  // spotlight: __DEV__,
+});
 
 GoogleSignin.configure({
   webClientId: process.env.EXPO_PUBLIC_GOOGLE_SIGN_IN_WEB_CLIENT_ID,
@@ -48,7 +68,7 @@ declare const WebSocket: {
   ): WebSocket;
 };
 
-export default function RootLayout() {
+export default Sentry.wrap(function RootLayout() {
   return (
     <SQLiteProvider
       databaseName="db"
@@ -63,7 +83,7 @@ export default function RootLayout() {
       </ActionSheetProvider>
     </SQLiteProvider>
   );
-}
+});
 
 function RootNavigator() {
   const db = useSQLiteContext();
