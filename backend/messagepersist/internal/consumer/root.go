@@ -2,6 +2,7 @@ package consumer
 
 import (
 	"backend/common/payload"
+	"backend/common/tlsconfig"
 	"backend/messagepersist/internal/service"
 	"context"
 	"encoding/json"
@@ -42,14 +43,12 @@ func connectConsumer(groupID string) (sarama.ConsumerGroup, error) {
 		return nil, err
 	}
 	cfg.ClientID = "persist_message." + id.String()
-	if os.Getenv("PROFILE") == "production" {
-		//tlsConfig, err1 := tlsconfig.Create("cert/kafka/user/user.crt", "cert/kafka/user/user.key", "cert/kafka/cluster/ca.crt")
-		//if err1 != nil {
-		//	return nil, err1
-		//}
-		//cfg.Net.TLS.Config = tlsConfig
-		cfg.Net.TLS.Enable = true
+	tlsConfig, err1 := tlsconfig.Create(os.Getenv("KAFKA_USER_CERT_PATH"), os.Getenv("KAFKA_USER_KEY_PATH"), os.Getenv("KAFKA_CA_CERT_PATH"))
+	if err1 != nil {
+		return nil, err1
 	}
+	cfg.Net.TLS.Config = tlsConfig
+	cfg.Net.TLS.Enable = true
 
 	cfg.Net.SASL.Enable = true
 	cfg.Net.SASL.Version = 1

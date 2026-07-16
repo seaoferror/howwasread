@@ -1,6 +1,7 @@
 package consumer
 
 import (
+	"backend/common/tlsconfig"
 	"backend/fcmnotification/internal/service"
 	"context"
 	"log"
@@ -40,21 +41,21 @@ func connectConsumer(groupID string) (sarama.ConsumerGroup, error) {
 		return nil, err
 	}
 
-	if os.Getenv("PROFILE") == "production" {
-		//tlsConfig, err1 := tlsconfig.Create("cert/kafka/user/user.crt", "cert/kafka/user/user.key", "cert/kafka/cluster/ca.crt")
-		//if err1 != nil {
-		//	return nil, err1
-		//}
-		//cfg.Net.TLS.Config = tlsConfig
-		cfg.Net.TLS.Enable = true
+	tlsConfig, err1 := tlsconfig.Create(os.Getenv("KAFKA_USER_CERT_PATH"), os.Getenv("KAFKA_USER_KEY_PATH"), os.Getenv("KAFKA_CA_CERT_PATH"))
+	if err1 != nil {
+		return nil, err1
 	}
+	cfg.Net.TLS.Config = tlsConfig
+	cfg.Net.TLS.Enable = true
 	cfg.ClientID = "consumer_fcm_notification." + id.String()
-	cfg.Net.SASL.Enable = true
-	cfg.Net.SASL.Version = 1
-	cfg.Net.SASL.Mechanism = sarama.SASLTypePlaintext
-	cfg.Net.SASL.User = os.Getenv("KAFKA_API_KEY")
-	cfg.Net.SASL.Password = os.Getenv("KAFKA_API_SECRET")
-	cfg.Net.SASL.Handshake = true
+	if os.Getenv("KAFKA_API_KEY") != "" {
+		cfg.Net.SASL.Enable = true
+		cfg.Net.SASL.Version = 1
+		cfg.Net.SASL.Mechanism = sarama.SASLTypePlaintext
+		cfg.Net.SASL.User = os.Getenv("KAFKA_API_KEY")
+		cfg.Net.SASL.Password = os.Getenv("KAFKA_API_SECRET")
+		cfg.Net.SASL.Handshake = true
+	}
 
 	cfg.Consumer.Return.Errors = true
 	cfg.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{sarama.NewBalanceStrategySticky()}

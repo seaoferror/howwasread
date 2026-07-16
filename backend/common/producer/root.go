@@ -1,6 +1,7 @@
 package producer
 
 import (
+	"backend/common/tlsconfig"
 	"log"
 	"log/slog"
 	"os"
@@ -38,20 +39,22 @@ func createProducer(clientIdPrefix string) (sarama.AsyncProducer, error) {
 		return nil, err
 	}
 
-	//tlsConfig, err1 := tlsconfig.Create("cert/kafka/user/user.crt", "cert/kafka/user/user.key", "cert/kafka/cluster/ca.crt")
-	//if err1 != nil {
-	//	return nil, err1
-	//}
-	//cfg.Net.TLS.Config = tlsConfig
+	tlsConfig, err1 := tlsconfig.Create(os.Getenv("KAFKA_USER_CERT_PATH"), os.Getenv("KAFKA_USER_KEY_PATH"), os.Getenv("KAFKA_CA_CERT_PATH"))
+	if err1 != nil {
+		return nil, err1
+	}
+	cfg.Net.TLS.Config = tlsConfig
+	cfg.Net.TLS.Enable = true
 
 	cfg.ClientID = clientIdPrefix + id.String()
-	cfg.Net.TLS.Enable = true
-	cfg.Net.SASL.Enable = true
-	cfg.Net.SASL.Version = 1
-	cfg.Net.SASL.Mechanism = sarama.SASLTypePlaintext
-	cfg.Net.SASL.User = os.Getenv("KAFKA_API_KEY")
-	cfg.Net.SASL.Password = os.Getenv("KAFKA_API_SECRET")
-	cfg.Net.SASL.Handshake = true
+	if os.Getenv("KAFKA_API_KEY") != "" {
+		cfg.Net.SASL.Enable = true
+		cfg.Net.SASL.Version = 1
+		cfg.Net.SASL.Mechanism = sarama.SASLTypePlaintext
+		cfg.Net.SASL.User = os.Getenv("KAFKA_API_KEY")
+		cfg.Net.SASL.Password = os.Getenv("KAFKA_API_SECRET")
+		cfg.Net.SASL.Handshake = true
+	}
 
 	cfg.Producer.Return.Successes = false
 	cfg.Producer.Return.Errors = true

@@ -38,23 +38,14 @@ export async function createValkeyClient() {
 
 export async function createKafkaConsumer() {
   const consumer = new Kafka().consumer({
-    "bootstrap.servers": process.env.KAFKA_ADDRESS || "localhost:9092",
-    "security.protocol": "sasl_ssl",
-    "sasl.mechanism": "PLAIN",
-    "sasl.username": process.env.KAFKA_API_KEY,
-    "sasl.password": process.env.KAFKA_API_SECRET,
-    // "ssl.ca.location":
-    //   process.env.PROFILE === "production"
-    //     ? "/cert/kafka/cluster/ca.crt"
-    //     : undefined,
-    // "ssl.certificate.location":
-    //   process.env.PROFILE === "production"
-    //     ? "/cert/kafka/user/user.crt"
-    //     : undefined,
-    // "ssl.key.location":
-    //   process.env.PROFILE === "production"
-    //     ? "/cert/kafka/user/user.key"
-    //     : undefined,
+    "bootstrap.servers": process.env.KAFKA_ADDRESS,
+    "security.protocol": process.env.KAFKA_API_KEY ? "sasl_ssl" : "ssl",
+    "sasl.mechanism": process.env.KAFKA_API_KEY ? "PLAIN": undefined,
+    "sasl.username": process.env.KAFKA_API_KEY || undefined,
+    "sasl.password": process.env.KAFKA_API_SECRET || undefined,
+    "ssl.ca.location": process.env.KAFKA_CA_CERT_PATH || undefined,
+    "ssl.certificate.location": process.env.KAFKA_USER_CERT_PATH || undefined,
+    "ssl.key.location": process.env.KAFKA_USER_KEY_PATH || undefined,
 
     "group.id": "apn_notification",
     "auto.offset.reset": "earliest",

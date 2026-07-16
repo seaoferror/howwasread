@@ -144,7 +144,7 @@ func (s *Service) sendEmailOTP(email string) (uuid.UUID, error) {
 		)
 
 		headers := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";"
-		message := "Subject: Verify your email\n" + headers + "\n\n" + otp + "\ncode is valid for 5 minutes"
+		message := "Subject: Howwasread : Verify your email\n" + headers + "\n\n" + otp + "\ncode is valid for 5 minutes"
 
 		err = smtp.SendMail(
 			os.Getenv("SMTP_ADDR"),

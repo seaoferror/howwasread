@@ -15,6 +15,7 @@ apps:
     routePath: /auth
     authentication: true
     aws: false
+    confluent: false
     kafka: false
     astradb: true
     mongodb: false
@@ -158,7 +159,8 @@ apps:
     routePath: /onlineconversation
     authentication: false
     aws: false
-    kafka: true
+    confluent: true
+    kafka: false
     astradb: false
     mongodb: true
     tidb: false
@@ -177,7 +179,8 @@ apps:
     routePath: false
     authentication: false
     aws: false
-    kafka: true
+    confluent: true
+    kafka: false
     astradb: false
     mongodb: false
     tidb: false

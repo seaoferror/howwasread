@@ -31,10 +31,10 @@ import { registerNotification } from "@/api/notification";
 import { setAudioModeAsync } from "expo-audio";
 import { useGetMyProfile } from "@/hooks/useProfile";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
-import * as Sentry from '@sentry/react-native';
+import * as Sentry from "@sentry/react-native";
 
 Sentry.init({
-  dsn: 'https://4d3c893e931b2ee0c936c646d22033bc@o4511734928572416.ingest.de.sentry.io/4511734931783760',
+  dsn: "https://4d3c893e931b2ee0c936c646d22033bc@o4511734928572416.ingest.de.sentry.io/4511734931783760",
 
   // Adds more context data to events (IP address, cookies, user, etc.)
   // For more information, visit: https://docs.sentry.io/platforms/react-native/data-management/data-collected/
@@ -46,7 +46,10 @@ Sentry.init({
   // Configure Session Replay
   replaysSessionSampleRate: 0.1,
   replaysOnErrorSampleRate: 1,
-  integrations: [Sentry.mobileReplayIntegration(), Sentry.feedbackIntegration()],
+  integrations: [
+    Sentry.mobileReplayIntegration(),
+    Sentry.feedbackIntegration(),
+  ],
 
   // uncomment the line below to enable Spotlight (https://spotlightjs.com)
   // spotlight: __DEV__,
@@ -135,7 +138,9 @@ function RootNavigator() {
       if (messages && messages.length > 0) {
         setKVStore("recentMessageId", messages[0].id);
         const myQuitMessages = messages.filter((m) => m.contentType === "quit");
-        const myDeleteMessages = messages.filter((m) => m.contentType === "delete");
+        const myDeleteMessages = messages.filter(
+          (m) => m.contentType === "delete",
+        );
         const validMessagesToSave = messages.filter((m) => {
           if (m.contentType === "quit" || m.contentType === "delete") {
             return false;
@@ -144,8 +149,8 @@ function RootNavigator() {
             (q) => q.roomId === m.roomId && q.id > m.id,
           );
           const wipedByDelete = myDeleteMessages.some(
-            (d) => d.contents[0] === m.id
-          )
+            (d) => d.contents[0] === m.id,
+          );
           return !wipedByQuit && !wipedByDelete;
         });
         for (const q of myQuitMessages) {
@@ -181,7 +186,11 @@ function RootNavigator() {
         const m: MessagingResponse = JSON.parse(event.data);
         console.log(m);
         setKVStore("recentMessageId", m.id);
-        if (m.contentType === "audio" || m.contentType === "image" || m.contentType === "video") {
+        if (
+          m.contentType === "audio" ||
+          m.contentType === "image" ||
+          m.contentType === "video"
+        ) {
           await downloadFiles(m);
         }
         await saveRecentMessage(db, m);
