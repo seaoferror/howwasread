@@ -26,19 +26,19 @@ public class KafkaProducerConfig {
   @Value("${spring.kafka.bootstrap-servers}")
   private String bootstrapServers;
 
-  @Value("${KAFKA_API_KEY}")
+  @Value("${KAFKA_API_KEY:}")
   private String kafkaApiKey;
 
-  @Value("${KAFKA_API_SECRET}")
+  @Value("${KAFKA_API_SECRET:}")
   private String kafkaApiSecret;
 
-  @Value("${KAFKA_USER_CERT_PATH}")
+  @Value("${KAFKA_USER_CERT_PATH:}")
   private String kafkaUserCertPath;
 
-  @Value("${KAFKA_USER_KEY_PATH")
+  @Value("${KAFKA_USER_KEY_PATH:}")
   private String kafkaUserKeyPath;
 
-  @Value("${KAFKA_CA_CERT_PATH}")
+  @Value("${KAFKA_CA_CERT_PATH:}")
   private String kafkaCACertPath;
 
   @Bean
