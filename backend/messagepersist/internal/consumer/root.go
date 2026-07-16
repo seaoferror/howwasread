@@ -50,12 +50,14 @@ func connectConsumer(groupID string) (sarama.ConsumerGroup, error) {
 	cfg.Net.TLS.Config = tlsConfig
 	cfg.Net.TLS.Enable = true
 
-	cfg.Net.SASL.Enable = true
-	cfg.Net.SASL.Version = 1
-	cfg.Net.SASL.Mechanism = sarama.SASLTypePlaintext
-	cfg.Net.SASL.User = os.Getenv("KAFKA_API_KEY")
-	cfg.Net.SASL.Password = os.Getenv("KAFKA_API_SECRET")
-	cfg.Net.SASL.Handshake = true
+	if os.Getenv("KAFKA_API_KEY") != "" {
+		cfg.Net.SASL.Enable = true
+		cfg.Net.SASL.Version = 1
+		cfg.Net.SASL.Mechanism = sarama.SASLTypePlaintext
+		cfg.Net.SASL.User = os.Getenv("KAFKA_API_KEY")
+		cfg.Net.SASL.Password = os.Getenv("KAFKA_API_SECRET")
+		cfg.Net.SASL.Handshake = true
+	}
 
 	cfg.Consumer.Return.Errors = true
 	cfg.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{sarama.NewBalanceStrategySticky()}
