@@ -1,4 +1,11 @@
-import { Alert, Keyboard, Pressable, StyleSheet, View } from "react-native";
+import {
+  Alert,
+  Keyboard,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+} from "react-native";
 import InputField from "@/components/InputField";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@/constants";
@@ -135,6 +142,13 @@ export default function MessageInput() {
       },
     );
   };
+
+  const handleSubmit = () => {
+    if (textContent.trim() && !sendMessageMutation.isPending) {
+      handleSendMessage("text", [textContent]);
+    }
+  };
+
   if (!roomInfo) {
     return null;
   }
@@ -150,7 +164,9 @@ export default function MessageInput() {
         <InputField
           value={textContent}
           onChangeText={(text) => setTextContent(text)}
-          submitBehavior="newline"
+          submitBehavior={Platform.OS === "macos" ? "submit" : "newline"}
+          onSubmitEditing={handleSubmit}
+          multiline={true}
           leftChild={
             <Pressable
               style={styles.buttonContainer}

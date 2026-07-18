@@ -5,6 +5,7 @@ import {
   CreateOnlineConversationRequest,
   OfflineConversationDetailResponse,
   OfflineConversationMapResponse,
+  OfflineConversationSearchResponse,
   OnlineConversationFeedResponse,
 } from "@/types/conversation";
 
@@ -36,7 +37,7 @@ export async function banParticipant(body: BanParticipantRequest) {
   return data;
 }
 
-export async function mapOfflineConversation({
+export async function mapOfflineConversations({
   resolution,
   h3Index,
 }: {
@@ -45,6 +46,25 @@ export async function mapOfflineConversation({
 }): Promise<OfflineConversationMapResponse[]> {
   const { data } = await axiosInstance.get(`/offlineconversation/map`, {
     params: {
+      resolution,
+      h3Index,
+    },
+  });
+  return data;
+}
+
+export async function searchOfflineConversations({
+  input,
+  resolution,
+  h3Index,
+}: {
+  input: string;
+  resolution: number;
+  h3Index: string;
+}): Promise<OfflineConversationSearchResponse[]> {
+  const { data } = await axiosInstance.get(`/offlineconversation/search`, {
+    params: {
+      input,
       resolution,
       h3Index,
     },

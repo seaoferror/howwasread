@@ -13,8 +13,9 @@ import {
   getOfflineConversationDetail,
   getOnlineConversations,
   joinOfflineConversation,
-  mapOfflineConversation,
+  mapOfflineConversations,
   quitOfflineConversation,
+  searchOfflineConversations,
 } from "@/api/conversation";
 import { queryKey } from "@/constants";
 import { AxiosError } from "axios";
@@ -77,10 +78,42 @@ export function useMapOfflineConversations({
       return {
         queryKey: [
           queryKey.CONVERSATION,
-          queryKey.MAP_OFFLINE_CONVERSATION,
+          queryKey.MAP_OFFLINE_CONVERSATIONS,
           h3Index,
         ],
-        queryFn: () => mapOfflineConversation({ resolution, h3Index }),
+        queryFn: () => mapOfflineConversations({ resolution, h3Index }),
+      };
+    }),
+  });
+
+  return queries.flatMap((query) => {
+    if (query.data) {
+      return query.data;
+    }
+    return [];
+  });
+}
+
+export function useSearchOfflineConversations({
+  input,
+  resolution,
+  h3Indexes,
+}: {
+  input: string;
+  resolution: number;
+  h3Indexes: string[];
+}) {
+  const queries = useQueries({
+    queries: h3Indexes.map((h3Index) => {
+      return {
+        queryKey: [
+          queryKey.CONVERSATION,
+          queryKey.SEARCH_OFFLINE_CONVERSATIONS,
+          input,
+          h3Index,
+        ],
+        enabled: !!input,
+        queryFn: () => searchOfflineConversations({ input, resolution, h3Index }),
       };
     }),
   });
@@ -100,14 +133,14 @@ export function useCreateOfflineConversation() {
       await queryClient.invalidateQueries({
         queryKey: [
           queryKey.CONVERSATION,
-          queryKey.MAP_OFFLINE_CONVERSATION,
+          queryKey.MAP_OFFLINE_CONVERSATIONS,
           variables?.h3Res5,
         ],
       });
       await queryClient.invalidateQueries({
         queryKey: [
           queryKey.CONVERSATION,
-          queryKey.MAP_OFFLINE_CONVERSATION,
+          queryKey.MAP_OFFLINE_CONVERSATIONS,
           variables?.h3Res7,
         ],
       });
@@ -172,6 +205,6 @@ export function useBlockConversation() {
 export function useGetBlockedConversations() {
   return useQuery({
     queryFn: getBlockedConversations,
-    queryKey: [queryKey.CONVERSATION, queryKey.BLOCKED_CONVERSATIONS]
-  })
+    queryKey: [queryKey.CONVERSATION, queryKey.BLOCKED_CONVERSATIONS],
+  });
 }

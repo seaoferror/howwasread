@@ -18,7 +18,7 @@ export default function ConversationsScreen() {
     setCurrentTab(index);
   };
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["bottom"]}>
       <View style={styles.tabContainer}>
         <Tab isActive={currentTab === 0} onPress={() => handlePressTab(0)}>
           Offline
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   },
   createButton: {
     position: "absolute",
-    bottom: 160,
+    bottom: 56,
     right: 16,
     backgroundColor: colors.WHITE,
     width: 64,
@@ -72,5 +72,6 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     flexDirection: "row",
+    marginTop: 8,
   },
 });

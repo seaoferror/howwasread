@@ -45,12 +45,13 @@ export const queryKey = {
   GET_PROFILE: "getProfile",
   FIND_MESSAGES_BY_ROOM_ID: "findMessagesByRoomId",
   GET_SIGNED_URL: "getSignedURL",
-  MAP_OFFLINE_CONVERSATION: "mapOfflineConversation",
+  MAP_OFFLINE_CONVERSATIONS: "mapOfflineConversations",
   GET_OFFLINE_CONVERSATION_DETAIL: "getOfflineConversationDetail",
   CHECK_BLOCK: "checkBlock",
   GET_CHAT_PARTICIPANT_IDS: "getChatParticipantIds",
   REPORT_USER: "reportUser",
-  BLOCKED_CONVERSATIONS: "blockedConversations"
+  BLOCKED_CONVERSATIONS: "blockedConversations",
+  SEARCH_OFFLINE_CONVERSATIONS: "searchOfflineConversations"
 };
 
 export const time = {

@@ -70,6 +70,22 @@ export interface OfflineConversationMapResponse {
   lng: number;
 }
 
+export interface OfflineConversationSearchResponse {
+  id: string;
+  novel: string;
+  poem: string;
+  shortStory: string;
+  play: string;
+  film: string;
+  writtenBy: string;
+  rule: string;
+  mapsLink: string;
+  location: string;
+  time: string;
+  lat: number;
+  lng: number;
+}
+
 export interface CreateOfflineConversationRequest {
   novel?: string;
   shortStory?: string;

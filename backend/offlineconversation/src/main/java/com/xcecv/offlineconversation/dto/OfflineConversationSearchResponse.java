@@ -1,8 +1,6 @@
 package com.xcecv.offlineconversation.dto;
 
 import lombok.Builder;
-import org.springframework.data.elasticsearch.annotations.Field;
-import org.springframework.data.elasticsearch.annotations.FieldType;
 
 import java.time.Instant;
 import java.util.UUID;
