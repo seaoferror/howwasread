@@ -124,7 +124,14 @@ export default function OfflineConversationMap() {
                   title: data.writtenBy,
                 }))
             : [];
-  }, [blockedConversations, searchRes7Datas, searchRes5Datas, zoom, res7Datas, res5Datas]);
+  }, [
+    blockedConversations,
+    searchRes7Datas,
+    searchRes5Datas,
+    zoom,
+    res7Datas,
+    res5Datas,
+  ]);
 
   const handleCameraMove = (event: CameraMoveEvent) => {
     setShowRetry(true);
@@ -238,6 +245,83 @@ export default function OfflineConversationMap() {
           }}
         />
       )}
+      <View>
+        {searchRes7Datas
+          ? searchRes7Datas.map((data, idx) => (
+              <View key={idx} style={styles.content}>
+                <Text style={styles.when}>
+                  {new Intl.DateTimeFormat("en-US", {
+                    weekday: "short",
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hourCycle: "h12",
+                  })
+                    .format(new Date(data.time))
+                    .replace(/\sat\s/, " ")}
+                </Text>
+                {data.novel && (
+                  <Text style={styles.detail}>Novel: {data.novel}</Text>
+                )}
+                {data.shortStory && (
+                  <Text style={styles.detail}>
+                    Short story: {data.shortStory}
+                  </Text>
+                )}
+                {data.poem && (
+                  <Text style={styles.detail}>Poem: {data.poem}</Text>
+                )}
+                {data.play && (
+                  <Text style={styles.detail}>Play: {data.play}</Text>
+                )}
+                {data.film && (
+                  <Text style={styles.detail}>Film: {data.film}</Text>
+                )}
+                <Text style={styles.detail}>Written by: {data.writtenBy}</Text>
+              </View>
+            ))
+          : searchRes5Datas
+            ? searchRes5Datas.map((data, idx) => (
+                <View key={idx} style={styles.content}>
+                  <Text style={styles.when}>
+                    {new Intl.DateTimeFormat("en-US", {
+                      weekday: "short",
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hourCycle: "h12",
+                    })
+                      .format(new Date(data.time))
+                      .replace(/\sat\s/, " ")}
+                  </Text>
+                  {data.novel && (
+                    <Text style={styles.detail}>Novel: {data.novel}</Text>
+                  )}
+                  {data.shortStory && (
+                    <Text style={styles.detail}>
+                      Short story: {data.shortStory}
+                    </Text>
+                  )}
+                  {data.poem && (
+                    <Text style={styles.detail}>Poem: {data.poem}</Text>
+                  )}
+                  {data.play && (
+                    <Text style={styles.detail}>Play: {data.play}</Text>
+                  )}
+                  {data.film && (
+                    <Text style={styles.detail}>Film: {data.film}</Text>
+                  )}
+                  <Text style={styles.detail}>
+                    Written by: {data.writtenBy}
+                  </Text>
+                </View>
+              ))
+            : null}
+      </View>
     </View>
   );
 }
@@ -274,5 +358,24 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     color: colors.BLACK,
+  },
+  content: {
+    padding: 16,
+    gap: 17,
+  },
+  when: {
+    fontSize: 19,
+    color: colors.BLACK,
+    fontWeight: 500,
+    marginVertical: 6,
+  },
+  detail: {
+    fontSize: 17,
+    fontWeight: 300,
+  },
+  ruleHeader: {
+    marginTop: 6,
+    fontSize: 18,
+    fontWeight: 400,
   },
 });

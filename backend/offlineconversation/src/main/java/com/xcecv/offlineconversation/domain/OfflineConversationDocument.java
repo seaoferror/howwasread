@@ -71,15 +71,6 @@ public class OfflineConversationDocument {
   @Field(type = FieldType.Keyword)
   private String h3Res7;
 
-  @Field(type = FieldType.Text, index = false)
-  private String rule;
-
-  @Field(type = FieldType.Keyword, index = false)
-  private String mapsLink;
-
-  @Field(type = FieldType.Text, index = false)
-  private String location;
-
   @Field(type = FieldType.Double, index = false)
   private Double latitude;
 

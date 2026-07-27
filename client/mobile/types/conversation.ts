@@ -78,9 +78,6 @@ export interface OfflineConversationSearchResponse {
   play: string;
   film: string;
   writtenBy: string;
-  rule: string;
-  mapsLink: string;
-  location: string;
   time: string;
   lat: number;
   lng: number;

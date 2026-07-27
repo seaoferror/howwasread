@@ -97,9 +97,6 @@ public class OfflineConversationService {
         .time(request.time())
         .h3Res5(request.h3Res5())
         .h3Res7(request.h3Res7())
-        .mapsLink(request.mapsLink())
-        .rule(request.rule())
-        .location(request.location())
         .latitude(request.lat())
         .longitude(request.lng())
         .build());
@@ -332,8 +329,6 @@ public class OfflineConversationService {
           .shortStory(getHighlightOrOriginal(highlightFields, "shortStory", conversation.getShortStory()))
           .film(getHighlightOrOriginal(highlightFields, "film", conversation.getFilm()))
           .writtenBy(getHighlightOrOriginal(highlightFields, "writtenBy", conversation.getWrittenBy()))
-          .rule(conversation.getRule())
-          .location(conversation.getLocation())
           .time(conversation.getTime())
           .lat(conversation.getLatitude())
           .lng(conversation.getLongitude())
