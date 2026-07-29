@@ -14,25 +14,39 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = "~> 2.0" # Keeps you on the stable 2.x releases
     }
+
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 4.0"
+    }
+
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
   }
 }
 provider "aws" {
   region = local.region
 }
 
+variable "cloudflare_api_token" {
+  description = "Cloudflare API Token"
+  type        = string
+  sensitive   = true
+}
+
+provider "cloudflare" {
+  api_token = var.cloudflare_api_token
+}
+
 provider "helm" {
   kubernetes {
-    host = module.cluster1.cluster_endpoint
-
-    cluster_ca_certificate = base64decode(module.cluster1.cluster_certificate_authority_data)
-
-    exec {
-      api_version = "client.authentication.k8s.io/v1beta1"
-      command     = "aws"
-      args        = ["eks", "get-token", "--cluster-name", module.cluster1.cluster_name]
-    }
+    config_path    = "~/.kube/config"
+    config_context = "minikube"
   }
 }
+
 locals {
   cluster_name = "cluster1"
   region       = "ap-northeast-2"

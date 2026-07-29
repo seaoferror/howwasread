@@ -1,5 +1,6 @@
 namespace: backend
 email: ""
+registry: "ghcr.io/seaoferror"
 
 circuitBreaker:
   maxConnections: 100
@@ -10,7 +11,7 @@ circuitBreaker:
 
 apps:
   auth:
-    image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/auth:latest"
+    image: "backend/auth:latest"
     port: 8080
     routePath: /auth
     authentication: true
@@ -30,7 +31,7 @@ apps:
 #    cpuLimits: "0.1"
 #    memoryLimits: "10Mi"
   chat:
-    image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/chat:latest"
+    image: "backend/chat:latest"
     port: 8080
     routePath: /chat
     authentication: false
@@ -48,7 +49,7 @@ apps:
 #    cpuLimits: "0.1"
 #    memoryLimits: "10Mi"
   expo-notification:
-    image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/expo-notification:latest"
+    image: "backend/expo-notification:latest"
     port: 8080
     routePath: false
     authentication: false
@@ -64,7 +65,7 @@ apps:
 #    cpuLimits: "0.1"
 #    memoryLimits: "10Mi"
   fcmnotification:
-    image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/fcmnotification:latest"
+    image: "backend/fcmnotification:latest"
     port: 8080
     routePath: false
     authentication: false
@@ -82,7 +83,7 @@ apps:
 #    cpuLimits: "0.1"
 #    memoryLimits: "10Mi"
   messagepersist:
-    image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/messagepersist:latest"
+    image: "backend/messagepersist:latest"
     port: 8080
     routePath: false
     authentication: false
@@ -100,7 +101,7 @@ apps:
 #    cpuLimits: "0.1"
 #    memoryLimits: "10Mi"
   messagepreprocess:
-    image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/messagepreprocess:latest"
+    image: "backend/messagepreprocess:latest"
     port: 8080
     routePath: false
     authentication: false
@@ -118,7 +119,7 @@ apps:
 #    cpuLimits: "0.1"
 #    memoryLimits: "10Mi"
   messagerelay:
-    image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/messagerelay:latest"
+    image: "backend/messagerelay:latest"
     port: 8080
     routePath: false
     authentication: false
@@ -136,7 +137,7 @@ apps:
 #    cpuLimits: "0.1"
 #    memoryLimits: "10Mi"
   notification:
-    image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/notification:latest"
+    image: "backend/notification:latest"
     port: 8080
     routePath: /notification
     authentication: false
@@ -154,7 +155,7 @@ apps:
 #    cpuLimits: "0.1"
 #    memoryLimits: "10Mi"
   onlineconversation:
-    image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/onlineconversation:latest"
+    image: "backend/onlineconversation:latest"
     port: 8080
     routePath: /onlineconversation
     authentication: false
@@ -174,7 +175,7 @@ apps:
 #    cpuLimits: "0.1"
 #    memoryLimits: "10Mi"
   signalrelay:
-    image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/signalrelay:latest"
+    image: "backend/signalrelay:latest"
     port: 8080
     routePath: false
     authentication: false
@@ -193,7 +194,7 @@ apps:
 #    cpuLimits: "0.1"
 #    memoryLimits: "10Mi"
   offlineconversation:
-    image: "565319458549.dkr.ecr.ap-northeast-2.amazonaws.com/backend/offlineconversation:latest"
+    image: "backend/offlineconversation:latest"
     port: 8080
     routePath: /offlineconversation
     authentication: false

@@ -1,4 +1,4 @@
-module "cluster1" {
+  module "cluster1" {
   source  = "terraform-aws-modules/eks/aws"
   version = "~> 21.0"
 

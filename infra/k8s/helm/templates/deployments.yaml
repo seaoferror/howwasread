@@ -18,9 +18,13 @@ spec:
         app: {{ $name }}
         framework: {{ $app.framework | default "none" }}
     spec:
+      {{if eq $.Values.registry "ghcr.io/seaoferror" }}
+      imagePullSecrets:
+        - name: ghcr
+      {{-end}}
       containers:
         - name: {{ $name }}
-          image: {{ $app.image }}
+          image: "{{ $.Values.registry }}/{{ $app.image }}"
           imagePullPolicy: Always
           ports:
             - containerPort: {{ $app.port }}
