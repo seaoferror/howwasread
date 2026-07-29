@@ -21,7 +21,7 @@ spec:
       {{if eq $.Values.registry "ghcr.io/seaoferror" }}
       imagePullSecrets:
         - name: ghcr
-      {{-end}}
+      {{- end }}
       containers:
         - name: {{ $name }}
           image: "{{ $.Values.registry }}/{{ $app.image }}"

@@ -65,7 +65,6 @@ public class KafkaProducerConfig {
       String jaasTemplate = "org.apache.kafka.common.security.plain.PlainLoginModule required username=\"%s\" password=\"%s\";";
       config.put(SaslConfigs.SASL_JAAS_CONFIG, String.format(jaasTemplate, kafkaApiKey, kafkaApiSecret));
     }
-    config.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 2500);
     if(!kafkaUserCertPath.isEmpty()) {
       String userCert = new String(Files.readAllBytes(Paths.get(kafkaUserCertPath)));
       String userKey = new String(Files.readAllBytes(Paths.get(kafkaUserKeyPath)));
