@@ -307,14 +307,14 @@ public class OfflineConversationService {
   public List<OfflineConversationSearchResponse> searchH3Res5(String input, List<String> h3Indexes, int page) {
     var searchHits =
         offlineConversationDocumentRepository
-            .findByInputAndH3Res5(input, h3Indexes, Instant.now(), PageRequest.of(page, 5));
+            .findByInputAndH3Res5(input, h3Indexes, Instant.now().toString(), PageRequest.of(page, 5));
     return buildSearchResponses(searchHits);
   }
 
   public List<OfflineConversationSearchResponse> searchH3Res7(String input, List<String> h3Indexes, int page) {
     var searchHits =
         offlineConversationDocumentRepository
-            .findByInputAndH3Res7(input, h3Indexes, Instant.now(), PageRequest.of(page, 5));
+            .findByInputAndH3Res7(input, h3Indexes, Instant.now().toString(), PageRequest.of(page, 5));
     return buildSearchResponses(searchHits);
   }
 

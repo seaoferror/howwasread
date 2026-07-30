@@ -64,7 +64,7 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
   List<SearchHit<OfflineConversationDocument>> findByInputAndH3Res7(
       String input,
       List<String> h3Indexes,
-      Instant time,
+      String time,
       Pageable page
 
   );
@@ -120,7 +120,7 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
   List<SearchHit<OfflineConversationDocument>> findByInputAndH3Res5(
       String input,
       List<String> h3Indexes,
-      Instant time,
+      String time,
       Pageable page
   );
 }
