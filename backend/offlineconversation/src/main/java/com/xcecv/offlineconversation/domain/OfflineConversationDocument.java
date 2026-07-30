@@ -62,7 +62,7 @@ public class OfflineConversationDocument {
   )
   private String writtenBy;
 
-  @Field(type = FieldType.Date, format = {}, pattern = "uuuu-MM-dd'T'HH:mm:ss.SSSX")
+  @Field(type = FieldType.Date)
   private Instant time;
 
   @Field(type = FieldType.Keyword)
