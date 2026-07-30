@@ -58,7 +58,7 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
               {
                 "range": {
                   "time": {
-                    "gt": "?2"
+                    "gt": ?2
                   }
                 }
               }
@@ -69,7 +69,7 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
   List<SearchHit<OfflineConversationDocument>> findByInputAndH3Res7(
       String input,
       List<String> h3Indexes,
-      String time,
+      long time,
       Pageable page
   );
 
@@ -115,7 +115,7 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
               {
                 "range": {
                   "time": {
-                    "gt": "?2"
+                    "gt": ?2
                   }
                 }
               }
@@ -126,7 +126,7 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
   List<SearchHit<OfflineConversationDocument>> findByInputAndH3Res5(
       String input,
       List<String> h3Indexes,
-      String time,
+      long time,
       Pageable page
   );
 }
