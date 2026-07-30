@@ -7,6 +7,7 @@ import com.xcecv.offlineconversation.dto.OfflineConversationSearchResponse;
 import com.xcecv.offlineconversation.service.OfflineConversationService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -92,7 +93,7 @@ public class OfflineConversationController {
   public ResponseEntity<?> search(
       @NotBlank @RequestParam String input,
       @NotBlank @RequestParam String resolution,
-      @NotBlank @RequestParam List<String> h3Indexes,
+      @NotEmpty @RequestParam List<String> h3Indexes,
       @NotBlank @RequestParam int page
   ) {
     List<OfflineConversationSearchResponse> response = null;
