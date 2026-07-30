@@ -94,7 +94,7 @@ public class OfflineConversationController {
       @NotBlank @RequestParam String input,
       @NotBlank @RequestParam String resolution,
       @NotEmpty @RequestParam List<String> h3Indexes,
-      @NotBlank @RequestParam int page
+      @RequestParam int page
   ) {
     List<OfflineConversationSearchResponse> response = null;
     if (resolution.equals("5")) {
