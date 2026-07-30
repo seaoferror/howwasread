@@ -2,17 +2,34 @@ package com.xcecv.offlineconversation.repository;
 
 import com.xcecv.offlineconversation.domain.OfflineConversationDocument;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.annotations.Highlight;
+import org.springframework.data.elasticsearch.annotations.HighlightField;
+import org.springframework.data.elasticsearch.annotations.HighlightParameters;
 import org.springframework.data.elasticsearch.annotations.Query;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
 import org.springframework.stereotype.Repository;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
 @Repository
 public interface OfflineConversationDocumentRepository extends ElasticsearchRepository<OfflineConversationDocument, UUID> {
+
+  @Highlight(
+      fields = {
+          @HighlightField(name = "novel"),
+          @HighlightField(name = "poem"),
+          @HighlightField(name = "shortStory"),
+          @HighlightField(name = "play"),
+          @HighlightField(name = "film"),
+          @HighlightField(name = "writtenBy")
+      },
+      parameters = @HighlightParameters(
+          preTags = "<em>",
+          postTags = "</em>"
+      )
+  )
   @Query("""
         {
           "bool": {
@@ -46,18 +63,6 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
                 }
               }
             ]
-          },
-          "highlight": {
-            "pre_tags": ["<em>"],
-            "post_tags": ["</em>"],
-            "fields": {
-              "novel": {},
-              "poem": {},
-              "shortStory": {},
-              "play": {},
-              "film": {},
-              "writtenBy": {}
-            }
           }
         }
       """)
@@ -66,9 +71,22 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
       List<String> h3Indexes,
       String time,
       Pageable page
-
   );
 
+  @Highlight(
+      fields = {
+          @HighlightField(name = "novel"),
+          @HighlightField(name = "poem"),
+          @HighlightField(name = "shortStory"),
+          @HighlightField(name = "play"),
+          @HighlightField(name = "film"),
+          @HighlightField(name = "writtenBy")
+      },
+      parameters = @HighlightParameters(
+          preTags = "<em>",
+          postTags = "</em>"
+      )
+  )
   @Query("""
         {
           "bool": {
@@ -102,18 +120,6 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
                 }
               }
             ]
-          },
-          "highlight": {
-            "pre_tags": ["<em>"],
-            "post_tags": ["</em>"],
-            "fields": {
-              "novel": {},
-              "poem": {},
-              "shortStory": {},
-              "play": {},
-              "film": {},
-              "writtenBy": {}
-            }
           }
         }
       """)
