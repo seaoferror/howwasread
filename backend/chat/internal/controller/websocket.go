@@ -6,7 +6,9 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"sync"
 	"time"
@@ -53,7 +55,7 @@ func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		destroy := context.Background()
 		err = conn.Close(websocket.StatusNormalClosure, "")
-		if err != nil {
+		if err != nil && !errors.Is(net.ErrClosed, err) {
 			slog.Error("fail to close conn", "err", err)
 		}
 		c.csMutex.Lock()
@@ -97,7 +99,7 @@ func (c *Controller) connectMessaging(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 	msgType, data, err1 := conn.Read(ctx)
-	if err1 != nil {
+	if err1 != nil && err1 != io.EOF {
 		if websocket.CloseStatus(err1) != -1 || errors.Is(err1, context.Canceled) {
 			slog.Info("Connection closed smoothly", "err", err1)
 			return

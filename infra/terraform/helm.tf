@@ -64,55 +64,55 @@ resource "helm_release" "envoy_gateway" {
 #   depends_on = [aws_iam_role_policy_attachment.external_dns_attach,  module.cluster1.eks_managed_node_groups]
 # }
 
-resource "helm_release" "cert_manager" {
-  name             = "cert-manager"
-  repository       = "https://charts.jetstack.io"
-  chart            = "cert-manager"
-  namespace        = "cert-manager"
-  create_namespace = true
-
-  set {
-    name  = "installCRDs"
-    value = "true"
-  }
-
-  set {
-    name  = "config.apiVersion"
-    value = "controller.config.cert-manager.io/v1alpha1"
-  }
-
-  set {
-    name  = "config.kind"
-    value = "ControllerConfiguration"
-  }
-
-  set {
-    name  = "config.enableGatewayAPI"
-    value = "true"
-  }
-
-  # values = [
-  #   yamlencode({
-  #     nodeSelector = {
-  #       "node.kubernetes.io/instance-type" = local.idle_node
-  #     }
-  #     webhook = {
-  #       nodeSelector = {
-  #         "node.kubernetes.io/instance-type" = local.idle_node
-  #       }
-  #     }
-  #     cainjector = {
-  #       nodeSelector = {
-  #         "node.kubernetes.io/instance-type" = local.idle_node
-  #       }
-  #     }
-  #   })
-  # ]
-
-  # depends_on = [
-  #   module.cluster1.eks_managed_node_groups
-  # ]
-}
+# resource "helm_release" "cert_manager" {
+#   name             = "cert-manager"
+#   repository       = "https://charts.jetstack.io"
+#   chart            = "cert-manager"
+#   namespace        = "cert-manager"
+#   create_namespace = true
+#
+#   set {
+#     name  = "installCRDs"
+#     value = "true"
+#   }
+#
+#   set {
+#     name  = "config.apiVersion"
+#     value = "controller.config.cert-manager.io/v1alpha1"
+#   }
+#
+#   set {
+#     name  = "config.kind"
+#     value = "ControllerConfiguration"
+#   }
+#
+#   set {
+#     name  = "config.enableGatewayAPI"
+#     value = "true"
+#   }
+#
+#   # values = [
+#   #   yamlencode({
+#   #     nodeSelector = {
+#   #       "node.kubernetes.io/instance-type" = local.idle_node
+#   #     }
+#   #     webhook = {
+#   #       nodeSelector = {
+#   #         "node.kubernetes.io/instance-type" = local.idle_node
+#   #       }
+#   #     }
+#   #     cainjector = {
+#   #       nodeSelector = {
+#   #         "node.kubernetes.io/instance-type" = local.idle_node
+#   #       }
+#   #     }
+#   #   })
+#   # ]
+#
+#   # depends_on = [
+#   #   module.cluster1.eks_managed_node_groups
+#   # ]
+# }
 
 # resource "helm_release" "argocd" {
 #   name             = "argocd"
@@ -290,109 +290,109 @@ resource "helm_release" "reflector" {
   # ]
 }
 
-# resource "helm_release" "alloy" {
-#   name             = "alloy"
-#   repository       = "https://grafana.github.io/helm-charts"
-#   chart            = "alloy"
-#   namespace        = "monitoring"
-#   create_namespace = true
-#
-#   # Passing the complete Alloy River configuration via YAML values
-#   values = [
-#     <<-EOF
-#     alloy:
-#       envFrom:
-#         - secretRef:
-#             name: grafanacloud
-#
-#       configMap:
-#         create: true
-#         content: |
-#           // 2. Read the environment variable in the Loki config
-#           loki.write "grafanacloud" {
-#             endpoint {
-#               url = "https://logs-prod-030.grafana.net/loki/api/v1/push"
-#
-#               basic_auth {
-#                 username = "1654261"
-#                 password = sys.env("GRAFANA_CLOUD_TOKEN")
-#               }
-#             }
-#           }
-#
-#           // ==========================================
-#           // 2. KUBERNETES DISCOVERY & BASE LABELS
-#           // ==========================================
-#           discovery.kubernetes "pods" {
-#             role = "pod"
-#           }
-#
-#           discovery.relabel "base_labels" {
-#             targets = discovery.kubernetes.pods.targets
-#
-#             rule {
-#               source_labels = ["__meta_kubernetes_namespace"]
-#               target_label  = "namespace"
-#             }
-#             rule {
-#               source_labels = ["__meta_kubernetes_pod_name"]
-#               target_label  = "pod"
-#             }
-#             rule {
-#               source_labels = ["__meta_kubernetes_pod_container_name"]
-#               target_label  = "container"
-#             }
-#           }
-#
-#           // ==========================================
-#           // 3. Default
-#           // ==========================================
-#           discovery.relabel "none" {
-#             targets = discovery.relabel.base_labels.output
-#             rule {
-#               action        = "keep"
-#               // Targets the new label we added to your Helm template
-#               source_labels = ["__meta_kubernetes_pod_label_framework"]
-#               regex         = "none"
-#             }
-#           }
-#
-#           loki.source.kubernetes "default_logs" {
-#             targets    = discovery.relabel.none.output
-#             forward_to = [loki.write.grafanacloud.receiver]
-#           }
-#
-#           // ==========================================
-#           // 4. SPRING BOOT APPLICATIONS
-#           // ==========================================
-#           discovery.relabel "spring_apps" {
-#             targets = discovery.relabel.base_labels.output
-#             rule {
-#               action        = "keep"
-#               source_labels = ["__meta_kubernetes_pod_label_framework"]
-#               regex         = "spring-boot"
-#             }
-#           }
-#
-#           loki.source.kubernetes "spring_logs" {
-#             targets    = discovery.relabel.spring_apps.output
-#             // Route to the multiline processor first
-#             forward_to = [loki.process.spring_multiline.receiver]
-#           }
-#
-#           loki.process "spring_multiline" {
-#             // Forward processed logs to Loki
-#             forward_to = [loki.write.grafanacloud.receiver]
-#
-#             stage.multiline {
-#               // Matches standard Spring Boot timestamp format: YYYY-MM-DD HH:MM:SS.mmm
-#               firstline     = "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}"
-#               max_wait_time = "3s"
-#             }
-#           }
-#     EOF
-#   ]
-# }
+resource "helm_release" "alloy" {
+  name             = "alloy"
+  repository       = "https://grafana.github.io/helm-charts"
+  chart            = "alloy"
+  namespace        = "monitoring"
+  create_namespace = true
+
+  # Passing the complete Alloy River configuration via YAML values
+  values = [
+    <<-EOF
+    alloy:
+      envFrom:
+        - secretRef:
+            name: grafanacloud
+
+      configMap:
+        create: true
+        content: |
+          // 2. Read the environment variable in the Loki config
+          loki.write "grafanacloud" {
+            endpoint {
+              url = "https://logs-prod-030.grafana.net/loki/api/v1/push"
+
+              basic_auth {
+                username = "1654261"
+                password = sys.env("GRAFANA_CLOUD_TOKEN")
+              }
+            }
+          }
+
+          // ==========================================
+          // 2. KUBERNETES DISCOVERY & BASE LABELS
+          // ==========================================
+          discovery.kubernetes "pods" {
+            role = "pod"
+          }
+
+          discovery.relabel "base_labels" {
+            targets = discovery.kubernetes.pods.targets
+
+            rule {
+              source_labels = ["__meta_kubernetes_namespace"]
+              target_label  = "namespace"
+            }
+            rule {
+              source_labels = ["__meta_kubernetes_pod_name"]
+              target_label  = "pod"
+            }
+            rule {
+              source_labels = ["__meta_kubernetes_pod_container_name"]
+              target_label  = "container"
+            }
+          }
+
+          // ==========================================
+          // 3. Default
+          // ==========================================
+          discovery.relabel "none" {
+            targets = discovery.relabel.base_labels.output
+            rule {
+              action        = "keep"
+              // Targets the new label we added to your Helm template
+              source_labels = ["__meta_kubernetes_pod_label_framework"]
+              regex         = "none"
+            }
+          }
+
+          loki.source.kubernetes "default_logs" {
+            targets    = discovery.relabel.none.output
+            forward_to = [loki.write.grafanacloud.receiver]
+          }
+
+          // ==========================================
+          // 4. SPRING BOOT APPLICATIONS
+          // ==========================================
+          discovery.relabel "spring_apps" {
+            targets = discovery.relabel.base_labels.output
+            rule {
+              action        = "keep"
+              source_labels = ["__meta_kubernetes_pod_label_framework"]
+              regex         = "spring-boot"
+            }
+          }
+
+          loki.source.kubernetes "spring_logs" {
+            targets    = discovery.relabel.spring_apps.output
+            // Route to the multiline processor first
+            forward_to = [loki.process.spring_multiline.receiver]
+          }
+
+          loki.process "spring_multiline" {
+            // Forward processed logs to Loki
+            forward_to = [loki.write.grafanacloud.receiver]
+
+            stage.multiline {
+              // Matches standard Spring Boot timestamp format: YYYY-MM-DD HH:MM:SS.mmm
+              firstline     = "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}"
+              max_wait_time = "3s"
+            }
+          }
+    EOF
+  ]
+}
 
 # resource "helm_release" "valkey_operator" {
 #   name             = "valkey-operator

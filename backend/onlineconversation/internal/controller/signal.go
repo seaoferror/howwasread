@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -151,7 +152,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 	for {
 		ctx1 := context.Background()
 		msgType, data, err1 := conn.Read(ctx1)
-		if err1 != nil {
+		if err1 != nil && err != io.EOF {
 			if websocket.CloseStatus(err1) != -1 || errors.Is(err1, context.Canceled) {
 				slog.Info("Connection closed smoothly", "err", err1)
 				return
@@ -165,12 +166,6 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 				"msgType", msgType,
 				"data", data)
 			handleWebsocketError(ctx1, conn, errors.New("incorrect payload types"))
-			return
-		}
-		if err1 != nil {
-			slog.Error("read error",
-				"err", err1)
-			handleWebsocketError(ctx1, conn, errors.New("read error"))
 			return
 		}
 		var req dto.ConversationSignalRequest
