@@ -92,14 +92,15 @@ public class OfflineConversationController {
   public ResponseEntity<?> search(
       @NotBlank @RequestParam String input,
       @NotBlank @RequestParam String resolution,
-      @NotBlank @RequestParam String h3Index
+      @NotBlank @RequestParam List<String> h3Indexes,
+      @NotBlank @RequestParam int page
   ) {
     List<OfflineConversationSearchResponse> response = null;
     if (resolution.equals("5")) {
-      response = offlineConversationService.searchH3Res5(input, h3Index);
+      response = offlineConversationService.searchH3Res5(input, h3Indexes, page);
     }
     if (resolution.equals("7")) {
-      response = offlineConversationService.searchH3Res7(input, h3Index);
+      response = offlineConversationService.searchH3Res7(input, h3Indexes, page);
     }
     return ResponseEntity.ok(response);
   }

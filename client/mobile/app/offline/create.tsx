@@ -210,7 +210,9 @@ export default function OfflineConversationScreen() {
           <FixedBottomCTA
             label="Create"
             onPress={offlineConversationForm.handleSubmit(onSubmit)}
-            disabled={resolvedGeoInfo === null}
+            disabled={
+              resolvedGeoInfo === null || createOfflineConversationMutation.isPending
+            }
           />
         </KeyboardAvoidingView>
       </View>

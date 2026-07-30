@@ -9,8 +9,6 @@ interface AuthRouteProps {
 export default function InitRoute({ children }: AuthRouteProps) {
 
   useEffect(() => {
-    router.replace("/conversations");
-    return;
     if(!getKVStore("didAgree")) {
       router.replace("/profile/term-of-use")
       return;

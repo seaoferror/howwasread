@@ -34,7 +34,7 @@ export default function ConversationsScreen() {
         onPageSelected={(e) => setCurrentTab(e.nativeEvent.position)}
         scrollEnabled={false}
       >
-        <OfflineConversationMap key="1" />
+        <OfflineConversationMap key="1" isActive={currentTab === 0} />
         <OnlineConversationList key="2" />
       </PagerView>
       <Pressable

@@ -56,17 +56,20 @@ export async function mapOfflineConversations({
 export async function searchOfflineConversations({
   input,
   resolution,
-  h3Index,
+  h3Indexes,
+  page = 1,
 }: {
   input: string;
   resolution: number;
-  h3Index: string;
+  h3Indexes: string[];
+  page: number;
 }): Promise<OfflineConversationSearchResponse[]> {
   const { data } = await axiosInstance.get(`/offlineconversation/search`, {
     params: {
       input,
       resolution,
-      h3Index,
+      h3Indexes: h3Indexes.join(","),
+      page,
     },
   });
   return data;

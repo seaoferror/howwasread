@@ -1,5 +1,5 @@
 import { colors } from "@/constants";
-import { ForwardedRef, forwardRef, ReactNode } from "react";
+import { ForwardedRef, forwardRef, ReactNode, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -17,18 +17,20 @@ interface InputFieldProps extends TextInputProps {
   leftChild?: ReactNode;
 }
 
-function InputField(
+export default forwardRef(function InputField(
   {
     label,
     variant = "filled",
     error = "",
     leftChild = null,
     rightChild = null,
-    customHeight = 44,
+    customHeight,
     ...props
   }: InputFieldProps,
   ref?: ForwardedRef<TextInput>,
 ) {
+  const [adjustedHeight, setAdjustedHeight] = useState(44);
+
   return (
     <View>
       {label && <Text style={styles.label}>{label}</Text>}
@@ -37,8 +39,8 @@ function InputField(
           styles.container,
           styles[variant],
           Boolean(error) && styles.inputError,
-          { height: customHeight },
-          props.multiline && styles.multiline,
+          props.multiline && { height: adjustedHeight },
+          !!customHeight && { height: customHeight },
         ]}
       >
         {leftChild}
@@ -48,6 +50,15 @@ function InputField(
           placeholderTextColor={colors.GRAY_400}
           spellCheck={false}
           autoCorrect={false}
+          onContentSizeChange={(event) => {
+            const h = event.nativeEvent.contentSize.height;
+            if (h > 44) {
+              setAdjustedHeight(h + 10);
+            }
+            if (h <= 44) {
+              setAdjustedHeight(44);
+            }
+          }}
           {...props}
           style={[styles.input, styles[`${variant}Text`], props.style]}
         />
@@ -56,7 +67,7 @@ function InputField(
       {Boolean(error) && <Text style={styles.error}>{error}</Text>}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   label: {
@@ -71,7 +82,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
-    gap: 10
+    gap: 10,
   },
   filled: {
     backgroundColor: colors.GRAY_100,
@@ -106,11 +117,4 @@ const styles = StyleSheet.create({
   inputError: {
     backgroundColor: colors.RED_100,
   },
-  multiline: {
-    alignItems: "flex-start",
-    paddingVertical: 10,
-    height: 95,
-  },
 });
-
-export default forwardRef(InputField);

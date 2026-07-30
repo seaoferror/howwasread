@@ -94,7 +94,7 @@ export function useMapOfflineConversations({
   });
 }
 
-export function useSearchOfflineConversations({
+export function useInfiniteSearchOfflineConversations({
   input,
   resolution,
   h3Indexes,
@@ -103,26 +103,25 @@ export function useSearchOfflineConversations({
   resolution: number;
   h3Indexes: string[];
 }) {
-  const queries = useQueries({
-    queries: h3Indexes.map((h3Index) => {
-      return {
-        queryKey: [
-          queryKey.CONVERSATION,
-          queryKey.SEARCH_OFFLINE_CONVERSATIONS,
-          input,
-          h3Index,
-        ],
-        enabled: !!input,
-        queryFn: () => searchOfflineConversations({ input, resolution, h3Index }),
-      };
-    }),
-  });
-
-  return queries.flatMap((query) => {
-    if (query.data) {
-      return query.data;
-    }
-    return [];
+  return useInfiniteQuery({
+    queryFn: ({ pageParam }) =>
+      searchOfflineConversations({
+        input,
+        resolution,
+        h3Indexes,
+        page: pageParam,
+      }),
+    queryKey: [
+      queryKey.CONVERSATION,
+      queryKey.SEARCH_OFFLINE_CONVERSATIONS,
+      input,
+      h3Indexes,
+    ],
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) => {
+      const lastPost = lastPage[lastPage.length - 1];
+      return lastPost ? allPages.length + 1 : undefined;
+    },
   });
 }
 

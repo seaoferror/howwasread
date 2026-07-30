@@ -1,4 +1,5 @@
 import {
+  FlatList,
   Keyboard,
   Platform,
   Pressable,
@@ -8,56 +9,65 @@ import {
   View,
 } from "react-native";
 import { AppleMaps, type CameraMoveEvent, GoogleMaps } from "expo-maps";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { gridDisk, latLngToCell } from "h3-js";
 import { Feather } from "@expo/vector-icons";
 import {
   useGetBlockedConversations,
+  useInfiniteSearchOfflineConversations,
   useMapOfflineConversations,
-  useSearchOfflineConversations,
 } from "@/hooks/useConversation";
 import {
   getCurrentPositionAsync,
   PermissionStatus,
   requestForegroundPermissionsAsync,
 } from "expo-location";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import SearchInput from "@/components/conversation/SearchInput";
 import { colors } from "@/constants";
+import { TrueSheet } from "@lodev09/react-native-true-sheet";
+import OfflineConversationSearchItem from "@/components/conversation/OfflineConversationSearchItem";
 
-export default function OfflineConversationMap() {
-  const [h3Res5, setH3Res5] = useState<string[]>([]);
-  const [h3Res7, setH3Res7] = useState<string[]>([]);
-  const [zoom, setZoom] = useState<number>(1);
+export default function OfflineConversationMap({isActive} : {isActive: boolean}) {
+  const [h3Indexes, setH3Indexes] = useState<string[]>([]);
+  const [resolution, setResolution] = useState<number>(7);
   const [initGeoInfo, setInitGeoInfo] = useState<{
     lat: number;
     lng: number;
     zoom: number;
   } | null>(null);
-  const res5Datas = useMapOfflineConversations({
-    resolution: 5,
-    h3Indexes: h3Res5,
-  });
-  const res7Datas = useMapOfflineConversations({
-    resolution: 7,
-    h3Indexes: h3Res7,
+  const datas = useMapOfflineConversations({
+    resolution: resolution,
+    h3Indexes: h3Indexes,
   });
   const { data: blockedConversations } = useGetBlockedConversations();
   const [keyword, setKeyword] = useState("");
   const [submitKeyword, setSubmitKeyword] = useState("");
   const [showRetry, setShowRetry] = useState(false);
-  const [submitH3Res5, setSubmitH3Res5] = useState<string[]>([]);
-  const [submitH3Res7, setSubmitH3Res7] = useState<string[]>([]);
-  const searchRes5Datas = useSearchOfflineConversations({
+  const [submitH3Indexes, setSubmitH3Indexes] = useState<string[]>([]);
+  const {
+    data: searchData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteSearchOfflineConversations({
     input: submitKeyword,
-    resolution: 5,
-    h3Indexes: submitH3Res5,
+    resolution: resolution,
+    h3Indexes: submitH3Indexes,
   });
-  const searchRes7Datas = useSearchOfflineConversations({
-    input: submitKeyword,
-    resolution: 7,
-    h3Indexes: submitH3Res7,
-  });
+  const sheet = useRef<TrueSheet>(null);
+
+  useEffect(() => {
+    if (!isActive) {
+      sheet.current?.dismiss();
+    }
+  }, [isActive]);
+
+  useFocusEffect(() => {
+    return () => {
+      sheet.current?.dismiss();
+    }
+  })
 
   useEffect(() => {
     async function wrapper() {
@@ -79,8 +89,9 @@ export default function OfflineConversationMap() {
     const blockedIds = new Set(
       blockedConversations?.map((block) => block.id) || [],
     );
-    return searchRes7Datas.length > 0
-      ? searchRes7Datas
+    return searchData && searchData.pages.flat().length > 0
+      ? searchData.pages
+          .flat()
           .filter((data) => !blockedIds.has(data.id))
           .map((data) => ({
             id: data.id,
@@ -90,65 +101,40 @@ export default function OfflineConversationMap() {
             },
             title: data.writtenBy,
           }))
-      : searchRes5Datas.length > 0
-        ? searchRes5Datas
-            .filter((data) => !blockedIds.has(data.id))
-            .map((data) => ({
-              id: data.id,
-              coordinates: {
-                latitude: data.lat,
-                longitude: data.lng,
-              },
-              title: data.writtenBy,
-            }))
-        : zoom >= (Platform.OS === "ios" ? 12 : 14)
-          ? res7Datas
-              .filter((data) => !blockedIds.has(data.id))
-              .map((data) => ({
-                id: data.id,
-                coordinates: {
-                  latitude: data.lat,
-                  longitude: data.lng,
-                },
-                title: data.writtenBy,
-              }))
-          : zoom >= (Platform.OS === "ios" ? 10 : 12)
-            ? res5Datas
-                .filter((data) => !blockedIds.has(data.id))
-                .map((data) => ({
-                  id: data.id,
-                  coordinates: {
-                    latitude: data.lat,
-                    longitude: data.lng,
-                  },
-                  title: data.writtenBy,
-                }))
-            : [];
-  }, [
-    blockedConversations,
-    searchRes7Datas,
-    searchRes5Datas,
-    zoom,
-    res7Datas,
-    res5Datas,
-  ]);
+      : datas
+          .filter((data) => !blockedIds.has(data.id))
+          .map((data) => ({
+            id: data.id,
+            coordinates: {
+              latitude: data.lat,
+              longitude: data.lng,
+            },
+            title: data.writtenBy,
+          }));
+  }, [blockedConversations, datas, searchData]);
+
+  const handleEndReached = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
 
   const handleCameraMove = (event: CameraMoveEvent) => {
     setShowRetry(true);
-
-    setZoom(event.zoom);
     const lat = event.coordinates.latitude;
     const lng = event.coordinates.longitude;
-    if (zoom >= (Platform.OS === "ios" ? 12 : 14) && lat && lng) {
+    if (event.zoom >= (Platform.OS === "ios" ? 12 : 14) && lat && lng) {
+      setResolution(7);
       const h3Index = latLngToCell(lat, lng, 7);
       const h3Indexes = gridDisk(h3Index, 1);
-      setH3Res7(h3Indexes);
+      setH3Indexes(h3Indexes);
       return;
     }
-    if (zoom >= (Platform.OS === "ios" ? 10 : 12) && lat && lng) {
+    if (event.zoom >= (Platform.OS === "ios" ? 10 : 12) && lat && lng) {
+      setResolution(5);
       const h3Index = latLngToCell(lat, lng, 5);
       const h3Indexes = gridDisk(h3Index, 1);
-      setH3Res5(h3Indexes);
+      setH3Indexes(h3Indexes);
     }
   };
 
@@ -160,14 +146,17 @@ export default function OfflineConversationMap() {
           value={keyword}
           onChangeText={(text) => setKeyword(text)}
           onSubmit={() => {
-            setSubmitH3Res5([]);
-            setSubmitH3Res7(h3Res7);
+            Keyboard.dismiss();
+            setSubmitH3Indexes(h3Indexes);
             setSubmitKeyword(keyword);
+            setResolution(7);
+            sheet.current?.present();
           }}
           submitKeyWord={submitKeyword}
           onCancel={() => {
             setSubmitKeyword("");
             setKeyword("");
+            sheet.current?.dismiss();
           }}
         />
       </View>
@@ -177,15 +166,9 @@ export default function OfflineConversationMap() {
           <Pressable
             style={styles.retrySearchButton}
             onPress={() => {
+              sheet.current?.present();
               setShowRetry(false);
-              if (zoom >= (Platform.OS === "ios" ? 12 : 14)) {
-                setSubmitH3Res7(h3Res7);
-                setSubmitH3Res5([]);
-              }
-              if (zoom >= (Platform.OS === "ios" ? 10 : 12)) {
-                setSubmitH3Res5(h3Res5);
-                setSubmitH3Res7([]);
-              }
+              setSubmitH3Indexes(h3Indexes);
             }}
           >
             <Feather name="rotate-cw" size={14} color="black" />
@@ -245,83 +228,41 @@ export default function OfflineConversationMap() {
           }}
         />
       )}
-      <View>
-        {searchRes7Datas
-          ? searchRes7Datas.map((data, idx) => (
-              <View key={idx} style={styles.content}>
-                <Text style={styles.when}>
-                  {new Intl.DateTimeFormat("en-US", {
-                    weekday: "short",
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hourCycle: "h12",
-                  })
-                    .format(new Date(data.time))
-                    .replace(/\sat\s/, " ")}
-                </Text>
-                {data.novel && (
-                  <Text style={styles.detail}>Novel: {data.novel}</Text>
-                )}
-                {data.shortStory && (
-                  <Text style={styles.detail}>
-                    Short story: {data.shortStory}
-                  </Text>
-                )}
-                {data.poem && (
-                  <Text style={styles.detail}>Poem: {data.poem}</Text>
-                )}
-                {data.play && (
-                  <Text style={styles.detail}>Play: {data.play}</Text>
-                )}
-                {data.film && (
-                  <Text style={styles.detail}>Film: {data.film}</Text>
-                )}
-                <Text style={styles.detail}>Written by: {data.writtenBy}</Text>
-              </View>
-            ))
-          : searchRes5Datas
-            ? searchRes5Datas.map((data, idx) => (
-                <View key={idx} style={styles.content}>
-                  <Text style={styles.when}>
-                    {new Intl.DateTimeFormat("en-US", {
-                      weekday: "short",
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hourCycle: "h12",
-                    })
-                      .format(new Date(data.time))
-                      .replace(/\sat\s/, " ")}
-                  </Text>
-                  {data.novel && (
-                    <Text style={styles.detail}>Novel: {data.novel}</Text>
-                  )}
-                  {data.shortStory && (
-                    <Text style={styles.detail}>
-                      Short story: {data.shortStory}
-                    </Text>
-                  )}
-                  {data.poem && (
-                    <Text style={styles.detail}>Poem: {data.poem}</Text>
-                  )}
-                  {data.play && (
-                    <Text style={styles.detail}>Play: {data.play}</Text>
-                  )}
-                  {data.film && (
-                    <Text style={styles.detail}>Film: {data.film}</Text>
-                  )}
-                  <Text style={styles.detail}>
-                    Written by: {data.writtenBy}
-                  </Text>
-                </View>
-              ))
-            : null}
-      </View>
+      <TrueSheet
+        ref={sheet}
+        detents={["auto", 0.72]}
+        dismissible={false}
+        dimmed={false}
+        backgroundColor={colors.SAND_100}
+      >
+        <FlatList
+          data={searchData?.pages.flat() || []}
+          ListEmptyComponent={
+            <Pressable
+              style={styles.emptyContainer}
+              onPress={() => {
+                sheet.current?.dismiss();
+              }}
+            >
+              <Text style={styles.emptyText}>No Result</Text>
+            </Pressable>
+          }
+          renderItem={({ item }) => {
+            if (blockedConversations) {
+              for (const c of blockedConversations) {
+                if (c.id === String(item.id)) {
+                  return null;
+                }
+              }
+            }
+            return <OfflineConversationSearchItem conversation={item} />;
+          }}
+          keyExtractor={(item) => String(item.id)}
+          contentContainerStyle={styles.contentContainer}
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.5}
+        />
+      </TrueSheet>
     </View>
   );
 }
@@ -377,5 +318,20 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontSize: 18,
     fontWeight: 400,
+  },
+  contentContainer: {
+    paddingVertical: 12,
+    backgroundColor: colors.SAND_150,
+    gap: 12,
+  },
+  emptyContainer: {
+    paddingVertical: 40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emptyText: {
+    fontSize: 16,
+    color: colors.BLACK,
+    fontWeight: "500",
   },
 });

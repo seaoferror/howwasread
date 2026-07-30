@@ -47,7 +47,7 @@ function buildMonthDayItems(year: number): MonthDayItem[] {
       monthLabel: date.toLocaleDateString("en-US", { month: "short" }),
     });
   }
-  for (month; month <= 12; month++) {
+  for (month = month + 1; month <= 12; month++) {
     lastDay = new Date(year, month, 0).getDate();
     for (let day = 1; day <= lastDay; day++) {
       const date = new Date(year, month - 1, day);

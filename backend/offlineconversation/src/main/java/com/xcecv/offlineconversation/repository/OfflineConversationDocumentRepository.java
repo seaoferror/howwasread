@@ -1,6 +1,7 @@
 package com.xcecv.offlineconversation.repository;
 
 import com.xcecv.offlineconversation.domain.OfflineConversationDocument;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.annotations.Query;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
@@ -33,8 +34,8 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
             ],
             "filter": [
               {
-                "term": {
-                  "h3Res7": "?1"
+                "terms": {
+                  "h3Res7": ?1
                 }
               },
               {
@@ -62,8 +63,10 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
       """)
   List<SearchHit<OfflineConversationDocument>> findByInputAndH3Res7(
       String input,
-      String h3Res7,
-      Instant time
+      List<String> h3Indexes,
+      Instant time,
+      Pageable page
+
   );
 
   @Query("""
@@ -87,8 +90,8 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
             ],
             "filter": [
               {
-                "term": {
-                  "h3Res5": "?1"
+                "terms": {
+                  "h3Res5": ?1
                 }
               },
               {
@@ -116,7 +119,8 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
       """)
   List<SearchHit<OfflineConversationDocument>> findByInputAndH3Res5(
       String input,
-      String h3Res5,
-      Instant time
+      List<String> h3Indexes,
+      Instant time,
+      Pageable page
   );
 }
