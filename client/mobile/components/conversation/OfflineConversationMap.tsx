@@ -11,7 +11,7 @@ import {
 import { AppleMaps, type CameraMoveEvent, GoogleMaps } from "expo-maps";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { gridDisk, latLngToCell } from "h3-js";
-import { Feather } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import {
   useGetBlockedConversations,
   useInfiniteSearchOfflineConversations,
@@ -22,16 +22,27 @@ import {
   PermissionStatus,
   requestForegroundPermissionsAsync,
 } from "expo-location";
-import { router, useFocusEffect } from "expo-router";
+import { useFocusEffect } from "expo-router";
 import SearchInput from "@/components/conversation/SearchInput";
 import { colors } from "@/constants";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import OfflineConversationSearchItem from "@/components/conversation/OfflineConversationSearchItem";
+import OfflineConversationDetail from "@/components/conversation/OfflineConversationDetail";
 
-export default function OfflineConversationMap({isActive} : {isActive: boolean}) {
+function stripHtml(text: string) {
+  if (!text) return "";
+  // Replaces anything that looks like an HTML tag with an empty string
+  return text.replace(/<\/?[^>]+(>|$)/g, "");
+}
+
+export default function OfflineConversationMap({
+  isActive,
+}: {
+  isActive: boolean;
+}) {
   const [h3Indexes, setH3Indexes] = useState<string[]>([]);
   const [resolution, setResolution] = useState<number>(7);
-  const [initGeoInfo, setInitGeoInfo] = useState<{
+  const [position, setPosition] = useState<{
     lat: number;
     lng: number;
     zoom: number;
@@ -55,6 +66,7 @@ export default function OfflineConversationMap({isActive} : {isActive: boolean})
     resolution: resolution,
     h3Indexes: submitH3Indexes,
   });
+  const [detailId, setDetailId] = useState("");
   const sheet = useRef<TrueSheet>(null);
 
   useEffect(() => {
@@ -66,8 +78,8 @@ export default function OfflineConversationMap({isActive} : {isActive: boolean})
   useFocusEffect(() => {
     return () => {
       sheet.current?.dismiss();
-    }
-  })
+    };
+  });
 
   useEffect(() => {
     async function wrapper() {
@@ -76,7 +88,7 @@ export default function OfflineConversationMap({isActive} : {isActive: boolean})
         return;
       }
       const location = await getCurrentPositionAsync({});
-      setInitGeoInfo({
+      setPosition({
         lat: location.coords.latitude,
         lng: location.coords.longitude,
         zoom: Platform.OS === "ios" ? 15 : 17,
@@ -99,7 +111,7 @@ export default function OfflineConversationMap({isActive} : {isActive: boolean})
               latitude: data.lat,
               longitude: data.lng,
             },
-            title: data.writtenBy,
+            title: stripHtml(data.writtenBy),
           }))
       : datas
           .filter((data) => !blockedIds.has(data.id))
@@ -168,6 +180,7 @@ export default function OfflineConversationMap({isActive} : {isActive: boolean})
             onPress={() => {
               sheet.current?.present();
               setShowRetry(false);
+              setDetailId("");
               setSubmitH3Indexes(h3Indexes);
             }}
           >
@@ -182,21 +195,22 @@ export default function OfflineConversationMap({isActive} : {isActive: boolean})
           style={StyleSheet.absoluteFill}
           cameraPosition={{
             coordinates: {
-              latitude: initGeoInfo?.lat,
-              longitude: initGeoInfo?.lng,
+              latitude: position?.lat,
+              longitude: position?.lng,
             },
-            zoom: initGeoInfo?.zoom,
+            zoom: position?.zoom,
           }}
           onCameraMove={(event) => {
             handleCameraMove(event);
           }}
           markers={markers}
-          onMapClick={() => Keyboard.dismiss()}
+          onMapClick={() => {
+            Keyboard.dismiss();
+            setDetailId("");
+          }}
           onMarkerClick={(event) => {
-            router.push({
-              pathname: "/offline/[id]",
-              params: { id: String(event.id) },
-            });
+            sheet.current?.present();
+            setDetailId(String(event.id));
           }}
         />
       ) : (
@@ -204,12 +218,19 @@ export default function OfflineConversationMap({isActive} : {isActive: boolean})
           style={StyleSheet.absoluteFill}
           cameraPosition={{
             coordinates: {
-              latitude: initGeoInfo?.lat,
-              longitude: initGeoInfo?.lng,
+              latitude: position?.lat,
+              longitude: position?.lng,
             },
-            zoom: initGeoInfo?.zoom ?? 1,
+            zoom: position?.zoom,
           }}
-          onMapClick={() => Keyboard.dismiss()}
+          onMapClick={() => {
+            Keyboard.dismiss();
+            setDetailId("");
+          }}
+          onMarkerClick={(event) => {
+            sheet.current?.present();
+            setDetailId(String(event.id));
+          }}
           onCameraMove={(event) => {
             handleCameraMove(event);
           }}
@@ -220,32 +241,48 @@ export default function OfflineConversationMap({isActive} : {isActive: boolean})
             rotationGesturesEnabled: true,
           }}
           markers={markers}
-          onMarkerClick={(event) => {
-            router.push({
-              pathname: "/offline/[id]",
-              params: { id: String(event.id) },
-            });
-          }}
         />
       )}
       <TrueSheet
         ref={sheet}
-        detents={["auto", 0.72]}
+        detents={['auto', 0.123, 0.72]}
         dismissible={false}
         dimmed={false}
         backgroundColor={colors.SAND_100}
       >
-        <FlatList
+        <Pressable
+          style={styles.closeButton}
+          onPress={() => {
+            if (detailId && submitKeyword) {
+              setDetailId("");
+              return;
+            }
+            if (detailId) {
+              sheet.current?.dismiss();
+            }
+            if (submitKeyword) {
+              sheet.current?.dismiss();
+              setSubmitKeyword("");
+              setKeyword("");
+              setSubmitH3Indexes([]);
+              return
+            }
+          }}
+        >
+          <Ionicons name="close" size={20} color="white" />
+        </Pressable>
+        {detailId ?
+        <View style={styles.container}>
+          <OfflineConversationDetail id={detailId} showReport={true} />
+        </View>
+        : <FlatList
           data={searchData?.pages.flat() || []}
           ListEmptyComponent={
-            <Pressable
+            <View
               style={styles.emptyContainer}
-              onPress={() => {
-                sheet.current?.dismiss();
-              }}
             >
-              <Text style={styles.emptyText}>No Result</Text>
-            </Pressable>
+              <Text style={styles.emptyText}>No result</Text>
+            </View>
           }
           renderItem={({ item }) => {
             if (blockedConversations) {
@@ -255,20 +292,33 @@ export default function OfflineConversationMap({isActive} : {isActive: boolean})
                 }
               }
             }
-            return <OfflineConversationSearchItem conversation={item} />;
+            return (
+              <OfflineConversationSearchItem
+                conversation={item}
+                onPress={() => {
+                  setDetailId(item.id);
+                  setPosition(null);
+                  setTimeout(() => {
+                    setPosition({ lat: item.lat, lng: item.lng, zoom: 14 });
+                  }, 0);
+                }}
+              />
+            );
           }}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={styles.contentContainer}
           onEndReached={handleEndReached}
           onEndReachedThreshold={0.5}
-        />
+        />}
       </TrueSheet>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {},
+  container: {
+    paddingVertical: 57,
+  },
   inputContainer: {
     zIndex: 1,
     marginTop: 17,
@@ -333,5 +383,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.BLACK,
     fontWeight: "500",
+  },
+  closeButton: {
+    position: "absolute",
+    top: 10,
+    right: 16,
+    zIndex: 10,
+    padding: 8,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderRadius: 100,
   },
 });

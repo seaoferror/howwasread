@@ -117,6 +117,7 @@ export function useInfiniteSearchOfflineConversations({
       input,
       h3Indexes,
     ],
+    enabled: h3Indexes.length > 0 && !!input,
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
       const lastPost = lastPage[lastPage.length - 1];

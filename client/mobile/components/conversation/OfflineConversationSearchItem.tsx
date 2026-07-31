@@ -1,25 +1,19 @@
 import { Pressable, StyleSheet, Text } from "react-native";
 import { colors } from "@/constants";
 import { OfflineConversationSearchResponse } from "@/types/conversation";
-import { router } from "expo-router";
+import RenderHtml from "@native-html/render";
 
 interface OfflineConversationSearchProps {
   conversation: OfflineConversationSearchResponse;
+  onPress: () => void;
 }
 
 export default function OfflineConversationSearchItem({
   conversation,
+  onPress,
 }: OfflineConversationSearchProps) {
   return (
-    <Pressable
-      style={styles.content}
-      onPress={() =>
-        router.push({
-          pathname: "/offline/[id]",
-          params: { id: conversation.id },
-        })
-      }
-    >
+    <Pressable style={styles.content} onPress={onPress}>
       <Text style={styles.when}>
         {new Intl.DateTimeFormat("en-US", {
           weekday: "short",
@@ -34,23 +28,39 @@ export default function OfflineConversationSearchItem({
           .replace(/\sat\s/, " ")}
       </Text>
       {conversation.novel && (
-        <Text style={styles.detail}>Novel: {conversation.novel}</Text>
+        <RenderHtml
+          source={{ html: `<b>Novel:</b> ${conversation.novel}` }}
+          baseStyle={styles.detail}
+        />
       )}
       {conversation.shortStory && (
-        <Text style={styles.detail}>
-          Short story: {conversation.shortStory}
-        </Text>
+        <RenderHtml
+          source={{ html: `<b>Short story:</b> ${conversation.shortStory}` }}
+          baseStyle={styles.detail}
+        />
       )}
       {conversation.poem && (
-        <Text style={styles.detail}>Poem: {conversation.poem}</Text>
+        <RenderHtml
+          source={{ html: `<b>Poem:</b> ${conversation.poem}` }}
+          baseStyle={styles.detail}
+        />
       )}
       {conversation.play && (
-        <Text style={styles.detail}>Play: {conversation.play}</Text>
+        <RenderHtml
+          source={{ html: `<b>Play:</b> ${conversation.play}` }}
+          baseStyle={styles.detail}
+        />
       )}
       {conversation.film && (
-        <Text style={styles.detail}>Film: {conversation.film}</Text>
+        <RenderHtml
+          source={{ html: `<b>Film:</b> ${conversation.film}` }}
+          baseStyle={styles.detail}
+        />
       )}
-      <Text style={styles.detail}>Written by: {conversation.writtenBy}</Text>
+      <RenderHtml
+        source={{ html: `<b>Written by:</b> ${conversation.writtenBy}` }}
+        baseStyle={styles.detail}
+      />
     </Pressable>
   );
 }
