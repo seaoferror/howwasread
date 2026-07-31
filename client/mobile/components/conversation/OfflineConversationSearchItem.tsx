@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text } from "react-native";
+import { Pressable, StyleSheet, Text, useWindowDimensions } from "react-native";
 import { colors } from "@/constants";
 import { OfflineConversationSearchResponse } from "@/types/conversation";
 import RenderHtml from "@native-html/render";
@@ -12,6 +12,8 @@ export default function OfflineConversationSearchItem({
   conversation,
   onPress,
 }: OfflineConversationSearchProps) {
+  const { width } = useWindowDimensions();
+
   return (
     <Pressable style={styles.content} onPress={onPress}>
       <Text style={styles.when}>
@@ -29,35 +31,41 @@ export default function OfflineConversationSearchItem({
       </Text>
       {conversation.novel && (
         <RenderHtml
+          contentWidth={width}
           source={{ html: `<b>Novel:</b> ${conversation.novel}` }}
           baseStyle={styles.detail}
         />
       )}
       {conversation.shortStory && (
         <RenderHtml
+          contentWidth={width}
           source={{ html: `<b>Short story:</b> ${conversation.shortStory}` }}
           baseStyle={styles.detail}
         />
       )}
       {conversation.poem && (
         <RenderHtml
+          contentWidth={width}
           source={{ html: `<b>Poem:</b> ${conversation.poem}` }}
           baseStyle={styles.detail}
         />
       )}
       {conversation.play && (
         <RenderHtml
+          contentWidth={width}
           source={{ html: `<b>Play:</b> ${conversation.play}` }}
           baseStyle={styles.detail}
         />
       )}
       {conversation.film && (
         <RenderHtml
+          contentWidth={width}
           source={{ html: `<b>Film:</b> ${conversation.film}` }}
           baseStyle={styles.detail}
         />
       )}
       <RenderHtml
+        contentWidth={width}
         source={{ html: `<b>Written by:</b> ${conversation.writtenBy}` }}
         baseStyle={styles.detail}
       />

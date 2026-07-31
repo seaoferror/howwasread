@@ -56,6 +56,7 @@ export default function OfflineConversationMap({
   const [keyword, setKeyword] = useState("");
   const [submitKeyword, setSubmitKeyword] = useState("");
   const [showRetry, setShowRetry] = useState(false);
+  const [zoom, setZoom] = useState(0);
   const [submitH3Indexes, setSubmitH3Indexes] = useState<string[]>([]);
   const {
     data: searchData,
@@ -137,6 +138,7 @@ export default function OfflineConversationMap({
     setShowRetry(true);
     const lat = event.coordinates.latitude;
     const lng = event.coordinates.longitude;
+    setZoom(event.zoom);
     if (event.zoom >= (Platform.OS === "ios" ? 12 : 14) && lat && lng) {
       setResolution(7);
       const h3Index = latLngToCell(lat, lng, 7);
@@ -161,9 +163,20 @@ export default function OfflineConversationMap({
           onChangeText={(text) => setKeyword(text)}
           onSubmit={() => {
             Keyboard.dismiss();
+            setShowRetry(false);
+            if (!keyword) {
+              sheet.current?.dismiss();
+              return;
+            }
+            setDetailId("");
             setSubmitH3Indexes(h3Indexes);
             setSubmitKeyword(keyword);
-            setResolution(7);
+            if (zoom > (Platform.OS === "ios" ? 10 : 12)) {
+              setResolution(5);
+            }
+            if (zoom >= (Platform.OS === "ios" ? 12 : 14)) {
+              setResolution(7);
+            }
             sheet.current?.present();
           }}
           submitKeyword={submitKeyword}
@@ -184,7 +197,14 @@ export default function OfflineConversationMap({
               sheet.current?.present();
               setShowRetry(false);
               setDetailId("");
+              setKeyword(submitKeyword);
               setSubmitH3Indexes(h3Indexes);
+              if (zoom > (Platform.OS === "ios" ? 10 : 12)) {
+                setResolution(5);
+              }
+              if (zoom >= (Platform.OS === "ios" ? 12 : 14)) {
+                setResolution(7);
+              }
             }}
           >
             <Feather name="rotate-cw" size={14} color="black" />
@@ -394,7 +414,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 10,
     right: 16,
-    zIndex: 10,
+    zIndex: 1,
     padding: 8,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     borderRadius: 100,

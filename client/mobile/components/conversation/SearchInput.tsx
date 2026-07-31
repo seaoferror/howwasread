@@ -26,7 +26,7 @@ export default function SearchInput({
         onSubmitEditing={onSubmit}
         {...props}
       />
-      {submitKeyword === keyword ? (
+      {keyword.length > 0 && submitKeyword === keyword ? (
         <Ionicons name="close" size={20} onPress={() => onCancel()} />
       ) : (
         <Ionicons
