@@ -4,13 +4,15 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 
 interface SearchInputProps extends TextInputProps {
   onSubmit?: () => void;
-  submitKeyWord: string;
+  submitKeyword: string;
+  keyword: string;
   onCancel: () => void;
 }
 
 export default function SearchInput({
   onSubmit,
-  submitKeyWord,
+  submitKeyword,
+  keyword,
   onCancel,
   ...props
 }: SearchInputProps) {
@@ -24,7 +26,7 @@ export default function SearchInput({
         onSubmitEditing={onSubmit}
         {...props}
       />
-      {submitKeyWord ? (
+      {submitKeyword === keyword ? (
         <Ionicons name="close" size={20} onPress={() => onCancel()} />
       ) : (
         <Ionicons

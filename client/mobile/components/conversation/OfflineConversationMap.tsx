@@ -1,4 +1,5 @@
 import {
+  ActivityIndicator,
   FlatList,
   Keyboard,
   Platform,
@@ -61,6 +62,7 @@ export default function OfflineConversationMap({
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    isFetching,
   } = useInfiniteSearchOfflineConversations({
     input: submitKeyword,
     resolution: resolution,
@@ -164,7 +166,8 @@ export default function OfflineConversationMap({
             setResolution(7);
             sheet.current?.present();
           }}
-          submitKeyWord={submitKeyword}
+          submitKeyword={submitKeyword}
+          keyword={keyword}
           onCancel={() => {
             setSubmitKeyword("");
             setKeyword("");
@@ -245,7 +248,7 @@ export default function OfflineConversationMap({
       )}
       <TrueSheet
         ref={sheet}
-        detents={['auto', 0.123, 0.72]}
+        detents={["auto", 0.123, 0.72]}
         dismissible={false}
         dimmed={false}
         backgroundColor={colors.SAND_100}
@@ -258,58 +261,61 @@ export default function OfflineConversationMap({
               return;
             }
             if (detailId) {
+              setDetailId("");
               sheet.current?.dismiss();
             }
             if (submitKeyword) {
-              sheet.current?.dismiss();
               setSubmitKeyword("");
               setKeyword("");
               setSubmitH3Indexes([]);
-              return
+              sheet.current?.dismiss();
+              return;
             }
           }}
         >
           <Ionicons name="close" size={20} color="white" />
         </Pressable>
-        {detailId ?
-        <View style={styles.container}>
-          <OfflineConversationDetail id={detailId} showReport={true} />
-        </View>
-        : <FlatList
-          data={searchData?.pages.flat() || []}
-          ListEmptyComponent={
-            <View
-              style={styles.emptyContainer}
-            >
-              <Text style={styles.emptyText}>No result</Text>
-            </View>
-          }
-          renderItem={({ item }) => {
-            if (blockedConversations) {
-              for (const c of blockedConversations) {
-                if (c.id === String(item.id)) {
-                  return null;
+        {detailId ? (
+          <View style={styles.container}>
+            <OfflineConversationDetail id={detailId} showReport={true} />
+          </View>
+        ) : isFetching ? (
+          <ActivityIndicator style={{ paddingVertical: 50 }} />
+        ) : (
+          <FlatList
+            data={searchData?.pages.flat() || []}
+            ListEmptyComponent={
+              <View style={styles.emptyContainer}>
+                <Text style={styles.emptyText}>No result</Text>
+              </View>
+            }
+            renderItem={({ item }) => {
+              if (blockedConversations) {
+                for (const c of blockedConversations) {
+                  if (c.id === String(item.id)) {
+                    return null;
+                  }
                 }
               }
-            }
-            return (
-              <OfflineConversationSearchItem
-                conversation={item}
-                onPress={() => {
-                  setDetailId(item.id);
-                  setPosition(null);
-                  setTimeout(() => {
-                    setPosition({ lat: item.lat, lng: item.lng, zoom: 14 });
-                  }, 0);
-                }}
-              />
-            );
-          }}
-          keyExtractor={(item) => String(item.id)}
-          contentContainerStyle={styles.contentContainer}
-          onEndReached={handleEndReached}
-          onEndReachedThreshold={0.5}
-        />}
+              return (
+                <OfflineConversationSearchItem
+                  conversation={item}
+                  onPress={() => {
+                    setDetailId(item.id);
+                    setPosition(null);
+                    setTimeout(() => {
+                      setPosition({ lat: item.lat, lng: item.lng, zoom: 14 });
+                    }, 0);
+                  }}
+                />
+              );
+            }}
+            keyExtractor={(item) => String(item.id)}
+            contentContainerStyle={styles.contentContainer}
+            onEndReached={handleEndReached}
+            onEndReachedThreshold={0.5}
+          />
+        )}
       </TrueSheet>
     </View>
   );

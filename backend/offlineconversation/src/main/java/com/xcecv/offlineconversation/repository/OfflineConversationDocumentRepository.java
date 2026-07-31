@@ -35,17 +35,49 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
           "bool": {
             "must": [
               {
-                "multi_match": {
-                  "query": "?0",
-                  "fields": [
-                    "novel", "novel.keyword^5",
-                    "poem", "poem.keyword^5",
-                    "shortStory", "shortStory.keyword^5",
-                    "play", "play.keyword^5",
-                    "film", "film.keyword^5",
-                    "writtenBy", "writtenBy.keyword^5"
+                "bool": {
+                  "should": [
+                    {
+                      "query_string": {
+                        "query": "*?0*",
+                        "fields": [
+                          "novel",
+                          "poem",
+                          "shortStory",
+                          "play",
+                          "film",
+                          "writtenBy"
+                        ]
+                      }
+                    },
+                    {
+                      "multi_match": {
+                        "query": "?0",
+                        "fields": [
+                          "novel^3",
+                          "poem^3",
+                          "shortStory^3",
+                          "play^3",
+                          "film^3",
+                          "writtenBy^3"
+                        ]
+                      }
+                    },
+                    {
+                      "multi_match": {
+                        "query": "?0",
+                        "fields": [
+                          "novel.keyword^5",
+                          "poem.keyword^5",
+                          "shortStory.keyword^5",
+                          "play.keyword^5",
+                          "film.keyword^5",
+                          "writtenBy.keyword^5"
+                        ]
+                      }
+                    }
                   ],
-                  "fuzziness": "AUTO"
+                  "minimum_should_match": 1
                 }
               }
             ],
@@ -92,17 +124,49 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
           "bool": {
             "must": [
               {
-                "multi_match": {
-                  "query": "?0",
-                  "fields": [
-                    "novel", "novel.keyword^5",
-                    "poem", "poem.keyword^5",
-                    "shortStory", "shortStory.keyword^5",
-                    "play", "play.keyword^5",
-                    "film", "film.keyword^5",
-                    "writtenBy", "writtenBy.keyword^5"
+                "bool": {
+                  "should": [
+                    {
+                      "query_string": {
+                        "query": "*?0*",
+                        "fields": [
+                          "novel",
+                          "poem",
+                          "shortStory",
+                          "play",
+                          "film",
+                          "writtenBy"
+                        ]
+                      }
+                    },
+                    {
+                      "multi_match": {
+                        "query": "?0",
+                        "fields": [
+                          "novel^3",
+                          "poem^3",
+                          "shortStory^3",
+                          "play^3",
+                          "film^3",
+                          "writtenBy^3"
+                        ]
+                      }
+                    },
+                    {
+                      "multi_match": {
+                        "query": "?0",
+                        "fields": [
+                          "novel.keyword^5",
+                          "poem.keyword^5",
+                          "shortStory.keyword^5",
+                          "play.keyword^5",
+                          "film.keyword^5",
+                          "writtenBy.keyword^5"
+                        ]
+                      }
+                    }
                   ],
-                  "fuzziness": "AUTO"
+                  "minimum_should_match": 1
                 }
               }
             ],
