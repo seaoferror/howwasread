@@ -29,10 +29,10 @@ import { colors } from "@/constants";
 import { TrueSheet } from "@lodev09/react-native-true-sheet";
 import OfflineConversationSearchItem from "@/components/conversation/OfflineConversationSearchItem";
 import OfflineConversationDetail from "@/components/conversation/OfflineConversationDetail";
+import { type OfflineConversationSearchResponse } from "@/types/conversation";
 
 function stripHtml(text: string) {
   if (!text) return "";
-  // Replaces anything that looks like an HTML tag with an empty string
   return text.replace(/<\/?[^>]+(>|$)/g, "");
 }
 
@@ -154,6 +154,68 @@ export default function OfflineConversationMap({
     }
   };
 
+  const commonSearchFlow = () => {
+    setDetailId("");
+    setSubmitH3Indexes(h3Indexes);
+    if (zoom > (Platform.OS === "ios" ? 10 : 12)) {
+      setResolution(5);
+    }
+    if (zoom >= (Platform.OS === "ios" ? 12 : 14)) {
+      setResolution(7);
+    }
+    sheet.current?.present();
+  };
+
+  const handleSearch = () => {
+    Keyboard.dismiss();
+    setShowRetry(false);
+    if (!keyword) {
+      sheet.current?.dismiss();
+      return;
+    }
+    setSubmitKeyword(keyword);
+    commonSearchFlow();
+  };
+
+  const handleSearchCancel = () => {
+    setSubmitKeyword("");
+    setKeyword("");
+    sheet.current?.dismiss();
+  };
+
+  const handleRetrySearch = () => {
+    setKeyword(submitKeyword);
+    Keyboard.dismiss();
+    setShowRetry(false);
+    commonSearchFlow();
+  };
+
+  const handleClose = () => {
+    if (detailId && submitKeyword) {
+      setDetailId("");
+      return;
+    }
+    if (detailId) {
+      setDetailId("");
+      sheet.current?.dismiss();
+    }
+    if (submitKeyword) {
+      setSubmitKeyword("");
+      setKeyword("");
+      setSubmitH3Indexes([]);
+      sheet.current?.dismiss();
+      return;
+    }
+  };
+
+  const handleSearchItemPress = (item: OfflineConversationSearchResponse) => {
+    setDetailId(item.id);
+    setPosition(null);
+    setTimeout(() => {
+      setPosition({ lat: item.lat, lng: item.lng, zoom: 14 });
+    }, 0);
+  };
+
   return (
     <View style={{ flex: 1 }}>
       <View style={styles.inputContainer}>
@@ -162,29 +224,12 @@ export default function OfflineConversationMap({
           value={keyword}
           onChangeText={(text) => setKeyword(text)}
           onSubmit={() => {
-            Keyboard.dismiss();
-            setShowRetry(false);
-            if (!keyword) {
-              sheet.current?.dismiss();
-              return;
-            }
-            setDetailId("");
-            setSubmitH3Indexes(h3Indexes);
-            setSubmitKeyword(keyword);
-            if (zoom > (Platform.OS === "ios" ? 10 : 12)) {
-              setResolution(5);
-            }
-            if (zoom >= (Platform.OS === "ios" ? 12 : 14)) {
-              setResolution(7);
-            }
-            sheet.current?.present();
+            handleSearch();
           }}
           submitKeyword={submitKeyword}
           keyword={keyword}
           onCancel={() => {
-            setSubmitKeyword("");
-            setKeyword("");
-            sheet.current?.dismiss();
+            handleSearchCancel();
           }}
         />
       </View>
@@ -194,17 +239,7 @@ export default function OfflineConversationMap({
           <Pressable
             style={styles.retrySearchButton}
             onPress={() => {
-              sheet.current?.present();
-              setShowRetry(false);
-              setDetailId("");
-              setKeyword(submitKeyword);
-              setSubmitH3Indexes(h3Indexes);
-              if (zoom > (Platform.OS === "ios" ? 10 : 12)) {
-                setResolution(5);
-              }
-              if (zoom >= (Platform.OS === "ios" ? 12 : 14)) {
-                setResolution(7);
-              }
+              handleRetrySearch();
             }}
           >
             <Feather name="rotate-cw" size={14} color="black" />
@@ -276,21 +311,7 @@ export default function OfflineConversationMap({
         <Pressable
           style={styles.closeButton}
           onPress={() => {
-            if (detailId && submitKeyword) {
-              setDetailId("");
-              return;
-            }
-            if (detailId) {
-              setDetailId("");
-              sheet.current?.dismiss();
-            }
-            if (submitKeyword) {
-              setSubmitKeyword("");
-              setKeyword("");
-              setSubmitH3Indexes([]);
-              sheet.current?.dismiss();
-              return;
-            }
+            handleClose();
           }}
         >
           <Ionicons name="close" size={20} color="white" />
@@ -321,11 +342,7 @@ export default function OfflineConversationMap({
                 <OfflineConversationSearchItem
                   conversation={item}
                   onPress={() => {
-                    setDetailId(item.id);
-                    setPosition(null);
-                    setTimeout(() => {
-                      setPosition({ lat: item.lat, lng: item.lng, zoom: 14 });
-                    }, 0);
+                    handleSearchItemPress(item);
                   }}
                 />
               );
