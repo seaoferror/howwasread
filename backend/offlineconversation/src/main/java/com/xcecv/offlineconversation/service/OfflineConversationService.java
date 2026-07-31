@@ -324,6 +324,7 @@ public class OfflineConversationService {
       var conversation = searchHit.getContent();
       Map<String, List<String>> highlightFields = searchHit.getHighlightFields();
       response.add(OfflineConversationSearchResponse.builder()
+          .id(conversation.getId())
           .novel(getHighlightOrOriginal(highlightFields, "novel", conversation.getNovel()))
           .play(getHighlightOrOriginal(highlightFields, "play", conversation.getPlay()))
           .poem(getHighlightOrOriginal(highlightFields, "poem", conversation.getPoem()))
