@@ -1,6 +1,6 @@
-package com.xcecv.offlineconversation.repository;
+package com.xcecv.search.repository;
 
-import com.xcecv.offlineconversation.domain.OfflineConversationDocument;
+import com.xcecv.search.domain.OfflineConversationDocument;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.annotations.Highlight;
 import org.springframework.data.elasticsearch.annotations.HighlightField;

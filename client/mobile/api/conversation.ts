@@ -64,7 +64,7 @@ export async function searchOfflineConversations({
   h3Indexes: string[];
   page: number;
 }): Promise<OfflineConversationSearchResponse[]> {
-  const { data } = await axiosInstance.get(`/offlineconversation/search`, {
+  const { data } = await axiosInstance.get(`/search/conversation/offline`, {
     params: {
       input,
       resolution,

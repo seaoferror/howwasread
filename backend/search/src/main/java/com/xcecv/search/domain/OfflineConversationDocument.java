@@ -1,7 +1,7 @@
-package com.xcecv.offlineconversation.domain;
+package com.xcecv.search.domain;
 
-import jakarta.persistence.Id;
 import lombok.*;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.*;
 
 import java.time.Instant;
@@ -72,8 +72,8 @@ public class OfflineConversationDocument {
   private String h3Res7;
 
   @Field(type = FieldType.Double, index = false)
-  private Double latitude;
+  private double latitude;
 
   @Field(type = FieldType.Double, index = false)
-  private Double longitude;
+  private double longitude;
 }

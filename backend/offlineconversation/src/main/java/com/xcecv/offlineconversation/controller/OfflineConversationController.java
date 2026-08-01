@@ -3,11 +3,9 @@ package com.xcecv.offlineconversation.controller;
 import com.xcecv.offlineconversation.dto.CreateOfflineConversationRequest;
 import com.xcecv.offlineconversation.dto.JoinOfflineConversationRequest;
 import com.xcecv.offlineconversation.dto.OfflineConversationMapResponse;
-import com.xcecv.offlineconversation.dto.OfflineConversationSearchResponse;
 import com.xcecv.offlineconversation.service.OfflineConversationService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -87,22 +85,5 @@ public class OfflineConversationController {
   ) {
     offlineConversationService.report(request.conversationId(), memberId);
     return ResponseEntity.ok("ok");
-  }
-
-  @GetMapping("/search")
-  public ResponseEntity<?> search(
-      @NotBlank @RequestParam String input,
-      @NotBlank @RequestParam String resolution,
-      @NotEmpty @RequestParam List<String> h3Indexes,
-      @RequestParam int page
-  ) {
-    List<OfflineConversationSearchResponse> response = null;
-    if (resolution.equals("5")) {
-      response = offlineConversationService.searchH3Res5(input, h3Indexes, page);
-    }
-    if (resolution.equals("7")) {
-      response = offlineConversationService.searchH3Res7(input, h3Indexes, page);
-    }
-    return ResponseEntity.ok(response);
   }
 }

@@ -180,6 +180,7 @@ export default function OfflineConversationMap({
   const handleSearchCancel = () => {
     setSubmitKeyword("");
     setKeyword("");
+    setSubmitH3Indexes([]);
     sheet.current?.dismiss();
   };
 
@@ -190,7 +191,7 @@ export default function OfflineConversationMap({
     commonSearchFlow();
   };
 
-  const handleClose = () => {
+  const handleSheetCloseButtonPress = () => {
     if (detailId && submitKeyword) {
       setDetailId("");
       return;
@@ -200,11 +201,7 @@ export default function OfflineConversationMap({
       sheet.current?.dismiss();
     }
     if (submitKeyword) {
-      setSubmitKeyword("");
-      setKeyword("");
-      setSubmitH3Indexes([]);
-      sheet.current?.dismiss();
-      return;
+      handleSearchCancel();
     }
   };
 
@@ -311,7 +308,7 @@ export default function OfflineConversationMap({
         <Pressable
           style={styles.closeButton}
           onPress={() => {
-            handleClose();
+            handleSheetCloseButtonPress();
           }}
         >
           <Ionicons name="close" size={20} color="white" />
@@ -323,35 +320,38 @@ export default function OfflineConversationMap({
         ) : isFetching ? (
           <ActivityIndicator style={{ paddingVertical: 50 }} />
         ) : (
-          <FlatList
-            data={searchData?.pages.flat() || []}
-            ListEmptyComponent={
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>No result</Text>
-              </View>
-            }
-            renderItem={({ item }) => {
-              if (blockedConversations) {
-                for (const c of blockedConversations) {
-                  if (c.id === String(item.id)) {
-                    return null;
+          <>
+            <View style={{paddingVertical: 30}}></View>
+            <FlatList
+              data={searchData?.pages.flat() || []}
+              ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyText}>No result</Text>
+                </View>
+              }
+              renderItem={({ item }) => {
+                if (blockedConversations) {
+                  for (const b of blockedConversations) {
+                    if (b.id === String(item.id)) {
+                      return null;
+                    }
                   }
                 }
-              }
-              return (
-                <OfflineConversationSearchItem
-                  conversation={item}
-                  onPress={() => {
-                    handleSearchItemPress(item);
-                  }}
-                />
-              );
-            }}
-            keyExtractor={(item) => String(item.id)}
-            contentContainerStyle={styles.contentContainer}
-            onEndReached={handleEndReached}
-            onEndReachedThreshold={0.5}
-          />
+                return (
+                  <OfflineConversationSearchItem
+                    conversation={item}
+                    onPress={() => {
+                      handleSearchItemPress(item);
+                    }}
+                  />
+                );
+              }}
+              keyExtractor={(item) => String(item.id)}
+              contentContainerStyle={styles.contentContainer}
+              onEndReached={handleEndReached}
+              onEndReachedThreshold={0.5}
+            />
+          </>
         )}
       </TrueSheet>
     </View>

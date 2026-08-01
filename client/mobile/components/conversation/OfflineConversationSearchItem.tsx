@@ -74,9 +74,9 @@ export default function OfflineConversationSearchItem({
 }
 
 const styles = StyleSheet.create({
-  container: {},
   content: {
     padding: 16,
+    backgroundColor: colors.SAND_110,
     gap: 17,
   },
   when: {

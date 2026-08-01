@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.f4b6a3.uuid.UuidCreator;
 import com.xcecv.offlineconversation.domain.OfflineConversation;
-import com.xcecv.offlineconversation.domain.OfflineConversationDocument;
 import com.xcecv.offlineconversation.domain.OfflineConversationParticipant;
 import com.xcecv.offlineconversation.domain.ParticipantCompositeKey;
 import com.xcecv.offlineconversation.dto.*;
@@ -12,7 +11,6 @@ import com.xcecv.offlineconversation.projection.OfflineConversationDetailProject
 import com.xcecv.offlineconversation.projection.OfflineConversationMapProjection;
 import com.xcecv.offlineconversation.projection.OfflineConversationPinProjection;
 import com.xcecv.offlineconversation.projection.OfflineConversationReportProjection;
-import com.xcecv.offlineconversation.repository.OfflineConversationDocumentRepository;
 import com.xcecv.offlineconversation.repository.OfflineConversationParticipantRepository;
 import com.xcecv.offlineconversation.repository.OfflineConversationRepository;
 import com.xcecv.offlineconversation.util.UUIDUtil;
@@ -20,8 +18,6 @@ import glide.api.GlideClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,7 +36,6 @@ public class OfflineConversationService {
 
   private final OfflineConversationRepository offlineConversationRepository;
   private final OfflineConversationParticipantRepository offlineConversationParticipantRepository;
-  private final OfflineConversationDocumentRepository offlineConversationDocumentRepository;
 
   private final GlideClient glideClient;
   private final ObjectMapper objectMapper;
@@ -302,44 +297,5 @@ public class OfflineConversationService {
             "Conversation not found"
         ));
     c.getReporterIds().add(memberId);
-  }
-
-  public List<OfflineConversationSearchResponse> searchH3Res5(String input, List<String> h3Indexes, int page) {
-    var searchHits =
-        offlineConversationDocumentRepository
-            .findByInputAndH3Res5(input, h3Indexes, Instant.now().toEpochMilli(), PageRequest.of(page - 1, 5));
-    return buildSearchResponses(searchHits);
-  }
-
-  public List<OfflineConversationSearchResponse> searchH3Res7(String input, List<String> h3Indexes, int page) {
-    var searchHits =
-        offlineConversationDocumentRepository
-            .findByInputAndH3Res7(input, h3Indexes, Instant.now().toEpochMilli(), PageRequest.of(page - 1, 5));
-    return buildSearchResponses(searchHits);
-  }
-
-  private List<OfflineConversationSearchResponse> buildSearchResponses(List<SearchHit<OfflineConversationDocument>> searchHits) {
-    List<OfflineConversationSearchResponse> response = new ArrayList<>();
-    for (var searchHit : searchHits) {
-      var conversation = searchHit.getContent();
-      Map<String, List<String>> highlightFields = searchHit.getHighlightFields();
-      response.add(OfflineConversationSearchResponse.builder()
-          .id(conversation.getId())
-          .novel(getHighlightOrOriginal(highlightFields, "novel", conversation.getNovel()))
-          .play(getHighlightOrOriginal(highlightFields, "play", conversation.getPlay()))
-          .poem(getHighlightOrOriginal(highlightFields, "poem", conversation.getPoem()))
-          .shortStory(getHighlightOrOriginal(highlightFields, "shortStory", conversation.getShortStory()))
-          .film(getHighlightOrOriginal(highlightFields, "film", conversation.getFilm()))
-          .writtenBy(getHighlightOrOriginal(highlightFields, "writtenBy", conversation.getWrittenBy()))
-          .time(conversation.getTime())
-          .lat(conversation.getLatitude())
-          .lng(conversation.getLongitude())
-          .build());
-    }
-    return response;
-  }
-
-  private String getHighlightOrOriginal(Map<String, List<String>> highlights, String fieldName, String originalValue) {
-    return highlights.containsKey(fieldName) ? highlights.get(fieldName).getFirst() : originalValue;
   }
 }

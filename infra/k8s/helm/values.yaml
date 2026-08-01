@@ -207,9 +207,29 @@ apps:
     twilio: false
     firebase: false
     valkey: true
-    opensearch: true
+    opensearch: false
     framework: spring-boot
 #    cpuRequests: "0.3"
 #    memoryRequests: "100Mi"
 #    cpuLimits: "0.4"
 #    memoryLimits: "100Mi"
+  search:
+    image: "backend/search:latest"
+    port: 8080
+    routePath: /search
+    authentication: false
+    aws: false
+    kafka: true
+    astradb: false
+    mongodb: false
+    tidb: false
+    smtp: false
+    twilio: false
+    firebase: false
+    valkey: false
+    opensearch: true
+    framework: spring-boot
+  #    cpuRequests: "0.3"
+  #    memoryRequests: "100Mi"
+  #    cpuLimits: "0.4"
+  #    memoryLimits: "100Mi"

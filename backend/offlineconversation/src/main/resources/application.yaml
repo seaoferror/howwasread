@@ -27,10 +27,6 @@ spring:
         default_batch_fetch_size: 1000
   kafka:
     bootstrap-servers: ${KAFKA_ADDRESS}
-  elasticsearch:
-    uris: ${OPENSEARCH_HOST}:${OPENSEARCH_PORT}
-    username: ${OPENSEARCH_USERNAME}
-    password: ${OPENSEARCH_PASSWORD}
 logging:
   level:
     org.springframework.web.socket: INFO

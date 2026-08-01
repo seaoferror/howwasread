@@ -1,4 +1,4 @@
-package com.xcecv.offlineconversation.dto;
+package com.xcecv.search.dto;
 
 import lombok.Builder;
 

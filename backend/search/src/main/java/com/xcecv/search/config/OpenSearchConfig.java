@@ -1,4 +1,4 @@
-package com.xcecv.offlineconversation.config;
+package com.xcecv.search.config;
 
 import org.opensearch.data.client.osc.OpenSearchConfiguration;
 import org.springframework.beans.factory.annotation.Value;
