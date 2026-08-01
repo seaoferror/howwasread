@@ -160,8 +160,7 @@ apps:
     routePath: /onlineconversation
     authentication: false
     aws: false
-    confluent: true
-    kafka: false
+    kafka: true
     astradb: false
     mongodb: true
     tidb: false
@@ -180,8 +179,7 @@ apps:
     routePath: false
     authentication: false
     aws: false
-    confluent: true
-    kafka: false
+    kafka: true
     astradb: false
     mongodb: false
     tidb: false

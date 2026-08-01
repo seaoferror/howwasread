@@ -63,10 +63,6 @@ spec:
             - secretRef:
                 name: twilio
             {{- end }}
-            {{- if $app.confluent }}
-            - secretRef:
-                name: confluent
-            {{- end }}
             {{- if $app.valkey }}
             - secretRef:
                 name: valkey
@@ -102,8 +98,11 @@ spec:
               readOnly: true
             {{- end }}
             {{- if $app.kafka }}
-            - name: kafka-volume
-              mountPath: "/cert/kafka"
+            - name: kafka-user
+              mountPath: "/cert/kafka/user"
+              readOnly: true
+            - name: kafka-ca
+              mountPath: "/cert/kafka/cluster"
               readOnly: true
             {{- end }}
       volumes:
@@ -133,10 +132,13 @@ spec:
             secretName: mongodb-volume
         {{- end }}
         {{- if $app.kafka }}
-        - name: kafka-volume
+        - name: kafka-user
           secret:
-            secretName: kafka-volume
-        {{- end}}
+            secretName: kafka-user
+        - name: kafka-ca
+          secret:
+            secretName: kafka-cluster-cluster-ca-cert
+        {{- end }}
 
 ---
 apiVersion: v1

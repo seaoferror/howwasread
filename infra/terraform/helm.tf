@@ -10,17 +10,17 @@ resource "helm_release" "envoy_gateway" {
   # ]
 }
 
-# resource "helm_release" "strimzi" {
-#   name             = "my-strimzi-cluster-operator"
-#   repository       = "oci://quay.io/strimzi-helm"
-#   chart            = "strimzi-kafka-operator"
-#   namespace        = "kafka-system"
-#   create_namespace = true
-#
-#   depends_on = [
-#     module.cluster1.eks_managed_node_groups
-#   ]
-# }
+resource "helm_release" "strimzi" {
+  name             = "my-strimzi-cluster-operator"
+  repository       = "oci://quay.io/strimzi-helm"
+  chart            = "strimzi-kafka-operator"
+  namespace        = "kafka-system"
+  create_namespace = true
+
+  # depends_on = [
+  #   module.cluster1.eks_managed_node_groups
+  # ]
+}
 
 # resource "helm_release" "external_dns" {
 #   name             = "external-dns"
