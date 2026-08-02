@@ -66,7 +66,7 @@ func (s *Service) RelayMessage(
 			ContentType:    contentType,
 			Contents:       contents,
 		})
-		s.producer.PushMessage("notification", nil, p)
+		s.producer.PushMessage("notification", nil, p, nil)
 		pushToIds = nil
 	}
 
@@ -179,7 +179,7 @@ func (s *Service) RelayMessage(
 			ContentType:    contentType,
 			Contents:       contents,
 		})
-		s.producer.PushMessage("notification", nil, p)
+		s.producer.PushMessage("notification", nil, p, nil)
 	}
 	return
 }

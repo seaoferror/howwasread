@@ -35,8 +35,6 @@ export const queryKey = {
   CONVERSATION: "conversation",
   GET_MY_ID: "getMyId",
   GET_ONLINE_CONVERSATIONS: "getOnlineConversations",
-  GET_ONLINE_CONVERSATION_PRE_ASSIGNED_IDS:
-    "getOnlineConversationPreAssignedIds",
   PROFILE: "profile",
   GET_MY_PROFILE: "getMyProfile",
   GET_RECENT_MESSAGES: "getRecentMessages",
@@ -51,7 +49,9 @@ export const queryKey = {
   GET_CHAT_PARTICIPANT_IDS: "getChatParticipantIds",
   REPORT_USER: "reportUser",
   BLOCKED_CONVERSATIONS: "blockedConversations",
-  SEARCH_OFFLINE_CONVERSATIONS: "searchOfflineConversations"
+  SEARCH_OFFLINE_CONVERSATIONS: "searchOfflineConversations",
+  SEARCH_ONLINE_CONVERSATIONS: "searchOnlineConversations",
+  GET_ONLINE_CONVERSATION_DETAIL: "getOnlineConversationDetail"
 };
 
 export const time = {

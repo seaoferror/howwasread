@@ -18,13 +18,11 @@ type Conversation struct {
 	Capacity   int           `bson:"capacity"`
 	When       time.Time     `bson:"when"`
 	Length     time.Duration `bson:"length"`
-	Expired    bool          `bson:"expired"`
 
-	ModeratorIds   []bson.Binary `bson:"moderator_ids"`
-	RegistrantIds  []bson.Binary `bson:"registrant_ids"`
-	ParticipantIds []bson.Binary `bson:"participant_ids"`
-	BanIds         []bson.Binary `bson:"ban_ids"`
-	ReporterIds    []bson.Binary `bson:"reporter_ids"`
+	ModeratorIds  []bson.Binary `bson:"moderator_ids"`
+	RegistrantIds []bson.Binary `bson:"registrant_ids"`
+	BanIds        []bson.Binary `bson:"ban_ids"`
+	ReporterIds   []bson.Binary `bson:"reporter_ids"`
 }
 
 //types Org struct {

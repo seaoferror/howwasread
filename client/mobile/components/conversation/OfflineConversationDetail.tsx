@@ -68,13 +68,13 @@ export default function OfflineConversationDetail({
   const handleButtonPress = () => {
     if (data?.isParticipant) {
       quitOfflineConversationMutation.mutate(
-        { conversationId: id },
+        { id: id },
         { onSuccess: () => router.push("/conversations") },
       );
       return;
     }
     joinOfflineConversationMutation.mutate(
-      { conversationId: String(id) },
+      { id: String(id) },
       {
         onSuccess: () => {
           Toast.show({

@@ -3,7 +3,9 @@ package repository
 import (
 	"backend/onlineconversation/internal/document"
 	"context"
+	"errors"
 	"log/slog"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -29,11 +31,12 @@ func (r *Repository) SaveConversation(ctx context.Context, memberId, conversatio
 		ModeratorIds: []bson.Binary{
 			{4, memberId[:]},
 		},
-		ParticipantIds: []bson.Binary{},
-		BanIds:         []bson.Binary{},
-		ReporterIds:    []bson.Binary{},
+		RegistrantIds: []bson.Binary{
+			{4, memberId[:]},
+		},
+		BanIds:      []bson.Binary{},
+		ReporterIds: []bson.Binary{},
 	}
-
 	session, err := r.mongoClient.StartSession()
 	if err != nil {
 		slog.Error("fail to start transaction for insert new conversation",
@@ -60,16 +63,25 @@ func (r *Repository) SaveConversation(ctx context.Context, memberId, conversatio
 	return nil
 }
 
-func (r *Repository) FindConversations(ctx context.Context, page int) ([]document.Conversation, error) {
+func (r *Repository) FindConversations(ctx context.Context, page int, t time.Time) ([]document.Conversation, error) {
 	filter := bson.M{
-		"when":    bson.M{"$gt": time.Now().Add(-9 * time.Hour)},
+		"when":    bson.M{"$gt": t.Add(-9 * time.Hour)},
 		"expired": false,
 	}
 
 	opts := options.Find().
 		SetSort(bson.M{"when": 1}).
 		SetLimit(Limit).
-		SetSkip(int64((page - 1) * 5))
+		SetSkip(int64((page - 1) * 5)).
+		SetProjection(bson.M{
+			"rule":           0,
+			"capacity":       0,
+			"length":         0,
+			"moderator_ids":  0,
+			"registrant_ids": 0,
+			"ban_ids":        0,
+			"reporter_ids":   0,
+		})
 
 	c, err := r.db.Collection("conversation").Find(ctx, filter, opts)
 	if err != nil {
@@ -128,11 +140,13 @@ func (r *Repository) RemoveParticipantId(ctx context.Context, conversationId str
 	return nil
 }
 
-func (r *Repository) GetConversation(ctx context.Context, conversationId uuid.UUID) (*document.Conversation, error) {
-	opts := options.FindOne().SetProjection(bson.M{"participant_ids": 0, "registrant_ids": 0})
+func (r *Repository) FindConversation(ctx context.Context, conversationId uuid.UUID) (*document.Conversation, error) {
+	opts := options.FindOne().SetProjection(bson.M{"reporter_ids": 0})
 
 	var d document.Conversation
-	err := r.db.Collection("conversation").FindOne(ctx, bson.M{"_id": bson.Binary{4, conversationId[:]}}, opts).Decode(&d)
+	err := r.db.Collection("conversation").
+		FindOne(ctx, bson.M{"_id": bson.Binary{4, conversationId[:]}}, opts).
+		Decode(&d)
 	if err != nil {
 		slog.Error("fail to find conversation", "err", err)
 		return nil, err
@@ -207,6 +221,86 @@ func (r *Repository) AddReporterIdByConversationId(ctx context.Context, conversa
 			"memberId", memberId,
 			"err", err,
 		)
+		return err
+	}
+	return nil
+}
+
+func (r *Repository) FindRegistrantIdsByConversationId(ctx context.Context, conversationId uuid.UUID) ([]bson.Binary, error) {
+	opt := options.FindOne().SetProjection(bson.M{"reporter_ids": 1})
+
+	var d document.Conversation
+	err := r.db.Collection("conversation").
+		FindOne(ctx, bson.M{"_id": bson.Binary{4, conversationId[:]}}, opt).Decode(&d)
+	if err != nil {
+		slog.Error("fail to find reporter ids", "err", err)
+		return nil, err
+	}
+	return d.ReporterIds, nil
+}
+
+func (r *Repository) FindCapacity(ctx context.Context, id uuid.UUID) (int, error) {
+	opt := options.FindOne().SetProjection(bson.M{"capacity": 1})
+	var d document.Conversation
+	err := r.db.Collection("conversation").
+		FindOne(ctx, bson.M{"_id": bson.Binary{4, id[:]}}, opt).Decode(&d)
+	if err != nil {
+		slog.Error("fail to find capacity", "err", err)
+		return 0, err
+	}
+	return d.Capacity, nil
+}
+
+var ErrMaxRegistrantReached = errors.New("already fully registered")
+
+func (r *Repository) AddRegistrantId(ctx context.Context, conversationId, memberId uuid.UUID, capacity int) error {
+	filter := bson.M{
+		"_id": bson.Binary{Subtype: 4, Data: conversationId[:]},
+		"registrant_ids." + strconv.Itoa(capacity-1): bson.M{"$exists": false},
+	}
+
+	update := bson.M{
+		"$addToSet": bson.M{
+			"registrant_ids": bson.Binary{
+				Subtype: 4,
+				Data:    memberId[:],
+			},
+		},
+	}
+
+	res, err := r.db.Collection("conversation").UpdateOne(ctx, filter, update)
+	if err != nil {
+		slog.Error("fail to update reporter ids for conversation",
+			"conversationId", conversationId,
+			"memberId", memberId,
+			"err", err,
+		)
+		return err
+	}
+
+	if res.MatchedCount == 0 {
+		return ErrMaxRegistrantReached
+	}
+
+	return nil
+}
+
+func (r *Repository) RemoveRegistrantId(ctx context.Context, conversationId, memberId uuid.UUID) error {
+	filter := bson.M{"_id": bson.Binary{4, conversationId[:]}}
+	update := bson.M{
+		"$pull": bson.M{
+			"registrant_ids": bson.Binary{
+				Subtype: 4,
+				Data:    memberId[:],
+			},
+		},
+	}
+	_, err := r.db.Collection("conversation").UpdateOne(ctx, filter, update)
+	if err != nil {
+		slog.Error("fail to remove registrant id",
+			"conversationId", conversationId,
+			"memberId", memberId,
+			"err", err)
 		return err
 	}
 	return nil

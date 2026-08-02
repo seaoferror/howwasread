@@ -122,6 +122,6 @@ func (s *Service) ManageMessage(
 		Contents:    contents,
 	})
 
-	s.producer.PushMessage("prepared-message", nil, p)
+	s.producer.PushMessage("prepared-message", nil, p, nil)
 	return
 }

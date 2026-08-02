@@ -63,7 +63,7 @@ func (s *Service) PublishMessaging(ctx context.Context, fromId uuid.UUID, toIdTy
 		ContentType: contentType,
 		Contents:    contents,
 	})
-	s.producer.PushMessage("chat-message", nil, p)
+	s.producer.PushMessage("chat-message", nil, p, nil)
 	return map[string]uuid.UUID{"id": id}, nil
 }
 

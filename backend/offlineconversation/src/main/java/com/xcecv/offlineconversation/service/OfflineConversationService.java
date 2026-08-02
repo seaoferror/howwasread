@@ -160,37 +160,37 @@ public class OfflineConversationService {
   }
 
   public List<OfflineConversationMapResponse> mapRes7Convos(
-      String h3Res7) {
+      String h3Res7, Instant time) {
     try {
       Map<String, String> cache = glideClient.hgetall(h3Res7).join();
       if (cache != null && !cache.isEmpty()) {
         return unmarshalH3Cache(cache);
       }
-      var convos = offlineConversationRepository.findByH3Res7AndTimeAfter(h3Res7, Instant.now());
+      var convos = offlineConversationRepository.findByH3Res7AndTimeAfter(h3Res7, time);
       var response = buildOfflineConversationMapResponse(convos);
       setH3Cache(h3Res7, response);
       return response;
     } catch (Exception e) {
       log.error("Failed to read from cache for h3Index {}. Falling back to DB.", h3Res7, e);
-      var convos = offlineConversationRepository.findByH3Res7AndTimeAfter(h3Res7, Instant.now());
+      var convos = offlineConversationRepository.findByH3Res7AndTimeAfter(h3Res7, time);
       return buildOfflineConversationMapResponse(convos);
     }
   }
 
   public List<OfflineConversationMapResponse> mapRes5Convos(
-      String h3Res5) {
+      String h3Res5, Instant time) {
     try {
       Map<String, String> cacheRaw = glideClient.hgetall(h3Res5).join();
       if (cacheRaw != null && !cacheRaw.isEmpty()) {
         return unmarshalH3Cache(cacheRaw);
       }
-      var convos = offlineConversationRepository.findTop2ByH3Res5AndTimeAfter(h3Res5, Instant.now());
+      var convos = offlineConversationRepository.findTop2ByH3Res5AndTimeAfter(h3Res5, time);
       var response = buildOfflineConversationMapResponse(convos);
       setH3Cache(h3Res5, response);
       return response;
     } catch (Exception e) {
       log.error("Failed to read from cache for h3Index {}. Falling back to DB.", h3Res5, e);
-      var convos = offlineConversationRepository.findTop2ByH3Res5AndTimeAfter(h3Res5, Instant.now());
+      var convos = offlineConversationRepository.findTop2ByH3Res5AndTimeAfter(h3Res5, time);
       return buildOfflineConversationMapResponse(convos);
     }
   }

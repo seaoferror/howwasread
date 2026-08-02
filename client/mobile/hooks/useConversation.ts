@@ -9,13 +9,17 @@ import {
   blockConversation,
   createOfflineConversation,
   createOnlineConversation,
+  deregisterOnlineConversation,
   getBlockedConversations,
   getOfflineConversationDetail,
+  getOnlineConversationDetail,
   getOnlineConversations,
   joinOfflineConversation,
   mapOfflineConversations,
   quitOfflineConversation,
+  registerOnlineConversation,
   searchOfflineConversations,
+  searchOnlineConversations,
 } from "@/api/conversation";
 import { queryKey } from "@/constants";
 import { AxiosError } from "axios";
@@ -23,10 +27,23 @@ import Toast from "react-native-toast-message";
 import queryClient from "@/api/queryClient";
 import { OfflineConversationMapResponse } from "@/types/conversation";
 
-export function useGetInfiniteOnlineConversations() {
+export function useGetInfiniteOnlineConversations(input: string) {
   return useInfiniteQuery({
-    queryFn: ({ pageParam }) => getOnlineConversations(pageParam),
-    queryKey: [queryKey.CONVERSATION, queryKey.GET_ONLINE_CONVERSATIONS],
+    queryFn: ({ pageParam }) => {
+      if (input) {
+        return searchOnlineConversations({
+          input,
+          page: pageParam,
+        });
+      }
+      return getOnlineConversations(pageParam);
+    },
+
+    queryKey: [
+      queryKey.CONVERSATION,
+      queryKey.SEARCH_ONLINE_CONVERSATIONS,
+      input,
+    ],
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
       const lastPost = lastPage[lastPage.length - 1];
@@ -191,6 +208,13 @@ export function useQuitOfflineConversation() {
   });
 }
 
+export function useGetOnlineConversationDetail(id:string) {
+  return useQuery({
+    queryFn: () => getOnlineConversationDetail(id),
+    queryKey: [queryKey.CONVERSATION, queryKey.GET_ONLINE_CONVERSATION_DETAIL],
+  });
+}
+
 export function useBlockConversation() {
   return useMutation({
     mutationFn: blockConversation,
@@ -206,5 +230,30 @@ export function useGetBlockedConversations() {
   return useQuery({
     queryFn: getBlockedConversations,
     queryKey: [queryKey.CONVERSATION, queryKey.BLOCKED_CONVERSATIONS],
+  });
+}
+
+export function useRegisterOnlineConversation() {
+  return useMutation({
+    mutationFn: registerOnlineConversation,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: [queryKey.CONVERSATION, queryKey.GET_ONLINE_CONVERSATION_DETAIL]
+      })
+    }
+  })
+}
+
+export function useDeregisterOnlineConversation() {
+  return useMutation({
+    mutationFn: deregisterOnlineConversation,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: [
+          queryKey.CONVERSATION,
+          queryKey.GET_ONLINE_CONVERSATION_DETAIL,
+        ],
+      });
+    },
   });
 }

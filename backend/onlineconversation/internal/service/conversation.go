@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/IBM/sarama"
 	"github.com/google/uuid"
 )
 
@@ -50,62 +51,42 @@ func (s *Service) CreateConversation(
 		return nil, err
 	}
 	slog.Info("success to create conversation")
+	s.producer.PushMessage("search",
+		nil,
+		payload.Marshal(dto.OnlineConversationDocument{
+			Id:         conversationId,
+			Novel:      novel,
+			ShortStory: shortStory,
+			Poem:       poem,
+			Play:       play,
+			Film:       film,
+			WrittenBy:  by,
+			Time:       when,
+		}),
+		[]sarama.RecordHeader{
+			{Key: []byte("type"), Value: []byte("onlineconversation")},
+		},
+	)
 	return map[string]uuid.UUID{"conversationId": conversationId}, nil
 }
 
-func (s *Service) GetConversations(ctx context.Context, memberId uuid.UUID, page int) ([]dto.ConversationFeedResponse, error) {
-	resp := []dto.ConversationFeedResponse{}
+func (s *Service) GetConversations(ctx context.Context, page int, t time.Time) ([]dto.OnlineConversationFeedResponse, error) {
+	resp := []dto.OnlineConversationFeedResponse{}
 
-	items, err := s.repository.FindConversations(ctx, page)
+	items, err := s.repository.FindConversations(ctx, page, t)
 	if err != nil {
 		return nil, err
 	}
 	for _, item := range items {
-		var isBanned bool
-		for _, bId := range item.BanIds {
-			if bytes.Equal(bId.Data, memberId[:]) {
-				isBanned = true
-			}
-		}
-		if isBanned {
-			continue
-		}
-		var isModerator bool
-		var isRegistrant bool
-		mIds := make([]uuid.UUID, 0, len(item.ModeratorIds))
-		for _, mId := range item.ModeratorIds {
-			mIds = append(mIds, uuid.UUID(mId.Data))
-			if bytes.Equal(mId.Data, memberId[:]) {
-				isModerator = true
-			}
-		}
-		for _, rId := range item.RegistrantIds {
-			if bytes.Equal(rId.Data, memberId[:]) {
-				isRegistrant = true
-				break
-			}
-		}
-		var ongoing bool
-		if time.Now().After(item.When.Add(-10 * time.Minute)) {
-			ongoing = true
-		}
-
-		resp = append(resp, dto.ConversationFeedResponse{
-			Id:           uuid.UUID(item.Id.Data),
-			Novel:        item.Novel,
-			ShortStory:   item.ShortStory,
-			Poem:         item.Poem,
-			Play:         item.Play,
-			Film:         item.Film,
-			By:           item.By,
-			Rule:         item.Rule,
-			Capacity:     item.Capacity,
-			When:         item.When,
-			Length:       item.Length.String(),
-			Ongoing:      ongoing,
-			IsModerator:  isModerator,
-			IsRegistrant: isRegistrant,
-			ModeratorIds: mIds,
+		resp = append(resp, dto.OnlineConversationFeedResponse{
+			Id:         uuid.UUID(item.Id.Data),
+			Novel:      item.Novel,
+			ShortStory: item.ShortStory,
+			Poem:       item.Poem,
+			Play:       item.Play,
+			Film:       item.Film,
+			By:         item.By,
+			When:       item.When,
 		})
 	}
 	slog.Info("success to get conversation")
@@ -156,37 +137,51 @@ func (s *Service) PublishConversationSignal(fromId uuid.UUID, toIds [][]byte, si
 		ToIds:  toIds,
 		Signal: signal,
 	})
-	s.producer.PushMessage("conversation-signal", nil, value)
+	s.producer.PushMessage("conversation-signal", nil, value, nil)
 	return nil
 }
 
-func (s *Service) GetConversation(ctx context.Context, conversationId, memberId uuid.UUID) (*dto.GetConversationResponse, error) {
-	c, err := s.repository.GetConversation(ctx, conversationId)
+func (s *Service) GetConversationDetail(ctx context.Context, conversationId, memberId uuid.UUID) (*dto.OnlineConversationDetailResponse, error) {
+	c, err := s.repository.FindConversation(ctx, conversationId)
 	if err != nil {
 		return nil, err
 	}
-	var isModerator bool
-	for _, m := range c.ModeratorIds {
-		if bytes.Equal(m.Data, memberId[:]) {
-			isModerator = true
+	var isRegistrant bool
+	for _, r := range c.RegistrantIds {
+		if bytes.Equal(r.Data, memberId[:]) {
+			isRegistrant = true
 			break
 		}
 	}
-
-	resp := dto.GetConversationResponse{
-		Id:          uuid.UUID(c.Id.Data),
-		Novel:       c.Novel,
-		ShortStory:  c.ShortStory,
-		Poem:        c.Poem,
-		Play:        c.Play,
-		Film:        c.Film,
-		By:          c.By,
-		Rule:        c.Rule,
-		When:        c.When,
-		Length:      c.Length.String(),
-		IsModerator: isModerator,
+	modIds := make([]uuid.UUID, 0, len(c.ModeratorIds))
+	for _, m := range c.ModeratorIds {
+		modIds = append(modIds, uuid.UUID(m.Data))
 	}
 
+	canEnter := true
+	if time.Now().UTC().Before(c.When.Add(-15 * time.Minute)) {
+		canEnter = false
+	}
+	if time.Now().UTC().Before(c.When.Add(10*time.Minute)) && !isRegistrant {
+		canEnter = false
+	}
+
+	resp := dto.OnlineConversationDetailResponse{
+		Id:           uuid.UUID(c.Id.Data),
+		Novel:        c.Novel,
+		ShortStory:   c.ShortStory,
+		Poem:         c.Poem,
+		Play:         c.Play,
+		Film:         c.Film,
+		By:           c.By,
+		Rule:         c.Rule,
+		Capacity:     c.Capacity,
+		When:         c.When,
+		Length:       c.Length.String(),
+		CanEnter:     canEnter,
+		ModeratorIds: modIds,
+		IsRegistrant: isRegistrant,
+	}
 	return &resp, nil
 }
 
@@ -229,6 +224,27 @@ func (s *Service) ReportOnlineConversation(ctx context.Context, memberId, conver
 		}
 	}
 	err = s.repository.AddReporterIdByConversationId(ctx, conversationId, memberId)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *Service) RegisterOnlineConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {
+	capacity, err := s.repository.FindCapacity(ctx, conversationId)
+	if err != nil {
+		return err
+	}
+	err = s.repository.AddRegistrantId(ctx, memberId, conversationId, capacity)
+	if err != nil {
+		return err
+	}
+	//TODO: publish message to notification with header
+	return nil
+}
+
+func (s *Service) DeregisterOnlineConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {
+	err := s.repository.RemoveRegistrantId(ctx, conversationId, memberId)
 	if err != nil {
 		return err
 	}

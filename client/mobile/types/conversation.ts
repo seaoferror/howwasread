@@ -11,7 +11,7 @@ export interface CreateOnlineConversationRequest {
   length: string;
 }
 
-export interface OnlineConversationFeedResponse {
+export interface OnlineConversationDetailResponse {
   id: string;
   novel?: string;
   shortStory?: string;
@@ -23,8 +23,7 @@ export interface OnlineConversationFeedResponse {
   capacity: number;
   when: string;
   length: string;
-  ongoing: boolean;
-  isModerator: boolean;
+  canEnter: boolean;
   isRegistrant: boolean;
   moderatorIds: string[];
 }
@@ -68,6 +67,17 @@ export interface OfflineConversationMapResponse {
   writtenBy: string;
   lat: number;
   lng: number;
+}
+
+export interface OnlineConversationFeedResponse {
+  id: string;
+  novel: string;
+  poem: string;
+  shortStory: string;
+  play: string;
+  film: string;
+  writtenBy: string;
+  time: string;
 }
 
 export interface OfflineConversationSearchResponse {

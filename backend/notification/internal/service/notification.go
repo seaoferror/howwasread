@@ -98,11 +98,11 @@ func (s *Service) PreprocessNotification(
 	kafkaKey := append(messageId[:], notificationId)
 	if len(fcmtm) > 0 {
 		p.TokenMap = fcmtm
-		s.producer.PushMessage("fcm-notification", kafkaKey, payload.Marshal(p))
+		s.producer.PushMessage("fcm-notification", kafkaKey, payload.Marshal(p), nil)
 	}
 	if len(apntm) > 0 {
 		p.TokenMap = apntm
-		s.producer.PushMessage("apn-notification", kafkaKey, payload.Marshal(p))
+		s.producer.PushMessage("apn-notification", kafkaKey, payload.Marshal(p), nil)
 	}
 	return
 }

@@ -6,34 +6,58 @@ import {
   OfflineConversationDetailResponse,
   OfflineConversationMapResponse,
   OfflineConversationSearchResponse,
+  OnlineConversationDetailResponse,
   OnlineConversationFeedResponse,
 } from "@/types/conversation";
 
 export async function getOnlineConversations(
   page = 1,
 ): Promise<OnlineConversationFeedResponse[]> {
-  const { data } = await axiosInstance.get(
-    `/onlineconversation/conversation/list?page=${page}`,
+  const { data } = await axiosInstance.get(`/onlineconversation/list`, {
+    params: {
+      page,
+      time: new Date().toISOString(),
+    },
+  });
+  return data;
+}
+
+export async function getOnlineConversationDetail(
+  id: string,
+): Promise<OnlineConversationDetailResponse> {
+  const { data } = await axiosInstance.get(`/onlineconversation/detail`, {
+    params: {
+      id: id,
+    },
+  });
+  return data;
+}
+
+export async function registerOnlineConversation(body: { id: string }) {
+  const { data } = await axiosInstance.post(
+    `/onlineconversation/register`,
+    body,
   );
-  // console.log(data);
+  return data;
+}
+
+export async function deregisterOnlineConversation(body: { id: string }) {
+  const { data } = await axiosInstance.post(
+    `/onlineconversation/deregister`,
+    body,
+  );
   return data;
 }
 
 export async function createOnlineConversation(
   body: CreateOnlineConversationRequest,
 ): Promise<{ id: string }> {
-  const { data } = await axiosInstance.post(
-    "/onlineconversation/conversation/create",
-    body,
-  );
+  const { data } = await axiosInstance.post("/onlineconversation/create", body);
   return data;
 }
 
 export async function banParticipant(body: BanParticipantRequest) {
-  const { data } = await axiosInstance.post(
-    "/onlineconversation/conversation/ban",
-    body,
-  );
+  const { data } = await axiosInstance.post("/onlineconversation/ban", body);
   return data;
 }
 
@@ -48,6 +72,7 @@ export async function mapOfflineConversations({
     params: {
       resolution,
       h3Index,
+      time: new Date().toISOString(),
     },
   });
   return data;
@@ -70,6 +95,24 @@ export async function searchOfflineConversations({
       resolution,
       h3Indexes: h3Indexes.join(","),
       page,
+      time: new Date().toISOString(),
+    },
+  });
+  return data;
+}
+
+export async function searchOnlineConversations({
+  input,
+  page = 1,
+}: {
+  input: string;
+  page: number;
+}): Promise<OnlineConversationFeedResponse[]> {
+  const { data } = await axiosInstance.get(`/search/conversation/online`, {
+    params: {
+      input,
+      page,
+      time: new Date().toISOString(),
     },
   });
   return data;
@@ -120,10 +163,7 @@ export async function getBlockedConversations(): Promise<{ id: string }[]> {
 }
 
 export async function reportOnlineConversation(body: { id: string }) {
-  const { data } = await axiosInstance.post(
-    "/onlineconversation/conversation/report",
-    body,
-  );
+  const { data } = await axiosInstance.post("/onlineconversation/report", body);
   return data;
 }
 

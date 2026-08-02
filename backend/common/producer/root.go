@@ -70,10 +70,11 @@ func createProducer(clientIdPrefix string) (sarama.AsyncProducer, error) {
 	return sarama.NewAsyncProducer([]string{os.Getenv("KAFKA_ADDRESS")}, cfg)
 }
 
-func (p *Producer) PushMessage(topic string, key, value []byte) {
+func (p *Producer) PushMessage(topic string, key, value []byte, headers []sarama.RecordHeader) {
 	msg := sarama.ProducerMessage{
-		Topic: topic,
-		Value: sarama.ByteEncoder(value),
+		Topic:   topic,
+		Headers: headers,
+		Value:   sarama.ByteEncoder(value),
 	}
 	if key != nil {
 		msg.Key = sarama.ByteEncoder(key)

@@ -20,7 +20,7 @@ type CreateConversationRequest struct {
 	Length     string    `json:"length"`
 }
 
-type ConversationFeedResponse struct {
+type OnlineConversationDetailResponse struct {
 	Id           uuid.UUID   `json:"id"`
 	Novel        string      `json:"novel,omitempty"`
 	ShortStory   string      `json:"shortStory,omitempty"`
@@ -32,10 +32,20 @@ type ConversationFeedResponse struct {
 	Capacity     int         `json:"capacity"`
 	When         time.Time   `json:"when"`
 	Length       string      `json:"length"`
-	Ongoing      bool        `json:"ongoing"`
-	IsModerator  bool        `json:"isModerator"`
+	CanEnter     bool        `json:"canEnter"`
 	IsRegistrant bool        `json:"isRegistrant"`
 	ModeratorIds []uuid.UUID `json:"moderatorIds"`
+}
+
+type OnlineConversationDocument struct {
+	Id         uuid.UUID `json:"id"`
+	Novel      string    `json:"novel"`
+	ShortStory string    `json:"short_story"`
+	Poem       string    `json:"poem"`
+	Play       string    `json:"play"`
+	Film       string    `json:"film"`
+	WrittenBy  string    `json:"writtenBy"`
+	Time       time.Time `json:"time"`
 }
 
 type ConversationSignalResponse struct {
@@ -48,7 +58,7 @@ type ConversationSignalRequest struct {
 	Signal json.RawMessage `json:"signal"`
 }
 
-type GetConversationResponse struct {
+type OnlineConversationFeedResponse struct {
 	Id         uuid.UUID `json:"id"`
 	Novel      string    `json:"novel,omitempty"`
 	ShortStory string    `json:"shortStory,omitempty"`
@@ -56,11 +66,7 @@ type GetConversationResponse struct {
 	Play       string    `json:"play,omitempty"`
 	Film       string    `json:"film,omitempty"`
 	By         string    `json:"by"`
-	Rule       string    `json:"rule,omitempty"`
 	When       time.Time `json:"when"`
-	Length     string    `json:"length"`
-
-	IsModerator bool `json:"isModerator"`
 }
 
 type BanParticipantRequest struct {
@@ -68,6 +74,6 @@ type BanParticipantRequest struct {
 	BanId          uuid.UUID `json:"banId"`
 }
 
-type ReportConversationRequest struct {
+type ConversationRequest struct {
 	Id uuid.UUID `json:"id"`
 }

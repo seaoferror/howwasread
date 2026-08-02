@@ -35,7 +35,7 @@ export default function ConversationsScreen() {
         scrollEnabled={false}
       >
         <OfflineConversationMap key="1" isActive={currentTab === 0} />
-        <OnlineConversationList key="2" />
+        <OnlineConversationList key="2" isActive={currentTab === 1} />
       </PagerView>
       <Pressable
         style={styles.createButton}
