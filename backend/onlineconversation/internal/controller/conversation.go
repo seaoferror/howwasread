@@ -13,17 +13,11 @@ import (
 )
 
 func conversationRouter(c *Controller) {
-	//TODO: remove long endpoints after deploy new app version
-	c.Router(POST, "/onlineconversation/conversation/create", c.createConversation)
 	c.Router(POST, "/onlineconversation/create", c.createConversation)
-	c.Router(GET, "/onlineconversation/conversation/list", c.getConversations)
 	c.Router(GET, "/onlineconversation/list", c.getConversations)
-	c.Router(GET, "/onlineconversation/conversation/join", c.joinConversation)
 	c.Router(GET, "/onlineconversation/join", c.joinConversation)
 	c.Router(GET, "/onlineconversation/detail", c.getConversationDetail)
-	c.Router(POST, "/onlineconversation/conversation/ban", c.banParticipant)
 	c.Router(POST, "/onlineconversation/ban", c.banParticipant)
-	c.Router(POST, "/onlineconversation/conversation/report", c.reportOnlineConversation)
 	c.Router(POST, "/onlineconversation/report", c.reportOnlineConversation)
 	c.Router(POST, "/onlineconversation/register", c.registerOnlineConversation)
 	c.Router(POST, "/onlineconversation/deregister", c.deregisterOnlineConversation)
