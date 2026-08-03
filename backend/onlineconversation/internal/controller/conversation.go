@@ -92,12 +92,10 @@ func (c *Controller) getConversations(w http.ResponseWriter, r *http.Request) {
 	}
 	t, err := time.Parse(time.RFC3339, r.URL.Query().Get("time"))
 	if err != nil {
-		t = time.Now()
-		//slog.Info("incorrect query param for time",
-		//	"err", err)
-		//handleError(w, errors.New("fail to parse"))
-		//return
-		//TODO: uncomment this after deploy app
+		slog.Info("incorrect query param for time",
+			"err", err)
+		handleError(w, errors.New("fail to parse"))
+		return
 	}
 	result, err := c.service.GetConversations(r.Context(), page, t)
 	if err != nil {

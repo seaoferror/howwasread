@@ -76,7 +76,7 @@ export default function OnlineConversationList({
   };
 
   return (
-    <View>
+    <View style={{ flex: 1 }}>
       <View style={styles.inputContainer}>
         <SearchInput
           placeholder="Search conversation"
@@ -135,7 +135,7 @@ export default function OnlineConversationList({
         >
           <Ionicons name="close" size={20} color="white" />
         </Pressable>
-        <OnlineConversationDetail id={detailId}/>
+        <OnlineConversationDetail id={detailId} />
       </TrueSheet>
     </View>
   );

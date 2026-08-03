@@ -85,7 +85,7 @@ export default function OnlineConversationDetail({
               })
                 .format(new Date(data.time))
                 .replace(/\sat\s/, " ")}
-              {` For ${data.length}m`}
+              {` For ${data.length}`.replace("0s", "")}
             </Text>
             {data.novel && (
               <Text style={styles.detail}>Novel: {data.novel}</Text>

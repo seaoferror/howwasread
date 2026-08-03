@@ -212,6 +212,7 @@ export function useGetOnlineConversationDetail(id:string) {
   return useQuery({
     queryFn: () => getOnlineConversationDetail(id),
     queryKey: [queryKey.CONVERSATION, queryKey.GET_ONLINE_CONVERSATION_DETAIL, id],
+    enabled: !!id,
   });
 }
 

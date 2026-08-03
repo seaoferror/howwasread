@@ -89,7 +89,7 @@ func (s *Service) GetConversations(ctx context.Context, page int, t time.Time) (
 			Time:       item.Time,
 		})
 	}
-	slog.Info("success to get conversation")
+	slog.Info("success to get conversation", "resp", resp)
 	return resp, nil
 }
 
@@ -208,7 +208,7 @@ func (s *Service) BanParticipant(ctx context.Context, modId, conversationId, ban
 }
 
 func (s *Service) ReportOnlineConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {
-	ids, err := s.repository.FindReporterIdsByConversationId(ctx, conversationId)
+	ids, err := s.repository.FindReporterIds(ctx, conversationId)
 	if err != nil {
 		return err
 	}
@@ -223,24 +223,36 @@ func (s *Service) ReportOnlineConversation(ctx context.Context, memberId, conver
 			return err
 		}
 	}
-	err = s.repository.AddReporterIdByConversationId(ctx, conversationId, memberId)
+	err = s.repository.AddReporterId(ctx, conversationId, memberId)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
+var ErrMaxRegistrantReached = errors.New("already fully registered")
+
 func (s *Service) RegisterOnlineConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {
 	capacity, err := s.repository.FindCapacity(ctx, conversationId)
 	if err != nil {
 		return err
 	}
-	err = s.repository.AddRegistrantId(ctx, memberId, conversationId, capacity)
+	err = s.repository.AddRegistrantId(ctx, memberId, conversationId)
 	if err != nil {
 		return err
 	}
-	//TODO: publish message to notification with header
-	return nil
+	ids, err := s.repository.FindRegistrantIds(ctx, conversationId)
+	if err != nil {
+		return err
+	}
+	if len(ids) <= capacity {
+		return nil
+	}
+	err = s.repository.RemoveRegistrantId(ctx, conversationId, memberId)
+	if err != nil {
+		return err
+	}
+	return ErrMaxRegistrantReached
 }
 
 func (s *Service) DeregisterOnlineConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {

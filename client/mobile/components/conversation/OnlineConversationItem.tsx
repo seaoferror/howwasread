@@ -1,6 +1,13 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { colors } from "@/constants";
 import { type OnlineConversationFeedResponse } from "@/types/conversation";
+import RenderHtml from "@native-html/render";
 
 interface OnlineConversationSearchItemProps {
   conversation: OnlineConversationFeedResponse;
@@ -11,6 +18,8 @@ export default function OnlineConversationItem({
   conversation,
   onPress,
 }: OnlineConversationSearchItemProps) {
+  const { width } = useWindowDimensions();
+
   return (
     <Pressable style={styles.container} onPress={onPress}>
       <View style={[styles.content]}>
@@ -27,28 +36,46 @@ export default function OnlineConversationItem({
             .format(new Date(conversation.time))
             .replace(/\sat\s/, " ")}
         </Text>
-        {!!conversation.novel && (
-          <Text style={styles.detail}>Novel: {conversation.novel}</Text>
+        {conversation.novel && (
+          <RenderHtml
+            contentWidth={width}
+            source={{ html: `<b>Novel:</b> ${conversation.novel}` }}
+            baseStyle={styles.detail}
+          />
         )}
-        {!!conversation.shortStory && (
-          <Text style={styles.detail}>
-            Short story: {conversation.shortStory}
-          </Text>
+        {conversation.shortStory && (
+          <RenderHtml
+            contentWidth={width}
+            source={{ html: `<b>Short story:</b> ${conversation.shortStory}` }}
+            baseStyle={styles.detail}
+          />
         )}
-        {!!conversation.poem && (
-          <Text style={styles.detail}>Poem: {conversation.poem}</Text>
+        {conversation.poem && (
+          <RenderHtml
+            contentWidth={width}
+            source={{ html: `<b>Poem:</b> ${conversation.poem}` }}
+            baseStyle={styles.detail}
+          />
         )}
-        {!!conversation.play && (
-          <Text style={styles.detail}>Play: {conversation.play}</Text>
+        {conversation.play && (
+          <RenderHtml
+            contentWidth={width}
+            source={{ html: `<b>Play:</b> ${conversation.play}` }}
+            baseStyle={styles.detail}
+          />
         )}
-        {!!conversation.film && (
-          <Text style={styles.detail}>Film: {conversation.film}</Text>
+        {conversation.film && (
+          <RenderHtml
+            contentWidth={width}
+            source={{ html: `<b>Film:</b> ${conversation.film}` }}
+            baseStyle={styles.detail}
+          />
         )}
-        {!!conversation.writtenBy && (
-          <Text style={styles.detail}>
-            Written by: {conversation.writtenBy}
-          </Text>
-        )}
+        <RenderHtml
+          contentWidth={width}
+          source={{ html: `<b>Written by:</b> ${conversation.writtenBy}` }}
+          baseStyle={styles.detail}
+        />
       </View>
     </Pressable>
   );

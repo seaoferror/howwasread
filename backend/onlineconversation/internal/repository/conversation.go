@@ -3,9 +3,7 @@ package repository
 import (
 	"backend/onlineconversation/internal/document"
 	"context"
-	"errors"
 	"log/slog"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -65,8 +63,7 @@ func (r *Repository) SaveConversation(ctx context.Context, memberId, conversatio
 
 func (r *Repository) FindConversations(ctx context.Context, page int, t time.Time) ([]document.Conversation, error) {
 	filter := bson.M{
-		"time":    bson.M{"$gt": t.Add(-9 * time.Hour)},
-		"expired": false,
+		"time": bson.M{"$gt": t.Add(-9 * time.Hour)},
 	}
 
 	opts := options.Find().
@@ -181,7 +178,7 @@ func (r *Repository) AddBanId(ctx context.Context, conversationId uuid.UUID, ban
 	return nil
 }
 
-func (r *Repository) FindReporterIdsByConversationId(ctx context.Context, conversationId uuid.UUID) ([]bson.Binary, error) {
+func (r *Repository) FindReporterIds(ctx context.Context, conversationId uuid.UUID) ([]bson.Binary, error) {
 	opt := options.FindOne().SetProjection(bson.M{"reporter_ids": 1})
 
 	var d document.Conversation
@@ -204,7 +201,7 @@ func (r *Repository) DeleteOnlineConversation(ctx context.Context, id uuid.UUID)
 	return nil
 }
 
-func (r *Repository) AddReporterIdByConversationId(ctx context.Context, conversationId, memberId uuid.UUID) error {
+func (r *Repository) AddReporterId(ctx context.Context, conversationId, memberId uuid.UUID) error {
 	filter := bson.M{"_id": bson.Binary{4, conversationId[:]}}
 	update := bson.M{
 		"$addToSet": bson.M{
@@ -226,17 +223,17 @@ func (r *Repository) AddReporterIdByConversationId(ctx context.Context, conversa
 	return nil
 }
 
-func (r *Repository) FindRegistrantIdsByConversationId(ctx context.Context, conversationId uuid.UUID) ([]bson.Binary, error) {
-	opt := options.FindOne().SetProjection(bson.M{"reporter_ids": 1})
+func (r *Repository) FindRegistrantIds(ctx context.Context, conversationId uuid.UUID) ([]bson.Binary, error) {
+	opt := options.FindOne().SetProjection(bson.M{"registrant_ids": 1})
 
 	var d document.Conversation
 	err := r.db.Collection("conversation").
 		FindOne(ctx, bson.M{"_id": bson.Binary{4, conversationId[:]}}, opt).Decode(&d)
 	if err != nil {
-		slog.Error("fail to find reporter ids", "err", err)
+		slog.Error("fail to find registrant ids", "err", err)
 		return nil, err
 	}
-	return d.ReporterIds, nil
+	return d.RegistrantIds, nil
 }
 
 func (r *Repository) FindCapacity(ctx context.Context, id uuid.UUID) (int, error) {
@@ -251,14 +248,10 @@ func (r *Repository) FindCapacity(ctx context.Context, id uuid.UUID) (int, error
 	return d.Capacity, nil
 }
 
-var ErrMaxRegistrantReached = errors.New("already fully registered")
-
-func (r *Repository) AddRegistrantId(ctx context.Context, conversationId, memberId uuid.UUID, capacity int) error {
+func (r *Repository) AddRegistrantId(ctx context.Context, conversationId, memberId uuid.UUID) error {
 	filter := bson.M{
 		"_id": bson.Binary{Subtype: 4, Data: conversationId[:]},
-		"registrant_ids." + strconv.Itoa(capacity-1): bson.M{"$exists": false},
 	}
-
 	update := bson.M{
 		"$addToSet": bson.M{
 			"registrant_ids": bson.Binary{
@@ -267,8 +260,7 @@ func (r *Repository) AddRegistrantId(ctx context.Context, conversationId, member
 			},
 		},
 	}
-
-	res, err := r.db.Collection("conversation").UpdateOne(ctx, filter, update)
+	_, err := r.db.Collection("conversation").UpdateOne(ctx, filter, update)
 	if err != nil {
 		slog.Error("fail to update reporter ids for conversation",
 			"conversationId", conversationId,
@@ -277,11 +269,6 @@ func (r *Repository) AddRegistrantId(ctx context.Context, conversationId, member
 		)
 		return err
 	}
-
-	if res.MatchedCount == 0 {
-		return ErrMaxRegistrantReached
-	}
-
 	return nil
 }
 
