@@ -13,15 +13,14 @@ import (
 )
 
 func conversationRouter(c *Controller) {
-	//TODO: remove long endpoints after deploy new app version except for detail
+	//TODO: remove long endpoints after deploy new app version
 	c.Router(POST, "/onlineconversation/conversation/create", c.createConversation)
 	c.Router(POST, "/onlineconversation/create", c.createConversation)
 	c.Router(GET, "/onlineconversation/conversation/list", c.getConversations)
 	c.Router(GET, "/onlineconversation/list", c.getConversations)
 	c.Router(GET, "/onlineconversation/conversation/join", c.joinConversation)
 	c.Router(GET, "/onlineconversation/join", c.joinConversation)
-	c.Router(GET, "/onlineconversation/conversation", c.getConversationDetail)
-	c.Router(GET, "/onlineconversation/conversation/detail", c.getConversationDetail)
+	c.Router(GET, "/onlineconversation/detail", c.getConversationDetail)
 	c.Router(POST, "/onlineconversation/conversation/ban", c.banParticipant)
 	c.Router(POST, "/onlineconversation/ban", c.banParticipant)
 	c.Router(POST, "/onlineconversation/conversation/report", c.reportOnlineConversation)
@@ -69,10 +68,10 @@ func (c *Controller) createConversation(w http.ResponseWriter, r *http.Request) 
 		req.Poem,
 		req.Play,
 		req.Film,
-		req.By,
+		req.WrittenBy,
 		req.Rule,
 		req.Capacity,
-		req.When,
+		req.Time,
 		length,
 	)
 	if err != nil {
@@ -131,7 +130,7 @@ func (c *Controller) getConversationDetail(w http.ResponseWriter, r *http.Reques
 	}
 	conversationId, err := uuid.Parse(r.URL.Query().Get("id"))
 	if err != nil {
-		slog.Error("fail to parse conversation object id from raw string", "err", err)
+		slog.Error("fail to parse conversation uuid from raw string", "err", err)
 		handleError(w, errors.New("fail to parse"))
 		return
 	}

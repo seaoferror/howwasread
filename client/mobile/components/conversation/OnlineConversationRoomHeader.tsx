@@ -10,9 +10,9 @@ interface OnlineConversationRoomHeaderProps {
   poem?: string;
   play?: string;
   film?: string;
-  by?: string;
+  writtenBy?: string;
   rule?: string;
-  when: string;
+  time: string;
   length: string;
 }
 
@@ -22,9 +22,9 @@ export default function OnlineConversationRoomHeader({
   poem,
   play,
   film,
-  by,
+  writtenBy,
   rule,
-  when,
+  time,
   length,
 }: OnlineConversationRoomHeaderProps) {
   const [open, setOpen] = useState(false);
@@ -44,7 +44,7 @@ export default function OnlineConversationRoomHeader({
                 minute: "2-digit",
                 hourCycle: "h12",
               })
-                .format(new Date(when))
+                .format(new Date(time))
                 .replace(/\sat\s/, " ")}
               {` For ${length.replace("0s", "")}`}
             </Text>
@@ -55,7 +55,7 @@ export default function OnlineConversationRoomHeader({
             {poem && <Text style={styles.detail}>Poem: {poem}</Text>}
             {play && <Text style={styles.detail}>Play: {play}</Text>}
             {film && <Text style={styles.detail}>Film: {film}</Text>}
-            {by && <Text style={styles.detail}>By: {by}</Text>}
+            {writtenBy && <Text style={styles.detail}>By: {writtenBy}</Text>}
             {rule ? (
               <View>
                 <Text style={styles.ruleHeader}>Rule</Text>{" "}

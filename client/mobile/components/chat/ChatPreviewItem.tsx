@@ -2,11 +2,7 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { Message } from "@/types/chat";
 import { colors, queryKey } from "@/constants";
 import { router } from "expo-router";
-import {
-  useCheckBlock,
-  useGetChatRoomInfo,
-  useSendMessage,
-} from "@/hooks/useChat";
+import { useGetChatRoomInfo, useSendMessage } from "@/hooks/useChat";
 import { useGetProfile } from "@/hooks/useProfile";
 import { formatPreviewDate } from "@/util/time";
 import { useEffect } from "react";

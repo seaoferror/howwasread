@@ -15,7 +15,7 @@ import (
 
 const Limit = 10
 
-func (r *Repository) SaveConversation(ctx context.Context, memberId, conversationId uuid.UUID, novel, shortStory, poem, play, film, by, rule string, capacity int, when time.Time, length time.Duration) error {
+func (r *Repository) SaveConversation(ctx context.Context, memberId, conversationId uuid.UUID, novel, shortStory, poem, play, film, writtenBy, rule string, capacity int, t time.Time, length time.Duration) error {
 	newConversation := document.Conversation{
 		Id:         bson.Binary{4, conversationId[:]},
 		Novel:      novel,
@@ -23,10 +23,10 @@ func (r *Repository) SaveConversation(ctx context.Context, memberId, conversatio
 		Poem:       poem,
 		Play:       play,
 		Film:       film,
-		By:         by,
+		WrittenBy:  writtenBy,
 		Rule:       rule,
 		Capacity:   capacity,
-		When:       when,
+		Time:       t,
 		Length:     length,
 		ModeratorIds: []bson.Binary{
 			{4, memberId[:]},
@@ -65,12 +65,12 @@ func (r *Repository) SaveConversation(ctx context.Context, memberId, conversatio
 
 func (r *Repository) FindConversations(ctx context.Context, page int, t time.Time) ([]document.Conversation, error) {
 	filter := bson.M{
-		"when":    bson.M{"$gt": t.Add(-9 * time.Hour)},
+		"time":    bson.M{"$gt": t.Add(-9 * time.Hour)},
 		"expired": false,
 	}
 
 	opts := options.Find().
-		SetSort(bson.M{"when": 1}).
+		SetSort(bson.M{"time": 1}).
 		SetLimit(Limit).
 		SetSkip(int64((page - 1) * 5)).
 		SetProjection(bson.M{

@@ -16,7 +16,7 @@ import ShortStoryInput from "@/components/conversation/ShortStoryInput";
 import PoemInput from "@/components/conversation/PoemInput";
 import PlayInput from "@/components/conversation/PlayInput";
 import FilmInput from "@/components/conversation/FilmInput";
-import ByInput from "@/components/conversation/ByInput";
+import WrittenBy from "@/components/conversation/WrittenBy";
 import RuleInput from "@/components/conversation/RuleInput";
 import CapacityInput from "@/components/conversation/CapacityInput";
 import YearInput from "@/components/conversation/YearInput";
@@ -34,7 +34,7 @@ interface FormValue {
   poem?: string;
   play?: string;
   film?: string;
-  by?: string;
+  writtenBy?: string;
   rule?: string;
   capacity: string;
   year: string;
@@ -56,7 +56,7 @@ export default function OnlineConversationCreateScreen() {
       poem: "",
       play: "",
       film: "",
-      by: "",
+      writtenBy: "",
       rule: "",
       capacity: "6",
       year: String(now.getFullYear()),
@@ -73,7 +73,7 @@ export default function OnlineConversationCreateScreen() {
       poem,
       play,
       film,
-      by,
+      writtenBy,
       rule,
       capacity,
       year,
@@ -82,7 +82,7 @@ export default function OnlineConversationCreateScreen() {
       minute,
       length,
     } = formValues;
-    const when = makeTime(now, year, monthDay, hour, minute)
+    const t = makeTime(now, year, monthDay, hour, minute)
     createOnlineConversationMutation.mutate(
       {
         novel: novel,
@@ -90,10 +90,10 @@ export default function OnlineConversationCreateScreen() {
         poem: poem,
         play: play,
         film: film,
-        by: by,
+        writtenBy: writtenBy,
         rule: rule,
         capacity: Number(capacity),
-        when: when,
+        time: t,
         length: `${length}m0s`,
       },
       {
@@ -121,7 +121,7 @@ export default function OnlineConversationCreateScreen() {
               <PoemInput />
               <PlayInput />
               <FilmInput />
-              <ByInput />
+              <WrittenBy />
               <RuleInput />
               <CapacityInput />
               <Text style={styles.whenLabel}>When</Text>

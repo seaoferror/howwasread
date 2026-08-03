@@ -108,6 +108,7 @@ export default function OnlineConversationList({
               conversation={item}
               onPress={() => {
                 setDetailId(item.id);
+                sheet.current?.present();
               }}
             />
           );
@@ -121,7 +122,7 @@ export default function OnlineConversationList({
       />
       <TrueSheet
         ref={sheet}
-        detents={["auto", 0.123, 0.72]}
+        detents={[0.123, 0.7]}
         dismissible={false}
         dimmed={false}
         backgroundColor={colors.SAND_100}

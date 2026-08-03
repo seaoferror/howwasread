@@ -167,7 +167,9 @@ export async function reportOnlineConversation(body: { id: string }) {
   return data;
 }
 
-export async function reportOfflineConversation(body: { id: string }) {
+export async function reportOfflineConversation(body: {
+  conversationId: string;
+}) {
   const { data } = await axiosInstance.post(
     "/offlineconversation/report",
     body,

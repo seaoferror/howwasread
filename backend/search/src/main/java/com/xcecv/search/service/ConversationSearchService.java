@@ -29,15 +29,16 @@ public class ConversationSearchService {
   private final ObjectMapper objectMapper;
 
   @KafkaListener(topics = "search", groupId = "search")
-  public void consume(@Payload Object payloadRaw, @Header("type") String type) {
+  public void consume(@Payload String payloadRaw, @Header("type") String type) {
     if (type.equals("offlineconversation")) {
-      OfflineConversationDocument doc = objectMapper.convertValue(payloadRaw, OfflineConversationDocument.class);
+      OfflineConversationDocument doc = objectMapper.readValue(payloadRaw, OfflineConversationDocument.class);
       offlineConversationDocumentRepository.save(doc);
       return;
     }
     if (type.equals("onlineconversation")) {
-      OnlineConversationDocument doc = objectMapper.convertValue(payloadRaw, OnlineConversationDocument.class);
+      OnlineConversationDocument doc = objectMapper.readValue(payloadRaw, OnlineConversationDocument.class);
       onlineConversationDocumentRepository.save(doc);
+      return;
     }
     System.err.println("Unknown event type received: " + type);
   }

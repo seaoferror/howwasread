@@ -21,10 +21,10 @@ func (s *Service) CreateConversation(
 	poem,
 	play,
 	film,
-	by,
+	writtenBy,
 	rule string,
 	capacity int,
-	when time.Time,
+	t time.Time,
 	length time.Duration,
 ) (map[string]uuid.UUID, error) {
 	conversationId, err := uuid.NewV7()
@@ -41,10 +41,10 @@ func (s *Service) CreateConversation(
 		poem,
 		play,
 		film,
-		by,
+		writtenBy,
 		rule,
 		capacity,
-		when,
+		t,
 		length,
 	)
 	if err != nil {
@@ -60,8 +60,8 @@ func (s *Service) CreateConversation(
 			Poem:       poem,
 			Play:       play,
 			Film:       film,
-			WrittenBy:  by,
-			Time:       when,
+			WrittenBy:  writtenBy,
+			Time:       t,
 		}),
 		[]sarama.RecordHeader{
 			{Key: []byte("type"), Value: []byte("onlineconversation")},
@@ -85,8 +85,8 @@ func (s *Service) GetConversations(ctx context.Context, page int, t time.Time) (
 			Poem:       item.Poem,
 			Play:       item.Play,
 			Film:       item.Film,
-			By:         item.By,
-			When:       item.When,
+			WrittenBy:  item.WrittenBy,
+			Time:       item.Time,
 		})
 	}
 	slog.Info("success to get conversation")
@@ -159,10 +159,10 @@ func (s *Service) GetConversationDetail(ctx context.Context, conversationId, mem
 	}
 
 	canEnter := true
-	if time.Now().UTC().Before(c.When.Add(-15 * time.Minute)) {
+	if time.Now().UTC().Before(c.Time.Add(-15 * time.Minute)) {
 		canEnter = false
 	}
-	if time.Now().UTC().Before(c.When.Add(10*time.Minute)) && !isRegistrant {
+	if time.Now().UTC().Before(c.Time.Add(10*time.Minute)) && !isRegistrant {
 		canEnter = false
 	}
 
@@ -173,10 +173,10 @@ func (s *Service) GetConversationDetail(ctx context.Context, conversationId, mem
 		Poem:         c.Poem,
 		Play:         c.Play,
 		Film:         c.Film,
-		By:           c.By,
+		WrittenBy:    c.WrittenBy,
 		Rule:         c.Rule,
 		Capacity:     c.Capacity,
-		When:         c.When,
+		Time:         c.Time,
 		Length:       c.Length.String(),
 		CanEnter:     canEnter,
 		ModeratorIds: modIds,

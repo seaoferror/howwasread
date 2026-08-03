@@ -48,7 +48,7 @@ export default function OfflineConversationDetail({
                 await Promise.all([
                   data.moderatorIds.map((modId) => reportUser({ id: modId })),
                 ]);
-                await reportOfflineConversation({ id: String(id) });
+                await reportOfflineConversation({ conversationId: String(id) });
               } catch (e) {
                 console.log(e);
               }
@@ -68,13 +68,13 @@ export default function OfflineConversationDetail({
   const handleButtonPress = () => {
     if (data?.isParticipant) {
       quitOfflineConversationMutation.mutate(
-        { id: id },
+        { conversationId: id },
         { onSuccess: () => router.push("/conversations") },
       );
       return;
     }
     joinOfflineConversationMutation.mutate(
-      { id: String(id) },
+      { conversationId: String(id) },
       {
         onSuccess: () => {
           Toast.show({

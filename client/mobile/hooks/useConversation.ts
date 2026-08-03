@@ -211,7 +211,7 @@ export function useQuitOfflineConversation() {
 export function useGetOnlineConversationDetail(id:string) {
   return useQuery({
     queryFn: () => getOnlineConversationDetail(id),
-    queryKey: [queryKey.CONVERSATION, queryKey.GET_ONLINE_CONVERSATION_DETAIL],
+    queryKey: [queryKey.CONVERSATION, queryKey.GET_ONLINE_CONVERSATION_DETAIL, id],
   });
 }
 
@@ -236,9 +236,9 @@ export function useGetBlockedConversations() {
 export function useRegisterOnlineConversation() {
   return useMutation({
     mutationFn: registerOnlineConversation,
-    onSuccess: async () => {
+    onSuccess: async (data, variables) => {
       await queryClient.invalidateQueries({
-        queryKey: [queryKey.CONVERSATION, queryKey.GET_ONLINE_CONVERSATION_DETAIL]
+        queryKey: [queryKey.CONVERSATION, queryKey.GET_ONLINE_CONVERSATION_DETAIL, variables.id]
       })
     }
   })
@@ -247,11 +247,12 @@ export function useRegisterOnlineConversation() {
 export function useDeregisterOnlineConversation() {
   return useMutation({
     mutationFn: deregisterOnlineConversation,
-    onSuccess: async () => {
+    onSuccess: async (data, variables) => {
       await queryClient.invalidateQueries({
         queryKey: [
           queryKey.CONVERSATION,
           queryKey.GET_ONLINE_CONVERSATION_DETAIL,
+          variables.id
         ],
       });
     },

@@ -437,9 +437,9 @@ export default function OnlineConversationScreen() {
           poem={String(poem)}
           play={String(play)}
           film={String(film)}
-          by={String(by)}
+          writtenBy={String(by)}
           rule={String(rule)}
-          when={String(when)}
+          time={String(when)}
           length={String(length)}
         />
       )}

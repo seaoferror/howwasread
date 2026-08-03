@@ -4,10 +4,10 @@ export interface CreateOnlineConversationRequest {
   poem?: string;
   play?: string;
   film?: string;
-  by?: string;
+  writtenBy?: string;
   rule?: string;
   capacity: number;
-  when: string;
+  time: string;
   length: string;
 }
 
@@ -18,10 +18,10 @@ export interface OnlineConversationDetailResponse {
   poem?: string;
   play?: string;
   film?: string;
-  by?: string;
+  writtenBy?: string;
   rule?: string;
   capacity: number;
-  when: string;
+  time: string;
   length: string;
   canEnter: boolean;
   isRegistrant: boolean;

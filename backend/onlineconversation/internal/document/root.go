@@ -13,10 +13,10 @@ type Conversation struct {
 	Poem       string        `bson:"poem,omitempty"`
 	Play       string        `bson:"play,omitempty"`
 	Film       string        `bson:"film,omitempty"`
-	By         string        `bson:"by"`
+	WrittenBy  string        `bson:"writtenBy"`
 	Rule       string        `bson:"rule,omitempty"`
 	Capacity   int           `bson:"capacity"`
-	When       time.Time     `bson:"when"`
+	Time       time.Time     `bson:"time"`
 	Length     time.Duration `bson:"length"`
 
 	ModeratorIds  []bson.Binary `bson:"moderator_ids"`

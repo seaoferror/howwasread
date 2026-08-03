@@ -45,7 +45,7 @@ export default function OnlineConversationDetail({
               id: id,
             });
             const reportPromises = [
-              reportOnlineConversation({ id }),
+              reportOnlineConversation({ id: id }),
               ...(data?.moderatorIds.map((mid) => reportUser({ id: mid })) ||
                 []),
             ];
@@ -70,6 +70,7 @@ export default function OnlineConversationDetail({
   return (
     data && (
       <View>
+        <View style={{ paddingVertical: 30 }}></View>
         <View style={styles.box}>
           <View style={[styles.content]}>
             <Text style={styles.when}>
@@ -82,7 +83,7 @@ export default function OnlineConversationDetail({
                 minute: "2-digit",
                 hourCycle: "h12",
               })
-                .format(new Date(data.when))
+                .format(new Date(data.time))
                 .replace(/\sat\s/, " ")}
               {` For ${data.length}m`}
             </Text>
@@ -95,7 +96,7 @@ export default function OnlineConversationDetail({
             {data.poem && <Text style={styles.detail}>Poem: {data.poem}</Text>}
             {data.play && <Text style={styles.detail}>Play: {data.play}</Text>}
             {data.film && <Text style={styles.detail}>Film: {data.film}</Text>}
-            <Text style={styles.detail}>Written by: {data.by}</Text>
+            <Text style={styles.detail}>Written by: {data.writtenBy}</Text>
             {data.rule ? (
               <View>
                 <Text style={styles.ruleHeader}>Rule</Text>{" "}
@@ -104,14 +105,13 @@ export default function OnlineConversationDetail({
             ) : (
               <Text style={styles.ruleHeader}>No rule</Text>
             )}
-          </View>
-          <View style={styles.buttonRow}>
             <CustomButton
               label={!data.isRegistrant ? "Register" : "Cancel registration"}
               onPress={
                 !data.isRegistrant
-                  ? () => registerOnlineConversationMutation.mutate({id: id})
-                  : () => deregisterOnlineConversationMutation.mutate({id: id})
+                  ? () => registerOnlineConversationMutation.mutate({ id: id })
+                  : () =>
+                      deregisterOnlineConversationMutation.mutate({ id: id })
               }
               disabled={
                 registerOnlineConversationMutation.isPending ||

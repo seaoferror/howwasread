@@ -28,7 +28,7 @@ export default function MemberItem({ id }: { id: string }) {
             case 0:
               reportUserMutation.mutate(
                 {
-                  id,
+                  id: id,
                 },
                 {
                   onSuccess: () => {

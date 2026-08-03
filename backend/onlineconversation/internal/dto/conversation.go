@@ -13,10 +13,10 @@ type CreateConversationRequest struct {
 	Poem       string    `json:"poem"`
 	Play       string    `json:"play"`
 	Film       string    `json:"film"`
-	By         string    `json:"by"`
+	WrittenBy  string    `json:"writtenBy"`
 	Rule       string    `json:"rule"`
 	Capacity   int       `json:"capacity"`
-	When       time.Time `json:"when"`
+	Time       time.Time `json:"time"`
 	Length     string    `json:"length"`
 }
 
@@ -27,10 +27,10 @@ type OnlineConversationDetailResponse struct {
 	Poem         string      `json:"poem,omitempty"`
 	Play         string      `json:"play,omitempty"`
 	Film         string      `json:"film,omitempty"`
-	By           string      `json:"by"`
+	WrittenBy    string      `json:"writtenBy"`
 	Rule         string      `json:"rule,omitempty"`
 	Capacity     int         `json:"capacity"`
-	When         time.Time   `json:"when"`
+	Time         time.Time   `json:"time"`
 	Length       string      `json:"length"`
 	CanEnter     bool        `json:"canEnter"`
 	IsRegistrant bool        `json:"isRegistrant"`
@@ -65,8 +65,8 @@ type OnlineConversationFeedResponse struct {
 	Poem       string    `json:"poem,omitempty"`
 	Play       string    `json:"play,omitempty"`
 	Film       string    `json:"film,omitempty"`
-	By         string    `json:"by"`
-	When       time.Time `json:"when"`
+	WrittenBy  string    `json:"writtenBy"`
+	Time       time.Time `json:"time"`
 }
 
 type BanParticipantRequest struct {
