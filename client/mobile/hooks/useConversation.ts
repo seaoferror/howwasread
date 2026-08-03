@@ -208,11 +208,21 @@ export function useQuitOfflineConversation() {
   });
 }
 
-export function useGetOnlineConversationDetail(id:string) {
+export function useGetOnlineConversationDetail({
+  id,
+  isPersonal,
+}: {
+  id: string;
+  isPersonal?: boolean;
+}) {
   return useQuery({
     queryFn: () => getOnlineConversationDetail(id),
-    queryKey: [queryKey.CONVERSATION, queryKey.GET_ONLINE_CONVERSATION_DETAIL, id],
-    enabled: !!id,
+    queryKey: [
+      queryKey.CONVERSATION,
+      queryKey.GET_ONLINE_CONVERSATION_DETAIL,
+      id,
+    ],
+    enabled: !!id && !isPersonal,
   });
 }
 
@@ -239,10 +249,14 @@ export function useRegisterOnlineConversation() {
     mutationFn: registerOnlineConversation,
     onSuccess: async (data, variables) => {
       await queryClient.invalidateQueries({
-        queryKey: [queryKey.CONVERSATION, queryKey.GET_ONLINE_CONVERSATION_DETAIL, variables.id]
-      })
-    }
-  })
+        queryKey: [
+          queryKey.CONVERSATION,
+          queryKey.GET_ONLINE_CONVERSATION_DETAIL,
+          variables.id,
+        ],
+      });
+    },
+  });
 }
 
 export function useDeregisterOnlineConversation() {
@@ -253,7 +267,7 @@ export function useDeregisterOnlineConversation() {
         queryKey: [
           queryKey.CONVERSATION,
           queryKey.GET_ONLINE_CONVERSATION_DETAIL,
-          variables.id
+          variables.id,
         ],
       });
     },

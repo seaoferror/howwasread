@@ -209,7 +209,7 @@ export default function OfflineConversationMap({
     setDetailId(item.id);
     setPosition(null);
     setTimeout(() => {
-      setPosition({ lat: item.lat, lng: item.lng, zoom: 14 });
+      setPosition({ lat: item.lat, lng: item.lng, zoom: 15 });
     }, 0);
   };
 
@@ -315,7 +315,7 @@ export default function OfflineConversationMap({
         </Pressable>
         {detailId ? (
           <View style={styles.container}>
-            <OfflineConversationDetail id={detailId} showReport={true} />
+            <OfflineConversationDetail id={detailId}/>
           </View>
         ) : isFetching ? (
           <ActivityIndicator style={{ paddingVertical: 50 }} />

@@ -1,4 +1,10 @@
-import { StyleSheet, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import {
   useBlockConversation,
   useDeregisterOnlineConversation,
@@ -11,6 +17,7 @@ import Toast from "react-native-toast-message";
 import { useActionSheet } from "@expo/react-native-action-sheet";
 import { reportUser } from "@/api/chat";
 import { reportOnlineConversation } from "@/api/conversation";
+import { router } from "expo-router";
 
 interface OnlineConversationDetailProps {
   id: string;
@@ -19,28 +26,23 @@ interface OnlineConversationDetailProps {
 export default function OnlineConversationDetail({
   id,
 }: OnlineConversationDetailProps) {
-  const { data } = useGetOnlineConversationDetail(id);
+  const { data } = useGetOnlineConversationDetail({ id });
   const blockConversationMutation = useBlockConversation();
   const { showActionSheetWithOptions } = useActionSheet();
   const registerOnlineConversationMutation = useRegisterOnlineConversation();
   const deregisterOnlineConversationMutation =
     useDeregisterOnlineConversation();
 
-  const handleMore = () => {
+  const handleReport = () => {
     showActionSheetWithOptions(
       {
-        options: ["Delete from feed", `Report and Delete from feed`, "Cancel"],
-        destructiveButtonIndex: 1,
-        cancelButtonIndex: 2,
+        options: [`Report and Delete from feed`, "Cancel"],
+        destructiveButtonIndex: 0,
+        cancelButtonIndex: 1,
       },
       async (selectedIndex?: number) => {
         switch (selectedIndex) {
           case 0:
-            blockConversationMutation.mutate({
-              id: id,
-            });
-            break;
-          case 1:
             blockConversationMutation.mutate({
               id: id,
             });
@@ -65,74 +67,86 @@ export default function OnlineConversationDetail({
     );
   };
 
-  const handleEnter = () => {};
+  const handleEnter = () => {
+    router.push({
+      pathname: "/online/[id]",
+      params: {
+        id: id,
+      },
+    });
+  };
 
-  return (
-    data && (
-      <View>
-        <View style={{ paddingVertical: 30 }}></View>
-        <View style={styles.box}>
-          <View style={[styles.content]}>
-            <Text style={styles.when}>
-              {new Intl.DateTimeFormat("en-US", {
-                weekday: "short",
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-                hourCycle: "h12",
-              })
-                .format(new Date(data.time))
-                .replace(/\sat\s/, " ")}
-              {` For ${data.length}`.replace("0s", "")}
-            </Text>
-            {data.novel && (
-              <Text style={styles.detail}>Novel: {data.novel}</Text>
-            )}
-            {data.shortStory && (
-              <Text style={styles.detail}>Short story: {data.shortStory}</Text>
-            )}
-            {data.poem && <Text style={styles.detail}>Poem: {data.poem}</Text>}
-            {data.play && <Text style={styles.detail}>Play: {data.play}</Text>}
-            {data.film && <Text style={styles.detail}>Film: {data.film}</Text>}
-            <Text style={styles.detail}>Written by: {data.writtenBy}</Text>
-            {data.rule ? (
-              <View>
-                <Text style={styles.ruleHeader}>Rule</Text>{" "}
-                <Text style={styles.detail}>{data.rule}</Text>
-              </View>
-            ) : (
-              <Text style={styles.ruleHeader}>No rule</Text>
-            )}
-            <CustomButton
-              label={!data.isRegistrant ? "Register" : "Cancel registration"}
-              onPress={
-                !data.isRegistrant
-                  ? () => registerOnlineConversationMutation.mutate({ id: id })
-                  : () =>
-                      deregisterOnlineConversationMutation.mutate({ id: id })
-              }
-              disabled={
-                registerOnlineConversationMutation.isPending ||
-                deregisterOnlineConversationMutation.isPending
-              }
-            />
-            <CustomButton
-              label={
-                data.canEnter
-                  ? "Enter"
-                  : data.isRegistrant
-                    ? "Enter available 15 minutes before conversation start"
-                    : "Non-registrant enter open 10 minutes after conversation start"
-              }
-              onPress={() => handleEnter()}
-              disabled={!data.canEnter}
-            />
-          </View>
+  return !data ? (
+    <ActivityIndicator style={{ paddingVertical: 50 }} />
+  ) : (
+    <View>
+      <View style={{ paddingVertical: 30 }}></View>
+      <View style={styles.box}>
+        <View style={[styles.content]}>
+          <Text style={styles.when}>
+            {new Intl.DateTimeFormat("en-US", {
+              weekday: "short",
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hourCycle: "h12",
+            })
+              .format(new Date(data.time))
+              .replace(/\sat\s/, " ")}
+            {`\nFor ${data.length}`.replace("0s", "")}
+          </Text>
+          {data.novel && <Text style={styles.detail}>Novel: {data.novel}</Text>}
+          {data.shortStory && (
+            <Text style={styles.detail}>Short story: {data.shortStory}</Text>
+          )}
+          {data.poem && <Text style={styles.detail}>Poem: {data.poem}</Text>}
+          {data.play && <Text style={styles.detail}>Play: {data.play}</Text>}
+          {data.film && <Text style={styles.detail}>Film: {data.film}</Text>}
+          <Text style={styles.detail}>Written by: {data.writtenBy}</Text>
+          {data.rule ? (
+            <View>
+              <Text style={styles.ruleHeader}>Rule</Text>{" "}
+              <Text style={styles.detail}>{data.rule}</Text>
+            </View>
+          ) : (
+            <Text style={styles.ruleHeader}>No rule</Text>
+          )}
+          <CustomButton
+            label={!data.isRegistrant ? "Register" : "Cancel registration"}
+            onPress={
+              !data.isRegistrant
+                ? () => registerOnlineConversationMutation.mutate({ id: id })
+                : () => deregisterOnlineConversationMutation.mutate({ id: id })
+            }
+            disabled={
+              registerOnlineConversationMutation.isPending ||
+              deregisterOnlineConversationMutation.isPending
+            }
+          />
+          <CustomButton
+            label={
+              data.canEnter
+                ? "Enter"
+                : data.isRegistrant
+                  ? "Enter available 15 minutes before conversation start"
+                  : "Non-registrant enter open 10 minutes after conversation start"
+            }
+            onPress={() => handleEnter()}
+            disabled={!data.canEnter}
+          />
+        </View>
+        <View style={styles.footer}>
+          <Pressable
+            onPress={async () => handleReport()}
+            style={({ pressed }) => [pressed && styles.reportPressed]}
+          >
+            <Text style={styles.reportText}>Report conversation</Text>
+          </Pressable>
         </View>
       </View>
-    )
+    </View>
   );
 }
 const styles = StyleSheet.create({
@@ -171,10 +185,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 400,
   },
-  reportPressed: {
-    opacity: 0.6,
-  },
   buttonRow: {
     flexDirection: "row",
+  },
+  reportText: {
+    color: colors.GRAY_400,
+    fontSize: 12,
+  },
+  reportPressed: {
+    opacity: 0.6,
   },
 });

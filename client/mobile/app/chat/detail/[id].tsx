@@ -38,7 +38,7 @@ export default function ChatRoomDetailScreen() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView style={{marginBottom: 100}}>
         <View style={{gap:20}}>
-          <OfflineConversationDetail id={String(roomId)} showReport={false}/>
+          <OfflineConversationDetail id={String(roomId)}/>
           <View style={styles.box}>
             <Text style={styles.listTitle}>Member list</Text>
             <View style={styles.memberContainer}>

@@ -16,12 +16,10 @@ import { reportOfflineConversation } from "@/api/conversation";
 
 interface OfflineConversationDetailProps {
   id: string;
-  showReport: boolean;
 }
 
 export default function OfflineConversationDetail({
   id,
-  showReport,
 }: OfflineConversationDetailProps) {
   const { data } = useGetOfflineConversationDetail(id);
   const joinOfflineConversationMutation = useJoinOfflineConversation();
@@ -103,7 +101,7 @@ export default function OfflineConversationDetail({
               })
                 .format(new Date(data.time))
                 .replace(/\sat\s/, " ")}
-              {` For ${data.length}m`}
+              {`\nFor ${data.length}m`}
             </Text>
             {data.novel && (
               <Text style={styles.detail}>Novel: {data.novel}</Text>
@@ -152,14 +150,14 @@ export default function OfflineConversationDetail({
             }
           />
         </View>
-        {showReport && <View style={styles.footer}>
+        <View style={styles.footer}>
           <Pressable
             onPress={async () => handlePress()}
             style={({ pressed }) => [pressed && styles.reportPressed]}
           >
             <Text style={styles.reportText}>Report conversation</Text>
           </Pressable>
-        </View>}
+        </View>
       </View>
     )
   );

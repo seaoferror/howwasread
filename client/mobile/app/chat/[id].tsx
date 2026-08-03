@@ -38,7 +38,7 @@ export default function ChatScreen() {
           onPress={() =>
             router.push({
               pathname: "/chat/detail/[id]",
-              params: { conversationId: String(roomId) },
+              params: { id: String(roomId) },
             })
           }
           disabled={isPersonal}
@@ -68,8 +68,7 @@ export default function ChatScreen() {
               router.push({
                 pathname: "/online/[id]",
                 params: {
-                  conversationId: conversationId,
-                  capacity: "2",
+                  id: conversationId,
                   isPersonal: "true"
                 },
               });

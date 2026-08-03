@@ -18,7 +18,7 @@ import {
   RTCPeerConnection,
   RTCSessionDescription,
 } from "react-native-webrtc";
-import { getSecureAsync } from "@/db/storage";
+import { getKVStore, getSecureAsync } from "@/db/storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import OnlineConversationRoomHeader from "@/components/conversation/OnlineConversationRoomHeader";
 import { Feather, Ionicons } from "@expo/vector-icons";
@@ -28,7 +28,10 @@ import { useSendMessage } from "@/hooks/useChat";
 import Toast from "react-native-toast-message";
 import CustomButton from "@/components/CustomButton";
 import queryClient from "@/api/queryClient";
-import { useBanParticipant } from "@/hooks/useConversation";
+import {
+  useBanParticipant,
+  useGetOnlineConversationDetail,
+} from "@/hooks/useConversation";
 
 declare const WebSocket: {
   prototype: WebSocket;
@@ -44,24 +47,12 @@ declare const WebSocket: {
 
 export default function OnlineConversationScreen() {
   const { data: profile } = useGetMyProfile();
-  const {
-    id: conversationId,
-    novel,
-    shortStory,
-    poem,
-    play,
-    film,
-    by,
-    rule,
-    capacity,
-    when,
-    length,
-    isModerator,
-    isPersonal,
-  } = useLocalSearchParams();
+  const { id: conversationId, isPersonal } = useLocalSearchParams();
+  const { data: detail } = useGetOnlineConversationDetail({
+    id: String(conversationId),
+    isPersonal: Boolean(isPersonal),
+  });
   const { showActionSheetWithOptions } = useActionSheet();
-  const coordinates = SEAT_COORDINATES[Number(capacity)];
-  const fillOrder = SEAT_FILL_ORDER[Number(capacity)];
   const sendMessageMutation = useSendMessage();
   const banParticipantMutation = useBanParticipant();
   const navigation = useNavigation();
@@ -76,6 +67,9 @@ export default function OnlineConversationScreen() {
   const localAudio = useRef<MediaStream>(null);
   const remoteAudios = useRef<Record<string, MediaStream>>({});
   const [isWebSocketOpen, setIsWebSocketOpen] = useState(false);
+
+  const coordinates = SEAT_COORDINATES[Number(detail?.capacity ?? 2)];
+  const fillOrder = SEAT_FILL_ORDER[Number(detail?.capacity ?? 2)];
 
   const coordinateSeat = () => {
     const unique = [...new Set(participantIds.current)].sort((a, b) =>
@@ -133,7 +127,12 @@ export default function OnlineConversationScreen() {
   };
 
   const handlePressParticipant = (id: string, name: string) => {
-    if (isModerator) {
+    if (
+      detail?.moderatorIds.some(
+        (m) => m === (profile?.id ?? getKVStore("myId")),
+      ) ??
+      false
+    ) {
       showActionSheetWithOptions(
         {
           options: [`Send like to ${name}`, `Ban ${name}`, "Cancel"],
@@ -216,9 +215,6 @@ export default function OnlineConversationScreen() {
 
   useEffect(() => {
     const joinConversation = async () => {
-      if (!profile) {
-        return;
-      }
       console.log("try to connect ws");
       ws.current = new WebSocket(
         `wss://${process.env.EXPO_PUBLIC_API_URL}/onlineconversation/conversation/join?id=${conversationId}`,
@@ -240,9 +236,10 @@ export default function OnlineConversationScreen() {
         audio: true,
         video: false,
       });
-      participantIds.current = [profile.id];
-      participantNames.current[profile.id] = profile.name;
-      participantMutes.current[profile.id] = false;
+      participantIds.current = [profile?.id ?? getKVStore("myId")];
+      participantNames.current[profile?.id ?? getKVStore("myId")] =
+        profile?.name ?? getKVStore("myName");
+      participantMutes.current[profile?.id ?? getKVStore("myName")] = false;
       coordinateSeat();
 
       ws.current.onmessage = async (event) => {
@@ -251,7 +248,7 @@ export default function OnlineConversationScreen() {
         const data: ConversationSignalResponse = JSON.parse(event.data);
         if (!data.signal) {
           const unique = [...new Set(data.fromIds)];
-          if (unique.length >= Number(capacity)) {
+          if (unique.length >= Number(detail?.capacity ?? 2)) {
             router.replace("/conversations");
             return;
           }
@@ -308,7 +305,10 @@ export default function OnlineConversationScreen() {
             ws.current?.send(
               JSON.stringify({
                 toIds: [fromId],
-                signal: { type: "name-offer", name: profile.name },
+                signal: {
+                  type: "name-offer",
+                  name: profile?.name ?? getKVStore("myName"),
+                },
               }),
             );
           }
@@ -337,7 +337,10 @@ export default function OnlineConversationScreen() {
           ws.current?.send(
             JSON.stringify({
               toIds: [fromId],
-              signal: { type: "name-answer", name: profile.name },
+              signal: {
+                type: "name-answer",
+                name: profile?.name ?? getKVStore("myName"),
+              },
             }),
           );
           coordinateSeat();
@@ -407,7 +410,7 @@ export default function OnlineConversationScreen() {
       }
       ws.current?.close();
     };
-  }, [profile]);
+  }, []);
 
   useEffect(() => {
     if (!isPersonal) {
@@ -424,7 +427,7 @@ export default function OnlineConversationScreen() {
     });
   }, [isPersonal]);
 
-  if (!profile) {
+  if (!detail || !profile) {
     return null;
   }
 
@@ -432,15 +435,15 @@ export default function OnlineConversationScreen() {
     <SafeAreaView style={styles.container}>
       {!isPersonal && (
         <OnlineConversationRoomHeader
-          novel={String(novel)}
-          shortStory={String(shortStory)}
-          poem={String(poem)}
-          play={String(play)}
-          film={String(film)}
-          writtenBy={String(by)}
-          rule={String(rule)}
-          time={String(when)}
-          length={String(length)}
+          novel={String(detail.novel)}
+          shortStory={String(detail.shortStory)}
+          poem={String(detail.poem)}
+          play={String(detail.play)}
+          film={String(detail.film)}
+          writtenBy={String(detail.writtenBy)}
+          rule={String(detail.rule)}
+          time={String(detail.time)}
+          length={String(detail.length)}
         />
       )}
       <View style={styles.participantContainer}>

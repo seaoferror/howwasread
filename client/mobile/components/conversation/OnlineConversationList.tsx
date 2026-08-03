@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Keyboard,
   Platform,
@@ -27,8 +28,14 @@ export default function OnlineConversationList({
 }) {
   const [keyword, setKeyword] = useState("");
   const [submitKeyword, setSubmitKeyword] = useState("");
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
-    useGetInfiniteOnlineConversations(submitKeyword);
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch,
+    isFetching,
+  } = useGetInfiniteOnlineConversations(submitKeyword);
   const { data: blockedConversations } = useGetBlockedConversations();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const ref = useRef<FlatList | null>(null);
@@ -92,37 +99,41 @@ export default function OnlineConversationList({
           }}
         />
       </View>
-      <FlatList
-        ref={ref}
-        data={data?.pages.flat()}
-        renderItem={({ item }) => {
-          if (blockedConversations) {
-            for (const c of blockedConversations) {
-              if (c.id === String(item.id)) {
-                return null;
+      {isFetching ? (
+        <ActivityIndicator style={{ paddingVertical: 50 }} />
+      ) : (
+        <FlatList
+          ref={ref}
+          data={data?.pages.flat()}
+          renderItem={({ item }) => {
+            if (blockedConversations) {
+              for (const c of blockedConversations) {
+                if (c.id === String(item.id)) {
+                  return null;
+                }
               }
             }
-          }
-          return (
-            <OnlineConversationItem
-              conversation={item}
-              onPress={() => {
-                setDetailId(item.id);
-                sheet.current?.present();
-              }}
-            />
-          );
-        }}
-        keyExtractor={(item) => String(item.id)}
-        contentContainerStyle={styles.contentContainer}
-        onEndReached={handleEndReached}
-        onEndReachedThreshold={0.5}
-        refreshing={isRefreshing}
-        onRefresh={handleRefresh}
-      />
+            return (
+              <OnlineConversationItem
+                conversation={item}
+                onPress={() => {
+                  setDetailId(item.id);
+                  sheet.current?.present();
+                }}
+              />
+            );
+          }}
+          keyExtractor={(item) => String(item.id)}
+          contentContainerStyle={styles.contentContainer}
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.5}
+          refreshing={isRefreshing}
+          onRefresh={handleRefresh}
+        />
+      )}
       <TrueSheet
         ref={sheet}
-        detents={[0.123, 0.7]}
+        detents={["auto", 0.123, 0.72]}
         dismissible={false}
         dimmed={false}
         backgroundColor={colors.SAND_100}
