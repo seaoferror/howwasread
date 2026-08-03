@@ -230,29 +230,16 @@ func (s *Service) ReportOnlineConversation(ctx context.Context, memberId, conver
 	return nil
 }
 
-var ErrMaxRegistrantReached = errors.New("already fully registered")
-
 func (s *Service) RegisterOnlineConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {
 	capacity, err := s.repository.FindCapacity(ctx, conversationId)
 	if err != nil {
 		return err
 	}
-	err = s.repository.AddRegistrantId(ctx, memberId, conversationId)
+	err = s.repository.AddRegistrantId(ctx, conversationId, memberId, capacity)
 	if err != nil {
 		return err
 	}
-	ids, err := s.repository.FindRegistrantIds(ctx, conversationId)
-	if err != nil {
-		return err
-	}
-	if len(ids) <= capacity {
-		return nil
-	}
-	err = s.repository.RemoveRegistrantId(ctx, conversationId, memberId)
-	if err != nil {
-		return err
-	}
-	return ErrMaxRegistrantReached
+	return nil
 }
 
 func (s *Service) DeregisterOnlineConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {

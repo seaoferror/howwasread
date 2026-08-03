@@ -3,7 +3,9 @@ package repository
 import (
 	"backend/onlineconversation/internal/document"
 	"context"
+	"errors"
 	"log/slog"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -248,9 +250,12 @@ func (r *Repository) FindCapacity(ctx context.Context, id uuid.UUID) (int, error
 	return d.Capacity, nil
 }
 
-func (r *Repository) AddRegistrantId(ctx context.Context, conversationId, memberId uuid.UUID) error {
+var ErrMaxRegistrantReached = errors.New("already fully registered")
+
+func (r *Repository) AddRegistrantId(ctx context.Context, conversationId, memberId uuid.UUID, capacity int) error {
 	filter := bson.M{
 		"_id": bson.Binary{Subtype: 4, Data: conversationId[:]},
+		"registrant_ids." + strconv.Itoa(capacity-1): bson.M{"$exists": false},
 	}
 	update := bson.M{
 		"$addToSet": bson.M{
@@ -260,7 +265,7 @@ func (r *Repository) AddRegistrantId(ctx context.Context, conversationId, member
 			},
 		},
 	}
-	_, err := r.db.Collection("conversation").UpdateOne(ctx, filter, update)
+	res, err := r.db.Collection("conversation").UpdateOne(ctx, filter, update)
 	if err != nil {
 		slog.Error("fail to update reporter ids for conversation",
 			"conversationId", conversationId,
@@ -268,6 +273,9 @@ func (r *Repository) AddRegistrantId(ctx context.Context, conversationId, member
 			"err", err,
 		)
 		return err
+	}
+	if res.MatchedCount == 0 {
+		return ErrMaxRegistrantReached
 	}
 	return nil
 }
