@@ -7,11 +7,11 @@ import OnlineConversationList from "@/components/conversation/OnlineConversation
 import OfflineConversationMap from "@/components/conversation/OfflineConversationMap";
 import { useRef, useState } from "react";
 import Tab from "@/components/Tab";
-import { PagerView, PagerViewRef } from "@expo/ui/community/pager-view";
+import PagerView from "react-native-pager-view";
 
 export default function ConversationsScreen() {
   const [currentTab, setCurrentTab] = useState(0);
-  const pagerRef = useRef<PagerViewRef | null>(null);
+  const pagerRef = useRef<PagerView | null>(null);
 
   const handlePressTab = (index: number) => {
     pagerRef.current?.setPage(index);

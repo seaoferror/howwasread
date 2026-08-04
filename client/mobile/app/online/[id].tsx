@@ -1,21 +1,49 @@
-import { Pressable, StyleSheet } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import { router, useLocalSearchParams, useNavigation } from "expo-router";
-import { useEffect, useState } from "react";
+import {
+  colors,
+  queryKey,
+  SEAT_COORDINATES,
+  SEAT_FILL_ORDER,
+} from "@/constants";
+import { useEffect, useRef, useState } from "react";
+import {
+  ConversationSignalResponse,
+  SeatAssignment,
+} from "@/types/conversation";
+import {
+  mediaDevices,
+  MediaStream,
+  RTCIceCandidate,
+  RTCPeerConnection,
+  RTCSessionDescription,
+} from "react-native-webrtc";
 import { getKVStore, getSecureAsync } from "@/db/storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import OnlineConversationRoomHeader from "@/components/conversation/OnlineConversationRoomHeader";
-import { Ionicons } from "@expo/vector-icons";
+import { Feather, Ionicons } from "@expo/vector-icons";
 import { useGetMyProfile } from "@/hooks/useProfile";
 import { useActionSheet } from "@expo/react-native-action-sheet";
 import { useSendMessage } from "@/hooks/useChat";
 import Toast from "react-native-toast-message";
+import CustomButton from "@/components/CustomButton";
 import queryClient from "@/api/queryClient";
 import {
   useBanParticipant,
   useGetOnlineConversationDetail,
 } from "@/hooks/useConversation";
-import { colors, queryKey } from "@/constants";
-import WebRTCRoom from "@/components/conversation/WebRTCRoom";
+
+declare const WebSocket: {
+  prototype: WebSocket;
+  new (
+    url: string,
+    protocols?: string | string[] | null,
+    options?: {
+      headers?: { [header: string]: string };
+      [key: string]: any;
+    } | null,
+  ): WebSocket;
+};
 
 export default function OnlineConversationScreen() {
   const { data: profile } = useGetMyProfile();
@@ -24,20 +52,370 @@ export default function OnlineConversationScreen() {
     id: String(conversationId),
     isPersonal: Boolean(isPersonal),
   });
-
   const { showActionSheetWithOptions } = useActionSheet();
   const sendMessageMutation = useSendMessage();
   const banParticipantMutation = useBanParticipant();
   const navigation = useNavigation();
 
-  const [accessToken, setAccessToken] = useState("");
+  const [seatAssignments, setSeatAssignments] = useState<SeatAssignment[]>([]);
+  const [mute, setMute] = useState<boolean>(false);
+  const participantIds = useRef<string[]>([]);
+  const participantNames = useRef<Record<string, string>>({});
+  const participantMutes = useRef<Record<string, boolean>>({});
+  const ws = useRef<WebSocket>(null);
+  const peers = useRef<Record<string, RTCPeerConnection>>({});
+  const localAudio = useRef<MediaStream>(null);
+  const remoteAudios = useRef<Record<string, MediaStream>>({});
+  const [isWebSocketOpen, setIsWebSocketOpen] = useState(false);
+
+  const coordinates = SEAT_COORDINATES[Number(detail?.capacity ?? 2)];
+  const fillOrder = SEAT_FILL_ORDER[Number(detail?.capacity ?? 2)];
+
+  const coordinateSeat = () => {
+    const unique = [...new Set(participantIds.current)].sort((a, b) =>
+      a.localeCompare(b),
+    );
+    const occupantBySeat: Record<number, string> = {};
+    unique.forEach((id, idx) => {
+      const seatIndex = fillOrder[idx];
+      occupantBySeat[seatIndex] = id;
+    });
+
+    const nextAssignments: SeatAssignment[] = coordinates.map(
+      (coordinate, idx) => ({
+        id: occupantBySeat[idx],
+        name: participantNames.current[occupantBySeat[idx]],
+        mute: participantMutes.current[occupantBySeat[idx]],
+        ...coordinate,
+      }),
+    );
+    setSeatAssignments(nextAssignments);
+  };
+
+  const toggleAudio = () => {
+    if (!profile) {
+      return;
+    }
+    try {
+      if (localAudio.current && localAudio.current.active) {
+        const audioTracks = localAudio.current.getAudioTracks();
+        console.log("WebSocket ready state:", ws.current?.readyState);
+        if (
+          ws.current &&
+          ws.current.readyState === 1 &&
+          audioTracks.length > 0
+        ) {
+          const audioTrack = audioTracks[0];
+          audioTrack.enabled = !audioTrack.enabled;
+          participantMutes.current[profile.id] =
+            !participantMutes.current[profile.id];
+          ws.current.send(
+            JSON.stringify({
+              toIds: Object.keys(peers.current),
+              signal: { type: "mute" },
+            }),
+          );
+          coordinateSeat();
+          setMute(!mute);
+          return;
+        }
+        console.log("WebSocket ready state:", ws.current?.readyState);
+      }
+    } catch (error) {
+      console.error("Failed to toggle audio:", error);
+    }
+  };
+
+  const handlePressParticipant = (id: string, name: string) => {
+    if (
+      detail?.moderatorIds.some(
+        (m) => m === (profile?.id ?? getKVStore("myId")),
+      ) ??
+      false
+    ) {
+      showActionSheetWithOptions(
+        {
+          options: [`Send like to ${name}`, `Ban ${name}`, "Cancel"],
+          destructiveButtonIndex: 1,
+          cancelButtonIndex: 2,
+        },
+        (selectedIndex?: number) => {
+          switch (selectedIndex) {
+            case 0:
+              sendMessageMutation.mutate(
+                {
+                  toIdType: "personal",
+                  toId: id,
+                  contentType: "text",
+                  contents: ["👍"],
+                },
+                {
+                  onSuccess: () => {
+                    Toast.show({
+                      type: "success",
+                      text1: `you sent like to ${name}`,
+                    });
+                  },
+                },
+              );
+              break;
+            case 1:
+              banParticipantMutation.mutate(
+                { conversationId: String(conversationId), banId: id },
+                {
+                  onSuccess: () => {
+                    ws.current?.send(
+                      JSON.stringify({
+                        toId: id,
+                        signal: { type: "ban" },
+                      }),
+                    );
+                  },
+                },
+              );
+              break;
+            case 2:
+              break;
+          }
+        },
+      );
+      return;
+    }
+    showActionSheetWithOptions(
+      {
+        options: [`Send like to ${name}`, "Cancel"],
+        cancelButtonIndex: 1,
+      },
+      (selectedIndex?: number) => {
+        switch (selectedIndex) {
+          case 0:
+            sendMessageMutation.mutate(
+              {
+                toIdType: "personal",
+                toId: id,
+                contentType: "text",
+                contents: ["👍"],
+              },
+              {
+                onSuccess: () => {
+                  Toast.show({
+                    type: "success",
+                    text1: `You send like to ${name}`,
+                  });
+                },
+              },
+            );
+            break;
+          case 1:
+            break;
+        }
+      },
+    );
+  };
 
   useEffect(() => {
-    getSecureAsync("accessToken").then((token) => setAccessToken(token || ""));
+    const joinConversation = async () => {
+      console.log("try to connect ws");
+      ws.current = new WebSocket(
+        `wss://${process.env.EXPO_PUBLIC_API_URL}/onlineconversation/conversation/join?id=${conversationId}`,
+        undefined,
+        {
+          headers: {
+            Authorization: `Bearer ${await getSecureAsync("accessToken")}`,
+            // "X-User-Id": `${Platform.OS === "ios" ? localDevId.ios : localDevId.android}`,
+          },
+        },
+      );
+      ws.current.onopen = () => {
+        setIsWebSocketOpen(true);
+      };
+      console.log(
+        `wss://${process.env.EXPO_PUBLIC_API_URL}/onlineconversation/conversation/join?id=${conversationId}`,
+      );
+      localAudio.current = await mediaDevices.getUserMedia({
+        audio: true,
+        video: false,
+      });
+      participantIds.current = [profile?.id ?? getKVStore("myId")];
+      participantNames.current[profile?.id ?? getKVStore("myId")] =
+        profile?.name ?? getKVStore("myName");
+      participantMutes.current[profile?.id ?? getKVStore("myName")] = false;
+      coordinateSeat();
+
+      ws.current.onmessage = async (event) => {
+        console.log("get message");
+
+        const data: ConversationSignalResponse = JSON.parse(event.data);
+        if (!data.signal) {
+          const unique = [...new Set(data.fromIds)];
+          if (unique.length >= Number(detail?.capacity ?? 2)) {
+            router.replace("/conversations");
+            return;
+          }
+          participantIds.current = [...participantIds.current, ...unique];
+
+          for (const fromId of unique) {
+            participantMutes.current[fromId] = false;
+            peers.current[fromId] = new RTCPeerConnection({
+              iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+            });
+
+            localAudio.current?.getTracks().forEach((track) => {
+              if (localAudio.current) {
+                peers.current[fromId].addTrack(track, localAudio.current);
+              }
+            });
+
+            peers.current[fromId].addEventListener(
+              "icecandidate",
+              (event: any) => {
+                if (event.candidate) {
+                  ws.current?.send(
+                    JSON.stringify({
+                      toIds: [fromId],
+                      signal: { type: "candidate", candidate: event.candidate },
+                    }),
+                  );
+                }
+              },
+            );
+
+            peers.current[fromId].addEventListener("track", (event: any) => {
+              if (!remoteAudios.current[fromId]) {
+                remoteAudios.current[fromId] = new MediaStream();
+              }
+              if (event.track) {
+                remoteAudios.current[fromId].addTrack(event.track);
+              }
+            });
+
+            const offer = await peers.current[fromId].createOffer({
+              offerToReceiveAudio: true,
+              offerToReceiveVideo: false,
+              voiceActivityDetection: true,
+            });
+            await peers.current[fromId].setLocalDescription(offer);
+            ws.current?.send(
+              JSON.stringify({
+                toIds: [fromId],
+                signal: peers.current[fromId].localDescription,
+              }),
+            );
+
+            ws.current?.send(
+              JSON.stringify({
+                toIds: [fromId],
+                signal: {
+                  type: "name-offer",
+                  name: profile?.name ?? getKVStore("myName"),
+                },
+              }),
+            );
+          }
+          coordinateSeat();
+          return;
+        }
+        const fromId = data.fromIds[0];
+        if (data.signal.type === "offer") {
+          const offer = new RTCSessionDescription(data.signal);
+          await peers.current[fromId].setRemoteDescription(offer);
+          const answer = await peers.current[fromId].createAnswer();
+          await peers.current[fromId].setLocalDescription(answer);
+          ws.current?.send(
+            JSON.stringify({
+              toIds: [fromId],
+              signal: peers.current[fromId].localDescription,
+            }),
+          );
+          return;
+        }
+        if (data.signal.type === "name-offer") {
+          participantNames.current = {
+            ...participantNames.current,
+            [fromId]: data.signal.name,
+          };
+          ws.current?.send(
+            JSON.stringify({
+              toIds: [fromId],
+              signal: {
+                type: "name-answer",
+                name: profile?.name ?? getKVStore("myName"),
+              },
+            }),
+          );
+          coordinateSeat();
+          return;
+        }
+        if (data.signal.type === "name-answer") {
+          participantNames.current = {
+            ...participantNames.current,
+            [fromId]: data.signal.name,
+          };
+          coordinateSeat();
+          return;
+        }
+        if (data.signal.type === "answer") {
+          const offerDescription = new RTCSessionDescription(data.signal);
+          await peers.current[fromId].setRemoteDescription(offerDescription);
+          return;
+        }
+        if (data.signal.type === "candidate") {
+          const iceCandidate = new RTCIceCandidate(data.signal.candidate);
+          await peers.current[fromId].addIceCandidate(iceCandidate);
+          return;
+        }
+        if (data.signal.type === "leave") {
+          peers.current[fromId].close();
+          delete peers.current[fromId];
+          remoteAudios.current[fromId].release();
+          delete remoteAudios.current[fromId];
+          participantIds.current = participantIds.current.filter(
+            (x) => x !== fromId,
+          );
+          delete participantNames.current[fromId];
+          coordinateSeat();
+        }
+        if (data.signal.type === "ban") {
+          await queryClient.invalidateQueries({
+            queryKey: [
+              queryKey.CONVERSATION,
+              queryKey.GET_ONLINE_CONVERSATIONS,
+            ],
+          });
+          router.replace("/conversations");
+        }
+        if (data.signal.type === "mute") {
+          participantMutes.current[fromId] = !participantMutes.current[fromId];
+          coordinateSeat();
+        }
+      };
+    };
+    joinConversation();
+
+    return () => {
+      if (ws.current && ws.current.readyState === 1) {
+        ws.current?.send(
+          JSON.stringify({
+            toIds: Object.keys(peers.current),
+            signal: { type: "leave" },
+          }),
+        );
+      }
+      for (const peer of Object.values(peers.current)) {
+        peer.close();
+      }
+      localAudio.current?.release();
+      for (const remoteAudio of Object.values(remoteAudios.current)) {
+        remoteAudio.release();
+      }
+      ws.current?.close();
+    };
   }, []);
 
   useEffect(() => {
-    if (!isPersonal) return;
+    if (!isPersonal) {
+      return;
+    }
     navigation.setOptions({
       title: "Voice call",
       headerShown: true,
@@ -49,68 +427,9 @@ export default function OnlineConversationScreen() {
     });
   }, [isPersonal]);
 
-  // Pass an async function to the DOM component so it can trigger native UI
-  const handleParticipantAction = async (
-    id: string,
-    name: string,
-  ): Promise<string> => {
-    return new Promise((resolve) => {
-      const isModerator =
-        detail?.moderatorIds.some(
-          (m) => m === (profile?.id ?? getKVStore("myId")),
-        ) ?? false;
-
-      const options = isModerator
-        ? [`Send like to ${name}`, `Ban ${name}`, "Cancel"]
-        : [`Send like to ${name}`, "Cancel"];
-      const destructiveButtonIndex = isModerator ? 1 : undefined;
-      const cancelButtonIndex = isModerator ? 2 : 1;
-
-      showActionSheetWithOptions(
-        { options, destructiveButtonIndex, cancelButtonIndex },
-        (selectedIndex?: number) => {
-          if (selectedIndex === 0) {
-            sendMessageMutation.mutate(
-              {
-                toIdType: "personal",
-                toId: id,
-                contentType: "text",
-                contents: ["👍"],
-              },
-              {
-                onSuccess: () =>
-                  Toast.show({
-                    type: "success",
-                    text1: `You sent a like to ${name}`,
-                  }),
-              },
-            );
-            resolve("liked");
-          } else if (isModerator && selectedIndex === 1) {
-            banParticipantMutation.mutate(
-              { conversationId: String(conversationId), banId: id },
-              { onSuccess: () => resolve("ban") },
-            );
-          } else {
-            resolve("cancelled");
-          }
-        },
-      );
-    });
-  };
-
-  const handleBanExit = async () => {
-    await queryClient.invalidateQueries({
-      queryKey: [queryKey.CONVERSATION, queryKey.GET_ONLINE_CONVERSATIONS],
-    });
-    router.replace("/conversations");
-  };
-
-  const handleExit = async () => {
-    router.replace("/conversations");
-  };
-
-  if (!detail || !profile || !accessToken) return null;
+  if (!detail || !profile) {
+    return null;
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -127,21 +446,101 @@ export default function OnlineConversationScreen() {
           length={String(detail.length)}
         />
       )}
-      <WebRTCRoogm
-        conversationId={String(conversationId)}
-        capacity={Number(detail?.capacity ?? 2)}
-        accessToken={accessToken}
-        myId={profile.id ?? getKVStore("myId")}
-        myName={profile.name ?? getKVStore("myName")}
-        apiUrl={process.env.EXPO_PUBLIC_API_URL || ""}
-        onParticipantAction={handleParticipantAction}
-        onBanExit={handleBanExit}
-        onExit={handleExit}
-      />
+      <View style={styles.participantContainer}>
+        <View style={styles.participantArea}>
+          {seatAssignments.map((seat, idx) => (
+            <View
+              key={idx}
+              style={[
+                styles.participantSeat,
+                { left: `${seat.left}%`, top: `${seat.top}%` },
+              ]}
+            >
+              {seat.id ? (
+                <>
+                  {seat.mute ? (
+                    <Feather name="mic-off" size={10} color="black" />
+                  ) : null}
+                  <Ionicons
+                    name="person-circle-outline"
+                    size={24}
+                    color="black"
+                    onPress={
+                      seat.id !== profile.id
+                        ? () =>
+                            handlePressParticipant(
+                              seat.id ?? "",
+                              seat.name ?? "",
+                            )
+                        : undefined
+                    }
+                  />
+                </>
+              ) : (
+                <Feather name="circle" size={24} color="black" />
+              )}
+              <Text style={styles.participantId}>{seat.name ?? ""}</Text>
+            </View>
+          ))}
+        </View>
+        <View style={styles.controls}>
+          {!isWebSocketOpen ? (
+            <CustomButton label="Connecting..." disabled={true} />
+          ) : mute ? (
+            <CustomButton label="turn on your mic" onPress={toggleAudio} />
+          ) : (
+            <CustomButton label="turn off your mic" onPress={toggleAudio} />
+          )}
+        </View>
+      </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.SAND_110 },
+  container: {
+    flex: 1,
+    backgroundColor: colors.SAND_110,
+  },
+  content: {
+    flex: 1,
+    padding: 16,
+  },
+  title: {
+    fontSize: 18,
+    color: colors.BLACK,
+    fontWeight: 600,
+    marginVertical: 8,
+  },
+  description: {
+    fontSize: 16,
+    color: colors.BLACK,
+    marginBottom: 14,
+  },
+  participantContainer: {
+    flex: 1,
+  },
+  participantArea: {
+    flex: 1,
+    position: "relative",
+  },
+  participantSeat: {
+    position: "absolute",
+    width: 96,
+    alignItems: "center",
+    transform: [{ translateX: -48 }, { translateY: -12 }],
+  },
+  participantId: {
+    marginTop: 6,
+    fontSize: 12,
+    color: colors.BLACK,
+  },
+  controls: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    gap: 12,
+  },
 });

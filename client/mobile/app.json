@@ -17,8 +17,9 @@
           "NSAllowsArbitraryLoads": false
         },
         "ITSAppUsesNonExemptEncryption": false,
-        "NSMicrophoneUsageDescription": "We accesses your microphone to let you exchange ideas over voice calls or send voice message.",
-        "UIBackgroundModes": ["audio"]
+        "UIBackgroundModes": [
+          "audio"
+        ]
       },
       "bitcode": false
     },
@@ -70,6 +71,15 @@
       "favicon": "./assets/images/icon.png"
     },
     "plugins": [
+      [
+        "@config-plugins/react-native-webrtc",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
+          "microphonePermission": "We accesses your microphone to let you exchange ideas with your friends over voice calls.",
+          "enableBackgroundPlayback": true,
+          "enableBackgroundRecording": true
+        }
+      ],
       [
         "expo-notifications",
         {
@@ -156,7 +166,11 @@
           "project": "react-native",
           "organization": "seaoferror"
         }
-      ]
+      ],
+      "expo-font",
+      "expo-image",
+      "expo-status-bar",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
