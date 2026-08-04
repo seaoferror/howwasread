@@ -165,7 +165,12 @@ func (s *Service) GetConversationDetail(ctx context.Context, conversationId, mem
 	if time.Now().UTC().Before(c.Time.Add(10*time.Minute)) && !isRegistrant {
 		canEnter = false
 	}
-
+	for _, b := range c.BanIds {
+		if bytes.Equal(b.Data, memberId[:]) {
+			canEnter = false
+			break
+		}
+	}
 	resp := dto.OnlineConversationDetailResponse{
 		Id:           uuid.UUID(c.Id.Data),
 		Novel:        c.Novel,
