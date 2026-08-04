@@ -123,7 +123,7 @@ export default function OnlineConversationList({
               />
             );
           }}
-          keyExtractor={(item) => String(item.id)}
+          keyExtractor={(item, index) => `${item.id}-${index}`}
           contentContainerStyle={styles.contentContainer}
           onEndReached={handleEndReached}
           onEndReachedThreshold={0.5}

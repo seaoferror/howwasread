@@ -17,6 +17,7 @@
           "NSAllowsArbitraryLoads": false
         },
         "ITSAppUsesNonExemptEncryption": false,
+        "NSMicrophoneUsageDescription": "We accesses your microphone to let you exchange ideas over voice calls or send voice message.",
         "UIBackgroundModes": ["audio"]
       },
       "bitcode": false
@@ -94,7 +95,7 @@
       [
         "expo-audio",
         {
-          "microphonePermission": "We accesses your microphone to let you able to call or send voice message to your friends.",
+          "microphonePermission": "We accesses your microphone to let you able to exchange ideas over voice call or send voice message.",
           "enableBackgroundPlayback": true,
           "enableBackgroundRecording": true
         }
@@ -123,15 +124,6 @@
       "expo-router",
       "expo-secure-store",
       "expo-localization",
-      [
-        "@config-plugins/react-native-webrtc",
-        {
-          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera",
-          "microphonePermission": "We accesses your microphone to let you exchange ideas with your friends over voice calls.",
-          "enableBackgroundPlayback": true,
-          "enableBackgroundRecording": true
-        }
-      ],
       [
         "expo-video",
         {

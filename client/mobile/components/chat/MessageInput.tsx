@@ -188,7 +188,6 @@ export default function MessageInput() {
               <Pressable
                 style={styles.buttonContainer}
                 onPress={async () => {
-                  await requestRecordingPermissionsAsync();
                   setIsVoice(true);
                 }}
               >

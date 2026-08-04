@@ -5,13 +5,13 @@ import { Feather } from "@expo/vector-icons";
 import { colors } from "@/constants";
 import OnlineConversationList from "@/components/conversation/OnlineConversationList";
 import OfflineConversationMap from "@/components/conversation/OfflineConversationMap";
-import PagerView from "react-native-pager-view";
 import { useRef, useState } from "react";
 import Tab from "@/components/Tab";
+import { PagerView, PagerViewRef } from "@expo/ui/community/pager-view";
 
 export default function ConversationsScreen() {
   const [currentTab, setCurrentTab] = useState(0);
-  const pagerRef = useRef<PagerView | null>(null);
+  const pagerRef = useRef<PagerViewRef | null>(null);
 
   const handlePressTab = (index: number) => {
     pagerRef.current?.setPage(index);

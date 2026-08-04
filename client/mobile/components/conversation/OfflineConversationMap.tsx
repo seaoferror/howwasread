@@ -230,7 +230,6 @@ export default function OfflineConversationMap({
           }}
         />
       </View>
-
       {showRetry && submitKeyword && (
         <View style={styles.retrySearchContainer}>
           <Pressable
@@ -244,7 +243,6 @@ export default function OfflineConversationMap({
           </Pressable>
         </View>
       )}
-
       {Platform.OS === "ios" ? (
         <AppleMaps.View
           style={StyleSheet.absoluteFill}
@@ -300,7 +298,7 @@ export default function OfflineConversationMap({
       )}
       <TrueSheet
         ref={sheet}
-        detents={["auto", 0.123, 0.72]}
+        detents={[0.123, 0.72]}
         dismissible={false}
         dimmed={false}
         backgroundColor={colors.SAND_100}
