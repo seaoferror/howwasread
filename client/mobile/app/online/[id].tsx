@@ -99,7 +99,6 @@ export default function OnlineConversationScreen() {
     try {
       if (localAudio.current && localAudio.current.active) {
         const audioTracks = localAudio.current.getAudioTracks();
-        console.log("WebSocket ready state:", ws.current?.readyState);
         if (
           ws.current &&
           ws.current.readyState === 1 &&
@@ -119,7 +118,6 @@ export default function OnlineConversationScreen() {
           setMute(!mute);
           return;
         }
-        console.log("WebSocket ready state:", ws.current?.readyState);
       }
     } catch (error) {
       console.error("Failed to toggle audio:", error);
@@ -160,18 +158,15 @@ export default function OnlineConversationScreen() {
               );
               break;
             case 1:
-              banParticipantMutation.mutate(
-                { conversationId: String(conversationId), banId: id },
-                {
-                  onSuccess: () => {
-                    ws.current?.send(
-                      JSON.stringify({
-                        toId: id,
-                        signal: { type: "ban" },
-                      }),
-                    );
-                  },
-                },
+              banParticipantMutation.mutate({
+                conversationId: String(conversationId),
+                banId: id,
+              });
+              ws.current?.send(
+                JSON.stringify({
+                  toId: id,
+                  signal: { type: "ban" },
+                }),
               );
               break;
             case 2:
@@ -215,14 +210,12 @@ export default function OnlineConversationScreen() {
 
   useEffect(() => {
     const joinConversation = async () => {
-      console.log("try to connect ws");
       ws.current = new WebSocket(
-        `wss://${process.env.EXPO_PUBLIC_API_URL}/onlineconversation/conversation/join?id=${conversationId}`,
+        `wss://${process.env.EXPO_PUBLIC_API_URL}/onlineconversation/join?id=${conversationId}`,
         undefined,
         {
           headers: {
             Authorization: `Bearer ${await getSecureAsync("accessToken")}`,
-            // "X-User-Id": `${Platform.OS === "ios" ? localDevId.ios : localDevId.android}`,
           },
         },
       );
@@ -230,7 +223,7 @@ export default function OnlineConversationScreen() {
         setIsWebSocketOpen(true);
       };
       console.log(
-        `wss://${process.env.EXPO_PUBLIC_API_URL}/onlineconversation/conversation/join?id=${conversationId}`,
+        `wss://${process.env.EXPO_PUBLIC_API_URL}/onlineconversation/join?id=${conversationId}`,
       );
       localAudio.current = await mediaDevices.getUserMedia({
         audio: true,
@@ -244,7 +237,6 @@ export default function OnlineConversationScreen() {
 
       ws.current.onmessage = async (event) => {
         console.log("get message");
-
         const data: ConversationSignalResponse = JSON.parse(event.data);
         if (!data.signal) {
           const unique = [...new Set(data.fromIds)];
@@ -289,18 +281,23 @@ export default function OnlineConversationScreen() {
               }
             });
 
-            const offer = await peers.current[fromId].createOffer({
-              offerToReceiveAudio: true,
-              offerToReceiveVideo: false,
-              voiceActivityDetection: true,
-            });
-            await peers.current[fromId].setLocalDescription(offer);
-            ws.current?.send(
-              JSON.stringify({
-                toIds: [fromId],
-                signal: peers.current[fromId].localDescription,
-              }),
-            );
+            const myId = profile?.id ?? getKVStore("myId");
+            const shouldICreateOffer = myId > fromId;
+
+            if (shouldICreateOffer) {
+              const offer = await peers.current[fromId].createOffer({
+                offerToReceiveAudio: true,
+                offerToReceiveVideo: false,
+                voiceActivityDetection: true,
+              });
+              await peers.current[fromId].setLocalDescription(offer);
+              ws.current?.send(
+                JSON.stringify({
+                  toIds: [fromId],
+                  signal: peers.current[fromId].localDescription,
+                }),
+              );
+            }
 
             ws.current?.send(
               JSON.stringify({
