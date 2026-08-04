@@ -41,8 +41,8 @@ export default function ChatRoomDetailScreen() {
           <View style={styles.box}>
             <Text style={styles.listTitle}>Member list</Text>
             <View style={styles.memberContainer}>
-              {ps.map((p, idx) => (
-                <MemberItem key={idx} id={p.id} />
+              {ps.map((p) => (
+                <MemberItem key={p.id} id={p.id} />
               ))}
             </View>
           </View>

@@ -42,7 +42,7 @@ export default function ChatScreen() {
               params: { id: String(roomId) },
             })
           }
-          disabled={isPersonal}
+          disabled={isPersonal || !myProfile}
         >
           <Text
             style={[

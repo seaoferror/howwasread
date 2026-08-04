@@ -63,7 +63,7 @@ export function useGeneratePresignedURL() {
 export function useCheckBlock(id: string) {
   return useQuery({
     queryFn: () => checkBlock(id),
-    queryKey: [queryKey.CHAT, queryKey.CHECK_BLOCK],
+    queryKey: [queryKey.CHAT, queryKey.CHECK_BLOCK, id],
     enabled: getKVStore("type" + id) === "personal",
   });
 }
@@ -71,7 +71,7 @@ export function useCheckBlock(id: string) {
 export function useGetChatParticipants(roomId: string) {
   return useQuery({
     queryFn: () => getChatParticipants(roomId),
-    queryKey: [queryKey.CHAT, queryKey.GET_CHAT_PARTICIPANT_IDS],
+    queryKey: [queryKey.CHAT, queryKey.GET_CHAT_PARTICIPANT_IDS, roomId],
   });
 }
 
