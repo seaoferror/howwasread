@@ -48,15 +48,15 @@ export default function OnlineConversationRoomHeader({
                 .replace(/\sat\s/, " ")}
               {` For ${length.replace("0s", "")}`}
             </Text>
-            {novel && <Text style={styles.detail}>Novel: {novel}</Text>}
-            {shortStory && (
+            {!!novel && <Text style={styles.detail}>Novel: {novel}</Text>}
+            {!!shortStory && (
               <Text style={styles.detail}>Short story: {shortStory}</Text>
             )}
-            {poem && <Text style={styles.detail}>Poem: {poem}</Text>}
-            {play && <Text style={styles.detail}>Play: {play}</Text>}
-            {film && <Text style={styles.detail}>Film: {film}</Text>}
-            {writtenBy && <Text style={styles.detail}>By: {writtenBy}</Text>}
-            {rule ? (
+            {!!poem && <Text style={styles.detail}>Poem: {poem}</Text>}
+            {!!play && <Text style={styles.detail}>Play: {play}</Text>}
+            {!!film && <Text style={styles.detail}>Film: {film}</Text>}
+            {!!writtenBy && <Text style={styles.detail}>By: {writtenBy}</Text>}
+            {!!rule ? (
               <View>
                 <Text style={styles.ruleHeader}>Rule</Text>{" "}
                 <Text style={styles.detail}>{rule}</Text>

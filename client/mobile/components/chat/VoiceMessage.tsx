@@ -1,31 +1,50 @@
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@/constants";
 import { formatToMinuteSecond } from "@/util/time";
 
-export default function VoiceMessage({ url, onLongPress }: { url: string , onLongPress: () => void }) {
+export default function VoiceMessage({
+  url,
+  onLongPress,
+}: {
+  url: string;
+  onLongPress: () => void;
+}) {
   const player = useAudioPlayer(url);
   const status = useAudioPlayerStatus(player);
+  const [trackWidth, setTrackWidth] = useState(0);
   const duration = Number.isFinite(status.duration) ? status.duration : 0;
   const currentTime = Number.isFinite(status.currentTime)
     ? status.currentTime
     : 0;
   const progress = duration > 0 ? Math.min(currentTime / duration, 1) : 0;
 
+  const togglePlay = async () => {
+    if (status.playing) {
+      player.pause();
+      await player.seekTo(0);
+    } else {
+      if (duration > 0 && currentTime >= duration - 0.1) {
+        await player.seekTo(0);
+      }
+      player.play();
+    }
+  };
+
+  const handleSeek = async (event: any) => {
+    if (duration === 0 || trackWidth === 0) return;
+    const touchX = event.nativeEvent.locationX;
+    const percentage = Math.max(0, Math.min(touchX / trackWidth, 1));
+    const seekTime = percentage * duration;
+    await player.seekTo(seekTime);
+  };
+
   return (
     <Pressable
       style={styles.audioContainer}
-      onPress={
-        status.playing
-          ? async () => {
-              player.pause();
-              await player.seekTo(0);
-            }
-          : () => {
-              player.play();
-            }
-      }
+      onPress={togglePlay}
       onLongPress={onLongPress}
     >
       <View style={styles.iconBox}>
@@ -37,13 +56,17 @@ export default function VoiceMessage({ url, onLongPress }: { url: string , onLon
       </View>
 
       <View style={styles.contentBox}>
-        <Text style={styles.audioTitle}>Voice message</Text>
-
-        <View style={styles.progressTrack}>
+        <Pressable
+          style={styles.progressTrack}
+          onLayout={(e) => setTrackWidth(e.nativeEvent.layout.width)}
+          onPress={handleSeek}
+          hitSlop={{ top: 10, bottom: 10 }}
+        >
           <View
             style={[styles.progressFill, { width: `${progress * 100}%` }]}
+            pointerEvents="none"
           />
-        </View>
+        </Pressable>
 
         <Text style={styles.audioMeta}>
           {formatToMinuteSecond(currentTime)} / {formatToMinuteSecond(duration)}
@@ -61,9 +84,9 @@ const styles = StyleSheet.create({
     minWidth: 220,
     minHeight: 64,
     paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 14,
-    backgroundColor: colors.SAND_100,
+    paddingHorizontal: 8,
+    borderRadius: 7,
+    backgroundColor: colors.SAND_150,
     borderWidth: 1,
     borderColor: colors.ORANGE_100,
   },
@@ -73,7 +96,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.ORANGE_100,
+    backgroundColor: colors.SAND_200,
   },
   contentBox: {
     flex: 1,

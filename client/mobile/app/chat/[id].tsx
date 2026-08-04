@@ -69,7 +69,7 @@ export default function ChatScreen() {
                 pathname: "/online/[id]",
                 params: {
                   id: conversationId,
-                  isPersonal: "true"
+                  isPersonal: "true",
                 },
               });
             }}
@@ -107,5 +107,6 @@ const styles = StyleSheet.create({
   },
   keyboardAvoidingView: {
     flex: 1,
+    gap: 7,
   },
 });

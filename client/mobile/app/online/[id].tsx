@@ -164,7 +164,7 @@ export default function OnlineConversationScreen() {
               });
               ws.current?.send(
                 JSON.stringify({
-                  toId: id,
+                  toIds: [id],
                   signal: { type: "ban" },
                 }),
               );
@@ -272,6 +272,40 @@ export default function OnlineConversationScreen() {
               },
             );
 
+            peers.current[fromId].addEventListener(
+              "iceconnectionstatechange",
+              () => {
+                const peer = peers.current[fromId];
+                if (!peer) {
+                  return;
+                }
+                const state = peers.current[fromId].iceConnectionState;
+                console.log(`Peer ${fromId} ICE connection state: ${state}`);
+                if (
+                  state === "disconnected" ||
+                  state === "failed" ||
+                  state === "closed"
+                ) {
+                  if (peers.current[fromId]) {
+                    peers.current[fromId].close();
+                    delete peers.current[fromId];
+                  }
+
+                  if (remoteAudios.current[fromId]) {
+                    remoteAudios.current[fromId].release();
+                    delete remoteAudios.current[fromId];
+                  }
+
+                  participantIds.current = participantIds.current.filter(
+                    (x) => x !== fromId,
+                  );
+                  delete participantNames.current[fromId];
+                  delete participantMutes.current[fromId];
+                }
+                coordinateSeat();
+              },
+            );
+
             peers.current[fromId].addEventListener("track", (event: any) => {
               if (!remoteAudios.current[fromId]) {
                 remoteAudios.current[fromId] = new MediaStream();
@@ -361,22 +395,18 @@ export default function OnlineConversationScreen() {
           await peers.current[fromId].addIceCandidate(iceCandidate);
           return;
         }
-        if (data.signal.type === "leave") {
-          peers.current[fromId].close();
-          delete peers.current[fromId];
-          remoteAudios.current[fromId].release();
-          delete remoteAudios.current[fromId];
-          participantIds.current = participantIds.current.filter(
-            (x) => x !== fromId,
-          );
-          delete participantNames.current[fromId];
-          coordinateSeat();
-        }
         if (data.signal.type === "ban") {
           await queryClient.invalidateQueries({
             queryKey: [
               queryKey.CONVERSATION,
               queryKey.GET_ONLINE_CONVERSATIONS,
+            ],
+          });
+          await queryClient.invalidateQueries({
+            queryKey: [
+              queryKey.CONVERSATION,
+              queryKey.GET_OFFLINE_CONVERSATION_DETAIL,
+              conversationId
             ],
           });
           router.replace("/conversations");
@@ -390,14 +420,6 @@ export default function OnlineConversationScreen() {
     joinConversation();
 
     return () => {
-      if (ws.current && ws.current.readyState === 1) {
-        ws.current?.send(
-          JSON.stringify({
-            toIds: Object.keys(peers.current),
-            signal: { type: "leave" },
-          }),
-        );
-      }
       for (const peer of Object.values(peers.current)) {
         peer.close();
       }
@@ -424,7 +446,7 @@ export default function OnlineConversationScreen() {
     });
   }, [isPersonal]);
 
-  if (!detail || !profile) {
+  if (!profile || (!isPersonal && !detail)) {
     return null;
   }
 
@@ -432,15 +454,15 @@ export default function OnlineConversationScreen() {
     <SafeAreaView style={styles.container}>
       {!isPersonal && (
         <OnlineConversationRoomHeader
-          novel={String(detail.novel)}
-          shortStory={String(detail.shortStory)}
-          poem={String(detail.poem)}
-          play={String(detail.play)}
-          film={String(detail.film)}
-          writtenBy={String(detail.writtenBy)}
-          rule={String(detail.rule)}
-          time={String(detail.time)}
-          length={String(detail.length)}
+          novel={String(detail?.novel ?? "")}
+          shortStory={String(detail?.shortStory ?? "")}
+          poem={String(detail?.poem ?? "")}
+          play={String(detail?.play ?? "")}
+          film={String(detail?.film ?? "")}
+          writtenBy={String(detail?.writtenBy ?? "")}
+          rule={String(detail?.rule ?? "")}
+          time={String(detail?.time ?? "")}
+          length={String(detail?.length ?? "")}
         />
       )}
       <View style={styles.participantContainer}>
@@ -484,9 +506,9 @@ export default function OnlineConversationScreen() {
           {!isWebSocketOpen ? (
             <CustomButton label="Connecting..." disabled={true} />
           ) : mute ? (
-            <CustomButton label="turn on your mic" onPress={toggleAudio} />
+            <CustomButton label="Turn on your mic" onPress={toggleAudio} />
           ) : (
-            <CustomButton label="turn off your mic" onPress={toggleAudio} />
+            <CustomButton label="Turn off your mic" onPress={toggleAudio} />
           )}
         </View>
       </View>

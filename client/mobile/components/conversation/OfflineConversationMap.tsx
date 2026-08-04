@@ -4,7 +4,6 @@ import {
   Keyboard,
   Platform,
   Pressable,
-  StatusBar,
   StyleSheet,
   Text,
   View,
@@ -298,7 +297,9 @@ export default function OfflineConversationMap({
       )}
       <TrueSheet
         ref={sheet}
-        detents={[0.123, 0.72]}
+        detents={
+          Platform.OS === "android" ? [0.123, 0.72] : ["auto", 0.123, 0.72]
+        }
         dismissible={false}
         dimmed={false}
         backgroundColor={colors.SAND_100}
@@ -313,13 +314,13 @@ export default function OfflineConversationMap({
         </Pressable>
         {detailId ? (
           <View style={styles.container}>
-            <OfflineConversationDetail id={detailId}/>
+            <OfflineConversationDetail id={detailId} />
           </View>
         ) : isFetching ? (
           <ActivityIndicator style={{ paddingVertical: 50 }} />
         ) : (
           <>
-            <View style={{paddingVertical: 30}}></View>
+            <View style={{ paddingVertical: 30 }}></View>
             <FlatList
               data={searchData?.pages.flat() || []}
               ListEmptyComponent={
@@ -362,13 +363,13 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     zIndex: 1,
-    marginTop: 17,
-    marginRight: 75,
-    paddingLeft: 10,
+    marginTop: Platform.OS === "android" ? 10 : 17,
+    marginRight: Platform.OS === "android" ? 18 : 75,
+    paddingLeft: Platform.OS === "android" ? 55 : 10,
     gap: 8,
     backgroundColor: "transparent",
     flexDirection: "row",
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+    paddingTop: 0,
     height: 44,
   },
   retrySearchContainer: {

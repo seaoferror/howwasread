@@ -26,14 +26,16 @@ export default function CustomButton({
   return (
     <Pressable
       {...props}
-      style={({ pressed }) => [
-        styles.container,
-        styles[size],
-        styles[variant],
-        props.disabled && styles.disabled,
-        pressed && styles.pressed,
-        style,
-      ]}
+      style={({ pressed }) =>
+        StyleSheet.flatten([
+          styles.container,
+          styles[size],
+          styles[variant],
+          props.disabled && styles.disabled,
+          pressed && styles.pressed,
+          style,
+        ])
+      }
     >
       <Text style={styles[`${variant}Text`]}>{label}</Text>
     </Pressable>
@@ -79,6 +81,7 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "bold",
     color: colors.WHITE,
+    textAlign: "center"
   },
   outlinedText: {
     fontSize: 17,

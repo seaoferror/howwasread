@@ -80,7 +80,7 @@ export default function MessageItem({
             }
             break;
           case 1:
-            if (message.fromId === (myProfile?.id ?? getKVStore("myId"))){
+            if (message.fromId === (myProfile?.id ?? getKVStore("myId"))) {
               return;
             }
             await deleteMessage(db, message.id);
@@ -195,10 +195,12 @@ export default function MessageItem({
             </View>
           </View>
         )}
-        <ImageModal
-          imageContent={pressedImageContent}
-          onClose={() => setPressedImageContent(null)}
-        />
+        {
+          <ImageModal
+            imageContent={pressedImageContent}
+            onClose={() => setPressedImageContent(null)}
+          />
+        }
       </Pressable>
     </View>
   );
@@ -206,7 +208,7 @@ export default function MessageItem({
 
 const styles = StyleSheet.create({
   container: {
-    marginVertical: 4,
+    marginVertical: 3.7,
     paddingHorizontal: 16,
   },
   row: {
@@ -222,28 +224,28 @@ const styles = StyleSheet.create({
   bubbleWrapper: {
     flexDirection: "row",
     alignItems: "flex-end",
-    gap: 6,
+    gap: 3.7,
     maxWidth: "85%",
   },
   otherName: {
-    paddingBottom: 12,
-    fontWeight: "bold",
+    paddingBottom: 4,
+    fontWeight: "600",
   },
   bubbleWrapperReverse: {
     flexDirection: "row-reverse",
   },
   messageContainer: {
-    borderRadius: 16,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+    borderRadius: 7,
+    paddingVertical: 7,
+    paddingHorizontal: 12,
     overflow: "hidden",
   },
   mine: {
-    backgroundColor: colors.SAND_150,
+    backgroundColor: colors.SAND_110,
     borderBottomRightRadius: 4,
   },
   theirs: {
-    backgroundColor: colors.WHITE,
+    backgroundColor: colors.GRAY_50,
     borderBottomLeftRadius: 4,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.GRAY_200 || "#E5E7EB",

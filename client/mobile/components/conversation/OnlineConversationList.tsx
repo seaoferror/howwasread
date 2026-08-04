@@ -5,7 +5,6 @@ import {
   Keyboard,
   Platform,
   Pressable,
-  StatusBar,
   StyleSheet,
   View,
 } from "react-native";
@@ -133,7 +132,9 @@ export default function OnlineConversationList({
       )}
       <TrueSheet
         ref={sheet}
-        detents={["auto", 0.123, 0.72]}
+        detents={
+          Platform.OS === "android" ? [0.123, 0.72] : ["auto", 0.123, 0.72]
+        }
         dismissible={false}
         dimmed={false}
         backgroundColor={colors.SAND_100}
@@ -160,12 +161,12 @@ const styles = StyleSheet.create({
   },
   inputContainer: {
     zIndex: 1,
-    marginTop: 17,
+    marginTop: 12,
     paddingHorizontal: 10,
     gap: 8,
     backgroundColor: "transparent",
     flexDirection: "row",
-    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+    paddingTop: 0,
     height: 44,
   },
   closeButton: {

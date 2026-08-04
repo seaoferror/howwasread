@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, View } from "react-native";
+import { Platform, Pressable, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   },
   createButton: {
     position: "absolute",
-    bottom: 56,
+    bottom: Platform.OS === "android" ? 120 : 56,
     right: 16,
     backgroundColor: colors.WHITE,
     width: 64,

@@ -28,7 +28,6 @@ import {
   requestPermissionsAsync,
 } from "expo-notifications";
 import { registerNotification } from "@/api/notification";
-import { setAudioModeAsync } from "expo-audio";
 import { useGetMyProfile } from "@/hooks/useProfile";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import * as Sentry from "@sentry/react-native";
@@ -101,10 +100,6 @@ function RootNavigator() {
       console.log("myId", profile.id);
       setKVStore("myId", profile.id);
       setKVStore("myName", profile.name);
-      await setAudioModeAsync({
-        allowsRecording: true,
-        playsInSilentMode: true,
-      });
       let deviceId = await getSecureAsync("deviceId");
       if (!deviceId) {
         deviceId = randomUUID();

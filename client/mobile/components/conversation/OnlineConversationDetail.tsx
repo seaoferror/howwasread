@@ -113,29 +113,33 @@ export default function OnlineConversationDetail({
           ) : (
             <Text style={styles.ruleHeader}>No rule</Text>
           )}
-          <CustomButton
-            label={!data.isRegistrant ? "Register" : "Cancel registration"}
-            onPress={
-              !data.isRegistrant
-                ? () => registerOnlineConversationMutation.mutate({ id: id })
-                : () => deregisterOnlineConversationMutation.mutate({ id: id })
-            }
-            disabled={
-              registerOnlineConversationMutation.isPending ||
-              deregisterOnlineConversationMutation.isPending
-            }
-          />
-          <CustomButton
-            label={
-              data.canEnter
-                ? "Enter"
-                : data.isRegistrant
-                  ? "Enter available 15 minutes before conversation start"
-                  : "Non-registrant enter open 10 minutes after conversation start"
-            }
-            onPress={() => handleEnter()}
-            disabled={!data.canEnter}
-          />
+          <View style={{ gap: 30 }}>
+            <CustomButton
+              label={!data.isRegistrant ? "Register" : "Cancel registration"}
+              onPress={
+                !data.isRegistrant
+                  ? () => registerOnlineConversationMutation.mutate({ id: id })
+                  : () =>
+                      deregisterOnlineConversationMutation.mutate({ id: id })
+              }
+              disabled={
+                registerOnlineConversationMutation.isPending ||
+                deregisterOnlineConversationMutation.isPending
+              }
+            />
+            <CustomButton
+              label={
+                data.canEnter
+                  ? "Enter"
+                  : data.isRegistrant
+                    ? "Enter available 15 minutes before convo start"
+                    : "Non-registrant enter available \n 10 minutes after convo start"
+              }
+              style={!data.canEnter ? {height: 60} : undefined}
+              onPress={() => handleEnter()}
+              disabled={!data.canEnter}
+            />
+          </View>
         </View>
         <View style={styles.footer}>
           <Pressable

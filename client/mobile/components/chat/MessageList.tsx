@@ -111,7 +111,7 @@ export default function MessageList() {
         );
       }}
       keyExtractor={(item, index) => `${item.id}-${index}`}
-      contentContainerStyle={{ ...styles.contentContainer }}
+      contentContainerStyle={styles.contentContainer}
       onEndReached={handleEndReached}
       onEndReachedThreshold={0.5}
       inverted={true}
@@ -121,8 +121,6 @@ export default function MessageList() {
 
 const styles = StyleSheet.create({
   contentContainer: {
-    paddingVertical: 12,
     backgroundColor: "transparent",
-    gap: 12,
   },
 });

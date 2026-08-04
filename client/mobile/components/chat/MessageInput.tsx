@@ -24,7 +24,7 @@ import {
 import { uploadToS3 } from "@/api/chat";
 import Toast from "react-native-toast-message";
 import VoiceInput from "@/components/chat/VoiceInput";
-import { requestRecordingPermissionsAsync } from "expo-audio";
+import { setAudioModeAsync } from "expo-audio";
 
 export default function MessageInput() {
   const { id: roomId } = useLocalSearchParams();
@@ -188,6 +188,10 @@ export default function MessageInput() {
               <Pressable
                 style={styles.buttonContainer}
                 onPress={async () => {
+                  await setAudioModeAsync({
+                    allowsRecording: true,
+                    playsInSilentMode: true,
+                  });
                   setIsVoice(true);
                 }}
               >

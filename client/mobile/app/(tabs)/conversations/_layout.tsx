@@ -6,9 +6,8 @@ export default function ConversationsLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: "Conversations",
+          title: "Conversation",
           headerShown: true,
-          animation: "slide_from_left",
         }}
       />
     </Stack>
