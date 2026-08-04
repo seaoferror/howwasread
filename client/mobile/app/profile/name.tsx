@@ -4,11 +4,11 @@ import { FormProvider, useForm } from "react-hook-form";
 import { router, useLocalSearchParams, useNavigation } from "expo-router";
 import { useSetName } from "@/hooks/useProfile";
 import NameInput from "@/components/profile/NameInput";
-import FixedBottomCTA from "@/components/FixedBottomCTA";
 import { colors } from "@/constants";
 import { useEffect } from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { setKVStore } from "@/db/storage";
+import CustomButton from "@/components/CustomButton";
 
 interface FormValue {
   name: string;
@@ -58,13 +58,14 @@ export default function NameScreen() {
     <FormProvider {...nameForm}>
       <SafeAreaView style={styles.container}>
         <Text style={styles.guideLine}>
-          We strongly recommend to set a name which is convenient to be called
-          by others
+          {
+            "We strongly recommend to set a name \n which is convenient to be called by others"
+          }
         </Text>
         <View style={styles.content}>
           <NameInput />
         </View>
-        <FixedBottomCTA
+        <CustomButton
           label="Set this name"
           onPress={nameForm.handleSubmit(onSubmit)}
           disabled={setNameMutation.isPending}
@@ -80,18 +81,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.SAND_110,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderColor: colors.GRAY_700,
+    paddingHorizontal: 40,
   },
   content: {
-    flex: 1,
     width: "100%",
-    paddingHorizontal: 100,
-    paddingTop: 100,
-    gap: 50,
+    paddingHorizontal: 57,
+    marginTop: 58,
+    marginBottom: 97,
   },
   guideLine: {
-    position: "absolute",
-    top: 40,
-    paddingHorizontal: 30,
-    fontSize: 15,
+    fontSize: 14,
+    textAlign: "center",
   },
 });

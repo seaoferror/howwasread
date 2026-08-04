@@ -1,9 +1,8 @@
-import { Modal, Platform, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { getKVStore } from "@/db/storage";
-import Zoom from "react-native-zoom-reanimated";
 
 interface ImageModalProps {
   imageContent: string | null;
@@ -24,34 +23,24 @@ export default function ImageModal({ imageContent, onClose }: ImageModalProps) {
             <Ionicons name="close" size={32} color="white" />
           </Pressable>
 
-          {imageContent &&
-            (Platform.OS === "android" ? (
-              <Zoom>
-                <Image
-                  style={styles.fullScreenImage}
-                  source={getKVStore(imageContent)}
-                  contentFit="contain"
-                  cachePolicy="memory"
-                />
-              </Zoom>
-            ) : (
-              <ScrollView
-                contentContainerStyle={{ flex: 1 }}
-                maximumZoomScale={10}
-                minimumZoomScale={1}
-                bouncesZoom={true}
-                centerContent={true}
-                showsHorizontalScrollIndicator={false}
-                showsVerticalScrollIndicator={false}
-              >
-                <Image
-                  style={styles.fullScreenImage}
-                  source={getKVStore(imageContent)}
-                  contentFit="contain"
-                  cachePolicy="memory"
-                />
-              </ScrollView>
-            ))}
+          {imageContent && (
+            <ScrollView
+              contentContainerStyle={{ flex: 1 }}
+              maximumZoomScale={10}
+              minimumZoomScale={1}
+              bouncesZoom={true}
+              centerContent={true}
+              showsHorizontalScrollIndicator={false}
+              showsVerticalScrollIndicator={false}
+            >
+              <Image
+                style={styles.fullScreenImage}
+                source={getKVStore(imageContent)}
+                contentFit="contain"
+                cachePolicy="memory"
+              />
+            </ScrollView>
+          )}
         </SafeAreaView>
       </View>
     </Modal>

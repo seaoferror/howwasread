@@ -6,7 +6,7 @@ export default function ChatsLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: "Chat",
+          title: "Chats",
           headerShown: true,
         }}
       />

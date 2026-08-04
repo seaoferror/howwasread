@@ -135,20 +135,20 @@ export default function OnlineConversationDetail({
                     ? "Enter available 15 minutes before convo start"
                     : "Non-registrant enter available \n 10 minutes after convo start"
               }
-              style={!data.canEnter ? {height: 60} : undefined}
+              style={!data.canEnter ? { height: 60 } : undefined}
               onPress={() => handleEnter()}
               disabled={!data.canEnter}
             />
           </View>
         </View>
-        <View style={styles.footer}>
-          <Pressable
-            onPress={async () => handleReport()}
-            style={({ pressed }) => [pressed && styles.reportPressed]}
-          >
-            <Text style={styles.reportText}>Report conversation</Text>
-          </Pressable>
-        </View>
+      </View>
+      <View style={styles.footer}>
+        <Pressable
+          onPress={async () => handleReport()}
+          style={({ pressed }) => [pressed && styles.reportPressed]}
+        >
+          <Text style={styles.reportText}>Report conversation</Text>
+        </Pressable>
       </View>
     </View>
   );

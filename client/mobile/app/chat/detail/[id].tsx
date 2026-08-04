@@ -36,9 +36,8 @@ export default function ChatRoomDetailScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <ScrollView style={{marginBottom: 100}}>
-        <View style={{gap:20}}>
-          <OfflineConversationDetail id={String(roomId)}/>
+      <ScrollView>
+        <View style={{ gap: 20, marginBottom: 70 }}>
           <View style={styles.box}>
             <Text style={styles.listTitle}>Member list</Text>
             <View style={styles.memberContainer}>
@@ -47,6 +46,7 @@ export default function ChatRoomDetailScreen() {
               ))}
             </View>
           </View>
+          <OfflineConversationDetail id={String(roomId)} />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -56,7 +56,7 @@ export default function ChatRoomDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginTop: 50,
+    marginTop: 70,
   },
   box: {
     padding: 16,

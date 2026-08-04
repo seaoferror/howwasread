@@ -13,7 +13,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="conversations"
         options={{
-          title: "Conversation",
+          title: "Conversations",
           tabBarIcon: ({ color }) => (
             <FontAwesome name="exchange" size={24} color={color} />
           ),
@@ -22,7 +22,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="chats"
         options={{
-          title: "Chat",
+          title: "Chats",
           tabBarIcon: ({ color, focused }) => (
             <Ionicons
               name={focused ? "chatbubbles-sharp" : "chatbubbles-outline"}

@@ -33,6 +33,7 @@ export default function ChatScreen() {
 
   useEffect(() => {
     navigation.setOptions({
+      headerTitleAlign: "center",
       headerTitle: () => (
         <Pressable
           onPress={() =>
@@ -56,27 +57,28 @@ export default function ChatScreen() {
           </Text>
         </Pressable>
       ),
-      headerRight: () =>
-        isPersonal &&
-        myProfile && (
-          <Pressable
-            onPress={() => {
-              const conversationId =
-                myProfile.id > roomId
-                  ? `${roomId}${myProfile.id}`
-                  : `${myProfile.id}${roomId}`;
-              router.push({
-                pathname: "/online/[id]",
-                params: {
-                  id: conversationId,
-                  isPersonal: "true",
-                },
-              });
-            }}
-          >
-            <Ionicons name="call-outline" size={28} color="black" />
-          </Pressable>
-        ),
+      headerRight:
+        isPersonal && myProfile
+          ? () => (
+              <Pressable
+                onPress={() => {
+                  const conversationId =
+                    myProfile.id > roomId
+                      ? `${roomId}${myProfile.id}`
+                      : `${myProfile.id}${roomId}`;
+                  router.push({
+                    pathname: "/online/[id]",
+                    params: {
+                      id: conversationId,
+                      isPersonal: "true",
+                    },
+                  });
+                }}
+              >
+                <Ionicons name="call-outline" size={28} color="black" />
+              </Pressable>
+            )
+          : undefined, // This completely removes headerRight when conditions aren't met
     });
   }, [roomInfo]);
 

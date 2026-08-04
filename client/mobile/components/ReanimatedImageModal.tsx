@@ -1,10 +1,9 @@
-import React from "react";
 import {
   Modal,
   Pressable,
   StyleSheet,
-  View,
   useWindowDimensions,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -17,9 +16,10 @@ import {
   GestureHandlerRootView,
 } from "react-native-gesture-handler";
 import Animated, {
-  useSharedValue,
   useAnimatedStyle,
+  useSharedValue,
   withTiming,
+  withDecay, // 1. Imported withDecay
 } from "react-native-reanimated";
 
 interface ImageModalProps {
@@ -29,8 +29,10 @@ interface ImageModalProps {
 
 const AnimatedImage = Animated.createAnimatedComponent(Image);
 
-export default function ImageModal({ imageContent, onClose }: ImageModalProps) {
-  // 1. Get window dimensions to calculate boundaries
+export default function ReanimatedImageModal({
+  imageContent,
+  onClose,
+}: ImageModalProps) {
   const { width, height } = useWindowDimensions();
 
   const scale = useSharedValue(1);
@@ -51,6 +53,11 @@ export default function ImageModal({ imageContent, onClose }: ImageModalProps) {
   };
 
   const pinchGesture = Gesture.Pinch()
+    .onStart(() => {
+      savedScale.value = scale.value;
+      savedTranslateX.value = translateX.value;
+      savedTranslateY.value = translateY.value;
+    })
     .onUpdate((e) => {
       scale.value = Math.min(Math.max(savedScale.value * e.scale, 0.5), 10);
     })
@@ -59,14 +66,7 @@ export default function ImageModal({ imageContent, onClose }: ImageModalProps) {
         scale.value = withTiming(1);
         translateX.value = withTiming(0);
         translateY.value = withTiming(0);
-        savedScale.value = 1;
-        savedTranslateX.value = 0;
-        savedTranslateY.value = 0;
       } else {
-        savedScale.value = scale.value;
-
-        // 2. If the user pinches OUT (shrinks the image) while panned to the edge,
-        // we need to recalculate the bounds and snap the image back into view.
         const maxTranslateX = (width * (scale.value - 1)) / 2;
         const maxTranslateY = (height * (scale.value - 1)) / 2;
 
@@ -78,25 +78,24 @@ export default function ImageModal({ imageContent, onClose }: ImageModalProps) {
           -maxTranslateY,
           Math.min(translateY.value, maxTranslateY),
         );
-
         translateX.value = withTiming(clampedX);
         translateY.value = withTiming(clampedY);
-        savedTranslateX.value = clampedX;
-        savedTranslateY.value = clampedY;
       }
     });
 
   const panGesture = Gesture.Pan()
+    .onStart(() => {
+      savedTranslateX.value = translateX.value;
+      savedTranslateY.value = translateY.value;
+    })
     .onUpdate((e) => {
       if (scale.value > 1) {
-        // 3. Calculate maximum allowed panning distance
         const maxTranslateX = (width * (scale.value - 1)) / 2;
         const maxTranslateY = (height * (scale.value - 1)) / 2;
 
         const nextTranslateX = savedTranslateX.value + e.translationX;
         const nextTranslateY = savedTranslateY.value + e.translationY;
 
-        // 4. Clamp the translation values so it can't go past the edges
         translateX.value = Math.max(
           -maxTranslateX,
           Math.min(nextTranslateX, maxTranslateX),
@@ -107,32 +106,22 @@ export default function ImageModal({ imageContent, onClose }: ImageModalProps) {
         );
       }
     })
-    .onEnd(() => {
-      savedTranslateX.value = translateX.value;
-      savedTranslateY.value = translateY.value;
-    });
-
-  const doubleTapGesture = Gesture.Tap()
-    .numberOfTaps(2)
-    .onEnd(() => {
+    .onEnd((e) => {
       if (scale.value > 1) {
-        scale.value = withTiming(1);
-        translateX.value = withTiming(0);
-        translateY.value = withTiming(0);
-        savedScale.value = 1;
-        savedTranslateX.value = 0;
-        savedTranslateY.value = 0;
-      } else {
-        scale.value = withTiming(2);
-        savedScale.value = 2;
+        const maxTranslateX = (width * (scale.value - 1)) / 2;
+        const maxTranslateY = (height * (scale.value - 1)) / 2;
+        translateX.value = withDecay({
+          velocity: e.velocityX,
+          clamp: [-maxTranslateX, maxTranslateX],
+        });
+        translateY.value = withDecay({
+          velocity: e.velocityY,
+          clamp: [-maxTranslateY, maxTranslateY],
+        });
       }
     });
 
-  const composedGestures = Gesture.Simultaneous(
-    pinchGesture,
-    panGesture,
-    doubleTapGesture,
-  );
+  const composedGestures = Gesture.Simultaneous(pinchGesture, panGesture);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {

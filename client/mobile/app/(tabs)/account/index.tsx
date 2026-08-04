@@ -79,7 +79,7 @@ export default function AccountScreen() {
             pressed && styles.menuItemPressed,
           ]}
         >
-          <Text style={styles.menuText}>Change your profile</Text>
+          <Text style={styles.menuText}>Change your name</Text>
         </Pressable>
         <Pressable
           onPress={handleLogout}
@@ -88,7 +88,7 @@ export default function AccountScreen() {
             pressed && styles.menuItemPressed,
           ]}
         >
-          <Text style={styles.menuText}>Logout</Text>
+          <Text style={styles.menuText}>Sign out</Text>
         </Pressable>
       </View>
       <View style={styles.footer}>

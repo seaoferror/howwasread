@@ -6,7 +6,7 @@ export default function ConversationsLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: "Conversation",
+          title: "Conversations",
           headerShown: true,
         }}
       />

@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Message } from "@/types/chat";
 import { getHourMinute, getLongDate } from "@/util/time";
 import { useGetMyProfile, useGetProfile } from "@/hooks/useProfile";
@@ -16,6 +16,7 @@ import { useSQLiteContext } from "expo-sqlite";
 import { deleteMessage } from "@/db/message";
 import { reportUser } from "@/api/chat";
 import Toast from "react-native-toast-message";
+import ReanimatedImageModal from "@/components/ReanimatedImageModal";
 
 interface MessageItemProps {
   message: Omit<Message, "roomId">;
@@ -195,12 +196,17 @@ export default function MessageItem({
             </View>
           </View>
         )}
-        {
+        {Platform.OS === "android" ? (
+          <ReanimatedImageModal
+            imageContent={pressedImageContent}
+            onClose={() => setPressedImageContent(null)}
+          />
+        ) : (
           <ImageModal
             imageContent={pressedImageContent}
             onClose={() => setPressedImageContent(null)}
           />
-        }
+        )}
       </Pressable>
     </View>
   );
