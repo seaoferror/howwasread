@@ -24,7 +24,7 @@ import {
 import { uploadToS3 } from "@/api/chat";
 import Toast from "react-native-toast-message";
 import VoiceInput from "@/components/chat/VoiceInput";
-import { requestRecordingPermissionsAsync, setAudioModeAsync } from "expo-audio";
+import { requestRecordingPermissionsAsync } from "expo-audio";
 
 export default function MessageInput() {
   const { id: roomId } = useLocalSearchParams();
