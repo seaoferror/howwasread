@@ -31,6 +31,7 @@ import { registerNotification } from "@/api/notification";
 import { useGetMyProfile } from "@/hooks/useProfile";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import * as Sentry from "@sentry/react-native";
+import { setAudioModeAsync } from "expo-audio";
 
 Sentry.init({
   dsn: "https://4d3c893e931b2ee0c936c646d22033bc@o4511734928572416.ingest.de.sentry.io/4511734931783760",
@@ -107,6 +108,12 @@ function RootNavigator() {
       }
       console.log(deviceId);
       try {
+        await setAudioModeAsync({
+          allowsRecording: true,
+          shouldPlayInBackground: true,
+          shouldRouteThroughEarpiece: true,
+          playsInSilentMode: true,
+        });
         await requestPermissionsAsync({
           ios: {
             allowAlert: true,
