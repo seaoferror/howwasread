@@ -32,6 +32,7 @@ import {
   useBanParticipant,
   useGetOnlineConversationDetail,
 } from "@/hooks/useConversation";
+import * as BackgroundTimer from "react-native-nitro-keepalive-timer";
 
 declare const WebSocket: {
   prototype: WebSocket;
@@ -209,6 +210,7 @@ export default function OnlineConversationScreen() {
   };
 
   useEffect(() => {
+    let keepaliveInterval: number | null = null;
     const joinConversation = async () => {
       ws.current = new WebSocket(
         `wss://${process.env.EXPO_PUBLIC_API_URL}/onlineconversation/join?id=${conversationId}`,
@@ -221,6 +223,12 @@ export default function OnlineConversationScreen() {
       );
       ws.current.onopen = () => {
         setIsWebSocketOpen(true);
+        keepaliveInterval = BackgroundTimer.setInterval(() => {
+          if (ws.current && ws.current.readyState === 1) {
+            ws.current.ping();
+            console.log("Sent background keepalive ping");
+          }
+        }, 10000);
       };
       console.log(
         `wss://${process.env.EXPO_PUBLIC_API_URL}/onlineconversation/join?id=${conversationId}`,
@@ -282,6 +290,7 @@ export default function OnlineConversationScreen() {
                 const state = peers.current[fromId].iceConnectionState;
                 console.log(`Peer ${fromId} ICE connection state: ${state}`);
                 if (
+                  state === "disconnected" ||
                   state === "failed" ||
                   state === "closed"
                 ) {
@@ -419,6 +428,9 @@ export default function OnlineConversationScreen() {
     joinConversation();
 
     return () => {
+      if (keepaliveInterval !== null) {
+        BackgroundTimer.clearInterval(keepaliveInterval);
+      }
       for (const peer of Object.values(peers.current)) {
         peer.close();
       }
