@@ -282,7 +282,6 @@ export default function OnlineConversationScreen() {
                 const state = peers.current[fromId].iceConnectionState;
                 console.log(`Peer ${fromId} ICE connection state: ${state}`);
                 if (
-                  state === "disconnected" ||
                   state === "failed" ||
                   state === "closed"
                 ) {
