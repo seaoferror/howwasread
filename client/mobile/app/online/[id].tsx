@@ -17,7 +17,7 @@ import {
   RTCIceCandidate,
   RTCPeerConnection,
   RTCSessionDescription,
-} from "@livekit/react-native-webrtc";
+} from "react-native-webrtc";
 import { getKVStore, getSecureAsync } from "@/db/storage";
 import { SafeAreaView } from "react-native-safe-area-context";
 import OnlineConversationRoomHeader from "@/components/conversation/OnlineConversationRoomHeader";
