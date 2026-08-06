@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { colors } from "@/constants";
 import InputField from "@/components/InputField";
 import {
+  RecordingOptions,
   RecordingPresets,
   useAudioPlayer,
   useAudioPlayerStatus,
@@ -13,6 +14,7 @@ import { type Dispatch, type SetStateAction, useEffect } from "react";
 import { formatToMinuteSecond } from "@/util/time";
 
 interface VoiceInputProps {
+  recordingPresets?: RecordingOptions
   setIsVoice: Dispatch<SetStateAction<boolean>>;
   handleFileMessage: (
     contentType: string,
@@ -22,10 +24,11 @@ interface VoiceInputProps {
 }
 
 export default function VoiceInput({
+  recordingPresets,
   setIsVoice,
   handleFileMessage,
 }: VoiceInputProps) {
-  const audioRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const audioRecorder = useAudioRecorder(recordingPresets ?? RecordingPresets.HIGH_QUALITY);
   const recorderState = useAudioRecorderState(audioRecorder);
   const audioPlayer = useAudioPlayer();
   const audioStatus = useAudioPlayerStatus(audioPlayer);

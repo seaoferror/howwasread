@@ -12,7 +12,7 @@ import {
   setKVStore,
   setSecure,
 } from "@/db/storage";
-import { Platform } from "react-native";
+import { AppState, Platform } from "react-native";
 import { getRecentMessages } from "@/api/chat";
 import {
   deleteMessage,
@@ -200,6 +200,12 @@ function RootNavigator() {
       };
     };
     connectMessaging();
+    AppState.addEventListener("change", (state) => {
+      console.log("trigger app state event listener", state)
+      if (state === "active" && (!ws.current || ws.current?.readyState === 3)) {
+        connectMessaging();
+      }
+    });
   }, [profile]);
   return (
     <Stack>

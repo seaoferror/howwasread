@@ -33,6 +33,7 @@ import {
   useGetOnlineConversationDetail,
 } from "@/hooks/useConversation";
 import VoiceInput from "@/components/chat/VoiceInput";
+import {RecordingPresets} from "expo-audio";
 
 declare const WebSocket: {
   prototype: WebSocket;
@@ -477,6 +478,7 @@ export default function OnlineConversationScreen() {
       <View style={styles.hiddenContainer}>
         {isVoice && (
           <VoiceInput
+            recordingPresets={RecordingPresets.LOW_QUALITY}
             setIsVoice={setIsVoice}
             handleFileMessage={async (contentType, mimeType, content) => {}}
           />
