@@ -418,11 +418,30 @@ export default function OnlineConversationScreen() {
           participantMutes.current[fromId] = !participantMutes.current[fromId];
           coordinateSeat();
         }
+        if (data.signal.type === "leave") {
+          peers.current[fromId].close();
+          delete peers.current[fromId];
+          remoteAudios.current[fromId].release();
+          delete remoteAudios.current[fromId];
+          participantIds.current = participantIds.current.filter(
+            (x) => x !== fromId,
+          );
+          delete participantNames.current[fromId];
+          coordinateSeat();
+        }
       };
     };
     joinConversation();
 
     return () => {
+      if (ws.current && ws.current.readyState === 1) {
+        ws.current?.send(
+          JSON.stringify({
+            toIds: Object.keys(peers.current),
+            signal: { type: "leave" },
+          }),
+        );
+      }
       for (const peer of Object.values(peers.current)) {
         peer.close();
       }
