@@ -18,6 +18,7 @@ import { useActionSheet } from "@expo/react-native-action-sheet";
 import { reportUser } from "@/api/chat";
 import { reportOnlineConversation } from "@/api/conversation";
 import { router } from "expo-router";
+import { requestRecordingPermissionsAsync } from "expo-audio";
 
 interface OnlineConversationDetailProps {
   id: string;
@@ -136,7 +137,10 @@ export default function OnlineConversationDetail({
                     : "Non-registrant enter available \n 10 minutes after convo start"
               }
               style={!data.canEnter ? { height: 60 } : undefined}
-              onPress={() => handleEnter()}
+              onPress={async () => {
+                await requestRecordingPermissionsAsync();
+                handleEnter();
+              }}
               disabled={!data.canEnter}
             />
           </View>

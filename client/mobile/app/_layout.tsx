@@ -110,6 +110,7 @@ function RootNavigator() {
       try {
         await setAudioModeAsync({
           allowsRecording: true,
+          allowsBackgroundRecording: true,
           shouldPlayInBackground: true,
           shouldRouteThroughEarpiece: true,
           playsInSilentMode: true,

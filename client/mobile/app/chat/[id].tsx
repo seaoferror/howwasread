@@ -19,6 +19,7 @@ import { useEffect } from "react";
 import { getKVStore } from "@/db/storage";
 import { Ionicons } from "@expo/vector-icons";
 import { useGetMyProfile } from "@/hooks/useProfile";
+import { requestRecordingPermissionsAsync } from "expo-audio";
 
 export default function ChatScreen() {
   const { id: roomId } = useLocalSearchParams();
@@ -61,11 +62,12 @@ export default function ChatScreen() {
         isPersonal && myProfile
           ? () => (
               <Pressable
-                onPress={() => {
+                onPress={async () => {
                   const conversationId =
                     myProfile.id > roomId
                       ? `${roomId}${myProfile.id}`
                       : `${myProfile.id}${roomId}`;
+                  await requestRecordingPermissionsAsync();
                   router.push({
                     pathname: "/online/[id]",
                     params: {

@@ -32,7 +32,7 @@ import {
   useBanParticipant,
   useGetOnlineConversationDetail,
 } from "@/hooks/useConversation";
-import * as BackgroundTimer from "react-native-nitro-keepalive-timer";
+import VoiceInput from "@/components/chat/VoiceInput";
 
 declare const WebSocket: {
   prototype: WebSocket;
@@ -68,6 +68,7 @@ export default function OnlineConversationScreen() {
   const localAudio = useRef<MediaStream>(null);
   const remoteAudios = useRef<Record<string, MediaStream>>({});
   const [isWebSocketOpen, setIsWebSocketOpen] = useState(false);
+  const [isVoice, setIsVoice] = useState(false);
 
   const coordinates = SEAT_COORDINATES[Number(detail?.capacity ?? 2)];
   const fillOrder = SEAT_FILL_ORDER[Number(detail?.capacity ?? 2)];
@@ -210,7 +211,6 @@ export default function OnlineConversationScreen() {
   };
 
   useEffect(() => {
-    let keepaliveInterval: number | null = null;
     const joinConversation = async () => {
       ws.current = new WebSocket(
         `wss://${process.env.EXPO_PUBLIC_API_URL}/onlineconversation/join?id=${conversationId}`,
@@ -223,12 +223,7 @@ export default function OnlineConversationScreen() {
       );
       ws.current.onopen = () => {
         setIsWebSocketOpen(true);
-        keepaliveInterval = BackgroundTimer.setInterval(() => {
-          if (ws.current && ws.current.readyState === 1) {
-            ws.current.ping();
-            console.log("Sent background keepalive ping");
-          }
-        }, 10000);
+        setIsVoice(true);
       };
       console.log(
         `wss://${process.env.EXPO_PUBLIC_API_URL}/onlineconversation/join?id=${conversationId}`,
@@ -414,7 +409,7 @@ export default function OnlineConversationScreen() {
             queryKey: [
               queryKey.CONVERSATION,
               queryKey.GET_OFFLINE_CONVERSATION_DETAIL,
-              conversationId
+              conversationId,
             ],
           });
           router.replace("/conversations");
@@ -428,9 +423,6 @@ export default function OnlineConversationScreen() {
     joinConversation();
 
     return () => {
-      if (keepaliveInterval !== null) {
-        BackgroundTimer.clearInterval(keepaliveInterval);
-      }
       for (const peer of Object.values(peers.current)) {
         peer.close();
       }
@@ -463,6 +455,14 @@ export default function OnlineConversationScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View style={styles.hiddenContainer}>
+        {isVoice && (
+          <VoiceInput
+            setIsVoice={setIsVoice}
+            handleFileMessage={async (contentType, mimeType, content) => {}}
+          />
+        )}
+      </View>
       {!isPersonal && (
         <OnlineConversationRoomHeader
           novel={String(detail?.novel ?? "")}
@@ -572,5 +572,11 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
     paddingHorizontal: 16,
     gap: 12,
+  },
+  hiddenContainer: {
+    width: 0,
+    height: 0,
+    opacity: 0,
+    position: "absolute",
   },
 });
