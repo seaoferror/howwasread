@@ -12,8 +12,8 @@ const { Kafka, ErrorCodes } = KafkaJS;
 export async function createValkeyClient() {
   const ca = process.env.VALKEY_CA_CERT_PATH;
   let caCertBuffer;
-  if(ca) {
-    caCertBuffer = readFileSync("/cert/valkey/ca.crt");
+  if(ca) {  
+    caCertBuffer = readFileSync(ca);
   }
   return GlideClusterClient.createClient({
     addresses: [

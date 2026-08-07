@@ -8,8 +8,10 @@ spec:
     maxmemory-policy: "volatile-lfu"
   shards: 1
   replicas: 0
+  tls:
+    certificate:
+      secretName: valkey-cert
   users:
-      # this name is VALKEY_USERNAME
     - name: lule
       enabled: true
       passwordSecret:

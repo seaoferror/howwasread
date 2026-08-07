@@ -154,7 +154,7 @@ spec:
             items:
               - key: ca.crt
                 path: ca.crt
-        {{- end }}}
+        {{- end }}
 
 ---
 apiVersion: v1
