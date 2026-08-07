@@ -1,16 +1,21 @@
-import { GlideClient } from "@valkey/valkey-glide";
+import { GlideClusterClient } from "@valkey/valkey-glide";
 import {
   KafkaJS,
   LibrdKafkaError,
   type TopicPartition,
 } from "@confluentinc/kafka-javascript";
 import cassandra from "cassandra-driver";
+import { readFileSync } from "node:fs";
 
 const { Kafka, ErrorCodes } = KafkaJS;
 
 export async function createValkeyClient() {
-  // const caCertBuffer = readFileSync("/cert/valkey/ca.crt");
-  return GlideClient.createClient({
+  const ca = process.env.VALKEY_CA_CERT_PATH;
+  let caCertBuffer;
+  if(ca) {
+    caCertBuffer = readFileSync("/cert/valkey/ca.crt");
+  }
+  return GlideClusterClient.createClient({
     addresses: [
       {
         host: process.env.VALKEY_HOST || "localhost",
@@ -25,11 +30,11 @@ export async function createValkeyClient() {
           }
         : undefined,
     useTLS: process.env.PROFILE === "production" ? true : undefined,
-    // advancedConfiguration: {
-    //   tlsAdvancedConfiguration: {
-    //     rootCertificates: caCertBuffer
-    //   }
-    // },
+    advancedConfiguration: {
+      tlsAdvancedConfiguration: {
+        rootCertificates: caCertBuffer
+      }
+    },
     compression: {
       enabled: true,
     },
@@ -40,7 +45,7 @@ export async function createKafkaConsumer() {
   const consumer = new Kafka().consumer({
     "bootstrap.servers": process.env.KAFKA_ADDRESS,
     "security.protocol": process.env.KAFKA_API_KEY ? "sasl_ssl" : "ssl",
-    "sasl.mechanism": process.env.KAFKA_API_KEY ? "PLAIN": undefined,
+    "sasl.mechanism": process.env.KAFKA_API_KEY ? "PLAIN" : undefined,
     "sasl.username": process.env.KAFKA_API_KEY || undefined,
     "sasl.password": process.env.KAFKA_API_SECRET || undefined,
     "ssl.ca.location": process.env.KAFKA_CA_CERT_PATH || undefined,

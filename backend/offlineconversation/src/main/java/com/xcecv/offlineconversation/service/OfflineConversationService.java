@@ -14,7 +14,7 @@ import com.xcecv.offlineconversation.projection.OfflineConversationReportProject
 import com.xcecv.offlineconversation.repository.OfflineConversationParticipantRepository;
 import com.xcecv.offlineconversation.repository.OfflineConversationRepository;
 import com.xcecv.offlineconversation.util.UUIDUtil;
-import glide.api.GlideClient;
+import glide.api.GlideClusterClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -37,7 +37,7 @@ public class OfflineConversationService {
   private final OfflineConversationRepository offlineConversationRepository;
   private final OfflineConversationParticipantRepository offlineConversationParticipantRepository;
 
-  private final GlideClient glideClient;
+  private final GlideClusterClient glideClient;
   private final ObjectMapper objectMapper;
   private final ApplicationEventPublisher applicationEventPublisher;
 

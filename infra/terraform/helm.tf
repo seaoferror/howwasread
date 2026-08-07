@@ -64,55 +64,55 @@ resource "helm_release" "strimzi" {
 #   depends_on = [aws_iam_role_policy_attachment.external_dns_attach,  module.cluster1.eks_managed_node_groups]
 # }
 
-# resource "helm_release" "cert_manager" {
-#   name             = "cert-manager"
-#   repository       = "https://charts.jetstack.io"
-#   chart            = "cert-manager"
-#   namespace        = "cert-manager"
-#   create_namespace = true
-#
-#   set {
-#     name  = "installCRDs"
-#     value = "true"
-#   }
-#
-#   set {
-#     name  = "config.apiVersion"
-#     value = "controller.config.cert-manager.io/v1alpha1"
-#   }
-#
-#   set {
-#     name  = "config.kind"
-#     value = "ControllerConfiguration"
-#   }
-#
-#   set {
-#     name  = "config.enableGatewayAPI"
-#     value = "true"
-#   }
-#
-#   # values = [
-#   #   yamlencode({
-#   #     nodeSelector = {
-#   #       "node.kubernetes.io/instance-type" = local.idle_node
-#   #     }
-#   #     webhook = {
-#   #       nodeSelector = {
-#   #         "node.kubernetes.io/instance-type" = local.idle_node
-#   #       }
-#   #     }
-#   #     cainjector = {
-#   #       nodeSelector = {
-#   #         "node.kubernetes.io/instance-type" = local.idle_node
-#   #       }
-#   #     }
-#   #   })
-#   # ]
-#
-#   # depends_on = [
-#   #   module.cluster1.eks_managed_node_groups
-#   # ]
-# }
+resource "helm_release" "cert_manager" {
+  name             = "cert-manager"
+  repository       = "https://charts.jetstack.io"
+  chart            = "cert-manager"
+  namespace        = "cert-manager"
+  create_namespace = true
+
+  set {
+    name  = "installCRDs"
+    value = "true"
+  }
+
+  set {
+    name  = "config.apiVersion"
+    value = "controller.config.cert-manager.io/v1alpha1"
+  }
+
+  set {
+    name  = "config.kind"
+    value = "ControllerConfiguration"
+  }
+
+  set {
+    name  = "config.enableGatewayAPI"
+    value = "true"
+  }
+
+  # values = [
+  #   yamlencode({
+  #     nodeSelector = {
+  #       "node.kubernetes.io/instance-type" = local.idle_node
+  #     }
+  #     webhook = {
+  #       nodeSelector = {
+  #         "node.kubernetes.io/instance-type" = local.idle_node
+  #       }
+  #     }
+  #     cainjector = {
+  #       nodeSelector = {
+  #         "node.kubernetes.io/instance-type" = local.idle_node
+  #       }
+  #     }
+  #   })
+  # ]
+
+  # depends_on = [
+  #   module.cluster1.eks_managed_node_groups
+  # ]
+}
 
 # resource "helm_release" "argocd" {
 #   name             = "argocd"
@@ -394,25 +394,25 @@ resource "helm_release" "alloy" {
   ]
 }
 
-# resource "helm_release" "valkey_operator" {
-#   name             = "valkey-operator
-#   repository       = "https://valkey.io/valkey-helm"
-#   chart            = "valkey-operator"
-#   namespace        = "valkey-system"
-#   create_namespace = true
-#
-#   values = [
-#     yamlencode({
-#       nodeSelector = {
-#         "node.kubernetes.io/instance-type" = local.idle_node
-#       }
-#     })
-#   ]
-#
-#   depends_on = [
-#     module.cluster0.eks_managed_node_groups
-#   ]
-# }
+resource "helm_release" "valkey_operator" {
+  name             = "valkey-operator"
+  repository       = "https://valkey.io/valkey-helm"
+  chart            = "valkey-operator"
+  namespace        = "valkey-system"
+  create_namespace = true
+
+  # values = [
+  #   yamlencode({
+  #     nodeSelector = {
+  #       "node.kubernetes.io/instance-type" = local.idle_node
+  #     }
+  #   })
+  # ]
+
+  # depends_on = [
+  #   module.cluster0.eks_managed_node_groups
+  # ]
+}
 
 # resource "helm_release" "metrics_server" {
 #   name       = "metrics-server"

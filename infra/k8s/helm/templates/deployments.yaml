@@ -36,6 +36,13 @@ spec:
 {{/*              cpu: {{ $app.cpuLimits }}*/}}
 {{/*              memory: {{ $app.memoryLimits }}*/}}
           env:
+            {{- if $app.valkey }}
+            - name: VALKEY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: valkey-user
+                  key: lule
+            {{- end}}
             - name: POD_IP
               valueFrom:
                 fieldRef:
@@ -62,10 +69,6 @@ spec:
             {{- if $app.twilio }}
             - secretRef:
                 name: twilio
-            {{- end }}
-            {{- if $app.valkey }}
-            - secretRef:
-                name: valkey
             {{- end }}
             {{- if $app.opensearch }}
             - secretRef:
@@ -105,6 +108,11 @@ spec:
               mountPath: "/cert/kafka/cluster"
               readOnly: true
             {{- end }}
+            {{- if $app.valkey }}
+            - name: valkey-cert-volume
+              mountPath: "/cert/valkey"
+              readOnly: true
+            {{- end }}
       volumes:
         {{- if $app.authentication}}
         - name: authentication-volume
@@ -139,6 +147,14 @@ spec:
           secret:
             secretName: kafka-cluster-cluster-ca-cert
         {{- end }}
+        {{- if $app.valkey }}
+        - name: valkey-cert-volume
+          secret:
+            secretName: valkey-cert
+            items:
+              - key: ca.crt
+                path: ca.crt
+        {{- end }}}
 
 ---
 apiVersion: v1
