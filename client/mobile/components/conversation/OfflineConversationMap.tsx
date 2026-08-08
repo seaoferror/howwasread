@@ -145,20 +145,19 @@ export default function OfflineConversationMap({
       setH3Indexes(h3Indexes);
       return;
     }
-    if (event.zoom >= (Platform.OS === "ios" ? 10 : 12) && lat && lng) {
+    if (lat && lng) {
       setResolution(5);
       const h3Index = latLngToCell(lat, lng, 5);
       const h3Indexes = gridDisk(h3Index, 1);
       setH3Indexes(h3Indexes);
+      return;
     }
   };
 
   const commonSearchFlow = () => {
     setDetailId("");
     setSubmitH3Indexes(h3Indexes);
-    if (zoom > (Platform.OS === "ios" ? 10 : 12)) {
-      setResolution(5);
-    }
+    setResolution(5);
     if (zoom >= (Platform.OS === "ios" ? 12 : 14)) {
       setResolution(7);
     }
