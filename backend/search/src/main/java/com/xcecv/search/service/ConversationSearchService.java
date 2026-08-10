@@ -7,6 +7,7 @@ import com.xcecv.search.dto.OnlineConversationSearchResponse;
 import com.xcecv.search.repository.OfflineConversationDocumentRepository;
 import com.xcecv.search.repository.OnlineConversationDocumentRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class ConversationSearchService {
@@ -30,6 +32,7 @@ public class ConversationSearchService {
 
   @KafkaListener(topics = "search", groupId = "search")
   public void consume(@Payload String payloadRaw, @Header("type") String type) {
+    log.info("Successfully consumed message-type: {}", type);
     if (type.equals("offlineconversation")) {
       OfflineConversationDocument doc = objectMapper.readValue(payloadRaw, OfflineConversationDocument.class);
       offlineConversationDocumentRepository.save(doc);
