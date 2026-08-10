@@ -60,7 +60,8 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
                           "play^3",
                           "film^3",
                           "writtenBy^3"
-                        ]
+                        ],
+                        "fuzziness": "AUTO"
                       }
                     },
                     {
@@ -73,7 +74,8 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
                           "play.keyword^5",
                           "film.keyword^5",
                           "writtenBy.keyword^5"
-                        ]
+                        ],
+                        "fuzziness": "AUTO"
                       }
                     }
                   ],
@@ -149,7 +151,8 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
                           "play^3",
                           "film^3",
                           "writtenBy^3"
-                        ]
+                        ],
+                        "fuzziness": "AUTO"
                       }
                     },
                     {
@@ -162,7 +165,8 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
                           "play.keyword^5",
                           "film.keyword^5",
                           "writtenBy.keyword^5"
-                        ]
+                        ],
+                        "fuzziness": "AUTO"
                       }
                     }
                   ],
