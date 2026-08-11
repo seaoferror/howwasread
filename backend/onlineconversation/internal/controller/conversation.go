@@ -21,6 +21,7 @@ func conversationRouter(c *Controller) {
 	c.Router(POST, "/onlineconversation/report", c.reportOnlineConversation)
 	c.Router(POST, "/onlineconversation/register", c.registerOnlineConversation)
 	c.Router(POST, "/onlineconversation/deregister", c.deregisterOnlineConversation)
+	c.Router(GET, "/onlineconversation/turn", c.getTurn)
 }
 
 func (c *Controller) createConversation(w http.ResponseWriter, r *http.Request) {
@@ -227,4 +228,14 @@ func (c *Controller) deregisterOnlineConversation(w http.ResponseWriter, r *http
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func (c *Controller) getTurn(w http.ResponseWriter, _ *http.Request) {
+	result := c.service.GenerateTurn()
+	w.WriteHeader(http.StatusOK)
+	err := json.NewEncoder(w).Encode(result)
+	if err != nil {
+		slog.Error("fail to write response body",
+			"err", err)
+	}
 }

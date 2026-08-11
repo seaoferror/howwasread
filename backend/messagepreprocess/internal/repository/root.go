@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"backend/common/tlsconfig"
+	"backend/common"
 	"log"
 	"os"
 	"time"
@@ -56,7 +56,7 @@ func NewRepository() *Repository {
 		InitAddress: []string{os.Getenv("VALKEY_ADDRESS")},
 	}
 
-	tlsConfig, err := tlsconfig.Create("", "", os.Getenv("VALKEY_CA_CERT_PATH"))
+	tlsConfig, err := common.CreateTlSConfig("", "", os.Getenv("VALKEY_CA_CERT_PATH"))
 	if err != nil {
 		log.Panicf("fail to create tls config for valkey")
 	}

@@ -1,7 +1,7 @@
 package consumer
 
 import (
-	"backend/common/tlsconfig"
+	"backend/common"
 	"backend/fcmnotification/internal/service"
 	"context"
 	"log"
@@ -41,7 +41,7 @@ func connectConsumer(groupID string) (sarama.ConsumerGroup, error) {
 		return nil, err
 	}
 
-	tlsConfig, err1 := tlsconfig.Create(os.Getenv("KAFKA_USER_CERT_PATH"), os.Getenv("KAFKA_USER_KEY_PATH"), os.Getenv("KAFKA_CA_CERT_PATH"))
+	tlsConfig, err1 := common.CreateTlSConfig(os.Getenv("KAFKA_USER_CERT_PATH"), os.Getenv("KAFKA_USER_KEY_PATH"), os.Getenv("KAFKA_CA_CERT_PATH"))
 	if err1 != nil {
 		return nil, err1
 	}

@@ -1,8 +1,7 @@
 package consumer
 
 import (
-	"backend/common/payload"
-	"backend/common/tlsconfig"
+	"backend/common"
 	"backend/messagerelay/internal/service"
 	"context"
 	"encoding/json"
@@ -43,7 +42,7 @@ func connectConsumer(groupID string) (sarama.ConsumerGroup, error) {
 		return nil, err
 	}
 	cfg.ClientID = "relay_message.consumer." + id.String()
-	tlsConfig, err1 := tlsconfig.Create(os.Getenv("KAFKA_USER_CERT_PATH"), os.Getenv("KAFKA_USER_KEY_PATH"), os.Getenv("KAFKA_CA_CERT_PATH"))
+	tlsConfig, err1 := common.CreateTlSConfig(os.Getenv("KAFKA_USER_CERT_PATH"), os.Getenv("KAFKA_USER_KEY_PATH"), os.Getenv("KAFKA_CA_CERT_PATH"))
 	if err1 != nil {
 		return nil, err1
 	}
@@ -158,7 +157,7 @@ func toggleConsumptionFlow(client sarama.ConsumerGroup, isPaused *bool) {
 
 func (c *Consumer) distinguishMessage(ctx context.Context, message *sarama.ConsumerMessage) {
 	if message.Topic == "prepared-message" {
-		var p payload.PreparedMessage
+		var p common.PreparedMessage
 		err := json.Unmarshal(message.Value, &p)
 		if err != nil {
 			slog.Error("fail to unmarshal payload value",

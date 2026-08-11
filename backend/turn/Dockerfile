@@ -5,7 +5,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY common/ common/
 COPY turn/ turn/
-RUN cd signalrelay && CGO_ENABLED=0 GOOS=linux go build -o /signalrelay .
+RUN cd turn && CGO_ENABLED=0 GOOS=linux go build -o /turn .
 
 #/app/ (Working directory containing all the source code)
 #/app/go.mod

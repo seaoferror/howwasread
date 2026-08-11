@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"backend/common"
 	"crypto/hmac"
 	"crypto/sha1"
 	"encoding/base64"
@@ -20,15 +21,19 @@ type TurnManager struct {
 	packetConn net.PacketConn
 	mu         sync.Mutex
 	turnServer *turn.Server
+	realm      string
+	secret     string
 	publicIP   net.IP
 }
 
 func RunTurnManager(packetConn net.PacketConn, checkInterval time.Duration) (*TurnManager, error) {
 	tm := &TurnManager{
 		packetConn: packetConn,
+		realm:      os.Getenv("TURN_REALM"),
+		secret:     os.Getenv("TURN_SECRET"),
 	}
 
-	initialIP, err := fetchPublicWANIP()
+	initialIP, err := common.FetchPublicWANIP()
 	if err != nil {
 		return nil, fmt.Errorf("could not determine initial WAN IP: %w", err)
 	}
@@ -57,7 +62,7 @@ func (tm *TurnManager) serve(publicIP net.IP) error {
 
 	log.Printf("[TURN] Starting server instance bound to RelayAddress: %s", publicIP.String())
 	server, err := turn.NewServer(turn.ServerConfig{
-		Realm: os.Getenv("TURN_REALM"),
+		Realm: tm.realm,
 		AuthHandler: func(ra *turn.RequestAttributes) (string, []byte, bool) {
 			username := ra.Username
 			parts := strings.Split(username, ":")
@@ -66,10 +71,10 @@ func (tm *TurnManager) serve(publicIP net.IP) error {
 			if err != nil || time.Now().Unix() > expiry {
 				return "", nil, false
 			}
-			mac := hmac.New(sha1.New, []byte(os.Getenv("TURN_SECRET")))
+			mac := hmac.New(sha1.New, []byte(tm.secret))
 			mac.Write([]byte(username))
-			expectedPassword := base64.StdEncoding.EncodeToString(mac.Sum(nil))
-			return username, turn.GenerateAuthKey(username, ra.Realm, expectedPassword), true
+			credential := base64.StdEncoding.EncodeToString(mac.Sum(nil))
+			return username, turn.GenerateAuthKey(username, ra.Realm, credential), true
 		},
 		PacketConnConfigs: []turn.PacketConnConfig{
 			{

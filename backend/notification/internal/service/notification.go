@@ -1,7 +1,7 @@
 package service
 
 import (
-	"backend/common/payload"
+	"backend/common"
 	"bytes"
 	"context"
 	"errors"
@@ -76,7 +76,7 @@ func (s *Service) PreprocessNotification(
 		return
 	}
 
-	p := payload.NotificationMessage{
+	p := common.NotificationMessage{
 		RoomName:   roomName,
 		SenderName: senderName,
 		Text:       content[0],
@@ -98,11 +98,11 @@ func (s *Service) PreprocessNotification(
 	kafkaKey := append(messageId[:], notificationId)
 	if len(fcmtm) > 0 {
 		p.TokenMap = fcmtm
-		s.producer.PushMessage("fcm-notification", kafkaKey, payload.Marshal(p), nil)
+		s.producer.PushMessage("fcm-notification", kafkaKey, common.Marshal(p), nil)
 	}
 	if len(apntm) > 0 {
 		p.TokenMap = apntm
-		s.producer.PushMessage("apn-notification", kafkaKey, payload.Marshal(p), nil)
+		s.producer.PushMessage("apn-notification", kafkaKey, common.Marshal(p), nil)
 	}
 	return
 }

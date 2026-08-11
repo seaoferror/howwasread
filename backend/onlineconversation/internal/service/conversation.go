@@ -1,11 +1,16 @@
 package service
 
 import (
-	"backend/common/payload"
+	"backend/common"
 	"backend/onlineconversation/internal/dto"
 	"bytes"
 	"context"
+	"crypto/hmac"
+	"crypto/sha1"
+	"encoding/base64"
 	"errors"
+	"fmt"
+	"log"
 	"log/slog"
 	"time"
 
@@ -53,7 +58,7 @@ func (s *Service) CreateConversation(
 	slog.Info("success to create conversation")
 	s.producer.PushMessage("search",
 		nil,
-		payload.Marshal(dto.OnlineConversationDocument{
+		common.Marshal(dto.OnlineConversationDocument{
 			Id:         conversationId,
 			Novel:      novel,
 			ShortStory: shortStory,
@@ -132,7 +137,7 @@ func (s *Service) RemoveParticipant(ctx context.Context, conversationId string, 
 }
 
 func (s *Service) PublishConversationSignal(fromId uuid.UUID, toIds [][]byte, signal []byte) error {
-	value := payload.Marshal(payload.OnlineConversationSignal{
+	value := common.Marshal(common.OnlineConversationSignal{
 		FromId: fromId[:],
 		ToIds:  toIds,
 		Signal: signal,
@@ -253,4 +258,33 @@ func (s *Service) DeregisterOnlineConversation(ctx context.Context, memberId, co
 		return err
 	}
 	return nil
+}
+
+func (s *Service) GenerateTurn() *dto.GetTurnResponse {
+	res := &dto.GetTurnResponse{
+		Uri:      fmt.Sprintf("turn:%s:3478?transport=udp", s.publicIP.String()),
+		Username: fmt.Sprintf("%d", time.Now().Add(2*time.Hour).Unix()),
+	}
+	mac := hmac.New(sha1.New, []byte(s.turnSecret))
+	mac.Write([]byte(res.Username))
+	res.Credential = base64.StdEncoding.EncodeToString(mac.Sum(nil))
+	return res
+}
+
+func (s *Service) monitorAndReflectIPChange(interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for range ticker.C {
+		latestIP, err := common.FetchPublicWANIP()
+		if err != nil {
+			log.Printf("[TURN Monitor] Warning: failed to check WAN IP: %v", err)
+			continue
+		}
+		activeIP := s.publicIP
+		if !latestIP.Equal(activeIP) {
+			log.Printf("[TURN Monitor] IP change detected! Old: %s -> New: %s", activeIP.String(), latestIP.String())
+			s.publicIP = latestIP
+		}
+	}
 }

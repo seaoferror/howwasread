@@ -77,3 +77,9 @@ type BanParticipantRequest struct {
 type ConversationRequest struct {
 	Id uuid.UUID `json:"id"`
 }
+
+type GetTurnResponse struct {
+	Uri        string `json:"uri"`
+	Username   string `json:"username"`
+	Credential string `json:"credential"`
+}
