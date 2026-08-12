@@ -10,7 +10,7 @@ type Service struct {
 	repository *repository.Repository
 	producer   *producer.Producer
 	turnSecret string
-	turnHost   string
+	turnRealm  string
 }
 
 func NewService(r *repository.Repository, p *producer.Producer) *Service {
@@ -18,7 +18,7 @@ func NewService(r *repository.Repository, p *producer.Producer) *Service {
 		repository: r,
 		producer:   p,
 		turnSecret: os.Getenv("TURN_SECRET"),
-		turnHost:   os.Getenv("TURN_HOST"),
+		turnRealm:  os.Getenv("TURN_REALM"),
 	}
 
 	return s

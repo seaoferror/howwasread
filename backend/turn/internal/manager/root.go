@@ -37,7 +37,7 @@ func RunTurnManager(checkInterval time.Duration) (tm *TurnManager, err error) {
 		realm:    os.Getenv("TURN_REALM"),
 		secret:   os.Getenv("TURN_SECRET"),
 		zoneID:   os.Getenv("CF_ZONE_ID"),
-		recordID: os.Getenv("CF_RECORD_ID"),
+		recordID: os.Getenv("CF_TURN_RECORD_ID"),
 		apiToken: os.Getenv("CF_API_TOKEN"),
 	}
 	tm.tlsConfig, err = common.CreateTlSConfig(os.Getenv("TURN_CERT_PATH"), os.Getenv("TURN_KEY_PATH"), "")

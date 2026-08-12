@@ -22,4 +22,4 @@ spec:
             - run
           envFrom:
             - secretRef:
-                name: cloudflare
+                name: cloudflared
