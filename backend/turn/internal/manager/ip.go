@@ -26,13 +26,11 @@ func (tm *TurnManager) monitorAndReflectIPChange(interval time.Duration) {
 		tm.mu.Unlock()
 
 		if !latestIP.Equal(activeIP) {
+			log.Printf("[TURN Monitor] IP change detected! Old: %s -> New: %s", activeIP.String(), latestIP.String())
 			err = tm.updateCloudflareDNS(latestIP.String())
 			if err != nil {
 				log.Panicf("[TURN Monitor] Error updating Cloudflare DNS: %v", err)
 			}
-			log.Printf("[TURN Monitor] Cloudflare DNS successfully pointed to %s", latestIP.String())
-
-			log.Printf("[TURN Monitor] IP change detected! Old: %s -> New: %s", activeIP.String(), latestIP.String())
 			err = tm.serve(latestIP)
 			if err != nil {
 				log.Panicf("[TURN Monitor] Critical: Failed to restart TURN server with new IP: %v", err)
@@ -63,5 +61,6 @@ func (tm *TurnManager) updateCloudflareDNS(newIP string) error {
 		}
 		return fmt.Errorf("cloudflare API rejected request (status %d): %s", resp.StatusCode, string(bodyBytes))
 	}
+	log.Printf("[TURN Monitor] Cloudflare DNS successfully pointed to %s", newIP)
 	return nil
 }
