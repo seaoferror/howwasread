@@ -21,12 +21,17 @@ resource "cloudflare_record" "wildcard" {
   proxied = true
 }
 
-output "cloudflare_nameservers" {
-  value       = cloudflare_zone.main.name_servers
-  description = "Copy these nameservers and paste them into your Gabia domain management dashboard."
+resource "cloudflare_record" "turn" {
+  zone_id = cloudflare_zone.main.id
+  name    = "turn"
+  content = "127.0.0.1"
+  type    = "A"
+  proxied = false
+
+  lifecycle {
+    ignore_changes = [content]
+  }
 }
-
-
 
 resource "random_id" "tunnel_secret" {
   byte_length = 35
@@ -58,6 +63,21 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "kind_cluster_config"
       service = "http_status:404"
     }
   }
+}
+
+output "cloudflare_nameservers" {
+  value       = cloudflare_zone.main.name_servers
+  description = "Copy these nameservers and paste them into your Gabia domain management dashboard."
+}
+
+output "cloudflare_zone_id" {
+  value       = cloudflare_zone.main.id
+  description = "The Cloudflare Zone ID for mikekim1032.shop"
+}
+
+output "cloudflare_turn_record_id" {
+  value       = cloudflare_record.turn.id
+  description = "The DNS Record ID for turn.mikekim1032.shop"
 }
 
 output "tunnel_token" {

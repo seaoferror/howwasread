@@ -18,7 +18,20 @@ spec:
         app: {{ $name }}
         framework: {{ $app.framework | default "none" }}
     spec:
-      {{if eq $.Values.registry "ghcr.io/seaoferror" }}
+      {{- if $app.turn }}
+      hostNetwork: true
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - {{ $name }}
+              topologyKey: "kubernetes.io/hostname"
+      {{- end }}
+      {{- if eq $.Values.registry "ghcr.io/seaoferror" }}
       imagePullSecrets:
         - name: ghcr
       {{- end }}
@@ -156,6 +169,7 @@ spec:
                 path: ca.crt
         {{- end }}
 
+{{- if not $app.turn }}
 ---
 apiVersion: v1
 kind: Service
@@ -171,8 +185,7 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: {{ $app.port }}
-
----
+{{- end }}
 
 {{/*apiVersion: autoscaling/v2*/}}
 {{/*kind: HorizontalPodAutoscaler*/}}

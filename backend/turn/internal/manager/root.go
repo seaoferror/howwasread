@@ -24,6 +24,9 @@ type TurnManager struct {
 	realm      string
 	secret     string
 	publicIP   net.IP
+	zoneID     string
+	recordID   string
+	apiToken   string
 }
 
 func RunTurnManager(packetConn net.PacketConn, checkInterval time.Duration) (*TurnManager, error) {
@@ -31,8 +34,13 @@ func RunTurnManager(packetConn net.PacketConn, checkInterval time.Duration) (*Tu
 		packetConn: packetConn,
 		realm:      os.Getenv("TURN_REALM"),
 		secret:     os.Getenv("TURN_SECRET"),
+		zoneID:     os.Getenv("CF_ZONE_ID"),
+		recordID:   os.Getenv("CF_RECORD_ID"),
+		apiToken:   os.Getenv("CF_API_TOKEN"),
 	}
-
+	if tm.realm == "" || tm.secret == "" || tm.zoneID == "" || tm.recordID == "" || tm.apiToken == "" {
+		return nil, fmt.Errorf("cloudflare credentials missing in environment variables")
+	}
 	initialIP, err := common.FetchPublicWANIP()
 	if err != nil {
 		return nil, fmt.Errorf("could not determine initial WAN IP: %w", err)
@@ -58,6 +66,11 @@ func (tm *TurnManager) serve(publicIP net.IP) error {
 		if err != nil {
 			log.Printf("[TURN] Error closing old server instance: %v", err)
 		}
+		newConn, err := net.ListenPacket("udp4", "0.0.0.0:3478")
+		if err != nil {
+			return fmt.Errorf("failed to bind UDP port 3478: %w", err)
+		}
+		tm.packetConn = newConn
 	}
 
 	log.Printf("[TURN] Starting server instance bound to RelayAddress: %s", publicIP.String())
@@ -81,6 +94,7 @@ func (tm *TurnManager) serve(publicIP net.IP) error {
 				PacketConn: tm.packetConn,
 				RelayAddressGenerator: &turn.RelayAddressGeneratorPortRange{
 					RelayAddress: publicIP,
+					Address:      "0.0.0.0",
 					MinPort:      42093,
 					MaxPort:      49000,
 				},

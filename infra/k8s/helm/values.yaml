@@ -231,3 +231,19 @@ apps:
   #    memoryRequests: "100Mi"
   #    cpuLimits: "0.4"
   #    memoryLimits: "100Mi"
+  turn:
+    image: "backend/turn:latest"
+    port: 3478
+    routePath: false
+    turn: true
+    authentication: false
+    aws: false
+    kafka: false
+    astradb: false
+    mongodb: false
+    tidb: false
+    smtp: false
+    twilio: false
+    firebase: false
+    valkey: false
+    opensearch: false
