@@ -69,17 +69,17 @@ func (tm *TurnManager) serve(publicIP net.IP) error {
 		if err != nil {
 			return err
 		}
-		u, err := net.ListenPacket("udp4", "0.0.0.0:3478")
-		if err != nil {
-			return err
-		}
-		tm.udp = u
-		t, err := tls.Listen("tcp", "0.0.0.0:5349", tm.tlsConfig)
-		if err != nil {
-			return err
-		}
-		tm.tcp = t
 	}
+	u, err := net.ListenPacket("udp4", "0.0.0.0:3478")
+	if err != nil {
+		return err
+	}
+	tm.udp = u
+	t, err := tls.Listen("tcp", "0.0.0.0:5349", tm.tlsConfig)
+	if err != nil {
+		return err
+	}
+	tm.tcp = t
 
 	log.Printf("[TURN] Starting server instance bound to RelayAddress: %s", publicIP.String())
 	server, err := turn.NewServer(turn.ServerConfig{

@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: turn-tls-cert
+  namespace: backend
+spec:
+  secretName: turn-tls-cert
+  issuerRef:
+    name: letsencrypt
+    kind: ClusterIssuer
+  commonName: turn.mikekim1032.shop
+  dnsNames:
+    - turn.mikekim1032.shop
