@@ -49,6 +49,11 @@ func RunTurnManager(checkInterval time.Duration) (tm *TurnManager, err error) {
 		return nil, fmt.Errorf("could not determine initial WAN IP: %w", err)
 	}
 
+	err = tm.updateCloudflareDNS(initialIP.String())
+	if err != nil {
+		return nil, err
+	}
+
 	err = tm.serve(initialIP)
 	if err != nil {
 		return nil, err
