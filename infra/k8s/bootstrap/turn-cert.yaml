@@ -6,7 +6,7 @@ metadata:
 spec:
   secretName: turn-tls-cert
   issuerRef:
-    name: letsencrypt
+    name: letsencrypt-cloudflare
     kind: ClusterIssuer
   commonName: turn.mikekim1032.shop
   dnsNames:

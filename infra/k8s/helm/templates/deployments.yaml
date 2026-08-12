@@ -126,7 +126,17 @@ spec:
               mountPath: "/cert/valkey"
               readOnly: true
             {{- end }}
+            {{- if $app.turn }}
+            - name: turn-cert-volume
+              mountPath: "/cert/turn"
+              readOnly: true
+            {{- end }}
       volumes:
+        {{- if $app.turn }}
+        - name: turn-cert-volume
+          secret:
+            secretName: turn-tls-cert
+        {{- end }}
         {{- if $app.authentication}}
         - name: authentication-volume
           secret:

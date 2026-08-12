@@ -29,3 +29,5 @@ data:
   KAFKA_USER_CERT_PATH: "/cert/kafka/user/user.crt"
   KAFKA_USER_KEY_PATH: "/cert/kafka/user/user.key"
   TURN_REALM: "turn.mikekim1032.shop"
+  TURN_CERT_PATH: "/cert/turn/tls.crt"
+  TURN_KEY_PATH: "/cert/turn/tls.key"
