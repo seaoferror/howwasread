@@ -2,7 +2,11 @@ package manager
 
 import (
 	"backend/common"
+	"bytes"
+	"fmt"
+	"io"
 	"log"
+	"net/http"
 	"time"
 )
 
@@ -22,11 +26,42 @@ func (tm *TurnManager) monitorAndReflectIPChange(interval time.Duration) {
 		tm.mu.Unlock()
 
 		if !latestIP.Equal(activeIP) {
+			err = tm.updateCloudflareDNS(latestIP.String())
+			if err != nil {
+				log.Panicf("[TURN Monitor] Error updating Cloudflare DNS: %v", err)
+			}
+			log.Printf("[TURN Monitor] Cloudflare DNS successfully pointed to %s", latestIP.String())
+
 			log.Printf("[TURN Monitor] IP change detected! Old: %s -> New: %s", activeIP.String(), latestIP.String())
 			err = tm.serve(latestIP)
 			if err != nil {
-				log.Printf("[TURN Monitor] Critical: Failed to restart TURN server with new IP: %v", err)
+				log.Panicf("[TURN Monitor] Critical: Failed to restart TURN server with new IP: %v", err)
 			}
 		}
 	}
+}
+
+func (tm *TurnManager) updateCloudflareDNS(newIP string) error {
+	url := fmt.Sprintf("https://api.cloudflare.com/client/v4/zones/%s/dns_records/%s", tm.zoneID, tm.recordID)
+	payload := fmt.Sprintf(`{"type":"A","name":"turn.mikekim1032.shop","content":"%s","proxied":false}`, newIP)
+	req, err := http.NewRequest("PATCH", url, bytes.NewBuffer([]byte(payload)))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+tm.apiToken)
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		bodyBytes, err1 := io.ReadAll(resp.Body)
+		if err1 != nil {
+			return fmt.Errorf("fail to read resp body : %v", err1)
+		}
+		return fmt.Errorf("cloudflare API rejected request (status %d): %s", resp.StatusCode, string(bodyBytes))
+	}
+	return nil
 }

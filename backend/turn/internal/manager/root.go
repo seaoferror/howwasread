@@ -4,6 +4,7 @@ import (
 	"backend/common"
 	"crypto/hmac"
 	"crypto/sha1"
+	"crypto/tls"
 	"encoding/base64"
 	"fmt"
 	"log"
@@ -18,7 +19,9 @@ import (
 )
 
 type TurnManager struct {
-	packetConn net.PacketConn
+	udp        net.PacketConn
+	tcp        net.Listener
+	tlsConfig  *tls.Config
 	mu         sync.Mutex
 	turnServer *turn.Server
 	realm      string
@@ -29,17 +32,17 @@ type TurnManager struct {
 	apiToken   string
 }
 
-func RunTurnManager(packetConn net.PacketConn, checkInterval time.Duration) (*TurnManager, error) {
-	tm := &TurnManager{
-		packetConn: packetConn,
-		realm:      os.Getenv("TURN_REALM"),
-		secret:     os.Getenv("TURN_SECRET"),
-		zoneID:     os.Getenv("CF_ZONE_ID"),
-		recordID:   os.Getenv("CF_RECORD_ID"),
-		apiToken:   os.Getenv("CF_API_TOKEN"),
+func RunTurnManager(checkInterval time.Duration) (tm *TurnManager, err error) {
+	tm = &TurnManager{
+		realm:    os.Getenv("TURN_REALM"),
+		secret:   os.Getenv("TURN_SECRET"),
+		zoneID:   os.Getenv("CF_ZONE_ID"),
+		recordID: os.Getenv("CF_RECORD_ID"),
+		apiToken: os.Getenv("CF_API_TOKEN"),
 	}
-	if tm.realm == "" || tm.secret == "" || tm.zoneID == "" || tm.recordID == "" || tm.apiToken == "" {
-		return nil, fmt.Errorf("cloudflare credentials missing in environment variables")
+	tm.tlsConfig, err = common.CreateTlSConfig(os.Getenv("TURN_CERT_PATH"), os.Getenv("TURN_KEY_PATH"), "")
+	if err != nil {
+		return nil, err
 	}
 	initialIP, err := common.FetchPublicWANIP()
 	if err != nil {
@@ -64,13 +67,18 @@ func (tm *TurnManager) serve(publicIP net.IP) error {
 		log.Printf("[TURN] Public IP changed to %s. Closing old TURN server...", publicIP.String())
 		err := tm.turnServer.Close()
 		if err != nil {
-			log.Printf("[TURN] Error closing old server instance: %v", err)
+			return err
 		}
-		newConn, err := net.ListenPacket("udp4", "0.0.0.0:3478")
+		u, err := net.ListenPacket("udp4", "0.0.0.0:3478")
 		if err != nil {
-			return fmt.Errorf("failed to bind UDP port 3478: %w", err)
+			return err
 		}
-		tm.packetConn = newConn
+		tm.udp = u
+		t, err := tls.Listen("tcp", "0.0.0.0:5349", tm.tlsConfig)
+		if err != nil {
+			return err
+		}
+		tm.tcp = t
 	}
 
 	log.Printf("[TURN] Starting server instance bound to RelayAddress: %s", publicIP.String())
@@ -89,9 +97,20 @@ func (tm *TurnManager) serve(publicIP net.IP) error {
 			credential := base64.StdEncoding.EncodeToString(mac.Sum(nil))
 			return username, turn.GenerateAuthKey(username, ra.Realm, credential), true
 		},
+		ListenerConfigs: []turn.ListenerConfig{
+			{
+				Listener: tm.tcp,
+				RelayAddressGenerator: &turn.RelayAddressGeneratorPortRange{
+					RelayAddress: publicIP,
+					Address:      "0.0.0.0",
+					MinPort:      42093,
+					MaxPort:      49000,
+				},
+			},
+		},
 		PacketConnConfigs: []turn.PacketConnConfig{
 			{
-				PacketConn: tm.packetConn,
+				PacketConn: tm.udp,
 				RelayAddressGenerator: &turn.RelayAddressGeneratorPortRange{
 					RelayAddress: publicIP,
 					Address:      "0.0.0.0",

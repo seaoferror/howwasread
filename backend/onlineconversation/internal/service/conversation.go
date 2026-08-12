@@ -10,7 +10,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"log"
 	"log/slog"
 	"time"
 
@@ -262,29 +261,14 @@ func (s *Service) DeregisterOnlineConversation(ctx context.Context, memberId, co
 
 func (s *Service) GenerateTurn() *dto.GetTurnResponse {
 	res := &dto.GetTurnResponse{
-		Uri:      fmt.Sprintf("turn:%s:3478?transport=udp", s.publicIP.String()),
+		Uris: []string{
+			fmt.Sprintf("turn:%s:3478?transport=udp", s.turnHost),
+			fmt.Sprintf("turn:%s:5349?transport=tcp", s.turnHost),
+		},
 		Username: fmt.Sprintf("%d", time.Now().Add(2*time.Hour).Unix()),
 	}
 	mac := hmac.New(sha1.New, []byte(s.turnSecret))
 	mac.Write([]byte(res.Username))
 	res.Credential = base64.StdEncoding.EncodeToString(mac.Sum(nil))
 	return res
-}
-
-func (s *Service) monitorAndReflectIPChange(interval time.Duration) {
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-
-	for range ticker.C {
-		latestIP, err := common.FetchPublicWANIP()
-		if err != nil {
-			log.Printf("[TURN Monitor] Warning: failed to check WAN IP: %v", err)
-			continue
-		}
-		activeIP := s.publicIP
-		if !latestIP.Equal(activeIP) {
-			log.Printf("[TURN Monitor] IP change detected! Old: %s -> New: %s", activeIP.String(), latestIP.String())
-			s.publicIP = latestIP
-		}
-	}
 }

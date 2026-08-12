@@ -3,16 +3,14 @@ package service
 import (
 	"backend/common/producer"
 	"backend/onlineconversation/internal/repository"
-	"net"
 	"os"
-	"time"
 )
 
 type Service struct {
 	repository *repository.Repository
 	producer   *producer.Producer
 	turnSecret string
-	publicIP   net.IP
+	turnHost   string
 }
 
 func NewService(r *repository.Repository, p *producer.Producer) *Service {
@@ -20,8 +18,8 @@ func NewService(r *repository.Repository, p *producer.Producer) *Service {
 		repository: r,
 		producer:   p,
 		turnSecret: os.Getenv("TURN_SECRET"),
+		turnHost:   os.Getenv("TURN_HOST"),
 	}
 
-	go s.monitorAndReflectIPChange(10 * time.Second)
 	return s
 }

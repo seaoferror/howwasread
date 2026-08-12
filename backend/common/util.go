@@ -34,10 +34,10 @@ func FetchPublicWANIP() (net.IP, error) {
 	return parsedIP, nil
 }
 
-func CreateTlSConfig(clientCertFile, clientKeyFile, caCertFile string) (tlsConfig *tls.Config, err error) {
+func CreateTlSConfig(certFile, keyFile, caCertFile string) (tlsConfig *tls.Config, err error) {
 	tlsConfig = &tls.Config{InsecureSkipVerify: false}
-	if clientCertFile != "" {
-		clientCert, err1 := tls.LoadX509KeyPair(clientCertFile, clientKeyFile)
+	if certFile != "" {
+		clientCert, err1 := tls.LoadX509KeyPair(certFile, keyFile)
 		if err1 != nil {
 			return nil, fmt.Errorf("failed to load client cert/key: %w", err1)
 		}

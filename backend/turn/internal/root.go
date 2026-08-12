@@ -2,9 +2,7 @@ package internal
 
 import (
 	"backend/turn/internal/manager"
-	"log"
 	"log/slog"
-	"net"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,12 +15,7 @@ func NewServer() {
 	}))
 	slog.SetDefault(logger)
 
-	pc, err := net.ListenPacket("udp4", "0.0.0.0:3478")
-	if err != nil {
-		log.Panicf("fail to create udp listener: %v", err)
-	}
-	defer pc.Close()
-	t, err := manager.RunTurnManager(pc, 20*time.Second)
+	t, err := manager.RunTurnManager(20 * time.Second)
 	if err != nil {
 		panic(err)
 	}

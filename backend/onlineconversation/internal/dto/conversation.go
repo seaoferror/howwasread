@@ -79,7 +79,7 @@ type ConversationRequest struct {
 }
 
 type GetTurnResponse struct {
-	Uri        string `json:"uri"`
-	Username   string `json:"username"`
-	Credential string `json:"credential"`
+	Uris       []string `json:"uris"`
+	Username   string   `json:"username"`
+	Credential string   `json:"credential"`
 }
