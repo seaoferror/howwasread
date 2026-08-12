@@ -63,6 +63,10 @@ spec:
           envFrom:
             - configMapRef:
                 name: config-map
+            {{- if $app.turn }}
+            - secretRef:
+                name: cloudflaredns
+            {{- end }}
             {{- if $app.astradb }}
             - secretRef:
                 name: astradb
