@@ -31,9 +31,10 @@ import queryClient from "@/api/queryClient";
 import {
   useBanParticipant,
   useGetOnlineConversationDetail,
+  useGetTurn,
 } from "@/hooks/useConversation";
 import VoiceInput from "@/components/chat/VoiceInput";
-import {RecordingPresets} from "expo-audio";
+import { RecordingPresets } from "expo-audio";
 
 declare const WebSocket: {
   prototype: WebSocket;
@@ -58,6 +59,7 @@ export default function OnlineConversationScreen() {
   const sendMessageMutation = useSendMessage();
   const banParticipantMutation = useBanParticipant();
   const navigation = useNavigation();
+  const { data: turn } = useGetTurn();
 
   const [seatAssignments, setSeatAssignments] = useState<SeatAssignment[]>([]);
   const [mute, setMute] = useState<boolean>(false);
@@ -253,9 +255,15 @@ export default function OnlineConversationScreen() {
           for (const fromId of unique) {
             participantMutes.current[fromId] = false;
             peers.current[fromId] = new RTCPeerConnection({
-              iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+              iceServers: [
+                { urls: "stun:stun.l.google.com:19302" },
+                {
+                  urls: turn?.uris,
+                  username: turn?.username,
+                  credential: turn?.credential,
+                }
+              ],
             });
-
             localAudio.current?.getTracks().forEach((track) => {
               if (localAudio.current) {
                 peers.current[fromId].addTrack(track, localAudio.current);

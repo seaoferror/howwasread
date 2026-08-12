@@ -14,6 +14,7 @@ import {
   getOfflineConversationDetail,
   getOnlineConversationDetail,
   getOnlineConversations,
+  getTurn,
   joinOfflineConversation,
   mapOfflineConversations,
   quitOfflineConversation,
@@ -272,4 +273,11 @@ export function useDeregisterOnlineConversation() {
       });
     },
   });
+}
+
+export function useGetTurn() {
+  return useQuery({
+    queryFn: getTurn,
+    queryKey: [queryKey.CONVERSATION, queryKey.GET_TURN]
+  })
 }

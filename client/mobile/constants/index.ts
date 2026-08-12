@@ -51,7 +51,8 @@ export const queryKey = {
   BLOCKED_CONVERSATIONS: "blockedConversations",
   SEARCH_OFFLINE_CONVERSATIONS: "searchOfflineConversations",
   SEARCH_ONLINE_CONVERSATIONS: "searchOnlineConversations",
-  GET_ONLINE_CONVERSATION_DETAIL: "getOnlineConversationDetail"
+  GET_ONLINE_CONVERSATION_DETAIL: "getOnlineConversationDetail",
+  GET_TURN: "getTurn"
 };
 
 export const time = {

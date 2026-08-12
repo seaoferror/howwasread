@@ -3,6 +3,7 @@ import {
   BanParticipantRequest,
   CreateOfflineConversationRequest,
   CreateOnlineConversationRequest,
+  GetTurnResponse,
   OfflineConversationDetailResponse,
   OfflineConversationMapResponse,
   OfflineConversationSearchResponse,
@@ -174,5 +175,10 @@ export async function reportOfflineConversation(body: {
     "/offlineconversation/report",
     body,
   );
+  return data;
+}
+
+export async function getTurn(): Promise<GetTurnResponse> {
+  const { data } = await axiosInstance.get("/onlineconversation/turn");
   return data;
 }

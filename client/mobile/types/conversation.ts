@@ -129,3 +129,10 @@ export interface OfflineConversationDetailResponse {
   numberOfParticipants: number;
   moderatorIds: string[];
 }
+
+export interface GetTurnResponse {
+  uris: string[]
+  username: string
+  credential: string
+}
+
