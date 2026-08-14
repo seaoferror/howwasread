@@ -36,6 +36,20 @@ func (r *Repository) SaveRefreshTokenJTIById(id, jti gocql.UUID) error {
 	return nil
 }
 
+func (r *Repository) RemoveRefreshTokenJTIById(id, jti gocql.UUID) error {
+	err := r.session.Query(
+		"UPDATE member_by_id SET refresh_token_jtis -= ? WHERE id = ?",
+		[]gocql.UUID{jti}, id,
+	).Exec()
+	if err != nil {
+		slog.Error("fail to save refresh token jti",
+			"err", err,
+		)
+		return err
+	}
+	return nil
+}
+
 func (r *Repository) FindEmailAndPhoneNumberById(ctx context.Context, id gocql.UUID) (email, phoneNumber string, err error) {
 	err = r.session.Query("SELECT email, phone_number FROM member_by_id WHERE id = ?", id).
 		ScanContext(ctx, &email, &phoneNumber)

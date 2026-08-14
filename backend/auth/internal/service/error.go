@@ -14,6 +14,7 @@ var (
 	ErrSendSMSOTP               = errors.New("fail to send SMS OTP")
 	ErrVerifySMSOTP             = errors.New("fail to verify SMS OTP")
 	ErrGenerateToken            = errors.New("fail to generate new access token")
+	ErrFailToSignOut            = errors.New("fail to sign out")
 
 	ErrInternalServer = errors.New("something went wrong")
 )

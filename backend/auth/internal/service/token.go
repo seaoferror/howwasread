@@ -80,6 +80,59 @@ func (s *Service) GenerateAccessToken(refreshToken string) (map[string]string, e
 	return resp, nil
 }
 
+func (s *Service) RemoveJTI(refreshToken string) error {
+	rt, err := jwt.Parse(refreshToken, func(token *jwt.Token) (any, error) {
+		if token.Method.Alg() != jwt.SigningMethodRS256.Alg() {
+			slog.Info("unexpected signing method")
+			return nil, ErrFailToSignOut
+		}
+		return s.publicKeyRT, nil
+	})
+	if err != nil {
+		slog.Info("fail to parse token",
+			"err", err)
+		return ErrFailToSignOut
+	}
+	if !rt.Valid {
+		slog.Info("invalid token",
+			"rt", rt)
+		return ErrFailToSignOut
+	}
+	exp, err := rt.Claims.GetExpirationTime()
+	if err != nil {
+		slog.Info("fail to get expiration time")
+		return ErrFailToSignOut
+	}
+	if exp.Unix() < time.Now().Unix() {
+		slog.Info("stale token")
+		return ErrFailToSignOut
+	}
+	rawId, err := rt.Claims.GetSubject()
+	if err != nil {
+		slog.Info("fail to get subject from claim",
+			"err", err,
+		)
+		return ErrFailToSignOut
+	}
+	id, err := gocql.ParseUUID(rawId)
+	if err != nil {
+		slog.Info("fail to parse gocql uuid from id",
+			"err", err)
+		return ErrFailToSignOut
+	}
+	jti, err := gocql.ParseUUID(rt.Claims.(jwt.MapClaims)["jti"].(string))
+	if err != nil {
+		slog.Info("fail to parse gocql uuid from id",
+			"err", err)
+		return ErrFailToSignOut
+	}
+	err = s.repository.RemoveRefreshTokenJTIById(id, jti)
+	if err != nil {
+		return ErrFailToSignOut
+	}
+	return nil
+}
+
 func (s *Service) createLoginTokens(id, jti, role string) (accessToken, refreshToken string, err error) {
 	at, err := createToken(id, role, s.privateKeyAT, constant.AccessTokenTTL)
 	if err != nil {
