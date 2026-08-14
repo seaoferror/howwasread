@@ -206,7 +206,7 @@ function RootNavigator() {
         connectMessaging();
       }
     });
-  }, [profile]);
+  }, [profile?.id, profile?.name]);
   return (
     <Stack>
       <Stack.Screen name="(init)" options={{ headerShown: false }} />
