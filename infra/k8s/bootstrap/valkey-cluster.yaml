@@ -8,9 +8,10 @@ spec:
     maxmemory-policy: "volatile-lfu"
   shards: 1
   replicas: 0
-  tls:
-    certificate:
-      secretName: valkey-cert
+  networking:
+    tls:
+      certificate:
+        secretName: valkey-cert
   users:
     - name: lule
       enabled: true
