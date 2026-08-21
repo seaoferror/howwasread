@@ -33,6 +33,15 @@ resource "cloudflare_record" "turn" {
   }
 }
 
+resource "cloudflare_record" "vercel_app" {
+  zone_id = cloudflare_zone.main.id
+  name    = "app"
+  content   = "1c285eb961bd2418.vercel-dns-017.com"
+  type    = "CNAME"
+  proxied = false
+  ttl     = 1
+}
+
 resource "random_id" "tunnel_secret" {
   byte_length = 35
 }
