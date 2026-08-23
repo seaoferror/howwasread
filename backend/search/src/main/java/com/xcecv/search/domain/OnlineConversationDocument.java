@@ -18,47 +18,22 @@ public class OnlineConversationDocument {
   @Id
   private UUID id;
 
-  @MultiField(
-      mainField = @Field(type = FieldType.Text, analyzer = "standard_lowercase_analyzer"),
-      otherFields = {
-          @InnerField(suffix = "keyword", type = FieldType.Keyword)
-      }
-  )
+  @Field(type = FieldType.Search_As_You_Type, analyzer = "standard_lowercase_analyzer")
   private String novel;
-  @MultiField(
-      mainField = @Field(type = FieldType.Text, analyzer = "standard_lowercase_analyzer"),
-      otherFields = {
-          @InnerField(suffix = "keyword", type = FieldType.Keyword)
-      }
-  )
+
+  @Field(type = FieldType.Search_As_You_Type, analyzer = "standard_lowercase_analyzer")
   private String poem;
-  @MultiField(
-      mainField = @Field(type = FieldType.Text, analyzer = "standard_lowercase_analyzer"),
-      otherFields = {
-          @InnerField(suffix = "keyword", type = FieldType.Keyword)
-      }
-  )
+
+  @Field(type = FieldType.Search_As_You_Type, analyzer = "standard_lowercase_analyzer")
   private String shortStory;
-  @MultiField(
-      mainField = @Field(type = FieldType.Text, analyzer = "standard_lowercase_analyzer"),
-      otherFields = {
-          @InnerField(suffix = "keyword", type = FieldType.Keyword)
-      }
-  )
+
+  @Field(type = FieldType.Search_As_You_Type, analyzer = "standard_lowercase_analyzer")
   private String play;
-  @MultiField(
-      mainField = @Field(type = FieldType.Text, analyzer = "standard_lowercase_analyzer"),
-      otherFields = {
-          @InnerField(suffix = "keyword", type = FieldType.Keyword)
-      }
-  )
+
+  @Field(type = FieldType.Search_As_You_Type, analyzer = "standard_lowercase_analyzer")
   private String film;
-  @MultiField(
-      mainField = @Field(type = FieldType.Text, analyzer = "standard_lowercase_analyzer"),
-      otherFields = {
-          @InnerField(suffix = "keyword", type = FieldType.Keyword)
-      }
-  )
+
+  @Field(type = FieldType.Search_As_You_Type, analyzer = "standard_lowercase_analyzer")
   private String writtenBy;
 
   @Field(type = FieldType.Date)

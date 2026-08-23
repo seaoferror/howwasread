@@ -38,8 +38,8 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
                 "bool": {
                   "should": [
                     {
-                      "query_string": {
-                        "query": "*?0*",
+                      "multi_match": {
+                        "query": "?0",
                         "fields": [
                           "novel",
                           "poem",
@@ -47,19 +47,6 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
                           "play",
                           "film",
                           "writtenBy"
-                        ]
-                      }
-                    },
-                    {
-                      "multi_match": {
-                        "query": "?0",
-                        "fields": [
-                          "novel^3",
-                          "poem^3",
-                          "shortStory^3",
-                          "play^3",
-                          "film^3",
-                          "writtenBy^3"
                         ],
                         "fuzziness": "AUTO"
                       }
@@ -75,7 +62,6 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
                           "film.keyword^5",
                           "writtenBy.keyword^5"
                         ],
-                        "fuzziness": "AUTO"
                       }
                     }
                   ],
@@ -129,8 +115,8 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
                 "bool": {
                   "should": [
                     {
-                      "query_string": {
-                        "query": "*?0*",
+                      "multi_match": {
+                        "query": "?0",
                         "fields": [
                           "novel",
                           "poem",
@@ -138,19 +124,6 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
                           "play",
                           "film",
                           "writtenBy"
-                        ]
-                      }
-                    },
-                    {
-                      "multi_match": {
-                        "query": "?0",
-                        "fields": [
-                          "novel^3",
-                          "poem^3",
-                          "shortStory^3",
-                          "play^3",
-                          "film^3",
-                          "writtenBy^3"
                         ],
                         "fuzziness": "AUTO"
                       }
@@ -166,7 +139,6 @@ public interface OfflineConversationDocumentRepository extends ElasticsearchRepo
                           "film.keyword^5",
                           "writtenBy.keyword^5"
                         ],
-                        "fuzziness": "AUTO"
                       }
                     }
                   ],

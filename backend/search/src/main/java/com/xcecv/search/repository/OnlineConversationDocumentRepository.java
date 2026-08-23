@@ -36,51 +36,17 @@ public interface OnlineConversationDocumentRepository extends ElasticsearchRepos
           "bool": {
             "must": [
               {
-                "bool": {
-                  "should": [
-                    {
-                      "query_string": {
-                        "query": "*?0*",
-                        "fields": [
-                          "novel",
-                          "poem",
-                          "shortStory",
-                          "play",
-                          "film",
-                          "writtenBy"
-                        ]
-                      }
-                    },
-                    {
-                      "multi_match": {
-                        "query": "?0",
-                        "fields": [
-                          "novel^3",
-                          "poem^3",
-                          "shortStory^3",
-                          "play^3",
-                          "film^3",
-                          "writtenBy^3"
-                        ],
-                        "fuzziness": "AUTO"
-                      }
-                    },
-                    {
-                      "multi_match": {
-                        "query": "?0",
-                        "fields": [
-                          "novel.keyword^5",
-                          "poem.keyword^5",
-                          "shortStory.keyword^5",
-                          "play.keyword^5",
-                          "film.keyword^5",
-                          "writtenBy.keyword^5"
-                        ],
-                        "fuzziness": "AUTO"
-                      }
-                    }
-                  ],
-                  "minimum_should_match": 1
+                "multi_match": {
+                  "query": "?0",
+                  "type": "bool_prefix",
+                  "fields": [
+                    "novel", "novel._2gram", "novel._3gram",
+                    "poem", "poem._2gram", "poem._3gram",
+                    "shortStory", "shortStory._2gram", "shortStory._3gram",
+                    "play", "play._2gram", "play._3gram",
+                    "film", "film._2gram", "film._3gram",
+                    "writtenBy", "writtenBy._2gram", "writtenBy._3gram"
+                  ]
                 }
               }
             ],
@@ -101,5 +67,4 @@ public interface OnlineConversationDocumentRepository extends ElasticsearchRepos
       long time,
       Pageable page
   );
-
 }
