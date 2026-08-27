@@ -1,7 +1,7 @@
 package service
 
 import (
-	"backend/common"
+	"backend/common/payload"
 	"bytes"
 	"context"
 	"errors"
@@ -15,7 +15,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) PreprocessNotification(
+func (s *Service) PreprocessMessageNotification(
 	ctx context.Context,
 	notificationId uint8,
 	messageId uuid.UUID,
@@ -76,7 +76,7 @@ func (s *Service) PreprocessNotification(
 		return
 	}
 
-	p := common.NotificationMessage{
+	p := payload.NotificationMessage{
 		RoomName:   roomName,
 		SenderName: senderName,
 		Text:       content[0],
@@ -98,25 +98,11 @@ func (s *Service) PreprocessNotification(
 	kafkaKey := append(messageId[:], notificationId)
 	if len(fcmtm) > 0 {
 		p.TokenMap = fcmtm
-		s.producer.PushMessage("fcm-notification", kafkaKey, common.Marshal(p), nil)
+		s.producer.PushMessage("fcm-notification", kafkaKey, payload.Marshal(p), nil)
 	}
 	if len(apntm) > 0 {
 		p.TokenMap = apntm
-		s.producer.PushMessage("apn-notification", kafkaKey, common.Marshal(p), nil)
+		s.producer.PushMessage("apn-notification", kafkaKey, payload.Marshal(p), nil)
 	}
 	return
-}
-
-func (s *Service) generateSignedURL(contentType, filename string) (string, error) {
-	signedURL, err := s.signer.Sign(
-		fmt.Sprintf("%s/%s/%s",
-			s.cloudfrontURL, contentType, filename),
-		time.Now().Add(1*time.Hour))
-	if err != nil {
-		slog.Error("fail to generate signed URL",
-			"err", err)
-		return "", err
-	}
-	slog.Info("success to sign url", "signedURL", signedURL)
-	return signedURL, nil
 }

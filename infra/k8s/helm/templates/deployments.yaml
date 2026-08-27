@@ -18,6 +18,9 @@ spec:
         app: {{ $name }}
         framework: {{ $app.framework | default "none" }}
     spec:
+      {{- if $app.leaderElection }}
+      serviceAccountName: {{ $name }}-sa
+      {{- end }}
       {{- if $app.turn }}
       hostNetwork: true
       affinity:
@@ -56,6 +59,18 @@ spec:
                   name: valkey-user
                   key: lule
             {{- end}}
+            {{- if $app.k8ssandra }}
+            - name: K8SSANDRA_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: k8ssandra-cluster-superuser
+                  key: username
+            - name: K8SSANDRA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: k8ssandra-cluster-superuser
+                  key: password
+            {{- end }}
             - name: POD_IP
               valueFrom:
                 fieldRef:
@@ -66,10 +81,6 @@ spec:
             {{- if $app.turn }}
             - secretRef:
                 name: cloudflaredns
-            {{- end }}
-            {{- if $app.astradb }}
-            - secretRef:
-                name: astradb
             {{- end }}
             {{- if $app.aws }}
             - secretRef:
@@ -97,9 +108,9 @@ spec:
               mountPath: "/cert/authentication"
               readOnly: true
             {{- end}}
-            {{- if $app.astradb }}
-            - name: astradb-volume
-              mountPath: "/cert/astradb"
+            {{- if $app.k8ssandra }}
+            - name: k8ssandra-volume
+              mountPath: "/cert/k8ssandra"
               readOnly: true
             {{- end }}
             {{- if $app.aws }}
@@ -146,10 +157,10 @@ spec:
           secret:
             secretName: authentication-volume
         {{- end}}
-        {{- if $app.astradb }}
-        - name: astradb-volume
+        {{- if $app.k8ssandra }}
+        - name: k8ssandra-volume
           secret:
-            secretName: astradb-volume
+            secretName: k8ssandra-volume
         {{- end }}
         {{- if $app.aws }}
         - name: aws-volume

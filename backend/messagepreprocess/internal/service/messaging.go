@@ -1,7 +1,7 @@
 package service
 
 import (
-	"backend/common"
+	"backend/common/payload"
 	"context"
 	"errors"
 	"log/slog"
@@ -113,7 +113,7 @@ func (s *Service) ManageMessage(
 		}
 	}
 
-	p := common.Marshal(common.PreparedMessage{
+	p := payload.Marshal(payload.PreparedMessage{
 		Id:          id[:],
 		ToIds:       toIds,
 		RoomId:      roomId[:],

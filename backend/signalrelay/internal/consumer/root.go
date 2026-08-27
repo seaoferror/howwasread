@@ -2,6 +2,7 @@ package consumer
 
 import (
 	"backend/common"
+	"backend/common/payload"
 	"backend/signalrelay/internal/service"
 	"context"
 	"encoding/json"
@@ -157,7 +158,7 @@ func toggleConsumptionFlow(client sarama.ConsumerGroup, isPaused *bool) {
 
 func (c *Consumer) distinguishMessage(ctx context.Context, message *sarama.ConsumerMessage) {
 	if message.Topic == "conversation-signal" {
-		var m common.OnlineConversationSignal
+		var m payload.OnlineConversationSignal
 		err := json.Unmarshal(message.Value, &m)
 		if err != nil {
 			slog.Error("fail to unmarshal payload value",

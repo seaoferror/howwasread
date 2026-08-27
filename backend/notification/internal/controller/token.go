@@ -10,11 +10,11 @@ import (
 	"github.com/google/uuid"
 )
 
-func tokenRouter(c *Controller) {
-	c.Router(POST, "/notification/register", c.registerNotification)
+func registerRouter(c *Controller) {
+	c.Router(POST, "/notification/register", c.registerNotificationInfo)
 }
 
-func (c *Controller) registerNotification(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) registerNotificationInfo(w http.ResponseWriter, r *http.Request) {
 	memberIdRaw := r.Header.Get("X-User-Id")
 	memberId, err := uuid.Parse(memberIdRaw)
 	if err != nil {

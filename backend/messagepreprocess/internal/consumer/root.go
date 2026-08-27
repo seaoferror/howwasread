@@ -2,6 +2,7 @@ package consumer
 
 import (
 	"backend/common"
+	"backend/common/payload"
 	"backend/messagepreprocess/internal/service"
 	"context"
 	"encoding/json"
@@ -161,7 +162,7 @@ func (c *Consumer) distinguishMessage(
 	message *sarama.ConsumerMessage,
 ) {
 	if message.Topic == "chat-message" {
-		var p common.ChatMessage
+		var p payload.ChatMessage
 		err := json.Unmarshal(message.Value, &p)
 		if err != nil {
 			slog.Error("fail to unmarshal payload value",

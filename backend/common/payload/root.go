@@ -1,11 +1,21 @@
-package common
+package payload
 
 import (
 	"encoding/json"
 	"log/slog"
+	"time"
 
 	"github.com/google/uuid"
 )
+
+func Marshal(v any) []byte {
+	b, err := json.Marshal(v)
+	if err != nil {
+		slog.Error("fail to marshal", "err", err)
+		return nil
+	}
+	return b
+}
 
 type OnlineConversationSignal struct {
 	FromId []byte          `json:"fromId"`
@@ -40,11 +50,12 @@ type NotificationMessage struct {
 	ImageURL   string               `json:"imageURL,omitempty"`
 }
 
-func Marshal(v any) []byte {
-	b, err := json.Marshal(v)
-	if err != nil {
-		slog.Error("fail to marshal", "err", err)
-		return nil
-	}
-	return b
+type ConversationRequest struct {
+	Id uuid.UUID `json:"id"`
+}
+
+type OnlineConversationNotification struct {
+	ConversationId uuid.UUID `json:"conversationId"`
+	MemberId       uuid.UUID `json:"memberId"`
+	ScheduledTime  time.Time `json:"scheduledTime"`
 }

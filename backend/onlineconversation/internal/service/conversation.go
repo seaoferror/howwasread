@@ -1,7 +1,7 @@
 package service
 
 import (
-	"backend/common"
+	"backend/common/payload"
 	"backend/onlineconversation/internal/dto"
 	"bytes"
 	"context"
@@ -57,7 +57,7 @@ func (s *Service) CreateConversation(
 	slog.Info("success to create conversation")
 	s.producer.PushMessage("search",
 		nil,
-		common.Marshal(dto.OnlineConversationDocument{
+		payload.Marshal(dto.OnlineConversationDocument{
 			Id:         conversationId,
 			Novel:      novel,
 			ShortStory: shortStory,
@@ -136,7 +136,7 @@ func (s *Service) RemoveParticipant(ctx context.Context, conversationId string, 
 }
 
 func (s *Service) PublishConversationSignal(fromId uuid.UUID, toIds [][]byte, signal []byte) error {
-	value := common.Marshal(common.OnlineConversationSignal{
+	value := payload.Marshal(payload.OnlineConversationSignal{
 		FromId: fromId[:],
 		ToIds:  toIds,
 		Signal: signal,
@@ -271,4 +271,21 @@ func (s *Service) GenerateTurn() *dto.GetTurnResponse {
 	mac.Write([]byte(res.Username))
 	res.Credential = base64.StdEncoding.EncodeToString(mac.Sum(nil))
 	return res
+}
+
+func (s *Service) ScheduleOnlineConversationNotification(ctx context.Context, memberId, conversationId uuid.UUID) error {
+	c, err := s.repository.FindConversation(ctx, conversationId)
+	if err != nil {
+		return err
+	}
+	s.producer.PushMessage("notification", nil,
+		payload.Marshal(payload.OnlineConversationNotification{
+			ConversationId: conversationId,
+			MemberId:       memberId,
+			ScheduledTime:  c.Time,
+		}),
+		[]sarama.RecordHeader{
+			{Key: []byte("type"), Value: []byte("onlineconversation")},
+		})
+	return nil
 }

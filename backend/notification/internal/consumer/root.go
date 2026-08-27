@@ -2,7 +2,9 @@ package consumer
 
 import (
 	"backend/common"
+	"backend/common/payload"
 	"backend/notification/internal/service"
+	"bytes"
 	"context"
 	"encoding/json"
 	"log"
@@ -156,15 +158,29 @@ func toggleConsumptionFlow(consumerGroup sarama.ConsumerGroup, isPaused *bool) {
 }
 
 func (c *Consumer) distinguishMessage(ctx context.Context, message *sarama.ConsumerMessage) {
-	if message.Topic == "notification" {
-		var p common.PreparedMessage
+	var messageType string
+	for _, header := range message.Headers {
+		if bytes.Equal(header.Key, []byte("type")) {
+			messageType = string(header.Value)
+			break
+		}
+	}
+	if messageType == "onlineconversation" {
+		var p payload.OnlineConversationNotification
 		err := json.Unmarshal(message.Value, &p)
 		if err != nil {
-			slog.Error("fail to unmarshal payload value",
-				"err", err,
-				"payload.Value", message.Value)
+			slog.Error("fail to unmarshal payload value", "err", err)
 			return
 		}
-		c.service.PreprocessNotification(ctx, p.NotificationId, uuid.UUID(p.Id), p.ToIds, uuid.UUID(p.RoomId), uuid.UUID(p.FromId), p.ContentType, p.Contents)
+		c.service.ScheduleOnlineConversationNotification(ctx, p.ConversationId, p.MemberId, p.ScheduledTime)
 	}
+	var p payload.PreparedMessage
+	err := json.Unmarshal(message.Value, &p)
+	if err != nil {
+		slog.Error("fail to unmarshal payload value",
+			"err", err,
+			"payload.Value", message.Value)
+		return
+	}
+	c.service.PreprocessMessageNotification(ctx, p.NotificationId, uuid.UUID(p.Id), p.ToIds, uuid.UUID(p.RoomId), uuid.UUID(p.FromId), p.ContentType, p.Contents)
 }

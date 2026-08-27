@@ -2,7 +2,7 @@ package service
 
 import (
 	"backend/chat/internal/dto"
-	"backend/common"
+	"backend/common/payload"
 	"context"
 	"errors"
 	"fmt"
@@ -55,7 +55,7 @@ func (s *Service) PublishMessaging(ctx context.Context, fromId uuid.UUID, toIdTy
 			return nil, err
 		}
 	}
-	p := common.Marshal(common.ChatMessage{
+	p := payload.Marshal(payload.ChatMessage{
 		Id:          id[:],
 		FromId:      fromId[:],
 		ToIdType:    toIdType,

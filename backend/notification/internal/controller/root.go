@@ -27,7 +27,7 @@ func SetController(s *service.Service, m *http.ServeMux) {
 		mux:     m,
 	}
 
-	tokenRouter(c)
+	registerRouter(c)
 }
 
 func (c *Controller) Router(httpMethod HTTPMethod, path string, handler http.HandlerFunc) {

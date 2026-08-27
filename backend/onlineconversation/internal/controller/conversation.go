@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"backend/common/payload"
 	"backend/onlineconversation/internal/dto"
 	"encoding/json"
 	"errors"
@@ -22,6 +23,7 @@ func conversationRouter(c *Controller) {
 	c.Router(POST, "/onlineconversation/register", c.registerOnlineConversation)
 	c.Router(POST, "/onlineconversation/deregister", c.deregisterOnlineConversation)
 	c.Router(GET, "/onlineconversation/turn", c.getTurn)
+	c.Router(POST, "/onlineconveration/notification/reserve", c.reserveOnlineConversationNotification)
 }
 
 func (c *Controller) createConversation(w http.ResponseWriter, r *http.Request) {
@@ -172,7 +174,7 @@ func (c *Controller) reportOnlineConversation(w http.ResponseWriter, r *http.Req
 		handleError(w, errors.New("fail to parse"))
 		return
 	}
-	var req dto.ConversationRequest
+	var req payload.ConversationRequest
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		handleError(w, errors.New("fail to parse"))
@@ -194,7 +196,7 @@ func (c *Controller) registerOnlineConversation(w http.ResponseWriter, r *http.R
 		handleError(w, errors.New("fail to parse"))
 		return
 	}
-	var req dto.ConversationRequest
+	var req payload.ConversationRequest
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		handleError(w, errors.New("fail to parse"))
@@ -216,7 +218,7 @@ func (c *Controller) deregisterOnlineConversation(w http.ResponseWriter, r *http
 		handleError(w, errors.New("fail to parse"))
 		return
 	}
-	var req dto.ConversationRequest
+	var req payload.ConversationRequest
 	err = json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		handleError(w, errors.New("fail to parse"))
@@ -238,4 +240,26 @@ func (c *Controller) getTurn(w http.ResponseWriter, _ *http.Request) {
 		slog.Error("fail to write response body",
 			"err", err)
 	}
+}
+
+func (c *Controller) reserveOnlineConversationNotification(w http.ResponseWriter, r *http.Request) {
+	memberId, err := uuid.Parse(r.Header.Get("X-User-Id"))
+	if err != nil {
+		slog.Error("fail to parse member id",
+			"err", err)
+		handleError(w, errors.New("incorrect body"))
+	}
+	var req payload.ConversationRequest
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		slog.Error("fail to parse body",
+			"err", err)
+		handleError(w, errors.New("incorrect body"))
+	}
+	err = c.service.ScheduleOnlineConversationNotification(r.Context(), memberId, req.Id)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }

@@ -201,12 +201,12 @@ function RootNavigator() {
     };
     connectMessaging();
     AppState.addEventListener("change", (state) => {
-      console.log("trigger app state event listener", state)
+      console.log("trigger app state event listener", state);
       if (state === "active" && (!ws.current || ws.current?.readyState === 3)) {
         connectMessaging();
       }
     });
-  }, [profile?.id, profile?.name]);
+  }, [profile]);
   return (
     <Stack>
       <Stack.Screen name="(init)" options={{ headerShown: false }} />

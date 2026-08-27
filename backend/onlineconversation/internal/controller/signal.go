@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"backend/common"
+	"backend/common/payload"
 	"backend/onlineconversation/internal/dto"
 	"context"
 	"encoding/json"
@@ -70,7 +70,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 	}
 	if pids != nil {
 		resp := dto.ConversationSignalResponse{FromIds: pids}
-		p := common.Marshal(resp)
+		p := payload.Marshal(resp)
 		err = conn.Write(init, websocket.MessageText, p)
 		if err != nil {
 			slog.Error("fail to write payload",
@@ -90,7 +90,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 	res := dto.ConversationSignalResponse{
 		FromIds: []uuid.UUID{memberId},
 	}
-	resRaw := common.Marshal(res)
+	resRaw := payload.Marshal(res)
 	for _, pid := range pids {
 		wg.Add(1)
 		go func() {
@@ -227,7 +227,7 @@ func (c *Controller) RelaySignal(ctx context.Context, toIds []uuid.UUID, fromId 
 		FromIds: []uuid.UUID{fromId},
 		Signal:  signal,
 	}
-	resRaw := common.Marshal(res)
+	resRaw := payload.Marshal(res)
 	for _, toId := range toIds {
 		wg.Add(1)
 		go func() {

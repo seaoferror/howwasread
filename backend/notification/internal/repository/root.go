@@ -45,6 +45,15 @@ func NewRepository() *Repository {
 	if err != nil {
 		panic(err)
 	}
+	err = session.Query(`CREATE TABLE conversation_notification_by_scheduled_time (
+    scheduled_time timestamp,
+    conversation_type text,
+    conversation_id uuid,
+    member_id uuid,
+    PRIMARY KEY ((scheduled_time), conversation_type, conversation_id, member_id));`).Exec()
+	if err != nil {
+		panic(err)
+	}
 
 	log.Print("success to connect cassandra")
 	r := &Repository{

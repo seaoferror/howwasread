@@ -18,7 +18,7 @@ apps:
     aws: false
     confluent: false
     kafka: false
-    astradb: true
+    k8ssandra: true
     mongodb: false
     tidb: false
     smtp: true
@@ -26,6 +26,7 @@ apps:
     firebase: false
     valkey: false
     opensearch: false
+    leaderElection: false
 #    cpuRequests: "0.03"
 #    memoryRequests: "10Mi"
 #    cpuLimits: "0.1"
@@ -37,7 +38,7 @@ apps:
     authentication: false
     aws: true
     kafka: true
-    astradb: true
+    k8ssandra: true
     mongodb: false
     tidb: false
     smtp: false
@@ -55,7 +56,7 @@ apps:
     authentication: false
     aws: false
     kafka: true
-    astradb: true
+    k8ssandra: true
     mongodb: false
     tidb: false
     firebase: false
@@ -71,7 +72,7 @@ apps:
     authentication: false
     aws: false
     kafka: true
-    astradb: true
+    k8ssandra: true
     mongodb: false
     tidb: false
     smtp: false
@@ -89,7 +90,7 @@ apps:
     authentication: false
     aws: false
     kafka: true
-    astradb: true
+    k8ssandra: true
     mongodb: false
     tidb: false
     smtp: false
@@ -107,7 +108,7 @@ apps:
     authentication: false
     aws: false
     kafka: true
-    astradb: true
+    k8ssandra: true
     mongodb: false
     tidb: false
     smtp: false
@@ -125,7 +126,7 @@ apps:
     authentication: false
     aws: false
     kafka: true
-    astradb: true
+    k8ssandra: true
     mongodb: false
     tidb: false
     smtp: false
@@ -143,13 +144,14 @@ apps:
     authentication: false
     aws: true
     kafka: true
-    astradb: true
+    k8ssandra: true
     mongodb: false
     tidb: false
     smtp: false
     twilio: false
     firebase: false
     valkey: false
+    leaderElection: true
 #    cpuRequests: "0.03"
 #    memoryRequests: "10Mi"
 #    cpuLimits: "0.1"
@@ -161,7 +163,7 @@ apps:
     authentication: false
     aws: false
     kafka: true
-    astradb: false
+    k8ssandra: false
     mongodb: true
     tidb: false
     smtp: false
@@ -180,7 +182,7 @@ apps:
     authentication: false
     aws: false
     kafka: true
-    astradb: false
+    k8ssandra: false
     mongodb: false
     tidb: false
     smtp: false
@@ -198,7 +200,7 @@ apps:
     authentication: false
     aws: false
     kafka: true
-    astradb: false
+    k8ssandra: false
     mongodb: false
     tidb: true
     smtp: false
@@ -218,7 +220,7 @@ apps:
     authentication: false
     aws: false
     kafka: true
-    astradb: false
+    k8ssandra: false
     mongodb: false
     tidb: false
     smtp: false
@@ -239,7 +241,7 @@ apps:
     authentication: false
     aws: false
     kafka: false
-    astradb: false
+    k8ssandra: false
     mongodb: false
     tidb: false
     smtp: false
