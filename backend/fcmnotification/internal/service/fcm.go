@@ -47,8 +47,8 @@ func (s *Service) SendNotification(
 		return
 	}
 	tokenMap := p.TokenMap
-	roomName := p.RoomName
-	senderName := p.SenderName
+	title0 := p.Title0
+	title1 := p.Title1
 	text := p.Text
 	imageURL := p.ImageURL
 	var wg sync.WaitGroup
@@ -58,10 +58,10 @@ func (s *Service) SendNotification(
 	for t := range tokenMap {
 		ts = append(ts, t)
 	}
-	title := senderName
-	if roomName != "" {
-		title = roomName
-		text = fmt.Sprintf("%v: %v", senderName, text)
+	title := title1
+	if title0 != "" {
+		title = title0
+		text = fmt.Sprintf("%v: %v", title1, text)
 	}
 	message := &messaging.MulticastMessage{
 		Notification: &messaging.Notification{

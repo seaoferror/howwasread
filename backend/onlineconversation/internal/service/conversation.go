@@ -280,9 +280,10 @@ func (s *Service) ScheduleOnlineConversationNotification(ctx context.Context, me
 	}
 	s.producer.PushMessage("notification", nil,
 		payload.Marshal(payload.OnlineConversationNotification{
+			ScheduledTime:  c.Time,
 			ConversationId: conversationId,
 			MemberId:       memberId,
-			ScheduledTime:  c.Time,
+			WrittenBy:      c.WrittenBy,
 		}),
 		[]sarama.RecordHeader{
 			{Key: []byte("type"), Value: []byte("onlineconversation")},

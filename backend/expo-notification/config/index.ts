@@ -95,24 +95,28 @@ export async function createKafkaConsumer() {
 
 export async function createCassandraClient() {
   const authProvider = new cassandra.auth.PlainTextAuthProvider(
-    "token",
-    process.env.ASTRADB_TOKEN || "",
+    process.env.K8SSANDRA_USERNAME ?? "",
+    process.env.K8SSANDRA_PASSWORD ?? "",
   );
+
   const client = new cassandra.Client({
-    cloud: {
-      secureConnectBundle: "/cert/astradb/astradb-secure-connect.zip",
-    },
+    contactPoints: [
+      process.env.K8SSANDRA_HOST ??
+        "k8ssandra-cluster-dc1-service.k8ssandra.svc.cluster.local",
+    ],
+    localDataCenter: "dc1",
     authProvider: authProvider,
-    localDataCenter: process.env.PROFILE ? undefined : "datacenter1",
     keyspace: process.env.PROFILE,
+    sslOptions: {
+      rejectUnauthorized: false,
+    },
     queryOptions: {
-      consistency: cassandra.types.consistencies.quorum,
+      consistency: cassandra.types.consistencies.localOne,
     },
     socketOptions: {
       readTimeout: 60_000,
     },
   });
-
   await client.connect();
   console.log("connect to cassandra");
 
