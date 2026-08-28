@@ -4,12 +4,9 @@ import (
 	"backend/common/payload"
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"log/slog"
-	"sync"
-	"time"
 
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
 	"github.com/google/uuid"
@@ -25,45 +22,14 @@ func (s *Service) PreprocessMessageNotification(
 	content []string,
 ) {
 	log.Print("start notify message...")
-	var em sync.Mutex
-	var es []error
-	var wg sync.WaitGroup
-	apntm := make(map[string]uuid.UUID)
-	var am sync.Mutex
-	fcmtm := make(map[string]uuid.UUID)
-	var fm sync.Mutex
+	tIds := make([]uuid.UUID, len(toIds))
 	for _, toId := range toIds {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			ctxt, cancel := context.WithTimeout(ctx, 3*time.Second)
-			defer cancel()
-			result, err := s.repository.FindPushTokensById(ctxt, gocql.UUID(toId))
-			if err != nil {
-				em.Lock()
-				es = append(es, err)
-				em.Unlock()
-				return
-			}
-			for _, d := range result {
-				if d.OS == "ios" {
-					am.Lock()
-					apntm[d.DevicePushToken] = uuid.UUID(d.Id)
-					am.Unlock()
-					return
-				}
-				fm.Lock()
-				fcmtm[d.DevicePushToken] = uuid.UUID(d.Id)
-				fm.Unlock()
-			}
-		}()
+		tIds = append(tIds, uuid.UUID(toId))
 	}
-	wg.Wait()
-	err0 := errors.Join(es...)
-	if err0 != nil {
+	apntm, fcmtm, err := s.getEachTokenMap(ctx, tIds)
+	if err != nil {
 		return
 	}
-
 	senderName, err := s.repository.FindNameById(ctx, gocql.UUID(fromId))
 	if err != nil {
 		return
@@ -77,9 +43,9 @@ func (s *Service) PreprocessMessageNotification(
 	}
 
 	p := payload.NotificationMessage{
-		RoomName:   roomName,
-		SenderName: senderName,
-		Text:       content[0],
+		Title0: roomName,
+		Title1: senderName,
+		Text:   content[0],
 	}
 
 	if contentType == "image" {

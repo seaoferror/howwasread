@@ -7,7 +7,6 @@ import (
 
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
 	"github.com/apache/cassandra-gocql-driver/v2/lz4"
-	gocqlastra "github.com/datastax/gocql-astra/v2"
 )
 
 type Repository struct {
@@ -15,15 +14,18 @@ type Repository struct {
 }
 
 func NewRepository() *Repository {
-	cluster, err := gocqlastra.NewClusterFromBundle("cert/astradb/astradb-secure-connect.zip",
-		"token", os.Getenv("ASTRADB_TOKEN"), 10*time.Second)
+	cluster := gocql.NewCluster(os.Getenv("K8SSANDRA_HOST"))
+	cluster.Port = 9042
 	cluster.Keyspace = os.Getenv("PROFILE")
+	cluster.Authenticator = gocql.PasswordAuthenticator{
+		Username: os.Getenv("K8SSANDRA_USERNAME"),
+		Password: os.Getenv("K8SSANDRA_PASSWORD"),
+	}
 	cluster.Timeout = 1 * time.Minute
-	cluster.Consistency = gocql.Quorum
+	cluster.Consistency = gocql.LocalOne
 	cluster.Compressor = &lz4.LZ4Compressor{}
-	//cluster.PageSize = 1000
-	//cluster.NextPagePrefetch = 0.25
-	//cluster.Tracer =
+	cluster.PageSize = 1000
+	cluster.NextPagePrefetch = 0.25
 
 	session, err := gocql.NewSession(*cluster)
 	if err != nil {
@@ -49,8 +51,9 @@ func NewRepository() *Repository {
     scheduled_time timestamp,
     conversation_type text,
     conversation_id uuid,
-    member_id uuid,
-    PRIMARY KEY ((scheduled_time), conversation_type, conversation_id, member_id));`).Exec()
+    written_by text,
+    member_ids set<uuid>,
+    PRIMARY KEY ((scheduled_time, conversation_type), conversation_id));`).Exec()
 	if err != nil {
 		panic(err)
 	}

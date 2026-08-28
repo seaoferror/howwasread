@@ -172,7 +172,7 @@ func (c *Consumer) distinguishMessage(ctx context.Context, message *sarama.Consu
 			slog.Error("fail to unmarshal payload value", "err", err)
 			return
 		}
-		c.service.ScheduleOnlineConversationNotification(ctx, p.ConversationId, p.MemberId, p.ScheduledTime)
+		c.service.ScheduleOnlineConversationNotification(ctx, p.ScheduledTime, p.ConversationId, p.MemberId, p.WrittenBy)
 	}
 	var p payload.PreparedMessage
 	err := json.Unmarshal(message.Value, &p)

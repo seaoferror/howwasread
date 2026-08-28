@@ -43,11 +43,11 @@ type PreparedMessage struct {
 }
 
 type NotificationMessage struct {
-	TokenMap   map[string]uuid.UUID `json:"tokenMap"`
-	RoomName   string               `json:"roomName,omitempty"`
-	SenderName string               `json:"senderName"`
-	Text       string               `json:"text"`
-	ImageURL   string               `json:"imageURL,omitempty"`
+	TokenMap map[string]uuid.UUID `json:"tokenMap"`
+	Title0   string               `json:"title0,omitempty"`
+	Title1   string               `json:"title1"`
+	Text     string               `json:"text"`
+	ImageURL string               `json:"imageURL,omitempty"`
 }
 
 type ConversationRequest struct {
@@ -55,7 +55,8 @@ type ConversationRequest struct {
 }
 
 type OnlineConversationNotification struct {
+	ScheduledTime  time.Time `json:"scheduledTime"`
 	ConversationId uuid.UUID `json:"conversationId"`
 	MemberId       uuid.UUID `json:"memberId"`
-	ScheduledTime  time.Time `json:"scheduledTime"`
+	WrittenBy      string    `json:"writtenBy"`
 }
