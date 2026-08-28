@@ -17,7 +17,8 @@ type Repository struct {
 }
 
 func NewRepository() *Repository {
-	cluster := gocql.NewCluster(os.Getenv("K8SSANDRA_HOST"))
+	k8ssandraHost := os.Getenv("K8SSANDRA_HOST")
+	cluster := gocql.NewCluster(k8ssandraHost)
 	cluster.Port = 9042
 	cluster.Keyspace = os.Getenv("PROFILE")
 	cluster.Authenticator = gocql.PasswordAuthenticator{
@@ -33,9 +34,10 @@ func NewRepository() *Repository {
 	if err != nil {
 		panic(err)
 	}
+	tlSConfig.ServerName = k8ssandraHost
 	cluster.SslOpts = &gocql.SslOptions{
 		Config:                 tlSConfig,
-		EnableHostVerification: false,
+		EnableHostVerification: true,
 	}
 
 	session, err := gocql.NewSession(*cluster)

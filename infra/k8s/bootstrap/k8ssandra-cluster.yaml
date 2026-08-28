@@ -37,16 +37,3 @@ spec:
             resources:
               requests:
                 storage: 5Gi
-
-
-#kubectl annotate secret k8ssandra-cluster-superuser -n k8ssandra \
-#reflector.v1.k8s.emberstack.com/reflection-allowed="true" \
-#reflector.v1.k8s.emberstack.com/reflection-auto-enabled="true" \
-#reflector.v1.k8s.emberstack.com/reflection-allowed-namespaces="backend" \
-#--overwrite
-
-#CASS_USERNAME=$(kubectl get secret k8ssandra-cluster-superuser -n k8ssandra -o=jsonpath='{.data.username}' | base64 --decode)
-#echo $CASS_USERNAME
-#CASS_PASSWORD=$(kubectl get secret k8ssandra-cluster-superuser -n k8ssandra -o=jsonpath='{.data.password}' | base64 --decode)
-#echo $CASS_PASSWORD
-#kubectl exec -it k8ssandra-cluster-dc1-default-sts-0 -n k8ssandra -c cassandra -- env SSL_VALIDATE=false cqlsh --ssl -u $CASS_USERNAME -p $CASS_PASSWORD -e "CREATE KEYSPACE production WITH replication = {'class': 'NetworkTopologyStrategy', 'dc1': 1};"

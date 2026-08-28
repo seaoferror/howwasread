@@ -73,3 +73,47 @@ spec:
             apiTokenSecretRef:
               name: cloudflare
               key: CF_API_TOKEN
+
+---
+
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: k8ssandra-jks-cert
+  namespace: k8ssandra
+spec:
+  secretName: k8ssandra-jks
+  commonName: k8ssandra-cluster-dc1-service.k8ssandra.svc.cluster.local
+  dnsNames:
+    - k8ssandra-cluster-dc1-service.k8ssandra.svc.cluster.local
+    - "*.k8ssandra-cluster-dc1-all-pods-service.k8ssandra.svc.cluster.local"
+  usages:
+    - server auth
+    - client auth
+  issuerRef:
+    name: internal-ca-issuer
+    kind: ClusterIssuer
+  keystores:
+    jks:
+      create: true
+      passwordSecretRef:
+        name: k8ssandra-jks-password
+        key: password
+
+---
+
+apiVersion: trust.cert-manager.io/v1alpha1
+kind: Bundle
+metadata:
+  name: internal-root-ca-bundle
+spec:
+  sources:
+    - secret:
+        name: internal-root-ca
+        key: tls.crt
+  target:
+    configMap:
+      key: ca.crt
+    namespaceSelector:
+      matchLabels:
+        kubernetes.io/metadata.name: backend

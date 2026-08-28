@@ -109,7 +109,7 @@ spec:
               readOnly: true
             {{- end}}
             {{- if $app.k8ssandra }}
-            - name: k8ssandra-volume
+            - name: internal-root-ca-bundle
               mountPath: "/cert/k8ssandra"
               readOnly: true
             {{- end }}
@@ -147,6 +147,11 @@ spec:
               readOnly: true
             {{- end }}
       volumes:
+        {{- if $app.k8ssandra }}
+        - name: internal-root-ca-bundle
+          configMap:
+            name: internal-root-ca-bundle
+        {{- end }}
         {{- if $app.turn }}
         - name: turn-cert-volume
           secret:
@@ -157,11 +162,6 @@ spec:
           secret:
             secretName: authentication-volume
         {{- end}}
-        {{- if $app.k8ssandra }}
-        - name: k8ssandra-volume
-          secret:
-            secretName: k8ssandra-volume
-        {{- end }}
         {{- if $app.aws }}
         - name: aws-volume
           secret:

@@ -196,3 +196,7 @@ raw-secret*.yaml
 
 *.cert
 *.key
+*.csr
+*.srl
+*.p12
+*.cnf

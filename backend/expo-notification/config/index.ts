@@ -6,6 +6,7 @@ import {
 } from "@confluentinc/kafka-javascript";
 import cassandra from "cassandra-driver";
 import { readFileSync } from "node:fs";
+import { checkServerIdentity } from "node:tls";
 
 const { Kafka, ErrorCodes } = KafkaJS;
 
@@ -94,18 +95,19 @@ export async function createKafkaConsumer() {
 }
 
 export async function createCassandraClient() {
+  const K8SSANDRA_HOST =
+    process.env.K8SSANDRA_HOST ??
+    "k8ssandra-cluster-dc1-service.k8ssandra.svc.cluster.local";
+
   const authProvider = new cassandra.auth.PlainTextAuthProvider(
     process.env.K8SSANDRA_USERNAME ?? "",
     process.env.K8SSANDRA_PASSWORD ?? "",
   );
 
   const client = new cassandra.Client({
-    contactPoints: [
-      process.env.K8SSANDRA_HOST ??
-        "k8ssandra-cluster-dc1-service.k8ssandra.svc.cluster.local",
-    ],
+    contactPoints: [K8SSANDRA_HOST],
     localDataCenter: "dc1",
-    authProvider: authProvider,
+    authProvider,
     keyspace: process.env.PROFILE,
     sslOptions: {
       ca: [
@@ -113,7 +115,12 @@ export async function createCassandraClient() {
           process.env.K8SSANDRA_CA_CERT_PATH ?? "/cert/k8ssandra/ca.crt",
         ),
       ],
-      checkServerIdentity: () => undefined,
+      // Equivalent to tlSConfig.ServerName in your Go code: force
+      // hostname verification against the stable K8s DNS name, since
+      // the driver may open per-node connections against a raw pod IP
+      // that the cert's SAN doesn't (and can't practically) cover.
+      checkServerIdentity: (_host, cert) =>
+        checkServerIdentity(K8SSANDRA_HOST, cert),
     },
     queryOptions: {
       consistency: cassandra.types.consistencies.localOne,
@@ -122,6 +129,7 @@ export async function createCassandraClient() {
       readTimeout: 60_000,
     },
   });
+
   await client.connect();
   console.log("connect to cassandra");
 
