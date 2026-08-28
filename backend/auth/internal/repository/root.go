@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"backend/common"
 	"log"
 	"log/slog"
 	"os"
@@ -28,8 +29,19 @@ func NewRepository() *Repository {
 	cluster.Compressor = &lz4.LZ4Compressor{}
 	cluster.PageSize = 1000
 	cluster.NextPagePrefetch = 0.25
+	tlSConfig, err := common.CreateTlSConfig("", "", os.Getenv("K8SSANDRA_CA_CERT_PATH"))
+	if err != nil {
+		panic(err)
+	}
+	cluster.SslOpts = &gocql.SslOptions{
+		Config:                 tlSConfig,
+		EnableHostVerification: false,
+	}
 
 	session, err := gocql.NewSession(*cluster)
+	if err != nil {
+		panic(err)
+	}
 
 	queries := []string{
 		`CREATE TABLE IF NOT EXISTS member_by_email (
@@ -60,10 +72,6 @@ func NewRepository() *Repository {
 			slog.Error("failed to execute migration query", "err", err, "query", q)
 			panic(err)
 		}
-	}
-
-	if err != nil {
-		log.Panicf("fail to create session from cassandra cluster: %v", err)
 	}
 	log.Print("success to connect cassandra")
 	r := &Repository{

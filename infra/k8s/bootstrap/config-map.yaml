@@ -28,6 +28,8 @@ data:
   KAFKA_CA_CERT_PATH: "/cert/kafka/cluster/ca.crt"
   KAFKA_USER_CERT_PATH: "/cert/kafka/user/user.crt"
   KAFKA_USER_KEY_PATH: "/cert/kafka/user/user.key"
+  K8SSANDRA_HOST: "k8ssandra-cluster-dc1-service.k8ssandra.svc.cluster.local"
+  K8SSANDRA_CA_CERT_PATH: "/cert/k8ssandra/ca.crt"
   TURN_REALM: "turn.mikekim1032.shop"
   TURN_CERT_PATH: "/cert/turn/tls.crt"
   TURN_KEY_PATH: "/cert/turn/tls.key"

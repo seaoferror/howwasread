@@ -12,7 +12,7 @@ const { Kafka, ErrorCodes } = KafkaJS;
 export async function createValkeyClient() {
   const ca = process.env.VALKEY_CA_CERT_PATH;
   let caCertBuffer;
-  if(ca) {  
+  if (ca) {
     caCertBuffer = readFileSync(ca);
   }
   return GlideClusterClient.createClient({
@@ -32,8 +32,8 @@ export async function createValkeyClient() {
     useTLS: process.env.PROFILE === "production" ? true : undefined,
     advancedConfiguration: {
       tlsAdvancedConfiguration: {
-        rootCertificates: caCertBuffer
-      }
+        rootCertificates: caCertBuffer,
+      },
     },
     compression: {
       enabled: true,
@@ -108,7 +108,12 @@ export async function createCassandraClient() {
     authProvider: authProvider,
     keyspace: process.env.PROFILE,
     sslOptions: {
-      rejectUnauthorized: false,
+      ca: [
+        readFileSync(
+          process.env.K8SSANDRA_CA_CERT_PATH ?? "/cert/k8ssandra/ca.crt",
+        ),
+      ],
+      checkServerIdentity: () => undefined,
     },
     queryOptions: {
       consistency: cassandra.types.consistencies.localOne,

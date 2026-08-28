@@ -29,6 +29,14 @@ func NewRepository() *Repository {
 	cluster.Compressor = &lz4.LZ4Compressor{}
 	cluster.PageSize = 1000
 	cluster.NextPagePrefetch = 0.25
+	tlSConfig, err := common.CreateTlSConfig("", "", os.Getenv("K8SSANDRA_CA_CERT_PATH"))
+	if err != nil {
+		panic(err)
+	}
+	cluster.SslOpts = &gocql.SslOptions{
+		Config:                 tlSConfig,
+		EnableHostVerification: false,
+	}
 
 	session, err := gocql.NewSession(*cluster)
 	if err != nil {
