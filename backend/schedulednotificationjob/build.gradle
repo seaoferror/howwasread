@@ -1,0 +1,52 @@
+plugins {
+    id 'java'
+    // Shadow plugin for building the Fat JAR (GradleUp fork, compatible with Gradle 9+)
+    id 'com.gradleup.shadow' version '9.6.1'
+}
+
+group = 'com.howwasread'
+version = '1.0-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+ext {
+    flinkVersion = '2.2.1'
+    // Kafka connector is versioned independently from Flink core since 2.x
+    kafkaConnectorVersion = '5.0.0-2.2'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Core Flink dependencies (Provided by the cluster, not bundled in the fat JAR)
+    compileOnly "org.apache.flink:flink-streaming-java:${flinkVersion}"
+    compileOnly "org.apache.flink:flink-clients:${flinkVersion}"
+
+    // Flink Kafka Connector (Bundled in your JAR)
+    implementation "org.apache.flink:flink-connector-kafka:${kafkaConnectorVersion}"
+}
+
+shadowJar {
+    archiveBaseName.set('schedulednotificationjob')
+    archiveClassifier.set('')
+    archiveVersion.set(project.version.toString())
+
+    manifest {
+        attributes 'Main-Class': 'com.howwasread.NotificationDelayJob'
+    }
+
+    // Relocate Kafka client to avoid classpath conflicts on the Flink cluster
+    relocate 'org.apache.kafka', 'com.howwasread.shaded.kafka'
+
+    mergeServiceFiles()
+}
+
+// Make 'build' depend on 'shadowJar' so `./gradlew build` produces the fat JAR
+tasks.named('build') {
+    dependsOn tasks.named('shadowJar')
+}
