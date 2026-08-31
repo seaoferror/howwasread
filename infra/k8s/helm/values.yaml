@@ -26,7 +26,6 @@ apps:
     firebase: false
     valkey: false
     opensearch: false
-    leaderElection: false
 #    cpuRequests: "0.03"
 #    memoryRequests: "10Mi"
 #    cpuLimits: "0.1"
@@ -151,7 +150,6 @@ apps:
     twilio: false
     firebase: false
     valkey: false
-    leaderElection: true
 #    cpuRequests: "0.03"
 #    memoryRequests: "10Mi"
 #    cpuLimits: "0.1"

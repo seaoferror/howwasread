@@ -18,9 +18,6 @@ spec:
         app: {{ $name }}
         framework: {{ $app.framework | default "none" }}
     spec:
-      {{- if $app.leaderElection }}
-      serviceAccountName: {{ $name }}-sa
-      {{- end }}
       {{- if $app.turn }}
       hostNetwork: true
       affinity:
