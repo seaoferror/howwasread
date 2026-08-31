@@ -38,25 +38,25 @@ resource "helm_release" "k8ssandra" {
   # }
 }
 
-# resource "helm_release" "flink_operator" {
-#   name             = "flink-kubernetes-operator"
-#   repository       = "https://downloads.apache.org/flink/flink-kubernetes-operator-1.15.0/"
-#   chart            = "flink-kubernetes-operator"
-#   namespace        = "flink-system"
-#   create_namespace = true
-#
-#   depends_on = [helm_release.cert_manager]
-#
-#   set {
-#     name  = "webhook.create"
-#     value = "true"
-#   }
-#
-#   set {
-#     name  = "watchNamespaces[0]"
-#     value = ""
-#   }
-# }
+resource "helm_release" "flink_operator" {
+  name             = "flink-operator"
+  repository       = "https://downloads.apache.org/flink/flink-kubernetes-operator-1.15.0/"
+  chart            = "flink-kubernetes-operator"
+  namespace        = "flink"
+  create_namespace = true
+
+  depends_on = [helm_release.cert_manager]
+
+  set {
+    name  = "webhook.create"
+    value = "true"
+  }
+
+  set_list {
+    name  = "watchNamespaces"
+    value = ["backend", "kafka-system", "k8ssandra"]
+  }
+}
 
 resource "helm_release" "trust_manager" {
   name       = "trust-manager"

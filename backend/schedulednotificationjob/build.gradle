@@ -14,7 +14,6 @@ java {
 
 ext {
     flinkVersion = '2.2.1'
-    // Kafka connector is versioned independently from Flink core since 2.x
     kafkaConnectorVersion = '5.0.0-2.2'
 }
 
@@ -23,12 +22,14 @@ repositories {
 }
 
 dependencies {
-    // Core Flink dependencies (Provided by the cluster, not bundled in the fat JAR)
     compileOnly "org.apache.flink:flink-streaming-java:${flinkVersion}"
     compileOnly "org.apache.flink:flink-clients:${flinkVersion}"
+    compileOnly 'org.projectlombok:lombok:1.18.38'
+    annotationProcessor 'org.projectlombok:lombok:1.18.38'
 
-    // Flink Kafka Connector (Bundled in your JAR)
     implementation "org.apache.flink:flink-connector-kafka:${kafkaConnectorVersion}"
+    implementation "org.apache.flink:flink-statebackend-rocksdb:${flinkVersion}"
+    implementation "com.fasterxml.jackson.core:jackson-databind"
 }
 
 shadowJar {
@@ -37,7 +38,7 @@ shadowJar {
     archiveVersion.set(project.version.toString())
 
     manifest {
-        attributes 'Main-Class': 'com.howwasread.NotificationDelayJob'
+        attributes 'Main-Class': 'com.howwasread.ScheduledNotificationJob'
     }
 
     // Relocate Kafka client to avoid classpath conflicts on the Flink cluster
