@@ -15,25 +15,21 @@ public class KafkaConnectorFactory {
         System.getenv().getOrDefault("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092");
 
     public static KafkaSource<IncomingNotificationEvent> createSource(String topic, String groupId) {
-        // Builder is now explicitly typed to <IncomingNotificationEvent>
         return KafkaSource.<IncomingNotificationEvent>builder()
             .setBootstrapServers(BOOTSTRAP_SERVERS)
             .setTopics(topic)
             .setGroupId(groupId)
             .setStartingOffsets(OffsetsInitializer.earliest())
-            // Use a custom schema instead of SimpleStringSchema
             .setValueOnlyDeserializer(new NotificationEventDeserializationSchema())
             .build();
     }
 
     public static KafkaSink<OutgoingNotificationEvent> createSink(String topic) {
-        // Builder is now explicitly typed to <OutgoingNotificationEvent>
         return KafkaSink.<OutgoingNotificationEvent>builder()
             .setBootstrapServers(BOOTSTRAP_SERVERS)
             .setRecordSerializer(
                 KafkaRecordSerializationSchema.builder()
                     .setTopic(topic)
-                    // Use a custom schema instead of SimpleStringSchema
                     .setValueSerializationSchema(new NotificationEventSerializationSchema())
                     .build()
             )

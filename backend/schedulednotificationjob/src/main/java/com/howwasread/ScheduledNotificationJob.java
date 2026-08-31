@@ -28,13 +28,11 @@ public class ScheduledNotificationJob {
         "delayed-notifications-out"
     );
 
-    // Build the pipeline
     env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source")
         .keyBy(event -> event.getConversationId().toString())
         .process(new ScheduledNotificationFunction())
         .sinkTo(sink);
 
-    // Execute the job
     env.execute("Notification Delay Pipeline");
   }
 }
