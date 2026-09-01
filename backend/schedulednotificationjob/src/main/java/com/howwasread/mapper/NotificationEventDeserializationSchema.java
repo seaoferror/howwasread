@@ -11,7 +11,6 @@ public class NotificationEventDeserializationSchema implements DeserializationSc
   @Serial
   private static final long serialVersionUID = 1L;
 
-  // transient ensures Flink doesn't try to serialize the Jackson object
   private transient ObjectMapper objectMapper;
 
   @Override
@@ -24,7 +23,6 @@ public class NotificationEventDeserializationSchema implements DeserializationSc
     if (message == null || message.length == 0) {
       return null;
     }
-    // Maps the JSON keys directly to the incoming event fields
     return objectMapper.readValue(message, IncomingNotificationEvent.class);
   }
 

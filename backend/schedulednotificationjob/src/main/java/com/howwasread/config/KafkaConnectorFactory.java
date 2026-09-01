@@ -4,10 +4,15 @@ import com.howwasread.dto.IncomingNotificationEvent;
 import com.howwasread.dto.OutgoingNotificationEvent;
 import com.howwasread.mapper.NotificationEventDeserializationSchema;
 import com.howwasread.mapper.NotificationEventSerializationSchema;
+
+import java.nio.charset.StandardCharsets;
+
 import org.apache.flink.connector.kafka.sink.KafkaRecordSerializationSchema;
 import org.apache.flink.connector.kafka.sink.KafkaSink;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
+import org.apache.kafka.common.header.internals.RecordHeader;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 
 public class KafkaConnectorFactory {
 
@@ -30,6 +35,10 @@ public class KafkaConnectorFactory {
             .setRecordSerializer(
                 KafkaRecordSerializationSchema.builder()
                     .setTopic(topic)
+                    .setHeaderProvider(element -> new RecordHeaders().add(
+                        new RecordHeader("type",
+                            "scheduled-notification".getBytes(StandardCharsets.UTF_8))
+                    ))
                     .setValueSerializationSchema(new NotificationEventSerializationSchema())
                     .build()
             )

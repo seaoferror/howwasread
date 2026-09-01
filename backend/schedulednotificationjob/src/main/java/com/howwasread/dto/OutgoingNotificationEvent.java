@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 
@@ -17,12 +17,11 @@ import java.util.UUID;
 @AllArgsConstructor
 public class OutgoingNotificationEvent implements Serializable {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+  @Serial
+  private static final long serialVersionUID = 1L;
 
-    private UUID conversationId;
-    private List<UUID> memberIds;
-    private String writtenBy;
-    private long scheduledTime;
-    private String notificationType;
+  private UUID partitionId;
+  private String partitionIdType;
+  private long scheduledTime;
+  private Map<UUID, Content> notifications;
 }

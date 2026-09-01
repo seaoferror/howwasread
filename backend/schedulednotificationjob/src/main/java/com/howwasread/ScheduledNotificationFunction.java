@@ -1,5 +1,6 @@
 package com.howwasread;
 
+import com.howwasread.dto.Content;
 import com.howwasread.dto.IncomingNotificationEvent;
 import com.howwasread.dto.OutgoingNotificationEvent;
 import org.apache.flink.api.common.functions.OpenContext;
@@ -27,36 +28,37 @@ public class ScheduledNotificationFunction extends KeyedProcessFunction<String, 
 
   @Override
   public void processElement(IncomingNotificationEvent event, Context ctx, Collector<OutgoingNotificationEvent> out) throws Exception {
-    bufferedEvents.put(event.getMemberId(), event);
+    bufferedEvents.put(event.getKeyId(), event);
     ctx.timerService().registerProcessingTimeTimer(event.getScheduledTime());
   }
 
   @Override
   public void onTimer(long timestamp, KeyedProcessFunction<String, IncomingNotificationEvent, OutgoingNotificationEvent>.OnTimerContext ctx, Collector<OutgoingNotificationEvent> out) throws Exception {
-    List<UUID> memberIds = new ArrayList<>();
-    String writtenBy = null;
-    UUID conversationId = null;
-    String notificationType = null;
+    Map<UUID, Content> notifications = new HashMap<>();
+    UUID partitionId = null;
+    String partitionIdType = null;
 
     Iterator<Map.Entry<UUID, IncomingNotificationEvent>> iterator = bufferedEvents.entries().iterator();
     while (iterator.hasNext()) {
       IncomingNotificationEvent event = iterator.next().getValue();
       if (event.getScheduledTime() <= timestamp) {
-        conversationId = event.getConversationId();
-        writtenBy = event.getWrittenBy();
-        notificationType = event.getNotificationType();
-        memberIds.add(event.getMemberId());
+        partitionId = event.getPartitionId();
+        partitionIdType = event.getPartitionIdType();
+        notifications.put(event.getKeyId(),
+            Content.builder()
+                .title(event.getTitle())
+                .body(event.getBody())
+                .build());
         iterator.remove();
       }
     }
 
-    if (conversationId != null && !memberIds.isEmpty()) {
+    if (partitionId != null && !notifications.isEmpty()) {
       OutgoingNotificationEvent output = OutgoingNotificationEvent.builder()
-          .conversationId(conversationId)
-          .memberIds(memberIds)
-          .writtenBy(writtenBy)
+          .partitionId(partitionId)
+          .partitionIdType(partitionIdType)
+          .notifications(notifications)
           .scheduledTime(timestamp)
-          .notificationType(notificationType)
           .build();
       out.collect(output);
     }

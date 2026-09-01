@@ -19,17 +19,17 @@ public class ScheduledNotificationJob {
     StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(config);
     env.enableCheckpointing(10000);
 
-    KafkaSource<IncomingNotificationEvent> source = KafkaConnectorFactory.createSource(
-        "incoming-notifications",
-        "flink-notification-group"
+    KafkaSource <IncomingNotificationEvent> source = KafkaConnectorFactory.createSource(
+        "scheduled-notification",
+        "scheduled-notification"
     );
 
     KafkaSink<OutgoingNotificationEvent> sink = KafkaConnectorFactory.createSink(
-        "delayed-notifications-out"
+        "notification"
     );
 
     env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source")
-        .keyBy(event -> event.getConversationId().toString())
+        .keyBy(event -> event.getPartitionId().toString())
         .process(new ScheduledNotificationFunction())
         .sinkTo(sink);
 
