@@ -4,6 +4,7 @@ FROM eclipse-temurin:21-jdk AS builder
 WORKDIR /app
 COPY gradlew settings.gradle build.gradle ./
 COPY gradle/ gradle/
+RUN chmod +x gradlew
 # Cache dependencies
 RUN ./gradlew dependencies --no-daemon || true
 

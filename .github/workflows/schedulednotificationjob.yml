@@ -31,7 +31,7 @@ jobs:
       - name: build and push schedulednotificationjob
         env:
           REGISTRY: ghcr.io
-          REPOSITORY: ${{ github.repository_owner }}/backend/schedulednotificationjob
+          REPOSITORY: ${{ github.repository_owner }}/flink/schedulednotificationjob
           IMAGE_TAG: latest
         run: |
           IMAGE_NAME=$(echo "$REGISTRY/$REPOSITORY:$IMAGE_TAG" | tr '[:upper:]' '[:lower:]')

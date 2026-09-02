@@ -51,11 +51,6 @@ resource "helm_release" "flink_operator" {
     name  = "webhook.create"
     value = "true"
   }
-
-  set_list {
-    name  = "watchNamespaces"
-    value = ["backend", "kafka-system", "k8ssandra"]
-  }
 }
 
 resource "helm_release" "trust_manager" {

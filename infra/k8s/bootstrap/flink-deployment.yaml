@@ -4,15 +4,35 @@ metadata:
   name: flink-deployment
   namespace: flink
 spec:
-  image: ghcr.io/seaoferror/backend/schedulednotificationjob:latest
-  imagePullSecrets:
-    - name: ghcr
-  flinkVersion: v2_2_1
+  image: ghcr.io/seaoferror/flink/schedulednotificationjob:latest
+  podTemplate:
+    spec:
+      imagePullSecrets:
+        - name: ghcr
+      containers:
+        - name: flink-main-container
+          volumeMounts:
+            - name: kafka-user
+              mountPath: "/cert/kafka/user"
+              readOnly: true
+            - name: kafka-ca
+              mountPath: "/cert/kafka/cluster"
+              readOnly: true
+          envFrom:
+            - configMapRef:
+                name: config-map
+      volumes:
+        - name: kafka-user
+          secret:
+            secretName: kafka-user
+        - name: kafka-ca
+          secret:
+            secretName: kafka-cluster-cluster-ca-cert
+  flinkVersion: v2_2
   flinkConfiguration:
     taskmanager.numberOfTaskSlots: "2"
-    state.backend: rocksdb
-    state.backend.incremental: "true"
-    state.backend.rocksdb.memory.managed: "true"
+    state.backend.type: rocksdb
+    execution.checkpointing.incremental: "true"
     taskmanager.memory.managed.fraction: "0.4"
   serviceAccount: flink
   jobManager:
@@ -28,3 +48,47 @@ spec:
     entryClass: com.howwasread.ScheduledNotificationJob
     parallelism: 2
     upgradeMode: stateless
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: flink
+  namespace: flink
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: flink
+  namespace: flink
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "configmaps", "services"]
+    verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: flink
+  namespace: flink
+subjects:
+  - kind: ServiceAccount
+    name: flink
+    namespace: flink
+roleRef:
+  kind: Role
+  name: flink
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-map
+  namespace: flink
+data:
+  KAFKA_BOOTSTRAP_SERVERS: "kafka-cluster-kafka-bootstrap.kafka-system.svc.cluster.local:9093"
+  KAFKA_USER_CERT_PATH: "/cert/kafka/user/user.crt"
+  KAFKA_USER_KEY_PATH: "/cert/kafka/user/user.key"
+  KAFKA_CA_CERT_PATH: "/cert/kafka/cluster/ca.crt"
