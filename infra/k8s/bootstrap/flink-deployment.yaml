@@ -4,8 +4,10 @@ metadata:
   name: flink-deployment
   namespace: flink
 spec:
-  image: flink:1.17
-  flinkVersion: v1_17
+  image: ghcr.io/seaoferror/backend/schedulednotificationjob:latest
+  imagePullSecrets:
+    - name: ghcr
+  flinkVersion: v2_2_1
   flinkConfiguration:
     taskmanager.numberOfTaskSlots: "2"
     state.backend: rocksdb
@@ -16,12 +18,13 @@ spec:
   jobManager:
     resource:
       memory: "1024m"
-      cpu: 1
+      cpu: 0.5
   taskManager:
     resource:
-      memory: "2048m"
-      cpu: 1
+      memory: "1024m"
+      cpu: 0.5
   job:
-    jarURI: local:///opt/flink/examples/streaming/StateMachineExample.jar
+    jarURI: local:///opt/flink/usrlib/schedulednotificationjob.jar
+    entryClass: com.howwasread.ScheduledNotificationJob
     parallelism: 2
     upgradeMode: stateless
