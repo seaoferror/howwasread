@@ -11,6 +11,7 @@ spec:
         - name: ghcr
       containers:
         - name: flink-main-container
+          imagePullPolicy: Always
           volumeMounts:
             - name: kafka-user
               mountPath: "/cert/kafka/user"
