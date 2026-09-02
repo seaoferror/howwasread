@@ -46,17 +46,18 @@ pom.xml.versionsBackup
 pom.xml.next
 release.properties
 
-# Gradle
-.gradle/
-build/
-out/
-!gradle/wrapper/gradle-wrapper.jar
 
 # Spring Boot
 *.jar
 *.war
 *.ear
 *.iws
+
+# Gradle
+.gradle/
+build/
+out/
+!**/gradle/wrapper/gradle-wrapper.jar
 
 # Logs
 logs/
