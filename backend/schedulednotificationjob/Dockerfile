@@ -12,6 +12,6 @@ COPY src/ src/
 RUN ./gradlew shadowJar --no-daemon
 
 # Stage 2: Add the JAR to the official Flink image
-FROM flink:2.2.1
+FROM flink:2.2.1-java21
 
 COPY --from=builder /app/build/libs/schedulednotificationjob-1.0-SNAPSHOT.jar /opt/flink/usrlib/schedulednotificationjob.jar
