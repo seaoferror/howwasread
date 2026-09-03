@@ -3,7 +3,6 @@ package payload
 import (
 	"encoding/json"
 	"log/slog"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -44,8 +43,8 @@ type PreparedMessage struct {
 
 type NotificationMessage struct {
 	TokenMap map[string]uuid.UUID `json:"tokenMap"`
-	Title0   string               `json:"title0,omitempty"`
-	Title1   string               `json:"title1"`
+	Title    string               `json:"title,omitempty"`
+	SubTitle string               `json:"subtitle"`
 	Text     string               `json:"text"`
 	ImageURL string               `json:"imageURL,omitempty"`
 }
@@ -54,9 +53,18 @@ type ConversationRequest struct {
 	Id uuid.UUID `json:"id"`
 }
 
-type OnlineConversationNotification struct {
-	ScheduledTime  time.Time `json:"scheduledTime"`
-	ConversationId uuid.UUID `json:"conversationId"`
-	MemberId       uuid.UUID `json:"memberId"`
-	WrittenBy      string    `json:"writtenBy"`
+type NotificationScheduling struct {
+	ScheduledTime int64          `json:"scheduledTime,omitempty"`
+	PartitionId   uuid.UUID      `json:"partitionId"`
+	KeyId         uuid.UUID      `json:"keyId"`
+	Contents      map[int]string `json:"contents"`
+	Type          string         `json:"type,omitempty"`
+}
+
+type NotificationScheduled struct {
+	PartitionId    uuid.UUID                    `json:"partitionId"`
+	PartitionType  string                       `json:"partitionType"`
+	ScheduledTime  int64                        `json:"scheduledTime"`
+	SharedContents map[int]string               `json:"sharedContents"`
+	Notifications  map[uuid.UUID]map[int]string `json:"notifications"`
 }

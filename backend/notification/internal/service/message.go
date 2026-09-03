@@ -43,9 +43,12 @@ func (s *Service) PreprocessMessageNotification(
 	}
 
 	p := payload.NotificationMessage{
-		Title0: roomName,
-		Title1: senderName,
-		Text:   content[0],
+		Title: senderName,
+		Text:  content[0],
+	}
+	if roomName != "" {
+		p.Title = roomName
+		p.SubTitle = senderName
 	}
 
 	if contentType == "image" {

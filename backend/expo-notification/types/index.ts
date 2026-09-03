@@ -1,7 +1,7 @@
 export interface NotificationMessage {
   tokenMap: Record<string, string>;
   roomName?: string;
-  senderName: string;
+  title: string;
   text: string;
   imageURL?: string;
 }

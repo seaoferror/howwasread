@@ -41,7 +41,7 @@ async function main() {
           () => valkey.sadd(key, [member]),
           value.tokenMap,
           value.roomName,
-          value.senderName,
+          value.title,
           value.text,
           value.imageURL,
         );

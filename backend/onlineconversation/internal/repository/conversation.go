@@ -300,3 +300,46 @@ func (r *Repository) RemoveRegistrantId(ctx context.Context, conversationId, mem
 	}
 	return nil
 }
+
+func (r *Repository) AddNotificationId(ctx context.Context, conversationId, memberId uuid.UUID) error {
+	filter := bson.M{"_id": bson.Binary{4, conversationId[:]}}
+	update := bson.M{
+		"$addToSet": bson.M{
+			"notification_ids": bson.Binary{
+				Subtype: 4,
+				Data:    memberId[:],
+			},
+		},
+	}
+	_, err := r.db.Collection("conversation").UpdateOne(ctx, filter, update)
+	if err != nil {
+		slog.Error("fail to update reporter ids for conversation",
+			"conversationId", conversationId,
+			"memberId", memberId,
+			"err", err,
+		)
+		return err
+	}
+	return nil
+}
+
+func (r *Repository) RemoveNotificationId(ctx context.Context, conversationId, memberId uuid.UUID) error {
+	filter := bson.M{"_id": bson.Binary{4, conversationId[:]}}
+	update := bson.M{
+		"$pull": bson.M{
+			"notification_ids": bson.Binary{
+				Subtype: 4,
+				Data:    memberId[:],
+			},
+		},
+	}
+	_, err := r.db.Collection("conversation").UpdateOne(ctx, filter, update)
+	if err != nil {
+		slog.Error("fail to remove registrant id",
+			"conversationId", conversationId,
+			"memberId", memberId,
+			"err", err)
+		return err
+	}
+	return nil
+}

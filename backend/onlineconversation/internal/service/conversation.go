@@ -273,20 +273,46 @@ func (s *Service) GenerateTurn() *dto.GetTurnResponse {
 	return res
 }
 
-func (s *Service) ScheduleOnlineConversationNotification(ctx context.Context, memberId, conversationId uuid.UUID) error {
+func (s *Service) ScheduleNotification(ctx context.Context, memberId, conversationId uuid.UUID) error {
 	c, err := s.repository.FindConversation(ctx, conversationId)
 	if err != nil {
 		return err
 	}
-	s.producer.PushMessage("notification", nil,
-		payload.Marshal(payload.OnlineConversationNotification{
-			ScheduledTime:  c.Time,
-			ConversationId: conversationId,
-			MemberId:       memberId,
-			WrittenBy:      c.WrittenBy,
+	err = s.repository.AddNotificationId(ctx, conversationId, memberId)
+	if err != nil {
+		return err
+	}
+	p := payload.NotificationScheduling{
+		PartitionId: conversationId,
+		KeyId:       memberId,
+	}
+	if len(c.NotificationIds) == 0 {
+		aboutRaw := []rune(c.Novel + c.Play + c.Poem + c.ShortStory + c.Film + c.WrittenBy)
+		if len(aboutRaw) > 6 {
+			aboutRaw = []rune(string(aboutRaw[:6]) + "...")
+		}
+		p.ScheduledTime = c.Time.Add(-15 * time.Minute).Unix()
+		p.Contents = map[int]string{0: string(aboutRaw)}
+		p.Type = "online-conversation"
+	}
+	s.producer.PushMessage("scheduled-notification", nil,
+		payload.Marshal(p),
+		nil)
+	return nil
+}
+
+func (s *Service) CancelNotification(ctx context.Context, memberId, conversationId uuid.UUID) error {
+	err := s.repository.RemoveNotificationId(ctx, conversationId, memberId)
+	if err != nil {
+		return err
+	}
+	s.producer.PushMessage("scheduled-notification", nil,
+		payload.Marshal(payload.NotificationScheduling{
+			PartitionId: conversationId,
+			KeyId:       memberId,
+			Type:        "cancel",
 		}),
-		[]sarama.RecordHeader{
-			{Key: []byte("type"), Value: []byte("onlineconversation")},
-		})
+		nil,
+	)
 	return nil
 }

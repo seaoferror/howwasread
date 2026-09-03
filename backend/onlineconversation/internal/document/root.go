@@ -19,10 +19,11 @@ type Conversation struct {
 	Time       time.Time     `bson:"time"`
 	Length     time.Duration `bson:"length"`
 
-	ModeratorIds  []bson.Binary `bson:"moderator_ids"`
-	RegistrantIds []bson.Binary `bson:"registrant_ids"`
-	BanIds        []bson.Binary `bson:"ban_ids"`
-	ReporterIds   []bson.Binary `bson:"reporter_ids"`
+	ModeratorIds    []bson.Binary `bson:"moderator_ids"`
+	RegistrantIds   []bson.Binary `bson:"registrant_ids"`
+	NotificationIds []bson.Binary `bson:"notification_ids"`
+	BanIds          []bson.Binary `bson:"ban_ids"`
+	ReporterIds     []bson.Binary `bson:"reporter_ids"`
 }
 
 //types Org struct {

@@ -15,20 +15,20 @@ export function extractData(message: KafkaMessage) {
 }
 
 export function makeMessage(
-  senderName: string,
+  title: string,
   text: string,
   imageURL: string | undefined,
   roomName: string | undefined,
 ) {
   const message: ExpoPushMessage = {
     to: "",
-    title: senderName,
+    title: title,
     body: text,
     richContent: { image: imageURL },
   };
   if (roomName) {
     message.title = roomName;
-    message.subtitle = senderName;
+    message.subtitle = title;
   }
   return message;
 }

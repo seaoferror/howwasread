@@ -7,17 +7,17 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Map;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Content implements Serializable {
+public class NotificationElement implements Serializable {
 
   @Serial
   private static final long serialVersionUID = 1L;
 
-  private String title;
-  private String body;
-//  private String imageURL;
+  private Long scheduledTime;
+  private Map<Integer, String> contents;
 }

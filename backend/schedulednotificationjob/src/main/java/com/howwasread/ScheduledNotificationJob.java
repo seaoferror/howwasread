@@ -29,7 +29,7 @@ public class ScheduledNotificationJob {
     );
 
     env.fromSource(source, WatermarkStrategy.noWatermarks(), "Kafka Source")
-        .keyBy(event -> event.getPartitionId().toString())
+        .keyBy(IncomingNotificationEvent::getPartitionId)
         .process(new ScheduledNotificationFunction())
         .sinkTo(sink);
 

@@ -7,8 +7,8 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Map;
 import java.util.UUID;
-
 
 @Data
 @Builder
@@ -20,10 +20,8 @@ public class IncomingNotificationEvent implements Serializable {
   private static final long serialVersionUID = 1L;
 
   private UUID partitionId;
-  private String partitionIdType;
-  private long scheduledTime;
+  private String type;
+  private Long scheduledTime;
   private UUID keyId;
-  private String title;
-  private String body;
-  //  private String imageURL;
+  private Map<Integer, String> contents;
 }

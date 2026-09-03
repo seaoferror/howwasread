@@ -21,7 +21,8 @@ public class OutgoingNotificationEvent implements Serializable {
   private static final long serialVersionUID = 1L;
 
   private UUID partitionId;
-  private String partitionIdType;
+  private String partitionType;
   private long scheduledTime;
-  private Map<UUID, Content> notifications;
+  private Map<Integer, String> sharedContents;
+  private Map<UUID, Map<Integer, String>> notifications;
 }

@@ -4,6 +4,7 @@ import (
 	"backend/common"
 	"backend/common/payload"
 	"backend/notification/internal/service"
+	"bytes"
 	"context"
 	"encoding/json"
 	"log"
@@ -157,6 +158,24 @@ func toggleConsumptionFlow(consumerGroup sarama.ConsumerGroup, isPaused *bool) {
 }
 
 func (c *Consumer) distinguishMessage(ctx context.Context, message *sarama.ConsumerMessage) {
+	var messageType string
+	for _, header := range message.Headers {
+		if bytes.Equal(header.Key, []byte("type")) {
+			messageType = string(header.Value)
+			break
+		}
+	}
+	if messageType == "scheduled-notification" {
+		var p payload.NotificationScheduled
+		err := json.Unmarshal(message.Value, &p)
+		if err != nil {
+			slog.Error("fail to unmarshal payload value", "err", err)
+			return
+		}
+		if p.PartitionType == "online-conversation" {
+			c.service.PreprocessScheduledNotification(ctx, p.PartitionId, p.Notifications, p.SharedContents)
+		}
+	}
 	var p payload.PreparedMessage
 	err := json.Unmarshal(message.Value, &p)
 	if err != nil {

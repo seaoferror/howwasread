@@ -23,7 +23,8 @@ func conversationRouter(c *Controller) {
 	c.Router(POST, "/onlineconversation/register", c.registerOnlineConversation)
 	c.Router(POST, "/onlineconversation/deregister", c.deregisterOnlineConversation)
 	c.Router(GET, "/onlineconversation/turn", c.getTurn)
-	c.Router(POST, "/onlineconveration/notification/reserve", c.reserveOnlineConversationNotification)
+	c.Router(POST, "/onlineconversation/notification/reserve", c.reserveNotification)
+	c.Router(POST, "/onlineconversation/notification/cancel", c.cancelNotification)
 }
 
 func (c *Controller) createConversation(w http.ResponseWriter, r *http.Request) {
@@ -242,7 +243,7 @@ func (c *Controller) getTurn(w http.ResponseWriter, _ *http.Request) {
 	}
 }
 
-func (c *Controller) reserveOnlineConversationNotification(w http.ResponseWriter, r *http.Request) {
+func (c *Controller) reserveNotification(w http.ResponseWriter, r *http.Request) {
 	memberId, err := uuid.Parse(r.Header.Get("X-User-Id"))
 	if err != nil {
 		slog.Error("fail to parse member id",
@@ -256,7 +257,29 @@ func (c *Controller) reserveOnlineConversationNotification(w http.ResponseWriter
 			"err", err)
 		handleError(w, errors.New("incorrect body"))
 	}
-	err = c.service.ScheduleOnlineConversationNotification(r.Context(), memberId, req.Id)
+	err = c.service.ScheduleNotification(r.Context(), memberId, req.Id)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func (c *Controller) cancelNotification(w http.ResponseWriter, r *http.Request) {
+	memberId, err := uuid.Parse(r.Header.Get("X-User-Id"))
+	if err != nil {
+		slog.Error("fail to parse member id",
+			"err", err)
+		handleError(w, errors.New("incorrect body"))
+	}
+	var req payload.ConversationRequest
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		slog.Error("fail to parse body",
+			"err", err)
+		handleError(w, errors.New("incorrect body"))
+	}
+	err = c.service.CancelNotification(r.Context(), memberId, req.Id)
 	if err != nil {
 		handleError(w, err)
 		return

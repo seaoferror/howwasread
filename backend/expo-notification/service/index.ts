@@ -6,11 +6,11 @@ export async function sendPushNotification(
   markNotification: () => Promise<number>,
   tokenMap: Record<string, string>,
   roomName: string | undefined,
-  senderName: string,
+  title: string,
   text: string,
   imageURL: string | undefined,
 ): Promise<Record<string, string>> {
-  const message = makeMessage(senderName, text, imageURL, roomName);
+  const message = makeMessage(title, text, imageURL, roomName);
   const tickets = await expo.sendPushNotificationsAsync(
     Object.keys(tokenMap).map((token) => {
       message.to = token;
