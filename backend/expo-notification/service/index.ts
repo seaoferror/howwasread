@@ -5,12 +5,12 @@ export async function sendPushNotification(
   expo: Expo,
   markNotification: () => Promise<number>,
   tokenMap: Record<string, string>,
-  roomName: string | undefined,
   title: string,
+  subTitle: string | undefined,
   text: string,
   imageURL: string | undefined,
 ): Promise<Record<string, string>> {
-  const message = makeMessage(title, text, imageURL, roomName);
+  const message = makeMessage(title, subTitle, text, imageURL);
   const tickets = await expo.sendPushNotificationsAsync(
     Object.keys(tokenMap).map((token) => {
       message.to = token;
@@ -18,13 +18,13 @@ export async function sendPushNotification(
     }),
   );
   await markNotification();
-  const failedTokenMap: Record<string, string> = {}
+  const failedTokenMap: Record<string, string> = {};
   tickets.flatMap((ticket) => {
     if (
       ticket.status != "ok" &&
       ticket.details?.error === "DeviceNotRegistered"
     ) {
-      if(ticket.details.expoPushToken) {
+      if (ticket.details.expoPushToken) {
         const failedToken = ticket.details.expoPushToken;
         failedTokenMap[failedToken] = tokenMap[failedToken];
       }

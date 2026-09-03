@@ -16,9 +16,9 @@ export function extractData(message: KafkaMessage) {
 
 export function makeMessage(
   title: string,
+  subTitle: string | undefined,
   text: string,
   imageURL: string | undefined,
-  roomName: string | undefined,
 ) {
   const message: ExpoPushMessage = {
     to: "",
@@ -26,9 +26,8 @@ export function makeMessage(
     body: text,
     richContent: { image: imageURL },
   };
-  if (roomName) {
-    message.title = roomName;
-    message.subtitle = title;
+  if (subTitle) {
+    message.subtitle = subTitle;
   }
   return message;
 }

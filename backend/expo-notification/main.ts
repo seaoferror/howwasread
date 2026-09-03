@@ -40,8 +40,8 @@ async function main() {
           expo,
           () => valkey.sadd(key, [member]),
           value.tokenMap,
-          value.roomName,
           value.title,
+          value.subTitle,
           value.text,
           value.imageURL,
         );
