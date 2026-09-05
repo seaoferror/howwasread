@@ -26,7 +26,6 @@ export default function OnlineConversationList({
   isActive: boolean;
 }) {
   const [keyword, setKeyword] = useState("");
-  const [submitKeyword, setSubmitKeyword] = useState("");
   const {
     data,
     fetchNextPage,
@@ -34,7 +33,7 @@ export default function OnlineConversationList({
     isFetchingNextPage,
     refetch,
     isFetching,
-  } = useGetInfiniteOnlineConversations(submitKeyword);
+  } = useGetInfiniteOnlineConversations(keyword);
   const { data: blockedConversations } = useGetBlockedConversations();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const ref = useRef<FlatList | null>(null);
@@ -66,14 +65,13 @@ export default function OnlineConversationList({
     }
   };
 
-  const handleSearch = () => {
-    Keyboard.dismiss();
-    setSubmitKeyword(keyword);
+  const handleSearch = (text: string) => {
+    setKeyword(text);
   };
 
   const handleSearchCancel = () => {
-    setSubmitKeyword("");
     setKeyword("");
+    Keyboard.dismiss()
   };
 
   const handleSheetCloseButtonPress = () => {
@@ -87,15 +85,10 @@ export default function OnlineConversationList({
         <SearchInput
           placeholder="Search conversation"
           value={keyword}
-          onChangeText={(text) => setKeyword(text)}
-          onSubmit={() => {
-            handleSearch();
-          }}
-          submitKeyword={submitKeyword}
+          onChangeText={(text) => handleSearch(text)}
+          submitKeyword={keyword}
           keyword={keyword}
-          onCancel={() => {
-            handleSearchCancel();
-          }}
+          onCancel={() => handleSearchCancel()}
         />
       </View>
       {isFetching ? (
