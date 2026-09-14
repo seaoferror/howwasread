@@ -3,7 +3,9 @@ package consumer
 import (
 	"backend/common"
 	"backend/common/payload"
+	"backend/common/producer"
 	"backend/messagepreprocess/internal/service"
+	"bytes"
 	"context"
 	"encoding/json"
 	"log"
@@ -22,9 +24,10 @@ import (
 type Consumer struct {
 	consumerGroup sarama.ConsumerGroup
 	service       *service.Service
+	producer      *producer.Producer
 }
 
-func NewConsumer(s *service.Service) *Consumer {
+func NewConsumer(s *service.Service, p *producer.Producer) *Consumer {
 	consumerGroup, err := connectConsumer("preprocess_message")
 	if err != nil {
 		log.Panicf("fail to create consumer group client: %v", err)
@@ -32,6 +35,7 @@ func NewConsumer(s *service.Service) *Consumer {
 	return &Consumer{
 		consumerGroup: consumerGroup,
 		service:       s,
+		producer:      p,
 	}
 }
 
@@ -161,15 +165,38 @@ func (c *Consumer) distinguishMessage(
 	ctx context.Context,
 	message *sarama.ConsumerMessage,
 ) {
-	if message.Topic == "chat-message" {
-		var p payload.ChatMessage
-		err := json.Unmarshal(message.Value, &p)
-		if err != nil {
-			slog.Error("fail to unmarshal payload value",
-				"err", err,
-				"payload.Value", message.Value)
+	retry := false
+	for _, header := range message.Headers {
+		if bytes.Equal(header.Key, []byte("retry")) {
+			retry = true
+			break
+		}
+	}
+	var err error
+	var p payload.ChatMessage
+	err = json.Unmarshal(message.Value, &p)
+	if err != nil {
+		slog.Error("fail to unmarshal payload value",
+			"err", err,
+			"payload.Value", message.Value)
+		return
+	}
+	err = c.service.ManageMessage(ctx, uuid.UUID(p.Id), uuid.UUID(p.FromId), p.ToIdType, uuid.UUID(p.ToId), p.ContentType, p.Contents)
+	if err != nil {
+		e := payload.RetryEvent{
+			PartitionId: uuid.UUID(p.Id),
+			Reason:      err.Error(),
+		}
+		if retry {
+			c.producer.PushMessage("exponential-backoff-retry", nil, payload.Marshal(e), nil)
 			return
 		}
-		c.service.ManageMessage(ctx, uuid.UUID(p.Id), uuid.UUID(p.FromId), p.ToIdType, uuid.UUID(p.ToId), p.ContentType, p.Contents)
+		e.Backoff = common.AddJitter(2000)
+		e.Multiplier = 2
+		e.Cap = 15000000
+		e.MaxFailure = 5
+		e.Topic = message.Topic
+		e.Value = message.Value
+		c.producer.PushMessage("exponential-backoff-retry", nil, payload.Marshal(e), nil)
 	}
 }

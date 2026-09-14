@@ -158,14 +158,14 @@ func toggleConsumptionFlow(consumerGroup sarama.ConsumerGroup, isPaused *bool) {
 }
 
 func (c *Consumer) distinguishMessage(ctx context.Context, message *sarama.ConsumerMessage) {
-	var messageType string
+	var t string
 	for _, header := range message.Headers {
 		if bytes.Equal(header.Key, []byte("type")) {
-			messageType = string(header.Value)
+			t = string(header.Value)
 			break
 		}
 	}
-	if messageType == "scheduled-notification" {
+	if t == "scheduled-notification" {
 		var p payload.NotificationScheduled
 		err := json.Unmarshal(message.Value, &p)
 		if err != nil {

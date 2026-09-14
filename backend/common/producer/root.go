@@ -26,7 +26,7 @@ func NewProducer(clientIdPrefix string) *Producer {
 	log.Print("success to create kafka producer")
 	kp := Producer{asyncProducer}
 
-	go kp.drainChannels()
+	go kp.drainErrorChannel()
 
 	return &kp
 }
@@ -83,38 +83,17 @@ func (p *Producer) PushMessage(topic string, key, value []byte, headers []sarama
 	p.asyncProducer.Input() <- &msg
 }
 
-//func (p *Producer) PushRetryMessage(
-//	topic string,
-//	key, value []byte,
-//	retryBackoff time.Duration,
-//	errorMessage string) error {
-//}
-
 func (p *Producer) Close() error {
 	return p.asyncProducer.Close()
 }
 
-func (p *Producer) drainChannels() {
+func (p *Producer) drainErrorChannel() {
 	for err := range p.asyncProducer.Errors() {
 		log.Print(
 			"Failed to produce payload",
 			"err", err.Err,
 			"topic", err.Msg.Topic,
 		)
-		//TODO: dlq?
+		//TODO: dlq? or send notification to developer directly
 	}
 }
-
-//func (p *Producer) PushDeadLetter(reason error, originalTopic string, value []byte) error {
-//	_ = []sarama.RecordHeader{
-//		{Key: []byte("x-error-message"), Value: []byte(reason.Error())},
-//		{Key: []byte("x-original-topic"), Value: []byte(originalTopic)},
-//		{Key: []byte("x-failed-at"), Value: []byte(time.Now().Format(time.RFC3339))},
-//	}
-//	err := p.PushMessage("dlq", nil, value)
-//	if err != nil {
-//		slog.Error("fail to publish dead letter", "err", err)
-//		return err
-//	}
-//	return nil
-//}

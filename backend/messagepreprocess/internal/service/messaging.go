@@ -11,14 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) ManageMessage(
-	ctx context.Context,
-	id, fromId uuid.UUID,
-	toIdType string,
-	toId uuid.UUID,
-	contentType string,
-	contents []string,
-) {
+func (s *Service) ManageMessage(ctx context.Context, id, fromId uuid.UUID, toIdType string, toId uuid.UUID, contentType string, contents []string) error {
 	var toIds [][]byte
 	roomId := toId
 	if toIdType == "personal" {
@@ -26,7 +19,7 @@ func (s *Service) ManageMessage(
 		if contentType != "block" && contentType != "unblock" && contentType != "quit" && contentType != "delete" {
 			b, err := s.repository.IsBlocked(ctx, gocql.UUID(toId), gocql.UUID(fromId))
 			if err != nil {
-				return
+				return err
 			}
 			if !b {
 				toIds = append(toIds, toId[:])
@@ -36,13 +29,13 @@ func (s *Service) ManageMessage(
 	if contentType == "block" {
 		err := s.repository.AddBlock(ctx, gocql.UUID(fromId), gocql.UUID(toId))
 		if err != nil {
-			return
+			return err
 		}
 	}
 	if contentType == "unblock" {
 		err := s.repository.RemoveBlock(ctx, gocql.UUID(fromId), gocql.UUID(toId))
 		if err != nil {
-			return
+			return err
 		}
 	}
 	if toIdType == "group" && contentType != "create" && contentType != "quit" && contentType != "delete" {
@@ -51,7 +44,7 @@ func (s *Service) ManageMessage(
 			err = nil
 		}
 		if err != nil {
-			return
+			return err
 		}
 		for _, pid := range participantIds {
 			toIds = append(toIds, pid[:])
@@ -61,19 +54,19 @@ func (s *Service) ManageMessage(
 		err := s.repository.CreateChatRoom(ctx, gocql.UUID(roomId), gocql.UUID(fromId), contents[0])
 		contents = []string{}
 		if err != nil {
-			return
+			return err
 		}
 	}
 	if contentType == "participate" {
 		err := s.repository.AddParticipantId(ctx, gocql.UUID(roomId), gocql.UUID(fromId))
 		if err != nil {
-			return
+			return err
 		}
 	}
 	if toIdType == "group" && contentType == "quit" {
 		err := s.repository.RemoveParticipantId(ctx, gocql.UUID(roomId), gocql.UUID(fromId))
 		if err != nil {
-			return
+			return err
 		}
 	}
 	if toIdType == "group" && (contentType == "create" || contentType == "participate" || contentType == "quit" || contentType == "delete") {
@@ -109,7 +102,7 @@ func (s *Service) ManageMessage(
 		wg.Wait()
 		err := errors.Join(es...)
 		if err != nil {
-			return
+			return err
 		}
 	}
 
@@ -123,5 +116,5 @@ func (s *Service) ManageMessage(
 	})
 
 	s.producer.PushMessage("prepared-message", nil, p, nil)
-	return
+	return nil
 }
