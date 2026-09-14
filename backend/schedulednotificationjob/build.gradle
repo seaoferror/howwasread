@@ -4,7 +4,7 @@ plugins {
     id 'com.gradleup.shadow' version '9.6.1'
 }
 
-group = 'com.howwasread'
+group = 'schedulednotificationjob'
 version = '1.0-SNAPSHOT'
 
 java {
@@ -38,11 +38,11 @@ shadowJar {
     archiveVersion.set(project.version.toString())
 
     manifest {
-        attributes 'Main-Class': 'com.howwasread.ScheduledNotificationJob'
+        attributes 'Main-Class': 'schedulednotificationjob.ScheduledNotificationJob'
     }
 
     // Relocate Kafka client to avoid classpath conflicts on the Flink cluster
-    relocate 'org.apache.kafka', 'com.howwasread.shaded.kafka'
+    relocate 'org.apache.kafka', 'schedulednotificationjob.shaded.kafka'
 
     mergeServiceFiles()
 }
