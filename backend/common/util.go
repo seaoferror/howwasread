@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io"
+	"math/rand/v2"
 	"net"
 	"net/http"
 	"os"
@@ -55,4 +56,14 @@ func CreateTlSConfig(certFile, keyFile, caCertFile string) (tlsConfig *tls.Confi
 		tlsConfig.RootCAs = caCertPool
 	}
 	return tlsConfig, nil
+}
+
+func AddJitter(base int64) int64 {
+	if base <= 0 {
+		return base
+	}
+	maxJitter := float64(base) * 0.10
+	multiplier := (rand.Float64() * 2.0) - 1.0
+	jitterAmount := maxJitter * multiplier
+	return base + int64(jitterAmount)
 }

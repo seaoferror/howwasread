@@ -298,7 +298,7 @@ func (s *Service) ScheduleNotification(ctx context.Context, memberId, conversati
 		if len(aboutRaw) > 6 {
 			aboutRaw = []rune(string(aboutRaw[:6]) + "...")
 		}
-		p.ScheduledTime = c.Time.Add(-15 * time.Minute).Unix()
+		p.ScheduledTime = c.Time.Add(-15 * time.Minute).UnixMilli()
 		p.Contents = map[int]string{0: string(aboutRaw)}
 		p.Type = "online-conversation"
 	}

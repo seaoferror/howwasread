@@ -22,7 +22,7 @@ func NewServer() {
 
 	s := service.NewService(r, p)
 
-	c := consumer.NewConsumer(s)
+	c := consumer.NewConsumer(s, p)
 
 	err := c.GetMessage([]string{"chat-message"})
 	if err != nil {
