@@ -3,15 +3,18 @@ package offlineconversation.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.f4b6a3.uuid.UuidCreator;
+import offlineconversation.domain.ConversationMemberCompositeKey;
 import offlineconversation.domain.OfflineConversation;
+import offlineconversation.domain.OfflineConversationModerator;
 import offlineconversation.domain.OfflineConversationParticipant;
-import offlineconversation.domain.ParticipantCompositeKey;
+import offlineconversation.domain.OfflineConversationReporter;
 import offlineconversation.dto.*;
 import offlineconversation.projection.OfflineConversationDetailProjection;
 import offlineconversation.projection.OfflineConversationMapProjection;
 import offlineconversation.projection.OfflineConversationPinProjection;
-import offlineconversation.projection.OfflineConversationReportProjection;
+import offlineconversation.repository.OfflineConversationModeratorRepository;
 import offlineconversation.repository.OfflineConversationParticipantRepository;
+import offlineconversation.repository.OfflineConversationReporterRepository;
 import offlineconversation.repository.OfflineConversationRepository;
 import offlineconversation.util.UUIDUtil;
 import glide.api.GlideClusterClient;
@@ -36,6 +39,8 @@ public class OfflineConversationService {
 
   private final OfflineConversationRepository offlineConversationRepository;
   private final OfflineConversationParticipantRepository offlineConversationParticipantRepository;
+  private final OfflineConversationModeratorRepository offlineConversationModeratorRepository;
+  private final OfflineConversationReporterRepository offlineConversationReporterRepository;
 
   private final GlideClusterClient glideClient;
   private final ObjectMapper objectMapper;
@@ -66,14 +71,14 @@ public class OfflineConversationService {
         .city(request.city())
         .h3Res5(request.h3Res5())
         .h3Res7(request.h3Res7())
-        .moderatorIds(new HashSet<>(Set.of(memberId)))
         .build();
     var conversationId = offlineConversationRepository.save(convo).getId();
-    var key = ParticipantCompositeKey.builder()
+    var key = ConversationMemberCompositeKey.builder()
         .conversationId(conversationId)
-        .participantId(memberId)
+        .memberId(memberId)
         .build();
     offlineConversationParticipantRepository.save(new OfflineConversationParticipant(key, convo));
+    offlineConversationModeratorRepository.save(new OfflineConversationModerator(key, convo));
     applicationEventPublisher.publishEvent(ChatMessage.builder()
         .id(UUIDUtil.uuidToBytes(UuidCreator.getTimeOrderedEpoch()))
         .fromId(UUIDUtil.uuidToBytes(memberId))
@@ -127,9 +132,9 @@ public class OfflineConversationService {
   @Transactional
   public void join(JoinOfflineConversationRequest request, UUID memberId) {
     var conversationProxy = offlineConversationRepository.getReferenceById(request.conversationId());
-    var key = ParticipantCompositeKey.builder()
+    var key = ConversationMemberCompositeKey.builder()
         .conversationId(request.conversationId())
-        .participantId(memberId)
+        .memberId(memberId)
         .build();
     offlineConversationParticipantRepository.save(new OfflineConversationParticipant(key, conversationProxy));
     applicationEventPublisher.publishEvent(ChatMessage.builder()
@@ -144,9 +149,9 @@ public class OfflineConversationService {
 
   @Transactional
   public void quit(JoinOfflineConversationRequest request, UUID memberId) {
-    var key = ParticipantCompositeKey.builder()
+    var key = ConversationMemberCompositeKey.builder()
         .conversationId(request.conversationId())
-        .participantId(memberId)
+        .memberId(memberId)
         .build();
     offlineConversationParticipantRepository.deleteById(key);
     applicationEventPublisher.publishEvent(ChatMessage.builder()
@@ -258,6 +263,7 @@ public class OfflineConversationService {
             "Conversation not found"
         ));
     var participantIds = offlineConversationParticipantRepository.findParticipantIdsByConversationId(conversationId);
+    var moderatorIds = offlineConversationModeratorRepository.findMemberIdsByConversationId(conversationId);
     return OfflineConversationDetailResponse.builder()
         .novel(convo.getNovel())
         .poem(convo.getPoem())
@@ -270,32 +276,28 @@ public class OfflineConversationService {
         .length((int) convo.getLength().toMinutes())
         .mapsLink(convo.getMapsLink())
         .location(convo.getLocation())
-        .isModerator(convo.getModeratorIds().contains(memberId))
+        .isModerator(moderatorIds.contains(memberId))
         .isParticipant(participantIds.contains(memberId))
         .numberOfParticipants(participantIds.size())
-        .moderatorIds(convo.getModeratorIds())
+        .moderatorIds(moderatorIds)
         .build();
   }
 
   @Transactional
   public void report(UUID conversationId, UUID memberId) {
-    var conversation = offlineConversationRepository.findById(conversationId, OfflineConversationReportProjection.class)
-        .orElseThrow(() -> new ResponseStatusException(
-            HttpStatus.NOT_FOUND,
-            "Conversation not found"
-        ));
-    if (conversation.getReporterIds().contains(memberId)) {
+    var key = ConversationMemberCompositeKey.builder()
+        .conversationId(conversationId)
+        .memberId(memberId)
+        .build();
+    if (offlineConversationReporterRepository.existsById(key)) {
       return;
     }
-    if (conversation.getReporterIds().size() > 5) {
+    long reporterCount = offlineConversationReporterRepository.countByKeyConversationId(conversationId);
+    if (reporterCount > 5) {
       offlineConversationRepository.deleteById(conversationId);
       return;
     }
-    var c = offlineConversationRepository.findById(conversationId)
-        .orElseThrow(() -> new ResponseStatusException(
-            HttpStatus.NOT_FOUND,
-            "Conversation not found"
-        ));
-    c.getReporterIds().add(memberId);
+    var conversationProxy = offlineConversationRepository.getReferenceById(conversationId);
+    offlineConversationReporterRepository.save(new OfflineConversationReporter(key, conversationProxy));
   }
 }

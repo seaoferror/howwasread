@@ -14,10 +14,10 @@ import java.util.UUID;
 @EqualsAndHashCode
 @NoArgsConstructor
 @AllArgsConstructor
-public class ParticipantCompositeKey implements Serializable {
+public class ConversationMemberCompositeKey implements Serializable {
   @Column(nullable = false)
   private UUID conversationId;
 
   @Column(nullable = false)
-  private UUID participantId;
+  private UUID memberId;
 }

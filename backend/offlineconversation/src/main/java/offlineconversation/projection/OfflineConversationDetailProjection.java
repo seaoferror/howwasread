@@ -2,8 +2,6 @@ package offlineconversation.projection;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Set;
-import java.util.UUID;
 
 public interface OfflineConversationDetailProjection {
   String getNovel();
@@ -27,6 +25,4 @@ public interface OfflineConversationDetailProjection {
   String getMapsLink();
 
   String getLocation();
-
-  Set<UUID> getModeratorIds();
 }

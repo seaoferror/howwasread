@@ -2,14 +2,10 @@ package offlineconversation.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.UuidGenerator;
-import org.hibernate.type.SqlTypes;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -76,12 +72,4 @@ public class OfflineConversation {
 
   @Column(length = 15, nullable = false)
   private String h3Res7;
-
-  @JdbcTypeCode(SqlTypes.JSON)
-  @Column(columnDefinition = "JSON", nullable = false)
-  private Set<UUID> moderatorIds = new HashSet<>();
-
-  @JdbcTypeCode(SqlTypes.JSON)
-  @Column(columnDefinition = "JSON", nullable = false)
-  private Set<UUID> reporterIds = new HashSet<>();
 }

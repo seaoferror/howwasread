@@ -43,7 +43,11 @@ func (s *Service) CreateConversation(
 	}
 	defer tx.Rollback()
 
-	err = s.repository.InsertConversation(ctx, tx, conversationId, novel, shortStory, poem, play, film, writtenBy, rule, capacity, t, length, memberId)
+	err = s.repository.InsertConversation(ctx, tx, conversationId, novel, shortStory, poem, play, film, writtenBy, rule, capacity, t, length)
+	if err != nil {
+		return nil, err
+	}
+	err = s.repository.InsertModerator(ctx, tx, conversationId, memberId)
 	if err != nil {
 		return nil, err
 	}
@@ -99,6 +103,7 @@ func (s *Service) GetConversations(ctx context.Context, page int, t time.Time) (
 	slog.Info("success to get conversation", "resp", resp)
 	return resp, nil
 }
+
 func (s *Service) PublishConversationSignal(fromId uuid.UUID, toIds [][]byte, signal []byte) error {
 	value := payload.Marshal(payload.OnlineConversationSignal{
 		FromId: fromId[:],
