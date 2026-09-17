@@ -1,29 +1,28 @@
-package document
+package entity
 
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/v2/bson"
+	"github.com/google/uuid"
 )
 
 type Conversation struct {
-	Id         bson.Binary   `bson:"_id"`
-	Novel      string        `bson:"novel,omitempty"`
-	ShortStory string        `bson:"short_story,omitempty"`
-	Poem       string        `bson:"poem,omitempty"`
-	Play       string        `bson:"play,omitempty"`
-	Film       string        `bson:"film,omitempty"`
-	WrittenBy  string        `bson:"writtenBy"`
-	Rule       string        `bson:"rule,omitempty"`
-	Capacity   int           `bson:"capacity"`
-	Time       time.Time     `bson:"time"`
-	Length     time.Duration `bson:"length"`
-
-	ModeratorIds    []bson.Binary `bson:"moderator_ids"`
-	RegistrantIds   []bson.Binary `bson:"registrant_ids"`
-	NotificationIds []bson.Binary `bson:"notification_ids"`
-	BanIds          []bson.Binary `bson:"ban_ids"`
-	ReporterIds     []bson.Binary `bson:"reporter_ids"`
+	Id              uuid.UUID
+	Novel           string
+	ShortStory      string
+	Poem            string
+	Play            string
+	Film            string
+	WrittenBy       string
+	Rule            string
+	Capacity        int
+	Time            time.Time
+	Length          time.Duration
+	ModeratorIds    []uuid.UUID
+	RegistrantIds   []uuid.UUID
+	BanIds          []uuid.UUID
+	ReporterIds     []uuid.UUID
+	NotificationIds []uuid.UUID
 }
 
 //types Org struct {
