@@ -20,7 +20,7 @@ public interface OfflineConversationDetailProjection {
 
   Instant getTime();
 
-  Duration getLength();
+  int getLengthMinutes();
 
   String getMapsLink();
 

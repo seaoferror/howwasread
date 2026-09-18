@@ -50,7 +50,7 @@ public class OfflineConversation {
   private Instant time;
 
   @Column(nullable = false)
-  private Duration length;
+  private int lengthMinutes;
 
   @Column(columnDefinition = "TEXT", nullable = false)
   private String mapsLink;
