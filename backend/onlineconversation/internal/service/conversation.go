@@ -104,16 +104,6 @@ func (s *Service) GetConversations(ctx context.Context, page int, t time.Time) (
 	return resp, nil
 }
 
-func (s *Service) PublishConversationSignal(fromId uuid.UUID, toIds [][]byte, signal []byte) error {
-	value := payload.Marshal(payload.OnlineConversationSignal{
-		FromId: fromId[:],
-		ToIds:  toIds,
-		Signal: signal,
-	})
-	s.producer.PushMessage("conversation-signal", nil, value, nil)
-	return nil
-}
-
 func (s *Service) GetConversationDetail(ctx context.Context, conversationId, memberId uuid.UUID) (*dto.OnlineConversationDetailResponse, error) {
 	c, err := s.repository.FindConversation(ctx, s.repository.Tx(), conversationId)
 	if err != nil {

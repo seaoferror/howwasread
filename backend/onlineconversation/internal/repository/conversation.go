@@ -9,17 +9,15 @@ import (
 	"github.com/google/uuid"
 )
 
-const Limit = 10
-
 func (r *Repository) InsertConversation(ctx context.Context, session session, conversationId uuid.UUID, novel, shortStory, poem, play, film, writtenBy, rule string, capacity int, t time.Time, length time.Duration) error {
 	_, err := session.ExecContext(ctx, `
-		INSERT INTO conversations
+		INSERT INTO online_conversation
 			(id, novel, short_story, poem, play, film, written_by, rule, capacity, time, length_minutes, current_registrants)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
 		conversationId[:], novel, shortStory, poem, play, film, writtenBy, rule, capacity, t, int(length.Minutes()),
 	)
 	if err != nil {
-		slog.Error("fail to insert new conversation", "err", err)
+		slog.Error("fail to insert new online conversation", "err", err)
 		return err
 	}
 	return nil
@@ -27,7 +25,7 @@ func (r *Repository) InsertConversation(ctx context.Context, session session, co
 
 func (r *Repository) InsertModerator(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
-		`INSERT INTO conversation_moderators (conversation_id, member_id) VALUES (?, ?)`,
+		`INSERT INTO online_conversation_moderator (conversation_id, member_id) VALUES (?, ?)`,
 		conversationId[:], memberId[:],
 	)
 	if err != nil {
@@ -40,7 +38,7 @@ func (r *Repository) InsertModerator(ctx context.Context, session session, conve
 
 func (r *Repository) InsertRegistrant(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
-		`INSERT IGNORE INTO conversation_registrants (conversation_id, member_id) VALUES (?, ?)`,
+		`INSERT IGNORE INTO online_conversation_registrant (conversation_id, member_id) VALUES (?, ?)`,
 		conversationId[:], memberId[:],
 	)
 	if err != nil {
@@ -52,27 +50,28 @@ func (r *Repository) InsertRegistrant(ctx context.Context, session session, conv
 }
 
 func (r *Repository) FindConversations(ctx context.Context, session session, page int, t time.Time) ([]entity.Conversation, error) {
+	const limit = 10
 	rows, err := session.QueryContext(ctx, `
 		SELECT id, novel, short_story, poem, play, film, written_by, time
-		FROM conversations
+		FROM online_conversation
 		WHERE time > ?
 		ORDER BY time ASC
 		LIMIT ? OFFSET ?`,
-		t.Add(-9*time.Hour), Limit, (page-1)*5,
+		t.Add(-9*time.Hour), limit, (page-1)*5,
 	)
 	if err != nil {
-		slog.Error("fail to find next conversations page", "err", err)
+		slog.Error("fail to find next online conversations page", "err", err)
 		return nil, err
 	}
 	defer rows.Close()
 
-	items := make([]entity.Conversation, 0, Limit)
+	items := make([]entity.Conversation, 0, limit)
 	for rows.Next() {
 		var d entity.Conversation
 		var idRaw []byte
 		err = rows.Scan(&idRaw, &d.Novel, &d.ShortStory, &d.Poem, &d.Play, &d.Film, &d.WrittenBy, &d.Time)
 		if err != nil {
-			slog.Error("fail to scan conversation row", "err", err)
+			slog.Error("fail to scan online conversation row", "err", err)
 			return nil, err
 		}
 		d.Id = uuid.UUID(idRaw)
@@ -110,34 +109,34 @@ func (r *Repository) FindConversation(ctx context.Context, session session, conv
 
 	row := session.QueryRowContext(ctx, `
 		SELECT id, novel, short_story, poem, play, film, written_by, rule, capacity, time, length_minutes
-		FROM conversations
+		FROM online_conversation
 		WHERE id = ?`,
 		conversationId[:],
 	)
 	err := row.Scan(&idRaw, &d.Novel, &d.ShortStory, &d.Poem, &d.Play, &d.Film, &d.WrittenBy, &d.Rule, &d.Capacity, &d.Time, &lengthMinutes)
 	if err != nil {
-		slog.Error("fail to find conversation", "err", err)
+		slog.Error("fail to find online conversation", "err", err)
 		return nil, err
 	}
 	d.Id = uuid.UUID(idRaw)
 	d.Length = time.Duration(lengthMinutes) * time.Minute
 
-	d.ModeratorIds, err = r.findIds(ctx, session, `SELECT member_id FROM conversation_moderators WHERE conversation_id = ?`, conversationId)
+	d.ModeratorIds, err = r.findIds(ctx, session, `SELECT member_id FROM online_conversation_moderator WHERE conversation_id = ?`, conversationId)
+	if err != nil {
+		slog.Error("fail to find online conversation", "err", err)
+		return nil, err
+	}
+	d.RegistrantIds, err = r.findIds(ctx, session, `SELECT member_id FROM online_conversation_registrant WHERE conversation_id = ?`, conversationId)
 	if err != nil {
 		slog.Error("fail to find conversation", "err", err)
 		return nil, err
 	}
-	d.RegistrantIds, err = r.findIds(ctx, session, `SELECT member_id FROM conversation_registrants WHERE conversation_id = ?`, conversationId)
+	d.BanIds, err = r.findIds(ctx, session, `SELECT member_id FROM online_conversation_ban WHERE conversation_id = ?`, conversationId)
 	if err != nil {
 		slog.Error("fail to find conversation", "err", err)
 		return nil, err
 	}
-	d.BanIds, err = r.findIds(ctx, session, `SELECT member_id FROM conversation_bans WHERE conversation_id = ?`, conversationId)
-	if err != nil {
-		slog.Error("fail to find conversation", "err", err)
-		return nil, err
-	}
-	d.NotificationIds, err = r.findIds(ctx, session, `SELECT member_id FROM conversation_notifications WHERE conversation_id = ?`, conversationId)
+	d.NotificationIds, err = r.findIds(ctx, session, `SELECT member_id FROM online_conversation_notification WHERE conversation_id = ?`, conversationId)
 	if err != nil {
 		slog.Error("fail to find conversation", "err", err)
 		return nil, err
@@ -146,7 +145,7 @@ func (r *Repository) FindConversation(ctx context.Context, session session, conv
 }
 
 func (r *Repository) FindModeratorIds(ctx context.Context, session session, conversationId uuid.UUID) ([]uuid.UUID, error) {
-	ids, err := r.findIds(ctx, session, `SELECT member_id FROM conversation_moderators WHERE conversation_id = ?`, conversationId)
+	ids, err := r.findIds(ctx, session, `SELECT member_id FROM online_conversation_moderator WHERE conversation_id = ?`, conversationId)
 	if err != nil {
 		slog.Error("fail to find mod ids", "err", err)
 		return nil, err
@@ -155,7 +154,7 @@ func (r *Repository) FindModeratorIds(ctx context.Context, session session, conv
 }
 
 func (r *Repository) FindReporterIds(ctx context.Context, session session, conversationId uuid.UUID) ([]uuid.UUID, error) {
-	ids, err := r.findIds(ctx, session, `SELECT member_id FROM conversation_reporters WHERE conversation_id = ?`, conversationId)
+	ids, err := r.findIds(ctx, session, `SELECT member_id FROM online_conversation_reporter WHERE conversation_id = ?`, conversationId)
 	if err != nil {
 		slog.Error("fail to find reporter ids", "err", err)
 		return nil, err
@@ -164,7 +163,7 @@ func (r *Repository) FindReporterIds(ctx context.Context, session session, conve
 }
 
 func (r *Repository) FindRegistrantIds(ctx context.Context, session session, conversationId uuid.UUID) ([]uuid.UUID, error) {
-	ids, err := r.findIds(ctx, session, `SELECT member_id FROM conversation_registrants WHERE conversation_id = ?`, conversationId)
+	ids, err := r.findIds(ctx, session, `SELECT member_id FROM online_conversation_registrant WHERE conversation_id = ?`, conversationId)
 	if err != nil {
 		slog.Error("fail to find registrant ids", "err", err)
 		return nil, err
@@ -174,9 +173,9 @@ func (r *Repository) FindRegistrantIds(ctx context.Context, session session, con
 
 func (r *Repository) FindCapacity(ctx context.Context, session session, id uuid.UUID) (int, error) {
 	var capacity int
-	err := session.QueryRowContext(ctx, `SELECT capacity FROM conversations WHERE id = ?`, id[:]).Scan(&capacity)
+	err := session.QueryRowContext(ctx, `SELECT capacity FROM online_conversation WHERE id = ?`, id[:]).Scan(&capacity)
 	if err != nil {
-		slog.Error("fail to find capacity", "err", err)
+		slog.Error("fail to find online conversation capacity", "err", err)
 		return 0, err
 	}
 	return capacity, nil
@@ -184,11 +183,11 @@ func (r *Repository) FindCapacity(ctx context.Context, session session, id uuid.
 
 func (r *Repository) AddBanId(ctx context.Context, session session, conversationId uuid.UUID, banId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
-		`INSERT IGNORE INTO conversation_bans (conversation_id, member_id) VALUES (?, ?)`,
+		`INSERT IGNORE INTO online_conversation_ban (conversation_id, member_id) VALUES (?, ?)`,
 		conversationId[:], banId[:],
 	)
 	if err != nil {
-		slog.Error("fail to add participant member id to conversation",
+		slog.Error("fail to add ban id to online conversation",
 			"err", err, "conversationId", conversationId, "memberId", banId.String())
 		return err
 	}
@@ -196,9 +195,9 @@ func (r *Repository) AddBanId(ctx context.Context, session session, conversation
 }
 
 func (r *Repository) DeleteOnlineConversation(ctx context.Context, session session, id uuid.UUID) error {
-	_, err := session.ExecContext(ctx, `DELETE FROM conversations WHERE id = ?`, id[:])
+	_, err := session.ExecContext(ctx, `DELETE FROM online_conversation WHERE id = ?`, id[:])
 	if err != nil {
-		slog.Error("fail to delete conversation", "err", err)
+		slog.Error("fail to delete online conversation", "err", err)
 		return err
 	}
 	return nil
@@ -206,11 +205,11 @@ func (r *Repository) DeleteOnlineConversation(ctx context.Context, session sessi
 
 func (r *Repository) AddReporterId(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
-		`INSERT IGNORE INTO conversation_reporters (conversation_id, member_id) VALUES (?, ?)`,
+		`INSERT IGNORE INTO online_conversation_reporter (conversation_id, member_id) VALUES (?, ?)`,
 		conversationId[:], memberId[:],
 	)
 	if err != nil {
-		slog.Error("fail to update reporter ids for conversation",
+		slog.Error("fail to add reporter id to online conversation",
 			"conversationId", conversationId, "memberId", memberId, "err", err)
 		return err
 	}
@@ -220,11 +219,11 @@ func (r *Repository) AddReporterId(ctx context.Context, session session, convers
 func (r *Repository) LockConversationRegistrants(ctx context.Context, session session, conversationId uuid.UUID) (int, int, error) {
 	var currentRegistrants, capacity int
 	err := session.QueryRowContext(ctx,
-		`SELECT current_registrants, capacity FROM conversations WHERE id = ? FOR UPDATE`,
+		`SELECT current_registrants, capacity FROM online_conversation WHERE id = ? FOR UPDATE`,
 		conversationId[:],
 	).Scan(&currentRegistrants, &capacity)
 	if err != nil {
-		slog.Error("fail to lock conversation for registration",
+		slog.Error("fail to lock online conversation for registration",
 			"conversationId", conversationId, "err", err)
 		return 0, 0, err
 	}
@@ -233,11 +232,11 @@ func (r *Repository) LockConversationRegistrants(ctx context.Context, session se
 
 func (r *Repository) IncrementRegistrants(ctx context.Context, session session, conversationId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
-		`UPDATE conversations SET current_registrants = current_registrants + 1 WHERE id = ?`,
+		`UPDATE online_conversation SET current_registrants = current_registrants + 1 WHERE id = ?`,
 		conversationId[:],
 	)
 	if err != nil {
-		slog.Error("fail to increment registrants",
+		slog.Error("fail to increment online conversation registrants",
 			"conversationId", conversationId, "err", err)
 		return err
 	}
@@ -246,11 +245,11 @@ func (r *Repository) IncrementRegistrants(ctx context.Context, session session, 
 
 func (r *Repository) DecrementRegistrants(ctx context.Context, session session, conversationId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
-		`UPDATE conversations SET current_registrants = current_registrants - 1 WHERE id = ?`,
+		`UPDATE online_conversation SET current_registrants = current_registrants - 1 WHERE id = ?`,
 		conversationId[:],
 	)
 	if err != nil {
-		slog.Error("fail to decrement registrants",
+		slog.Error("fail to decrement online conversation registrants",
 			"conversationId", conversationId, "err", err)
 		return err
 	}
@@ -259,11 +258,11 @@ func (r *Repository) DecrementRegistrants(ctx context.Context, session session, 
 
 func (r *Repository) RemoveRegistrantId(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
-		`DELETE FROM conversation_registrants WHERE conversation_id = ? AND member_id = ?`,
+		`DELETE FROM online_conversation_registrant WHERE conversation_id = ? AND member_id = ?`,
 		conversationId[:], memberId[:],
 	)
 	if err != nil {
-		slog.Error("fail to remove registrant id",
+		slog.Error("fail to remove online conversation registrant id",
 			"conversationId", conversationId, "memberId", memberId, "err", err)
 		return err
 	}
@@ -272,11 +271,11 @@ func (r *Repository) RemoveRegistrantId(ctx context.Context, session session, co
 
 func (r *Repository) AddNotificationId(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
-		`INSERT IGNORE INTO conversation_notifications (conversation_id, member_id) VALUES (?, ?)`,
+		`INSERT IGNORE INTO online_conversation_notification (conversation_id, member_id) VALUES (?, ?)`,
 		conversationId[:], memberId[:],
 	)
 	if err != nil {
-		slog.Error("fail to update reporter ids for conversation",
+		slog.Error("fail to add notification id to online conversation",
 			"conversationId", conversationId, "memberId", memberId, "err", err)
 		return err
 	}
@@ -285,11 +284,11 @@ func (r *Repository) AddNotificationId(ctx context.Context, session session, con
 
 func (r *Repository) RemoveNotificationId(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
-		`DELETE FROM conversation_notifications WHERE conversation_id = ? AND member_id = ?`,
+		`DELETE FROM online_conversation_notification WHERE conversation_id = ? AND member_id = ?`,
 		conversationId[:], memberId[:],
 	)
 	if err != nil {
-		slog.Error("fail to remove registrant id",
+		slog.Error("fail to remove online conversation notification id",
 			"conversationId", conversationId, "memberId", memberId, "err", err)
 		return err
 	}

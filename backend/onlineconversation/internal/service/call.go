@@ -1,6 +1,7 @@
 package service
 
 import (
+	"backend/common/payload"
 	"context"
 	"log/slog"
 
@@ -58,5 +59,15 @@ func (s *Service) RemoveServerIP(ctx context.Context, memberId uuid.UUID) error 
 	if err != nil {
 		return err
 	}
+	return nil
+}
+
+func (s *Service) PublishConversationSignal(fromId uuid.UUID, toIds [][]byte, signal []byte) error {
+	value := payload.Marshal(payload.OnlineConversationSignal{
+		FromId: fromId[:],
+		ToIds:  toIds,
+		Signal: signal,
+	})
+	s.producer.PushMessage("conversation-signal", nil, value, nil)
 	return nil
 }
