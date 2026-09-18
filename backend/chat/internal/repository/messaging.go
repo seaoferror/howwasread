@@ -63,7 +63,7 @@ func (r *Repository) HasFilepath(ctx context.Context, id string, filenames []str
 }
 
 func (r *Repository) RemoveFilepath(ctx context.Context, id string, filenames []string) error {
-	result := r.client.Do(ctx, r.client.B().Srem().Key("presigned"+id).Member(filenames...).Build())
+	result := r.client.Do(ctx, r.client.B().Srem().Key(id).Member(filenames...).Build())
 	if result.Error() != nil {
 		slog.Error("fail to check file path", "err", result.Error())
 		return result.Error()
