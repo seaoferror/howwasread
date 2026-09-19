@@ -121,26 +121,6 @@ func (r *Repository) FindConversation(ctx context.Context, session session, conv
 	d.Id = uuid.UUID(idRaw)
 	d.Length = time.Duration(lengthMinutes) * time.Minute
 
-	d.ModeratorIds, err = r.findIds(ctx, session, `SELECT member_id FROM online_conversation_moderator WHERE conversation_id = ?`, conversationId)
-	if err != nil {
-		slog.Error("fail to find online conversation", "err", err)
-		return nil, err
-	}
-	d.RegistrantIds, err = r.findIds(ctx, session, `SELECT member_id FROM online_conversation_registrant WHERE conversation_id = ?`, conversationId)
-	if err != nil {
-		slog.Error("fail to find conversation", "err", err)
-		return nil, err
-	}
-	d.BanIds, err = r.findIds(ctx, session, `SELECT member_id FROM online_conversation_ban WHERE conversation_id = ?`, conversationId)
-	if err != nil {
-		slog.Error("fail to find conversation", "err", err)
-		return nil, err
-	}
-	d.NotificationIds, err = r.findIds(ctx, session, `SELECT member_id FROM online_conversation_notification WHERE conversation_id = ?`, conversationId)
-	if err != nil {
-		slog.Error("fail to find conversation", "err", err)
-		return nil, err
-	}
 	return &d, nil
 }
 
@@ -151,6 +131,71 @@ func (r *Repository) FindModeratorIds(ctx context.Context, session session, conv
 		return nil, err
 	}
 	return ids, nil
+}
+
+func (r *Repository) IsModerator(ctx context.Context, session session, conversationId, memberId uuid.UUID) (bool, error) {
+	var exists bool
+	err := session.QueryRowContext(ctx,
+		`SELECT EXISTS(SELECT 1 FROM online_conversation_moderator WHERE conversation_id = ? AND member_id = ?)`,
+		conversationId[:], memberId[:],
+	).Scan(&exists)
+	if err != nil {
+		slog.Error("fail to check moderator", "conversationId", conversationId, "memberId", memberId, "err", err)
+		return false, err
+	}
+	return exists, nil
+}
+
+func (r *Repository) IsRegistrant(ctx context.Context, session session, conversationId, memberId uuid.UUID) (bool, error) {
+	var exists bool
+	err := session.QueryRowContext(ctx,
+		`SELECT EXISTS(SELECT 1 FROM online_conversation_registrant WHERE conversation_id = ? AND member_id = ?)`,
+		conversationId[:], memberId[:],
+	).Scan(&exists)
+	if err != nil {
+		slog.Error("fail to check registrant", "conversationId", conversationId, "memberId", memberId, "err", err)
+		return false, err
+	}
+	return exists, nil
+}
+
+func (r *Repository) IsBanned(ctx context.Context, session session, conversationId, memberId uuid.UUID) (bool, error) {
+	var exists bool
+	err := session.QueryRowContext(ctx,
+		`SELECT EXISTS(SELECT 1 FROM online_conversation_ban WHERE conversation_id = ? AND member_id = ?)`,
+		conversationId[:], memberId[:],
+	).Scan(&exists)
+	if err != nil {
+		slog.Error("fail to check ban", "conversationId", conversationId, "memberId", memberId, "err", err)
+		return false, err
+	}
+	return exists, nil
+}
+
+func (r *Repository) IsNotificationScheduled(ctx context.Context, session session, conversationId, memberId uuid.UUID) (bool, error) {
+	var exists bool
+	err := session.QueryRowContext(ctx,
+		`SELECT EXISTS(SELECT 1 FROM online_conversation_notification WHERE conversation_id = ? AND member_id = ?)`,
+		conversationId[:], memberId[:],
+	).Scan(&exists)
+	if err != nil {
+		slog.Error("fail to check notification", "conversationId", conversationId, "memberId", memberId, "err", err)
+		return false, err
+	}
+	return exists, nil
+}
+
+func (r *Repository) HasNotification(ctx context.Context, session session, conversationId uuid.UUID) (bool, error) {
+	var exists bool
+	err := session.QueryRowContext(ctx,
+		`SELECT EXISTS(SELECT 1 FROM online_conversation_notification WHERE conversation_id = ?)`,
+		conversationId[:],
+	).Scan(&exists)
+	if err != nil {
+		slog.Error("fail to check notification existence", "conversationId", conversationId, "err", err)
+		return false, err
+	}
+	return exists, nil
 }
 
 func (r *Repository) FindReporterIds(ctx context.Context, session session, conversationId uuid.UUID) ([]uuid.UUID, error) {
@@ -216,31 +261,21 @@ func (r *Repository) AddReporterId(ctx context.Context, session session, convers
 	return nil
 }
 
-func (r *Repository) LockConversationRegistrants(ctx context.Context, session session, conversationId uuid.UUID) (int, int, error) {
-	var currentRegistrants, capacity int
-	err := session.QueryRowContext(ctx,
-		`SELECT current_registrants, capacity FROM online_conversation WHERE id = ? FOR UPDATE`,
-		conversationId[:],
-	).Scan(&currentRegistrants, &capacity)
-	if err != nil {
-		slog.Error("fail to lock online conversation for registration",
-			"conversationId", conversationId, "err", err)
-		return 0, 0, err
-	}
-	return currentRegistrants, capacity, nil
-}
-
-func (r *Repository) IncrementRegistrants(ctx context.Context, session session, conversationId uuid.UUID) error {
-	_, err := session.ExecContext(ctx,
-		`UPDATE online_conversation SET current_registrants = current_registrants + 1 WHERE id = ?`,
+func (r *Repository) TryIncrementRegistrants(ctx context.Context, session session, conversationId uuid.UUID) (bool, error) {
+	result, err := session.ExecContext(ctx,
+		`UPDATE online_conversation SET current_registrants = current_registrants + 1 WHERE id = ? AND current_registrants < capacity`,
 		conversationId[:],
 	)
 	if err != nil {
 		slog.Error("fail to increment online conversation registrants",
 			"conversationId", conversationId, "err", err)
-		return err
+		return false, err
 	}
-	return nil
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return rows > 0, nil
 }
 
 func (r *Repository) DecrementRegistrants(ctx context.Context, session session, conversationId uuid.UUID) error {

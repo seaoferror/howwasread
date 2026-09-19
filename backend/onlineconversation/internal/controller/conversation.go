@@ -15,6 +15,7 @@ import (
 
 func conversationRouter(c *Controller) {
 	c.Router(POST, "/onlineconversation/create", c.createConversation)
+	c.Router(DELETE, "/onlineconversation/delete", c.deleteConversation)
 	c.Router(GET, "/onlineconversation/list", c.getConversations)
 	c.Router(GET, "/onlineconversation/join", c.joinConversation)
 	c.Router(GET, "/onlineconversation/detail", c.getConversationDetail)
@@ -28,12 +29,10 @@ func conversationRouter(c *Controller) {
 }
 
 func (c *Controller) createConversation(w http.ResponseWriter, r *http.Request) {
-	memberIdRaw := r.Header.Get("X-User-Id")
-	memberId, err := uuid.Parse(memberIdRaw)
+	memberId, err := uuid.Parse(r.Header.Get("X-User-Id"))
 	if err != nil {
 		slog.Error("fail to parse userId from X-User-Id header",
 			"err", err,
-			"memberIdRaw", memberIdRaw,
 		)
 		handleError(w, errors.New("fail to parse"))
 		return
@@ -81,6 +80,29 @@ func (c *Controller) createConversation(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		slog.Error("fail to write response body", "err", err)
 	}
+}
+
+func (c *Controller) deleteConversation(w http.ResponseWriter, r *http.Request) {
+	memberId, err := uuid.Parse(r.Header.Get("X-User-Id"))
+	if err != nil {
+		slog.Error("fail to parse userId from X-User-Id header",
+			"err", err,
+		)
+		handleError(w, errors.New("fail to parse"))
+		return
+	}
+	conversationId, err := uuid.Parse(r.URL.Query().Get("id"))
+	if err != nil {
+		slog.Error("fail to parse conversation uuid from raw string", "err", err)
+		handleError(w, errors.New("fail to parse"))
+		return
+	}
+	err = c.service.DeleteConversation(r.Context(), memberId, conversationId)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
 func (c *Controller) getConversations(w http.ResponseWriter, r *http.Request) {

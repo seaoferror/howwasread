@@ -4,11 +4,7 @@ import (
 	"backend/common/payload"
 	"backend/onlineconversation/internal/dto"
 	"context"
-	"crypto/hmac"
-	"crypto/sha1"
-	"encoding/base64"
 	"errors"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -38,7 +34,6 @@ func (s *Service) CreateConversation(
 
 	tx, err := s.repository.BeginTx(ctx)
 	if err != nil {
-		slog.Error("fail to start transaction for create conversation", "err", err)
 		return nil, err
 	}
 	defer tx.Rollback()
@@ -81,6 +76,31 @@ func (s *Service) CreateConversation(
 	return map[string]uuid.UUID{"conversationId": conversationId}, nil
 }
 
+func (s *Service) DeleteConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {
+	tx, err := s.repository.BeginTx(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	isModerator, err := s.repository.IsModerator(ctx, tx, conversationId, memberId)
+	if err != nil {
+		return err
+	}
+	if !isModerator {
+		return errors.New("only moderator can delete conversation")
+	}
+	err = s.repository.DeleteOnlineConversation(ctx, tx, conversationId)
+	if err != nil {
+		return err
+	}
+	err = tx.Commit()
+	if err != nil {
+		slog.Error("fail to commit transaction for delete conversation", "err", err)
+		return err
+	}
+	return nil
+}
+
 func (s *Service) GetConversations(ctx context.Context, page int, t time.Time) ([]dto.OnlineConversationFeedResponse, error) {
 	resp := []dto.OnlineConversationFeedResponse{}
 
@@ -109,12 +129,13 @@ func (s *Service) GetConversationDetail(ctx context.Context, conversationId, mem
 	if err != nil {
 		return nil, err
 	}
-	var isRegistrant bool
-	for _, r := range c.RegistrantIds {
-		if r == memberId {
-			isRegistrant = true
-			break
-		}
+	moderatorIds, err := s.repository.FindModeratorIds(ctx, s.repository.Tx(), conversationId)
+	if err != nil {
+		return nil, err
+	}
+	isRegistrant, err := s.repository.IsRegistrant(ctx, s.repository.Tx(), conversationId, memberId)
+	if err != nil {
+		return nil, err
 	}
 	canEnter := true
 	if time.Now().UTC().Before(c.Time.Add(-15 * time.Minute)) {
@@ -123,17 +144,16 @@ func (s *Service) GetConversationDetail(ctx context.Context, conversationId, mem
 	if time.Now().UTC().Before(c.Time.Add(10*time.Minute)) && !isRegistrant {
 		canEnter = false
 	}
-	for _, b := range c.BanIds {
-		if b == memberId {
-			canEnter = false
-			break
-		}
+	isBanned, err := s.repository.IsBanned(ctx, s.repository.Tx(), conversationId, memberId)
+	if err != nil {
+		return nil, err
 	}
-	var isNotificationScheduled bool
-	for _, n := range c.NotificationIds {
-		if n == memberId {
-			isNotificationScheduled = true
-		}
+	if isBanned {
+		canEnter = false
+	}
+	isNotificationScheduled, err := s.repository.IsNotificationScheduled(ctx, s.repository.Tx(), conversationId, memberId)
+	if err != nil {
+		return nil, err
 	}
 	resp := dto.OnlineConversationDetailResponse{
 		Id:                      c.Id,
@@ -148,7 +168,7 @@ func (s *Service) GetConversationDetail(ctx context.Context, conversationId, mem
 		Time:                    c.Time,
 		Length:                  c.Length.String(),
 		CanEnter:                canEnter,
-		ModeratorIds:            c.ModeratorIds,
+		ModeratorIds:            moderatorIds,
 		IsRegistrant:            isRegistrant,
 		IsNotificationScheduled: isNotificationScheduled,
 	}
@@ -156,29 +176,37 @@ func (s *Service) GetConversationDetail(ctx context.Context, conversationId, mem
 }
 
 func (s *Service) BanParticipant(ctx context.Context, modId, conversationId, banId uuid.UUID) error {
-	mIds, err := s.repository.FindModeratorIds(ctx, s.repository.Tx(), conversationId)
+	tx, err := s.repository.BeginTx(ctx)
 	if err != nil {
 		return err
 	}
-	isMod := false
-	for _, mId := range mIds {
-		if mId == modId {
-			isMod = true
-			break
-		}
+	defer tx.Rollback()
+	isMod, err := s.repository.IsModerator(ctx, tx, conversationId, modId)
+	if err != nil {
+		return err
 	}
 	if !isMod {
 		return errors.New("you cannot ban")
 	}
-	err = s.repository.AddBanId(ctx, s.repository.Tx(), conversationId, banId)
+	err = s.repository.AddBanId(ctx, tx, conversationId, banId)
 	if err != nil {
+		return err
+	}
+	err = tx.Commit()
+	if err != nil {
+		slog.Error("fail to commit", "err", err)
 		return err
 	}
 	return nil
 }
 
 func (s *Service) ReportOnlineConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {
-	ids, err := s.repository.FindReporterIds(ctx, s.repository.Tx(), conversationId)
+	tx, err := s.repository.BeginTx(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	ids, err := s.repository.FindReporterIds(ctx, tx, conversationId)
 	if err != nil {
 		return err
 	}
@@ -188,13 +216,24 @@ func (s *Service) ReportOnlineConversation(ctx context.Context, memberId, conver
 		}
 	}
 	if len(ids) > 5 {
-		err = s.repository.DeleteOnlineConversation(ctx, s.repository.Tx(), conversationId)
+		err = s.repository.DeleteOnlineConversation(ctx, tx, conversationId)
 		if err != nil {
 			return err
 		}
+		err = tx.Commit()
+		if err != nil {
+			slog.Error("fail to commit", "err", err)
+			return err
+		}
+		return nil
 	}
-	err = s.repository.AddReporterId(ctx, s.repository.Tx(), conversationId, memberId)
+	err = s.repository.AddReporterId(ctx, tx, conversationId, memberId)
 	if err != nil {
+		return err
+	}
+	err = tx.Commit()
+	if err != nil {
+		slog.Error("fail to commit", "err", err)
 		return err
 	}
 	return nil
@@ -203,25 +242,19 @@ func (s *Service) ReportOnlineConversation(ctx context.Context, memberId, conver
 func (s *Service) RegisterOnlineConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {
 	tx, err := s.repository.BeginTx(ctx)
 	if err != nil {
-		slog.Error("fail to start transaction for register conversation", "err", err)
 		return err
 	}
 	defer tx.Rollback()
 
-	currentRegistrants, capacity, err := s.repository.LockConversationRegistrants(ctx, tx, conversationId)
+	registered, err := s.repository.TryIncrementRegistrants(ctx, tx, conversationId)
 	if err != nil {
 		return err
 	}
-	if currentRegistrants >= capacity {
+	if !registered {
 		return errors.New("already fully registered")
 	}
 
 	err = s.repository.InsertRegistrant(ctx, tx, conversationId, memberId)
-	if err != nil {
-		return err
-	}
-
-	err = s.repository.IncrementRegistrants(ctx, tx, conversationId)
 	if err != nil {
 		return err
 	}
@@ -237,7 +270,6 @@ func (s *Service) RegisterOnlineConversation(ctx context.Context, memberId, conv
 func (s *Service) DeregisterOnlineConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {
 	tx, err := s.repository.BeginTx(ctx)
 	if err != nil {
-		slog.Error("fail to start transaction for deregister conversation", "err", err)
 		return err
 	}
 	defer tx.Rollback()
@@ -260,34 +292,35 @@ func (s *Service) DeregisterOnlineConversation(ctx context.Context, memberId, co
 	return nil
 }
 
-func (s *Service) GenerateTurn() *dto.GetTurnResponse {
-	res := &dto.GetTurnResponse{
-		Uris: []string{
-			fmt.Sprintf("turn:%s:3478?transport=udp", s.turnRealm),
-			fmt.Sprintf("turn:%s:5349?transport=tcp", s.turnRealm),
-		},
-		Username: fmt.Sprintf("%d", time.Now().Add(2*time.Hour).Unix()),
-	}
-	mac := hmac.New(sha1.New, []byte(s.turnSecret))
-	mac.Write([]byte(res.Username))
-	res.Credential = base64.StdEncoding.EncodeToString(mac.Sum(nil))
-	return res
-}
-
 func (s *Service) ScheduleNotification(ctx context.Context, memberId, conversationId uuid.UUID) error {
-	c, err := s.repository.FindConversation(ctx, s.repository.Tx(), conversationId)
+	tx, err := s.repository.BeginTx(ctx)
 	if err != nil {
 		return err
 	}
-	err = s.repository.AddNotificationId(ctx, s.repository.Tx(), conversationId, memberId)
+	defer tx.Rollback()
+
+	c, err := s.repository.FindConversation(ctx, tx, conversationId)
 	if err != nil {
+		return err
+	}
+	hasNotification, err := s.repository.HasNotification(ctx, tx, conversationId)
+	if err != nil {
+		return err
+	}
+	err = s.repository.AddNotificationId(ctx, tx, conversationId, memberId)
+	if err != nil {
+		return err
+	}
+	err = tx.Commit()
+	if err != nil {
+		slog.Error("fail to commit transaction", "err", err)
 		return err
 	}
 	p := payload.NotificationScheduling{
 		PartitionId: conversationId,
 		KeyId:       memberId,
 	}
-	if len(c.NotificationIds) == 0 {
+	if !hasNotification {
 		aboutRaw := []rune(c.Novel + c.Play + c.Poem + c.ShortStory + c.Film + c.WrittenBy)
 		if len(aboutRaw) > 6 {
 			aboutRaw = []rune(string(aboutRaw[:6]) + "...")
