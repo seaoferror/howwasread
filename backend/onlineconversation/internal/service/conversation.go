@@ -125,15 +125,11 @@ func (s *Service) GetConversations(ctx context.Context, page int, t time.Time) (
 }
 
 func (s *Service) GetConversationDetail(ctx context.Context, conversationId, memberId uuid.UUID) (*dto.OnlineConversationDetailResponse, error) {
-	c, err := s.repository.FindConversation(ctx, s.repository.Tx(), conversationId)
+	c, isRegistrant, isBanned, isNotificationScheduled, err := s.repository.FindConversationDetail(ctx, s.repository.Tx(), conversationId, memberId)
 	if err != nil {
 		return nil, err
 	}
 	moderatorIds, err := s.repository.FindModeratorIds(ctx, s.repository.Tx(), conversationId)
-	if err != nil {
-		return nil, err
-	}
-	isRegistrant, err := s.repository.IsRegistrant(ctx, s.repository.Tx(), conversationId, memberId)
 	if err != nil {
 		return nil, err
 	}
@@ -144,16 +140,8 @@ func (s *Service) GetConversationDetail(ctx context.Context, conversationId, mem
 	if time.Now().UTC().Before(c.Time.Add(10*time.Minute)) && !isRegistrant {
 		canEnter = false
 	}
-	isBanned, err := s.repository.IsBanned(ctx, s.repository.Tx(), conversationId, memberId)
-	if err != nil {
-		return nil, err
-	}
 	if isBanned {
 		canEnter = false
-	}
-	isNotificationScheduled, err := s.repository.IsNotificationScheduled(ctx, s.repository.Tx(), conversationId, memberId)
-	if err != nil {
-		return nil, err
 	}
 	resp := dto.OnlineConversationDetailResponse{
 		Id:                      c.Id,
