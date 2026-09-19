@@ -1,53 +1,46 @@
 package repository
 
 import (
-	"backend/common"
 	"context"
-	"crypto/tls"
+	"database/sql"
 	"log"
 	"log/slog"
 	"os"
+	"time"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/valkey-io/valkey-go"
-	"go.mongodb.org/mongo-driver/v2/mongo"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
-	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
+
+	"backend/common"
 
 	_ "github.com/joho/godotenv/autoload"
 )
 
+type session interface {
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
+	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
+}
 type Repository struct {
-	mongoClient  *mongo.Client
-	db           *mongo.Database
+	db           *sql.DB
 	valkeyClient valkey.Client
 }
 
 func NewRepository() *Repository {
-	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
+	db, err := sql.Open("mysql", os.Getenv("MYSQL_DSN"))
+	if err != nil {
+		log.Panicf("fail to open mysql connection: %v", err)
+	}
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(25)
+	db.SetConnMaxLifetime(5 * time.Minute)
 
-	certPath := "cert/mongodb/mongodb-cert.pem"
-	certs, err := tls.LoadX509KeyPair(certPath, certPath)
-	if err != nil {
-		log.Panicf("fail to load mongodb client certificate: %v", err)
+	pingCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := db.PingContext(pingCtx); err != nil {
+		log.Panicf("fail to ping mysql: %v", err)
 	}
-	opts := options.Client().
-		ApplyURI(os.Getenv("MONGODB_URI")).
-		SetServerAPIOptions(serverAPI).
-		SetAuth(options.Credential{
-			AuthMechanism: "MONGODB-X509",
-		}).
-		SetTLSConfig(&tls.Config{
-			Certificates: []tls.Certificate{certs},
-		})
-	mongoClient, err := mongo.Connect(opts)
-	if err != nil {
-		log.Panicf("fail to connect mongodb: %v", err)
-	}
-	err = mongoClient.Ping(context.Background(), readpref.Primary())
-	if err != nil {
-		log.Panicf("fail to ping mongodb: %v", err)
-	}
-	slog.Info("success to connect mongodb")
+	slog.Info("success to connect mysql")
 
 	clientOption := valkey.ClientOption{
 		InitAddress: []string{os.Getenv("VALKEY_ADDRESS")},
@@ -64,14 +57,19 @@ func NewRepository() *Repository {
 	clientOption.Password = os.Getenv("VALKEY_PASSWORD")
 	v, err := valkey.NewClient(clientOption)
 	if err != nil {
-		log.Panicf("Fail to connect to redis: %v", err)
+		log.Panicf("fail to connect to redis: %v", err)
 	}
 
-	r := &Repository{
-		mongoClient:  mongoClient,
-		db:           mongoClient.Database(os.Getenv("PROFILE")),
+	return &Repository{
+		db:           db,
 		valkeyClient: v,
 	}
+}
 
-	return r
+func (r *Repository) BeginTx(ctx context.Context) (*sql.Tx, error) {
+	return r.db.BeginTx(ctx, nil)
+}
+
+func (r *Repository) Tx() session {
+	return r.db
 }

@@ -1,152 +1,142 @@
 package repository
 
 import (
-	"backend/onlineconversation/internal/document"
+	"backend/onlineconversation/internal/entity"
 	"context"
-	"errors"
 	"log/slog"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
-	"go.mongodb.org/mongo-driver/v2/bson"
-	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-const Limit = 10
-
-func (r *Repository) SaveConversation(ctx context.Context, memberId, conversationId uuid.UUID, novel, shortStory, poem, play, film, writtenBy, rule string, capacity int, t time.Time, length time.Duration) error {
-	newConversation := document.Conversation{
-		Id:         bson.Binary{4, conversationId[:]},
-		Novel:      novel,
-		ShortStory: shortStory,
-		Poem:       poem,
-		Play:       play,
-		Film:       film,
-		WrittenBy:  writtenBy,
-		Rule:       rule,
-		Capacity:   capacity,
-		Time:       t,
-		Length:     length,
-		ModeratorIds: []bson.Binary{
-			{4, memberId[:]},
-		},
-		RegistrantIds: []bson.Binary{
-			{4, memberId[:]},
-		},
-		BanIds:          []bson.Binary{},
-		ReporterIds:     []bson.Binary{},
-		NotificationIds: []bson.Binary{},
-	}
-	session, err := r.mongoClient.StartSession()
+func (r *Repository) InsertConversation(ctx context.Context, session session, conversationId uuid.UUID, novel, shortStory, poem, play, film, writtenBy, rule string, capacity int, t time.Time, length time.Duration) error {
+	_, err := session.ExecContext(ctx, `
+		INSERT INTO online_conversation
+			(id, novel, short_story, poem, play, film, written_by, rule, capacity, time, length_minutes, current_registrants)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
+		conversationId[:], novel, shortStory, poem, play, film, writtenBy, rule, capacity, t, int(length.Minutes()),
+	)
 	if err != nil {
-		slog.Error("fail to start transaction for insert new conversation",
-			"err", err)
+		slog.Error("fail to insert new online conversation", "err", err)
 		return err
 	}
-	defer session.EndSession(ctx)
-	_, err = session.WithTransaction(ctx, func(ctx context.Context) (any, error) {
-		_, err = r.db.Collection("conversation").InsertOne(ctx, newConversation)
-		if err != nil {
-			slog.Error("fail to insert new conversation",
-				"err", err)
-			return nil, err
-		}
-		return nil, nil
-	})
-	if err != nil {
-		slog.Error("fail to transaction for saving new conversation",
-			"err", err,
-		)
-		return err
-	}
-
 	return nil
 }
 
-func (r *Repository) FindConversations(ctx context.Context, page int, t time.Time) ([]document.Conversation, error) {
-	filter := bson.M{
-		"time": bson.M{"$gt": t.Add(-9 * time.Hour)},
-	}
-
-	opts := options.Find().
-		SetSort(bson.M{"time": 1}).
-		SetLimit(Limit).
-		SetSkip(int64((page - 1) * 5)).
-		SetProjection(bson.M{
-			"rule":           0,
-			"capacity":       0,
-			"length":         0,
-			"moderator_ids":  0,
-			"registrant_ids": 0,
-			"ban_ids":        0,
-			"reporter_ids":   0,
-		})
-
-	c, err := r.db.Collection("conversation").Find(ctx, filter, opts)
+func (r *Repository) InsertModerator(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
+	_, err := session.ExecContext(ctx,
+		`INSERT INTO online_conversation_moderator (conversation_id, member_id) VALUES (?, ?)`,
+		conversationId[:], memberId[:],
+	)
 	if err != nil {
-		slog.Error("fail to find next conversations page",
-			"err", err)
+		slog.Error("fail to insert moderator",
+			"conversationId", conversationId, "memberId", memberId, "err", err)
+		return err
+	}
+	return nil
+}
+
+func (r *Repository) InsertRegistrant(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
+	_, err := session.ExecContext(ctx,
+		`INSERT IGNORE INTO online_conversation_registrant (conversation_id, member_id) VALUES (?, ?)`,
+		conversationId[:], memberId[:],
+	)
+	if err != nil {
+		slog.Error("fail to insert registrant",
+			"conversationId", conversationId, "memberId", memberId, "err", err)
+		return err
+	}
+	return nil
+}
+
+func (r *Repository) FindConversations(ctx context.Context, session session, page int, t time.Time) ([]entity.Conversation, error) {
+	const limit = 10
+	rows, err := session.QueryContext(ctx, `
+		SELECT id, novel, short_story, poem, play, film, written_by, time
+		FROM online_conversation
+		WHERE time > ?
+		ORDER BY time ASC
+		LIMIT ? OFFSET ?`,
+		t.Add(-9*time.Hour), limit, (page-1)*5,
+	)
+	if err != nil {
+		slog.Error("fail to find next online conversations page", "err", err)
 		return nil, err
 	}
+	defer rows.Close()
 
-	items := make([]document.Conversation, 0, Limit)
-	err = c.All(ctx, &items)
+	items := make([]entity.Conversation, 0, limit)
+	for rows.Next() {
+		var d entity.Conversation
+		var idRaw []byte
+		err = rows.Scan(&idRaw, &d.Novel, &d.ShortStory, &d.Poem, &d.Play, &d.Film, &d.WrittenBy, &d.Time)
+		if err != nil {
+			slog.Error("fail to scan online conversation row", "err", err)
+			return nil, err
+		}
+		d.Id = uuid.UUID(idRaw)
+		items = append(items, d)
+	}
+	err = rows.Err()
 	if err != nil {
 		return nil, err
-	}
-	err = c.Close(ctx)
-	if err != nil {
-		slog.Error("fail to close *Cursor",
-			"err", err)
 	}
 	return items, nil
 }
 
-func (r *Repository) FindParticipantIds(ctx context.Context, conversationId string) ([]string, error) {
-	result := r.valkeyClient.Do(ctx, r.valkeyClient.B().Smembers().Key(conversationId).Build())
-	if result.Error() != nil {
-		slog.Error("fail to get member ip", "err", result.Error())
-		return nil, result.Error()
-	}
-	value, err := result.AsStrSlice()
+func (r *Repository) findIds(ctx context.Context, session session, query string, conversationId uuid.UUID) ([]uuid.UUID, error) {
+	rows, err := session.QueryContext(ctx, query, conversationId[:])
 	if err != nil {
-		slog.Error("fail to get ips value string slice", "err", err)
+		return nil, err
 	}
-	return value, nil
+	defer rows.Close()
+
+	ids := make([]uuid.UUID, 0)
+	for rows.Next() {
+		var rawId []byte
+		if err := rows.Scan(&rawId); err != nil {
+			return nil, err
+		}
+		ids = append(ids, uuid.UUID(rawId))
+	}
+	return ids, rows.Err()
 }
 
-func (r *Repository) AddParticipantId(ctx context.Context, conversationId string, memberId uuid.UUID) error {
-	result := r.valkeyClient.Do(ctx, r.valkeyClient.B().Sadd().Key(conversationId).Member(string(memberId[:])).Build())
-	if result.Error() != nil {
-		slog.Error("fail to add participant member id to conversation",
-			"err", result.Error(),
-			"conversationId", conversationId,
-			"memberId", memberId)
-		return result.Error()
+func (r *Repository) FindConversation(ctx context.Context, session session, conversationId uuid.UUID) (*entity.Conversation, error) {
+	var d entity.Conversation
+	var idRaw []byte
+	var lengthMinutes int
+
+	row := session.QueryRowContext(ctx, `
+		SELECT id, novel, short_story, poem, play, film, written_by, rule, capacity, time, length_minutes
+		FROM online_conversation
+		WHERE id = ?`,
+		conversationId[:],
+	)
+	err := row.Scan(&idRaw, &d.Novel, &d.ShortStory, &d.Poem, &d.Play, &d.Film, &d.WrittenBy, &d.Rule, &d.Capacity, &d.Time, &lengthMinutes)
+	if err != nil {
+		slog.Error("fail to find online conversation", "err", err)
+		return nil, err
 	}
-	return nil
-}
+	d.Id = uuid.UUID(idRaw)
+	d.Length = time.Duration(lengthMinutes) * time.Minute
 
-func (r *Repository) RemoveParticipantId(ctx context.Context, conversationId string, memberId uuid.UUID) error {
-	result := r.valkeyClient.Do(ctx, r.valkeyClient.B().Srem().Key(conversationId).Member(string(memberId[:])).Build())
-	if result.Error() != nil {
-		slog.Error("fail to remove participant member id to conversation",
-			"err", result.Error(),
-			"conversationId", conversationId,
-			"memberId", memberId)
-		return result.Error()
+	d.ModeratorIds, err = r.findIds(ctx, session, `SELECT member_id FROM online_conversation_moderator WHERE conversation_id = ?`, conversationId)
+	if err != nil {
+		slog.Error("fail to find online conversation", "err", err)
+		return nil, err
 	}
-	return nil
-}
-
-func (r *Repository) FindConversation(ctx context.Context, conversationId uuid.UUID) (*document.Conversation, error) {
-	opts := options.FindOne().SetProjection(bson.M{"reporter_ids": 0})
-
-	var d document.Conversation
-	err := r.db.Collection("conversation").
-		FindOne(ctx, bson.M{"_id": bson.Binary{4, conversationId[:]}}, opts).
-		Decode(&d)
+	d.RegistrantIds, err = r.findIds(ctx, session, `SELECT member_id FROM online_conversation_registrant WHERE conversation_id = ?`, conversationId)
+	if err != nil {
+		slog.Error("fail to find conversation", "err", err)
+		return nil, err
+	}
+	d.BanIds, err = r.findIds(ctx, session, `SELECT member_id FROM online_conversation_ban WHERE conversation_id = ?`, conversationId)
+	if err != nil {
+		slog.Error("fail to find conversation", "err", err)
+		return nil, err
+	}
+	d.NotificationIds, err = r.findIds(ctx, session, `SELECT member_id FROM online_conversation_notification WHERE conversation_id = ?`, conversationId)
 	if err != nil {
 		slog.Error("fail to find conversation", "err", err)
 		return nil, err
@@ -154,192 +144,152 @@ func (r *Repository) FindConversation(ctx context.Context, conversationId uuid.U
 	return &d, nil
 }
 
-func (r *Repository) FindModeratorIds(ctx context.Context, conversationId uuid.UUID) ([]bson.Binary, error) {
-	opt := options.FindOne().SetProjection(bson.M{"moderator_ids": 1})
-
-	var d document.Conversation
-	err := r.db.Collection("conversation").
-		FindOne(ctx, bson.M{"_id": bson.Binary{4, conversationId[:]}}, opt).Decode(&d)
+func (r *Repository) FindModeratorIds(ctx context.Context, session session, conversationId uuid.UUID) ([]uuid.UUID, error) {
+	ids, err := r.findIds(ctx, session, `SELECT member_id FROM online_conversation_moderator WHERE conversation_id = ?`, conversationId)
 	if err != nil {
 		slog.Error("fail to find mod ids", "err", err)
 		return nil, err
 	}
-	return d.ModeratorIds, nil
+	return ids, nil
 }
 
-func (r *Repository) AddBanId(ctx context.Context, conversationId uuid.UUID, banId uuid.UUID) error {
-	_, err := r.db.Collection("conversation").
-		UpdateOne(ctx, bson.M{"_id": bson.Binary{4, conversationId[:]}},
-			bson.M{"$push": bson.M{"ban_ids": bson.Binary{4, banId[:]}}})
-	if err != nil {
-		slog.Error("fail to add participant member id to conversation",
-			"err", err,
-			"conversationId", conversationId,
-			"memberId", banId.String())
-		return err
-	}
-	return nil
-}
-
-func (r *Repository) FindReporterIds(ctx context.Context, conversationId uuid.UUID) ([]bson.Binary, error) {
-	opt := options.FindOne().SetProjection(bson.M{"reporter_ids": 1})
-
-	var d document.Conversation
-	err := r.db.Collection("conversation").
-		FindOne(ctx, bson.M{"_id": bson.Binary{4, conversationId[:]}}, opt).Decode(&d)
+func (r *Repository) FindReporterIds(ctx context.Context, session session, conversationId uuid.UUID) ([]uuid.UUID, error) {
+	ids, err := r.findIds(ctx, session, `SELECT member_id FROM online_conversation_reporter WHERE conversation_id = ?`, conversationId)
 	if err != nil {
 		slog.Error("fail to find reporter ids", "err", err)
 		return nil, err
 	}
-	return d.ReporterIds, nil
+	return ids, nil
 }
 
-func (r *Repository) DeleteOnlineConversation(ctx context.Context, id uuid.UUID) error {
-	_, err := r.db.Collection("conversation").DeleteOne(ctx, bson.M{"_id": bson.Binary{4, id[:]}})
-	if err != nil {
-		slog.Error("fail to delete conversation",
-			"err", err)
-		return err
-	}
-	return nil
-}
-
-func (r *Repository) AddReporterId(ctx context.Context, conversationId, memberId uuid.UUID) error {
-	filter := bson.M{"_id": bson.Binary{4, conversationId[:]}}
-	update := bson.M{
-		"$addToSet": bson.M{
-			"reporter_ids": bson.Binary{
-				Subtype: 4,
-				Data:    memberId[:],
-			},
-		},
-	}
-	_, err := r.db.Collection("conversation").UpdateOne(ctx, filter, update)
-	if err != nil {
-		slog.Error("fail to update reporter ids for conversation",
-			"conversationId", conversationId,
-			"memberId", memberId,
-			"err", err,
-		)
-		return err
-	}
-	return nil
-}
-
-func (r *Repository) FindRegistrantIds(ctx context.Context, conversationId uuid.UUID) ([]bson.Binary, error) {
-	opt := options.FindOne().SetProjection(bson.M{"registrant_ids": 1})
-
-	var d document.Conversation
-	err := r.db.Collection("conversation").
-		FindOne(ctx, bson.M{"_id": bson.Binary{4, conversationId[:]}}, opt).Decode(&d)
+func (r *Repository) FindRegistrantIds(ctx context.Context, session session, conversationId uuid.UUID) ([]uuid.UUID, error) {
+	ids, err := r.findIds(ctx, session, `SELECT member_id FROM online_conversation_registrant WHERE conversation_id = ?`, conversationId)
 	if err != nil {
 		slog.Error("fail to find registrant ids", "err", err)
 		return nil, err
 	}
-	return d.RegistrantIds, nil
+	return ids, nil
 }
 
-func (r *Repository) FindCapacity(ctx context.Context, id uuid.UUID) (int, error) {
-	opt := options.FindOne().SetProjection(bson.M{"capacity": 1})
-	var d document.Conversation
-	err := r.db.Collection("conversation").
-		FindOne(ctx, bson.M{"_id": bson.Binary{4, id[:]}}, opt).Decode(&d)
+func (r *Repository) FindCapacity(ctx context.Context, session session, id uuid.UUID) (int, error) {
+	var capacity int
+	err := session.QueryRowContext(ctx, `SELECT capacity FROM online_conversation WHERE id = ?`, id[:]).Scan(&capacity)
 	if err != nil {
-		slog.Error("fail to find capacity", "err", err)
+		slog.Error("fail to find online conversation capacity", "err", err)
 		return 0, err
 	}
-	return d.Capacity, nil
+	return capacity, nil
 }
 
-var ErrMaxRegistrantReached = errors.New("already fully registered")
-
-func (r *Repository) AddRegistrantId(ctx context.Context, conversationId, memberId uuid.UUID, capacity int) error {
-	filter := bson.M{
-		"_id": bson.Binary{Subtype: 4, Data: conversationId[:]},
-		"registrant_ids." + strconv.Itoa(capacity-1): bson.M{"$exists": false},
-	}
-	update := bson.M{
-		"$addToSet": bson.M{
-			"registrant_ids": bson.Binary{
-				Subtype: 4,
-				Data:    memberId[:],
-			},
-		},
-	}
-	res, err := r.db.Collection("conversation").UpdateOne(ctx, filter, update)
+func (r *Repository) AddBanId(ctx context.Context, session session, conversationId uuid.UUID, banId uuid.UUID) error {
+	_, err := session.ExecContext(ctx,
+		`INSERT IGNORE INTO online_conversation_ban (conversation_id, member_id) VALUES (?, ?)`,
+		conversationId[:], banId[:],
+	)
 	if err != nil {
-		slog.Error("fail to update reporter ids for conversation",
-			"conversationId", conversationId,
-			"memberId", memberId,
-			"err", err,
-		)
-		return err
-	}
-	if res.MatchedCount == 0 {
-		return ErrMaxRegistrantReached
-	}
-	return nil
-}
-
-func (r *Repository) RemoveRegistrantId(ctx context.Context, conversationId, memberId uuid.UUID) error {
-	filter := bson.M{"_id": bson.Binary{4, conversationId[:]}}
-	update := bson.M{
-		"$pull": bson.M{
-			"registrant_ids": bson.Binary{
-				Subtype: 4,
-				Data:    memberId[:],
-			},
-		},
-	}
-	_, err := r.db.Collection("conversation").UpdateOne(ctx, filter, update)
-	if err != nil {
-		slog.Error("fail to remove registrant id",
-			"conversationId", conversationId,
-			"memberId", memberId,
-			"err", err)
+		slog.Error("fail to add ban id to online conversation",
+			"err", err, "conversationId", conversationId, "memberId", banId.String())
 		return err
 	}
 	return nil
 }
 
-func (r *Repository) AddNotificationId(ctx context.Context, conversationId, memberId uuid.UUID) error {
-	filter := bson.M{"_id": bson.Binary{4, conversationId[:]}}
-	update := bson.M{
-		"$addToSet": bson.M{
-			"notification_ids": bson.Binary{
-				Subtype: 4,
-				Data:    memberId[:],
-			},
-		},
-	}
-	_, err := r.db.Collection("conversation").UpdateOne(ctx, filter, update)
+func (r *Repository) DeleteOnlineConversation(ctx context.Context, session session, id uuid.UUID) error {
+	_, err := session.ExecContext(ctx, `DELETE FROM online_conversation WHERE id = ?`, id[:])
 	if err != nil {
-		slog.Error("fail to update reporter ids for conversation",
-			"conversationId", conversationId,
-			"memberId", memberId,
-			"err", err,
-		)
+		slog.Error("fail to delete online conversation", "err", err)
 		return err
 	}
 	return nil
 }
 
-func (r *Repository) RemoveNotificationId(ctx context.Context, conversationId, memberId uuid.UUID) error {
-	filter := bson.M{"_id": bson.Binary{4, conversationId[:]}}
-	update := bson.M{
-		"$pull": bson.M{
-			"notification_ids": bson.Binary{
-				Subtype: 4,
-				Data:    memberId[:],
-			},
-		},
-	}
-	_, err := r.db.Collection("conversation").UpdateOne(ctx, filter, update)
+func (r *Repository) AddReporterId(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
+	_, err := session.ExecContext(ctx,
+		`INSERT IGNORE INTO online_conversation_reporter (conversation_id, member_id) VALUES (?, ?)`,
+		conversationId[:], memberId[:],
+	)
 	if err != nil {
-		slog.Error("fail to remove registrant id",
-			"conversationId", conversationId,
-			"memberId", memberId,
-			"err", err)
+		slog.Error("fail to add reporter id to online conversation",
+			"conversationId", conversationId, "memberId", memberId, "err", err)
+		return err
+	}
+	return nil
+}
+
+func (r *Repository) LockConversationRegistrants(ctx context.Context, session session, conversationId uuid.UUID) (int, int, error) {
+	var currentRegistrants, capacity int
+	err := session.QueryRowContext(ctx,
+		`SELECT current_registrants, capacity FROM online_conversation WHERE id = ? FOR UPDATE`,
+		conversationId[:],
+	).Scan(&currentRegistrants, &capacity)
+	if err != nil {
+		slog.Error("fail to lock online conversation for registration",
+			"conversationId", conversationId, "err", err)
+		return 0, 0, err
+	}
+	return currentRegistrants, capacity, nil
+}
+
+func (r *Repository) IncrementRegistrants(ctx context.Context, session session, conversationId uuid.UUID) error {
+	_, err := session.ExecContext(ctx,
+		`UPDATE online_conversation SET current_registrants = current_registrants + 1 WHERE id = ?`,
+		conversationId[:],
+	)
+	if err != nil {
+		slog.Error("fail to increment online conversation registrants",
+			"conversationId", conversationId, "err", err)
+		return err
+	}
+	return nil
+}
+
+func (r *Repository) DecrementRegistrants(ctx context.Context, session session, conversationId uuid.UUID) error {
+	_, err := session.ExecContext(ctx,
+		`UPDATE online_conversation SET current_registrants = current_registrants - 1 WHERE id = ?`,
+		conversationId[:],
+	)
+	if err != nil {
+		slog.Error("fail to decrement online conversation registrants",
+			"conversationId", conversationId, "err", err)
+		return err
+	}
+	return nil
+}
+
+func (r *Repository) RemoveRegistrantId(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
+	_, err := session.ExecContext(ctx,
+		`DELETE FROM online_conversation_registrant WHERE conversation_id = ? AND member_id = ?`,
+		conversationId[:], memberId[:],
+	)
+	if err != nil {
+		slog.Error("fail to remove online conversation registrant id",
+			"conversationId", conversationId, "memberId", memberId, "err", err)
+		return err
+	}
+	return nil
+}
+
+func (r *Repository) AddNotificationId(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
+	_, err := session.ExecContext(ctx,
+		`INSERT IGNORE INTO online_conversation_notification (conversation_id, member_id) VALUES (?, ?)`,
+		conversationId[:], memberId[:],
+	)
+	if err != nil {
+		slog.Error("fail to add notification id to online conversation",
+			"conversationId", conversationId, "memberId", memberId, "err", err)
+		return err
+	}
+	return nil
+}
+
+func (r *Repository) RemoveNotificationId(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
+	_, err := session.ExecContext(ctx,
+		`DELETE FROM online_conversation_notification WHERE conversation_id = ? AND member_id = ?`,
+		conversationId[:], memberId[:],
+	)
+	if err != nil {
+		slog.Error("fail to remove online conversation notification id",
+			"conversationId", conversationId, "memberId", memberId, "err", err)
 		return err
 	}
 	return nil

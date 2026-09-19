@@ -12,14 +12,14 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class OfflineConversationParticipant {
+public class OfflineConversationModerator {
   @NotNull
   @EmbeddedId
   private ConversationMemberCompositeKey key;
 
   @NotNull
   @ManyToOne(fetch = FetchType.LAZY)
-  @MapsId("conversationId") // maps to conversationId field in composite key
+  @MapsId("conversationId")
   @JoinColumn(
       name = "conversation_id",
       foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)
