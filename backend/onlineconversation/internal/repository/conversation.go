@@ -116,15 +116,6 @@ func (r *Repository) FindConversationDetail(ctx context.Context, session session
 	return d, isModerator, isRegistrant, isBanned, isNotificationScheduled, nil
 }
 
-func (r *Repository) FindModeratorIds(ctx context.Context, session session, conversationId uuid.UUID) ([]uuid.UUID, error) {
-	ids, err := r.findIds(ctx, session, `SELECT member_id FROM online_conversation_moderator WHERE conversation_id = ?`, conversationId)
-	if err != nil {
-		slog.Error("fail to find mod ids", "err", err)
-		return nil, err
-	}
-	return ids, nil
-}
-
 func (r *Repository) IsModerator(ctx context.Context, session session, conversationId, memberId uuid.UUID) (bool, error) {
 	var exists bool
 	err := session.QueryRowContext(ctx,
