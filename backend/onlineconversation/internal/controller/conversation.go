@@ -7,7 +7,6 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -16,7 +15,6 @@ import (
 func conversationRouter(c *Controller) {
 	c.Router(POST, "/onlineconversation/create", c.createConversation)
 	c.Router(DELETE, "/onlineconversation/delete", c.deleteConversation)
-	c.Router(GET, "/onlineconversation/list", c.getConversations)
 	c.Router(GET, "/onlineconversation/join", c.joinConversation)
 	c.Router(GET, "/onlineconversation/detail", c.getConversationDetail)
 	c.Router(POST, "/onlineconversation/ban", c.banParticipant)
@@ -103,37 +101,6 @@ func (c *Controller) deleteConversation(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-}
-
-func (c *Controller) getConversations(w http.ResponseWriter, r *http.Request) {
-	page, err := strconv.Atoi(r.URL.Query().Get("page"))
-	if err != nil {
-		slog.Info("incorrect query param for page",
-			"err", err)
-		handleError(w, errors.New("fail to parse"))
-		return
-	}
-	if page < 1 {
-		page = 1
-	}
-	t, err := time.Parse(time.RFC3339, r.URL.Query().Get("time"))
-	if err != nil {
-		slog.Info("incorrect query param for time",
-			"err", err)
-		handleError(w, errors.New("fail to parse"))
-		return
-	}
-	result, err := c.service.GetConversations(r.Context(), page, t)
-	if err != nil {
-		handleError(w, err)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-	err = json.NewEncoder(w).Encode(result)
-	if err != nil {
-		slog.Error("fail to write response body",
-			"err", err)
-	}
 }
 
 func (c *Controller) getConversationDetail(w http.ResponseWriter, r *http.Request) {

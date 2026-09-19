@@ -101,29 +101,6 @@ func (s *Service) DeleteConversation(ctx context.Context, memberId, conversation
 	return nil
 }
 
-func (s *Service) GetConversations(ctx context.Context, page int, t time.Time) ([]dto.OnlineConversationFeedResponse, error) {
-	resp := []dto.OnlineConversationFeedResponse{}
-
-	items, err := s.repository.FindConversations(ctx, s.repository.Tx(), page, t)
-	if err != nil {
-		return nil, err
-	}
-	for _, item := range items {
-		resp = append(resp, dto.OnlineConversationFeedResponse{
-			Id:         item.Id,
-			Novel:      item.Novel,
-			ShortStory: item.ShortStory,
-			Poem:       item.Poem,
-			Play:       item.Play,
-			Film:       item.Film,
-			WrittenBy:  item.WrittenBy,
-			Time:       item.Time,
-		})
-	}
-	slog.Info("success to get conversation", "resp", resp)
-	return resp, nil
-}
-
 func (s *Service) GetConversationDetail(ctx context.Context, conversationId, memberId uuid.UUID) (*dto.OnlineConversationDetailResponse, error) {
 	c, isRegistrant, isBanned, isNotificationScheduled, err := s.repository.FindConversationDetail(ctx, s.repository.Tx(), conversationId, memberId)
 	if err != nil {

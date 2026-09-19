@@ -49,41 +49,6 @@ func (r *Repository) InsertRegistrant(ctx context.Context, session session, conv
 	return nil
 }
 
-func (r *Repository) FindConversations(ctx context.Context, session session, page int, t time.Time) ([]entity.Conversation, error) {
-	const limit = 10
-	rows, err := session.QueryContext(ctx, `
-		SELECT id, novel, short_story, poem, play, film, written_by, time
-		FROM online_conversation
-		WHERE time > ?
-		ORDER BY time ASC
-		LIMIT ? OFFSET ?`,
-		t.Add(-9*time.Hour), limit, (page-1)*5,
-	)
-	if err != nil {
-		slog.Error("fail to find next online conversations page", "err", err)
-		return nil, err
-	}
-	defer rows.Close()
-
-	items := make([]entity.Conversation, 0, limit)
-	for rows.Next() {
-		var d entity.Conversation
-		var idRaw []byte
-		err = rows.Scan(&idRaw, &d.Novel, &d.ShortStory, &d.Poem, &d.Play, &d.Film, &d.WrittenBy, &d.Time)
-		if err != nil {
-			slog.Error("fail to scan online conversation row", "err", err)
-			return nil, err
-		}
-		d.Id = uuid.UUID(idRaw)
-		items = append(items, d)
-	}
-	err = rows.Err()
-	if err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 func (r *Repository) findIds(ctx context.Context, session session, query string, conversationId uuid.UUID) ([]uuid.UUID, error) {
 	rows, err := session.QueryContext(ctx, query, conversationId[:])
 	if err != nil {
