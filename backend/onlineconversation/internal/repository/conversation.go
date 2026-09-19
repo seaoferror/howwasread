@@ -267,9 +267,9 @@ func (r *Repository) AddBanId(ctx context.Context, session session, conversation
 }
 
 func (r *Repository) DeleteOnlineConversation(ctx context.Context, session session, id uuid.UUID) error {
-	_, err := session.ExecContext(ctx, `DELETE FROM online_conversation WHERE id = ?`, id[:])
+	_, err := session.ExecContext(ctx, `UPDATE online_conversation SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?`, id[:])
 	if err != nil {
-		slog.Error("fail to delete online conversation", "err", err)
+		slog.Error("fail to soft delete online conversation", "err", err)
 		return err
 	}
 	return nil
