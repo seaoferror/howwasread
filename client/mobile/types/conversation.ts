@@ -25,7 +25,7 @@ export interface OnlineConversationDetailResponse {
   length: string;
   canEnter: boolean;
   isRegistrant: boolean;
-  moderatorIds: string[];
+  isModerator: boolean;
   isNotificationScheduled: boolean;
 }
 

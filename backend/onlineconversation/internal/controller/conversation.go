@@ -104,12 +104,10 @@ func (c *Controller) deleteConversation(w http.ResponseWriter, r *http.Request) 
 }
 
 func (c *Controller) getConversationDetail(w http.ResponseWriter, r *http.Request) {
-	memberIdRaw := r.Header.Get("X-User-Id")
-	memberId, err := uuid.Parse(memberIdRaw)
+	memberId, err := uuid.Parse(r.Header.Get("X-User-Id"))
 	if err != nil {
 		slog.Error("fail to parse member id from raw string",
-			"err", err,
-			"memberIdRaw", memberIdRaw)
+			"err", err)
 		handleError(w, errors.New("fail to parse"))
 		return
 	}

@@ -56,8 +56,6 @@ export default function OnlineConversationDetail({
             });
             const reportPromises = [
               reportOnlineConversation({ id: id }),
-              ...(data?.moderatorIds.map((mid) => reportUser({ id: mid })) ||
-                []),
             ];
             try {
               await Promise.all(reportPromises);

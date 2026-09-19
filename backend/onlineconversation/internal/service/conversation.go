@@ -102,11 +102,7 @@ func (s *Service) DeleteConversation(ctx context.Context, memberId, conversation
 }
 
 func (s *Service) GetConversationDetail(ctx context.Context, conversationId, memberId uuid.UUID) (*dto.OnlineConversationDetailResponse, error) {
-	c, isRegistrant, isBanned, isNotificationScheduled, err := s.repository.FindConversationDetail(ctx, s.repository.Tx(), conversationId, memberId)
-	if err != nil {
-		return nil, err
-	}
-	moderatorIds, err := s.repository.FindModeratorIds(ctx, s.repository.Tx(), conversationId)
+	c, isModerator, isRegistrant, isBanned, isNotificationScheduled, err := s.repository.FindConversationDetail(ctx, s.repository.Tx(), conversationId, memberId)
 	if err != nil {
 		return nil, err
 	}
@@ -133,7 +129,7 @@ func (s *Service) GetConversationDetail(ctx context.Context, conversationId, mem
 		Time:                    c.Time,
 		Length:                  c.Length.String(),
 		CanEnter:                canEnter,
-		ModeratorIds:            moderatorIds,
+		IsModerator:             isModerator,
 		IsRegistrant:            isRegistrant,
 		IsNotificationScheduled: isNotificationScheduled,
 	}

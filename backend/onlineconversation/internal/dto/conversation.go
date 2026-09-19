@@ -21,21 +21,21 @@ type CreateConversationRequest struct {
 }
 
 type OnlineConversationDetailResponse struct {
-	Id                      uuid.UUID   `json:"id"`
-	Novel                   string      `json:"novel,omitempty"`
-	ShortStory              string      `json:"shortStory,omitempty"`
-	Poem                    string      `json:"poem,omitempty"`
-	Play                    string      `json:"play,omitempty"`
-	Film                    string      `json:"film,omitempty"`
-	WrittenBy               string      `json:"writtenBy"`
-	Rule                    string      `json:"rule,omitempty"`
-	Capacity                int         `json:"capacity"`
-	Time                    time.Time   `json:"time"`
-	Length                  string      `json:"length"`
-	CanEnter                bool        `json:"canEnter"`
-	IsRegistrant            bool        `json:"isRegistrant"`
-	ModeratorIds            []uuid.UUID `json:"moderatorIds"`
-	IsNotificationScheduled bool        `json:"isNotificationScheduled"`
+	Id                      uuid.UUID `json:"id"`
+	Novel                   string    `json:"novel,omitempty"`
+	ShortStory              string    `json:"shortStory,omitempty"`
+	Poem                    string    `json:"poem,omitempty"`
+	Play                    string    `json:"play,omitempty"`
+	Film                    string    `json:"film,omitempty"`
+	WrittenBy               string    `json:"writtenBy"`
+	Rule                    string    `json:"rule,omitempty"`
+	Capacity                int       `json:"capacity"`
+	Time                    time.Time `json:"time"`
+	Length                  string    `json:"length"`
+	CanEnter                bool      `json:"canEnter"`
+	IsRegistrant            bool      `json:"isRegistrant"`
+	IsModerator             bool      `json:"isModerator"`
+	IsNotificationScheduled bool      `json:"isNotificationScheduled"`
 }
 
 type OnlineConversationDocument struct {

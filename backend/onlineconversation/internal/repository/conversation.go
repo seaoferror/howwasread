@@ -89,31 +89,31 @@ func (r *Repository) FindConversation(ctx context.Context, session session, conv
 	return &d, nil
 }
 
-func (r *Repository) FindConversationDetail(ctx context.Context, session session, conversationId, memberId uuid.UUID) (*entity.Conversation, bool, bool, bool, error) {
-	var d entity.Conversation
+func (r *Repository) FindConversationDetail(ctx context.Context, session session, conversationId, memberId uuid.UUID) (d *entity.Conversation, isModerator, isRegistrant, isBanned, isNotificationScheduled bool, err error) {
+	d = &entity.Conversation{}
 	var idRaw []byte
 	var lengthMinutes int
-	var isRegistrant, isBanned, isNotificationScheduled bool
 
 	row := session.QueryRowContext(ctx, `
 		SELECT id, novel, short_story, poem, play, film, written_by, rule, capacity, time, length_minutes,
+		   EXISTS(SELECT 1 FROM online_conversation_moderator WHERE conversation_id = c.id AND member_id = ?),
 			EXISTS(SELECT 1 FROM online_conversation_registrant WHERE conversation_id = c.id AND member_id = ?),
 			EXISTS(SELECT 1 FROM online_conversation_ban WHERE conversation_id = c.id AND member_id = ?),
 			EXISTS(SELECT 1 FROM online_conversation_notification WHERE conversation_id = c.id AND member_id = ?)
 		FROM online_conversation c
 		WHERE c.id = ?`,
-		memberId[:], memberId[:], memberId[:], conversationId[:],
+		memberId[:], memberId[:], memberId[:], memberId[:], conversationId[:],
 	)
-	err := row.Scan(&idRaw, &d.Novel, &d.ShortStory, &d.Poem, &d.Play, &d.Film, &d.WrittenBy, &d.Rule, &d.Capacity, &d.Time, &lengthMinutes,
-		&isRegistrant, &isBanned, &isNotificationScheduled)
+	err = row.Scan(&idRaw, d.Novel, d.ShortStory, d.Poem, d.Play, d.Film, d.WrittenBy, d.Rule, d.Capacity, d.Time, &lengthMinutes,
+		&isModerator, &isRegistrant, &isBanned, &isNotificationScheduled)
 	if err != nil {
 		slog.Error("fail to find online conversation detail", "err", err)
-		return nil, false, false, false, err
+		return nil, false, false, false, false, err
 	}
 	d.Id = uuid.UUID(idRaw)
 	d.Length = time.Duration(lengthMinutes) * time.Minute
 
-	return &d, isRegistrant, isBanned, isNotificationScheduled, nil
+	return d, isModerator, isRegistrant, isBanned, isNotificationScheduled, nil
 }
 
 func (r *Repository) FindModeratorIds(ctx context.Context, session session, conversationId uuid.UUID) ([]uuid.UUID, error) {

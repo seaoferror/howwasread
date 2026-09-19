@@ -130,12 +130,7 @@ export default function OnlineConversationScreen() {
   };
 
   const handlePressParticipant = (id: string, name: string) => {
-    if (
-      detail?.moderatorIds.some(
-        (m) => m === (profile?.id ?? getKVStore("myId")),
-      ) ??
-      false
-    ) {
+    if (detail?.isModerator) {
       showActionSheetWithOptions(
         {
           options: [`Send like to ${name}`, `Ban ${name}`, "Cancel"],
@@ -261,7 +256,7 @@ export default function OnlineConversationScreen() {
                   urls: turn?.uris,
                   username: turn?.username,
                   credential: turn?.credential,
-                }
+                },
               ],
             });
             localAudio.current?.getTracks().forEach((track) => {
