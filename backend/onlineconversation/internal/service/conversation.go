@@ -1,14 +1,12 @@
 package service
 
 import (
-	"backend/common/payload"
 	"backend/onlineconversation/internal/dto"
 	"context"
 	"errors"
 	"log/slog"
 	"time"
 
-	"github.com/IBM/sarama"
 	"github.com/google/uuid"
 )
 
@@ -57,22 +55,6 @@ func (s *Service) CreateConversation(
 		return nil, err
 	}
 	slog.Info("success to create conversation")
-	s.producer.PushMessage("search",
-		nil,
-		payload.Marshal(dto.OnlineConversationDocument{
-			Id:         conversationId,
-			Novel:      novel,
-			ShortStory: shortStory,
-			Poem:       poem,
-			Play:       play,
-			Film:       film,
-			WrittenBy:  writtenBy,
-			Time:       t,
-		}),
-		[]sarama.RecordHeader{
-			{Key: []byte("type"), Value: []byte("onlineconversation")},
-		},
-	)
 	return map[string]uuid.UUID{"conversationId": conversationId}, nil
 }
 
@@ -254,45 +236,10 @@ func (s *Service) DeregisterOnlineConversation(ctx context.Context, memberId, co
 }
 
 func (s *Service) ScheduleNotification(ctx context.Context, memberId, conversationId uuid.UUID) error {
-	tx, err := s.repository.BeginTx(ctx)
+	err := s.repository.AddNotificationId(ctx, s.repository.Tx(), conversationId, memberId)
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
-
-	c, err := s.repository.FindConversation(ctx, tx, conversationId)
-	if err != nil {
-		return err
-	}
-	hasNotification, err := s.repository.HasNotification(ctx, tx, conversationId)
-	if err != nil {
-		return err
-	}
-	err = s.repository.AddNotificationId(ctx, tx, conversationId, memberId)
-	if err != nil {
-		return err
-	}
-	err = tx.Commit()
-	if err != nil {
-		slog.Error("fail to commit transaction", "err", err)
-		return err
-	}
-	p := payload.NotificationScheduling{
-		PartitionId: conversationId,
-		KeyId:       memberId,
-	}
-	if !hasNotification {
-		aboutRaw := []rune(c.Novel + c.Play + c.Poem + c.ShortStory + c.Film + c.WrittenBy)
-		if len(aboutRaw) > 6 {
-			aboutRaw = []rune(string(aboutRaw[:6]) + "...")
-		}
-		p.ScheduledTime = c.Time.Add(-15 * time.Minute).UnixMilli()
-		p.Contents = map[int]string{0: string(aboutRaw)}
-		p.Type = "online-conversation"
-	}
-	s.producer.PushMessage("scheduled-notification", nil,
-		payload.Marshal(p),
-		nil)
 	return nil
 }
 
@@ -301,13 +248,5 @@ func (s *Service) CancelNotification(ctx context.Context, memberId, conversation
 	if err != nil {
 		return err
 	}
-	s.producer.PushMessage("scheduled-notification", nil,
-		payload.Marshal(payload.NotificationScheduling{
-			PartitionId: conversationId,
-			KeyId:       memberId,
-			Type:        "cancel",
-		}),
-		nil,
-	)
 	return nil
 }
