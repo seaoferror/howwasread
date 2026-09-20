@@ -130,6 +130,6 @@ public class OfflineConversationService {
     }
     var conversationProxy = offlineConversationRepository.getReferenceById(conversationId);
     offlineConversationReporterRepository.save(
-        new OfflineConversationReporter(key, null, null, conversationProxy));
+        new OfflineConversationReporter(key, null, conversationProxy));
   }
 }

@@ -24,9 +24,6 @@ public class OfflineConversationReporter {
   @Column(updatable = false)
   private Instant createdAt;
 
-  @Column
-  private Instant deletedAt;
-
   @NotNull
   @ManyToOne(fetch = FetchType.LAZY)
   @MapsId("conversationId")

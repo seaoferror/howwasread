@@ -29,7 +29,7 @@ func (r *Repository) UpdateConversationIfModerator(ctx context.Context, session 
 		SET novel=?, short_story=?, poem=?, play=?, film=?,
 		    written_by=?, rule=?, capacity=?, time=?, length_minutes=?
 		WHERE id=?
-		  AND EXISTS (SELECT 1 FROM online_conversation_moderator WHERE conversation_id=? AND member_id=?)`,
+		  AND EXISTS (SELECT 1 FROM online_conversation_moderator WHERE conversation_id=? AND member_id=? AND deleted_at IS NULL)`,
 		req.Novel, req.ShortStory, req.Poem, req.Play, req.Film, req.WrittenBy, req.Rule, req.Capacity, req.Time, req.LengthMinutes,
 		req.Id[:], req.Id[:], memberId[:])
 	if err != nil {
@@ -45,7 +45,7 @@ func (r *Repository) DeleteOnlineConversationIfModerator(ctx context.Context, se
 		SET deleted_at = CURRENT_TIMESTAMP
 		WHERE id=?
 		  AND deleted_at IS NULL
-		  AND EXISTS (SELECT 1 FROM online_conversation_moderator WHERE conversation_id=? AND member_id=?)`,
+		  AND EXISTS (SELECT 1 FROM online_conversation_moderator WHERE conversation_id=? AND member_id=? AND deleted_at IS NULL)`,
 		conversationId[:], conversationId[:], memberId[:])
 	if err != nil {
 		return false, err
@@ -58,7 +58,7 @@ func (r *Repository) AddBanIdIfModerator(ctx context.Context, session session, c
 	res, err := session.ExecContext(ctx, `
 		INSERT IGNORE INTO online_conversation_ban (conversation_id, member_id)
 		SELECT ?, ?
-		WHERE EXISTS (SELECT 1 FROM online_conversation_moderator WHERE conversation_id=? AND member_id=?)`,
+		WHERE EXISTS (SELECT 1 FROM online_conversation_moderator WHERE conversation_id=? AND member_id=? AND deleted_at IS NULL)`,
 		conversationId[:], banId[:], conversationId[:], modId[:])
 	if err != nil {
 		return false, err
@@ -69,7 +69,7 @@ func (r *Repository) AddBanIdIfModerator(ctx context.Context, session session, c
 
 func (r *Repository) InsertModerator(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
-		`INSERT IGNORE INTO online_conversation_moderator (conversation_id, member_id) VALUES (?, ?)`,
+		`INSERT IGNORE INTO online_conversation_moderator (conversation_id, member_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
 		conversationId[:], memberId[:],
 	)
 	if err != nil {
@@ -82,7 +82,7 @@ func (r *Repository) InsertModerator(ctx context.Context, session session, conve
 
 func (r *Repository) InsertRegistrant(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
-		`INSERT IGNORE INTO online_conversation_registrant (conversation_id, member_id) VALUES (?, ?)`,
+		`INSERT IGNORE INTO online_conversation_registrant (conversation_id, member_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
 		conversationId[:], memberId[:],
 	)
 	if err != nil {
@@ -125,7 +125,7 @@ func (r *Repository) DeleteOnlineConversation(ctx context.Context, session sessi
 
 func (r *Repository) AddReporterId(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
-		`INSERT IGNORE INTO online_conversation_reporter (conversation_id, member_id) VALUES (?, ?)`,
+		`INSERT IGNORE INTO online_conversation_reporter (conversation_id, member_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
 		conversationId[:], memberId[:],
 	)
 	if err != nil {
@@ -168,7 +168,7 @@ func (r *Repository) DecrementRegistrants(ctx context.Context, session session, 
 
 func (r *Repository) AddNotificationId(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
-		`INSERT IGNORE INTO online_conversation_notification (conversation_id, member_id) VALUES (?, ?)`,
+		`INSERT IGNORE INTO online_conversation_notification (conversation_id, member_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)`,
 		conversationId[:], memberId[:],
 	)
 	if err != nil {
