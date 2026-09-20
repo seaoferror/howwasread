@@ -1,20 +1,20 @@
 package repository
 
 import (
+	"backend/onlineconversation/internal/dto"
 	"backend/onlineconversation/internal/entity"
 	"context"
 	"log/slog"
-	"time"
 
 	"github.com/google/uuid"
 )
 
-func (r *Repository) InsertConversation(ctx context.Context, session session, conversationId uuid.UUID, novel, shortStory, poem, play, film, writtenBy, rule string, capacity int, t time.Time, length int) error {
+func (r *Repository) InsertConversation(ctx context.Context, session session, conversationId uuid.UUID, req dto.CreateConversationRequest) error {
 	_, err := session.ExecContext(ctx, `
 		INSERT INTO online_conversation
 			(id, novel, short_story, poem, play, film, written_by, rule, capacity, time, length_minutes, current_registrants)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
-		conversationId[:], novel, shortStory, poem, play, film, writtenBy, rule, capacity, t, length,
+		conversationId[:], req.Novel, req.ShortStory, req.Poem, req.Play, req.Film, req.WrittenBy, req.Rule, req.Capacity, req.Time, req.LengthMinutes,
 	)
 	if err != nil {
 		slog.Error("fail to insert new online conversation", "err", err)
@@ -22,10 +22,53 @@ func (r *Repository) InsertConversation(ctx context.Context, session session, co
 	}
 	return nil
 }
+func (r *Repository) UpdateConversationIfModerator(ctx context.Context, session session, memberId uuid.UUID, req dto.UpdateConversationRequest) (bool, error) {
+	res, err := session.ExecContext(ctx, `
+		UPDATE online_conversation
+		SET novel=?, short_story=?, poem=?, play=?, film=?,
+		    written_by=?, rule=?, capacity=?, time=?, length_minutes=?
+		WHERE id=?
+		  AND EXISTS (SELECT 1 FROM online_conversation_moderator WHERE conversation_id=? AND member_id=?)`,
+		req.Novel, req.ShortStory, req.Poem, req.Play, req.Film, req.WrittenBy, req.Rule, req.Capacity, req.Time, req.LengthMinutes,
+		req.Id[:], req.Id[:], memberId[:])
+	if err != nil {
+		return false, err
+	}
+	n, err := res.RowsAffected()
+	return n > 0, err
+}
+
+func (r *Repository) DeleteOnlineConversationIfModerator(ctx context.Context, session session, conversationId, memberId uuid.UUID) (bool, error) {
+	res, err := session.ExecContext(ctx, `
+		UPDATE online_conversation
+		SET deleted_at = CURRENT_TIMESTAMP
+		WHERE id=?
+		  AND deleted_at IS NULL
+		  AND EXISTS (SELECT 1 FROM online_conversation_moderator WHERE conversation_id=? AND member_id=?)`,
+		conversationId[:], conversationId[:], memberId[:])
+	if err != nil {
+		return false, err
+	}
+	n, err := res.RowsAffected()
+	return n > 0, err
+}
+
+func (r *Repository) AddBanIdIfModerator(ctx context.Context, session session, conversationId, modId, banId uuid.UUID) (bool, error) {
+	res, err := session.ExecContext(ctx, `
+		INSERT IGNORE INTO online_conversation_ban (conversation_id, member_id)
+		SELECT ?, ?
+		WHERE EXISTS (SELECT 1 FROM online_conversation_moderator WHERE conversation_id=? AND member_id=?)`,
+		conversationId[:], banId[:], conversationId[:], modId[:])
+	if err != nil {
+		return false, err
+	}
+	n, err := res.RowsAffected()
+	return n > 0, err
+}
 
 func (r *Repository) InsertModerator(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
-		`INSERT INTO online_conversation_moderator (conversation_id, member_id) VALUES (?, ?)`,
+		`INSERT IGNORE INTO online_conversation_moderator (conversation_id, member_id) VALUES (?, ?)`,
 		conversationId[:], memberId[:],
 	)
 	if err != nil {
@@ -92,45 +135,6 @@ func (r *Repository) FindConversationDetail(ctx context.Context, session session
 	return d, isModerator, isRegistrant, isBanned, isNotificationScheduled, nil
 }
 
-func (r *Repository) IsModerator(ctx context.Context, session session, conversationId, memberId uuid.UUID) (bool, error) {
-	var exists bool
-	err := session.QueryRowContext(ctx,
-		`SELECT EXISTS(SELECT 1 FROM online_conversation_moderator WHERE conversation_id = ? AND member_id = ?)`,
-		conversationId[:], memberId[:],
-	).Scan(&exists)
-	if err != nil {
-		slog.Error("fail to check moderator", "conversationId", conversationId, "memberId", memberId, "err", err)
-		return false, err
-	}
-	return exists, nil
-}
-
-func (r *Repository) IsRegistrant(ctx context.Context, session session, conversationId, memberId uuid.UUID) (bool, error) {
-	var exists bool
-	err := session.QueryRowContext(ctx,
-		`SELECT EXISTS(SELECT 1 FROM online_conversation_registrant WHERE conversation_id = ? AND member_id = ?)`,
-		conversationId[:], memberId[:],
-	).Scan(&exists)
-	if err != nil {
-		slog.Error("fail to check registrant", "conversationId", conversationId, "memberId", memberId, "err", err)
-		return false, err
-	}
-	return exists, nil
-}
-
-func (r *Repository) IsBanned(ctx context.Context, session session, conversationId, memberId uuid.UUID) (bool, error) {
-	var exists bool
-	err := session.QueryRowContext(ctx,
-		`SELECT EXISTS(SELECT 1 FROM online_conversation_ban WHERE conversation_id = ? AND member_id = ?)`,
-		conversationId[:], memberId[:],
-	).Scan(&exists)
-	if err != nil {
-		slog.Error("fail to check ban", "conversationId", conversationId, "memberId", memberId, "err", err)
-		return false, err
-	}
-	return exists, nil
-}
-
 func (r *Repository) IsNotificationScheduled(ctx context.Context, session session, conversationId, memberId uuid.UUID) (bool, error) {
 	var exists bool
 	err := session.QueryRowContext(ctx,
@@ -161,15 +165,6 @@ func (r *Repository) FindReporterIds(ctx context.Context, session session, conve
 	ids, err := r.findIds(ctx, session, `SELECT member_id FROM online_conversation_reporter WHERE conversation_id = ?`, conversationId)
 	if err != nil {
 		slog.Error("fail to find reporter ids", "err", err)
-		return nil, err
-	}
-	return ids, nil
-}
-
-func (r *Repository) FindRegistrantIds(ctx context.Context, session session, conversationId uuid.UUID) ([]uuid.UUID, error) {
-	ids, err := r.findIds(ctx, session, `SELECT member_id FROM online_conversation_registrant WHERE conversation_id = ?`, conversationId)
-	if err != nil {
-		slog.Error("fail to find registrant ids", "err", err)
 		return nil, err
 	}
 	return ids, nil

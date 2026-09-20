@@ -47,16 +47,7 @@ func (c *Controller) createConversation(w http.ResponseWriter, r *http.Request) 
 	result, err := c.service.CreateConversation(
 		r.Context(),
 		memberId,
-		req.Novel,
-		req.ShortStory,
-		req.Poem,
-		req.Play,
-		req.Film,
-		req.WrittenBy,
-		req.Rule,
-		req.Capacity,
-		req.Time,
-		req.LengthMinutes,
+		req,
 	)
 	if err != nil {
 		handleError(w, err)
@@ -110,6 +101,12 @@ func (c *Controller) updateConversation(w http.ResponseWriter, r *http.Request) 
 		handleError(w, errors.New("fail to parse"))
 		return
 	}
+	err = c.service.UpdateConversation(r.Context(), memberId, req)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
 func (c *Controller) getConversationDetail(w http.ResponseWriter, r *http.Request) {

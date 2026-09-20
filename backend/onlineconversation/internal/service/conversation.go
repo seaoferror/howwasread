@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) CreateConversation(ctx context.Context, memberId uuid.UUID, novel, shortStory, poem, play, film, writtenBy, rule string, capacity int, t time.Time, length int) (map[string]uuid.UUID, error) {
+func (s *Service) CreateConversation(ctx context.Context, memberId uuid.UUID, req dto.CreateConversationRequest) (map[string]uuid.UUID, error) {
 	conversationId, err := uuid.NewV7()
 	if err != nil {
 		slog.Error("fail to create uuid v7 for online conversation id", "err", err)
@@ -23,7 +23,9 @@ func (s *Service) CreateConversation(ctx context.Context, memberId uuid.UUID, no
 	}
 	defer tx.Rollback()
 
-	err = s.repository.InsertConversation(ctx, tx, conversationId, novel, shortStory, poem, play, film, writtenBy, rule, capacity, t, length)
+	err = s.repository.InsertConversation(ctx, tx,
+		conversationId,
+		req)
 	if err != nil {
 		return nil, err
 	}
@@ -44,28 +46,35 @@ func (s *Service) CreateConversation(ctx context.Context, memberId uuid.UUID, no
 	slog.Info("success to create conversation")
 	return map[string]uuid.UUID{"conversationId": conversationId}, nil
 }
+func (s *Service) UpdateConversation(ctx context.Context, memberId uuid.UUID, req dto.UpdateConversationRequest) error {
+	ok, err := s.repository.UpdateConversationIfModerator(ctx, s.repository.Tx(), memberId, req)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return errors.New("not found or not moderator")
+	}
+	return nil
+}
 
 func (s *Service) DeleteConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {
-	tx, err := s.repository.BeginTx(ctx)
+	ok, err := s.repository.DeleteOnlineConversationIfModerator(ctx, s.repository.Tx(), conversationId, memberId)
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
-	isModerator, err := s.repository.IsModerator(ctx, tx, conversationId, memberId)
+	if !ok {
+		return errors.New("not found or not moderator")
+	}
+	return nil
+}
+
+func (s *Service) BanParticipant(ctx context.Context, modId, conversationId, banId uuid.UUID) error {
+	ok, err := s.repository.AddBanIdIfModerator(ctx, s.repository.Tx(), conversationId, modId, banId)
 	if err != nil {
 		return err
 	}
-	if !isModerator {
-		return errors.New("only moderator can delete conversation")
-	}
-	err = s.repository.DeleteOnlineConversation(ctx, tx, conversationId)
-	if err != nil {
-		return err
-	}
-	err = tx.Commit()
-	if err != nil {
-		slog.Error("fail to commit transaction for delete conversation", "err", err)
-		return err
+	if !ok {
+		return errors.New("you cannot ban")
 	}
 	return nil
 }
@@ -103,31 +112,6 @@ func (s *Service) GetConversationDetail(ctx context.Context, conversationId, mem
 		IsNotificationScheduled: isNotificationScheduled,
 	}
 	return &resp, nil
-}
-
-func (s *Service) BanParticipant(ctx context.Context, modId, conversationId, banId uuid.UUID) error {
-	tx, err := s.repository.BeginTx(ctx)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-	isMod, err := s.repository.IsModerator(ctx, tx, conversationId, modId)
-	if err != nil {
-		return err
-	}
-	if !isMod {
-		return errors.New("you cannot ban")
-	}
-	err = s.repository.AddBanId(ctx, tx, conversationId, banId)
-	if err != nil {
-		return err
-	}
-	err = tx.Commit()
-	if err != nil {
-		slog.Error("fail to commit", "err", err)
-		return err
-	}
-	return nil
 }
 
 func (s *Service) ReportOnlineConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {
@@ -175,7 +159,6 @@ func (s *Service) RegisterOnlineConversation(ctx context.Context, memberId, conv
 		return err
 	}
 	defer tx.Rollback()
-
 	registered, err := s.repository.TryIncrementRegistrants(ctx, tx, conversationId)
 	if err != nil {
 		return err
@@ -183,12 +166,10 @@ func (s *Service) RegisterOnlineConversation(ctx context.Context, memberId, conv
 	if !registered {
 		return errors.New("already fully registered")
 	}
-
 	err = s.repository.InsertRegistrant(ctx, tx, conversationId, memberId)
 	if err != nil {
 		return err
 	}
-
 	err = tx.Commit()
 	if err != nil {
 		slog.Error("fail to commit transaction for register conversation", "err", err)

@@ -9,7 +9,7 @@ import (
 
 type CreateConversationRequest struct {
 	Novel         string    `json:"novel"`
-	ShortStory    string    `json:"short_story"`
+	ShortStory    string    `json:"shortStory"`
 	Poem          string    `json:"poem"`
 	Play          string    `json:"play"`
 	Film          string    `json:"film"`
@@ -23,7 +23,7 @@ type CreateConversationRequest struct {
 type UpdateConversationRequest struct {
 	Id            uuid.UUID `json:"id"`
 	Novel         string    `json:"novel"`
-	ShortStory    string    `json:"short_story"`
+	ShortStory    string    `json:"shortStory"`
 	Poem          string    `json:"poem"`
 	Play          string    `json:"play"`
 	Film          string    `json:"film"`
@@ -50,17 +50,6 @@ type OnlineConversationDetailResponse struct {
 	IsRegistrant            bool      `json:"isRegistrant"`
 	IsModerator             bool      `json:"isModerator"`
 	IsNotificationScheduled bool      `json:"isNotificationScheduled"`
-}
-
-type OnlineConversationDocument struct {
-	Id         uuid.UUID `json:"id"`
-	Novel      string    `json:"novel"`
-	ShortStory string    `json:"short_story"`
-	Poem       string    `json:"poem"`
-	Play       string    `json:"play"`
-	Film       string    `json:"film"`
-	WrittenBy  string    `json:"writtenBy"`
-	Time       time.Time `json:"time"`
 }
 
 type ConversationSignalResponse struct {
