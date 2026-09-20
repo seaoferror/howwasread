@@ -1,6 +1,5 @@
 package offlineconversation.projection;
 
-import java.time.Duration;
 import java.time.Instant;
 
 public interface OfflineConversationDetailProjection {

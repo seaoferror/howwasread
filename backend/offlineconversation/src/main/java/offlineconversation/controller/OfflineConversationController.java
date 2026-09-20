@@ -2,17 +2,13 @@ package offlineconversation.controller;
 
 import offlineconversation.dto.CreateOfflineConversationRequest;
 import offlineconversation.dto.JoinOfflineConversationRequest;
-import offlineconversation.dto.OfflineConversationMapResponse;
 import offlineconversation.service.OfflineConversationService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -53,25 +49,6 @@ public class OfflineConversationController {
         memberId
     );
     return ResponseEntity.ok("ok");
-  }
-
-  @GetMapping("/map")
-  public ResponseEntity<?> mapFarConvos(
-      @NotBlank @RequestParam String resolution,
-      @NotBlank @RequestParam String h3Index,
-      @RequestParam Instant time //TODO: add @NotNull after approved app
-  ) {
-    List<OfflineConversationMapResponse> response = null;
-    if(time == null) {
-      time = Instant.now();
-    }
-    if (resolution.equals("5")) {
-      response = offlineConversationService.mapRes5Convos(h3Index, time);
-    }
-    if (resolution.equals("7")) {
-      response = offlineConversationService.mapRes7Convos(h3Index, time);
-    }
-    return ResponseEntity.ok(response);
   }
 
   @GetMapping("/detail")
