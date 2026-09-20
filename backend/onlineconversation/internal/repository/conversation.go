@@ -9,12 +9,12 @@ import (
 	"github.com/google/uuid"
 )
 
-func (r *Repository) InsertConversation(ctx context.Context, session session, conversationId uuid.UUID, novel, shortStory, poem, play, film, writtenBy, rule string, capacity int, t time.Time, length time.Duration) error {
+func (r *Repository) InsertConversation(ctx context.Context, session session, conversationId uuid.UUID, novel, shortStory, poem, play, film, writtenBy, rule string, capacity int, t time.Time, length int) error {
 	_, err := session.ExecContext(ctx, `
 		INSERT INTO online_conversation
 			(id, novel, short_story, poem, play, film, written_by, rule, capacity, time, length_minutes, current_registrants)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)`,
-		conversationId[:], novel, shortStory, poem, play, film, writtenBy, rule, capacity, t, int(length.Minutes()),
+		conversationId[:], novel, shortStory, poem, play, film, writtenBy, rule, capacity, t, length,
 	)
 	if err != nil {
 		slog.Error("fail to insert new online conversation", "err", err)
@@ -67,32 +67,9 @@ func (r *Repository) findIds(ctx context.Context, session session, query string,
 	return ids, rows.Err()
 }
 
-func (r *Repository) FindConversation(ctx context.Context, session session, conversationId uuid.UUID) (*entity.Conversation, error) {
-	var d entity.Conversation
-	var idRaw []byte
-	var lengthMinutes int
-
-	row := session.QueryRowContext(ctx, `
-		SELECT id, novel, short_story, poem, play, film, written_by, rule, capacity, time, length_minutes
-		FROM online_conversation
-		WHERE id = ?`,
-		conversationId[:],
-	)
-	err := row.Scan(&idRaw, &d.Novel, &d.ShortStory, &d.Poem, &d.Play, &d.Film, &d.WrittenBy, &d.Rule, &d.Capacity, &d.Time, &lengthMinutes)
-	if err != nil {
-		slog.Error("fail to find online conversation", "err", err)
-		return nil, err
-	}
-	d.Id = uuid.UUID(idRaw)
-	d.Length = time.Duration(lengthMinutes) * time.Minute
-
-	return &d, nil
-}
-
 func (r *Repository) FindConversationDetail(ctx context.Context, session session, conversationId, memberId uuid.UUID) (d *entity.Conversation, isModerator, isRegistrant, isBanned, isNotificationScheduled bool, err error) {
 	d = &entity.Conversation{}
 	var idRaw []byte
-	var lengthMinutes int
 
 	row := session.QueryRowContext(ctx, `
 		SELECT id, novel, short_story, poem, play, film, written_by, rule, capacity, time, length_minutes,
@@ -104,14 +81,13 @@ func (r *Repository) FindConversationDetail(ctx context.Context, session session
 		WHERE c.id = ?`,
 		memberId[:], memberId[:], memberId[:], memberId[:], conversationId[:],
 	)
-	err = row.Scan(&idRaw, d.Novel, d.ShortStory, d.Poem, d.Play, d.Film, d.WrittenBy, d.Rule, d.Capacity, d.Time, &lengthMinutes,
+	err = row.Scan(&idRaw, d.Novel, d.ShortStory, d.Poem, d.Play, d.Film, d.WrittenBy, d.Rule, d.Capacity, d.Time, d.LengthMinutes,
 		&isModerator, &isRegistrant, &isBanned, &isNotificationScheduled)
 	if err != nil {
 		slog.Error("fail to find online conversation detail", "err", err)
 		return nil, false, false, false, false, err
 	}
 	d.Id = uuid.UUID(idRaw)
-	d.Length = time.Duration(lengthMinutes) * time.Minute
 
 	return d, isModerator, isRegistrant, isBanned, isNotificationScheduled, nil
 }

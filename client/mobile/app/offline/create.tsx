@@ -138,7 +138,7 @@ export default function OfflineConversationScreen() {
         writtenBy: writtenBy,
         rule: rule,
         time: time,
-        length: Number(length),
+        lengthMinutes: Number(length),
         mapsLink: mapsLink,
         location: location,
         city: city ?? "",

@@ -10,20 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) CreateConversation(
-	ctx context.Context,
-	memberId uuid.UUID,
-	novel,
-	shortStory,
-	poem,
-	play,
-	film,
-	writtenBy,
-	rule string,
-	capacity int,
-	t time.Time,
-	length time.Duration,
-) (map[string]uuid.UUID, error) {
+func (s *Service) CreateConversation(ctx context.Context, memberId uuid.UUID, novel, shortStory, poem, play, film, writtenBy, rule string, capacity int, t time.Time, length int) (map[string]uuid.UUID, error) {
 	conversationId, err := uuid.NewV7()
 	if err != nil {
 		slog.Error("fail to create uuid v7 for online conversation id", "err", err)
@@ -109,7 +96,7 @@ func (s *Service) GetConversationDetail(ctx context.Context, conversationId, mem
 		Rule:                    c.Rule,
 		Capacity:                c.Capacity,
 		Time:                    c.Time,
-		Length:                  c.Length.String(),
+		LengthMinutes:           c.LengthMinutes,
 		CanEnter:                canEnter,
 		IsModerator:             isModerator,
 		IsRegistrant:            isRegistrant,

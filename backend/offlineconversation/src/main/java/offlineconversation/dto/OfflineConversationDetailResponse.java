@@ -16,7 +16,7 @@ public record OfflineConversationDetailResponse(
     String writtenBy,
     String rule,
     Instant time,
-    int length,
+    int lengthMinutes,
     String mapsLink,
     String location,
     boolean isModerator,

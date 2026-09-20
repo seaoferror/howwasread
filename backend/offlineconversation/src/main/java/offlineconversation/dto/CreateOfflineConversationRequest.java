@@ -16,7 +16,7 @@ public record CreateOfflineConversationRequest(
     @NotBlank String writtenBy,
     String rule,
     @NotNull Instant time,
-    @Min(value = 0) int length,
+    @Min(value = 0) int lengthMinutes,
     @NotBlank String mapsLink,
     @NotBlank String location,
     String city,

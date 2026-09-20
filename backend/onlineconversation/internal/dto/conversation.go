@@ -8,16 +8,30 @@ import (
 )
 
 type CreateConversationRequest struct {
-	Novel      string    `json:"novel"`
-	ShortStory string    `json:"short_story"`
-	Poem       string    `json:"poem"`
-	Play       string    `json:"play"`
-	Film       string    `json:"film"`
-	WrittenBy  string    `json:"writtenBy"`
-	Rule       string    `json:"rule"`
-	Capacity   int       `json:"capacity"`
-	Time       time.Time `json:"time"`
-	Length     string    `json:"length"`
+	Novel         string    `json:"novel"`
+	ShortStory    string    `json:"short_story"`
+	Poem          string    `json:"poem"`
+	Play          string    `json:"play"`
+	Film          string    `json:"film"`
+	WrittenBy     string    `json:"writtenBy"`
+	Rule          string    `json:"rule"`
+	Capacity      int       `json:"capacity"`
+	Time          time.Time `json:"time"`
+	LengthMinutes int       `json:"lengthMinutes"`
+}
+
+type UpdateConversationRequest struct {
+	Id            uuid.UUID `json:"id"`
+	Novel         string    `json:"novel"`
+	ShortStory    string    `json:"short_story"`
+	Poem          string    `json:"poem"`
+	Play          string    `json:"play"`
+	Film          string    `json:"film"`
+	WrittenBy     string    `json:"writtenBy"`
+	Rule          string    `json:"rule"`
+	Capacity      int       `json:"capacity"`
+	Time          time.Time `json:"time"`
+	LengthMinutes int       `json:"lengthMinutes"`
 }
 
 type OnlineConversationDetailResponse struct {
@@ -31,7 +45,7 @@ type OnlineConversationDetailResponse struct {
 	Rule                    string    `json:"rule,omitempty"`
 	Capacity                int       `json:"capacity"`
 	Time                    time.Time `json:"time"`
-	Length                  string    `json:"length"`
+	LengthMinutes           int       `json:"lengthMinutes"`
 	CanEnter                bool      `json:"canEnter"`
 	IsRegistrant            bool      `json:"isRegistrant"`
 	IsModerator             bool      `json:"isModerator"`

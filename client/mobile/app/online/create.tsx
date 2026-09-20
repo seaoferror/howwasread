@@ -94,7 +94,7 @@ export default function OnlineConversationCreateScreen() {
         rule: rule,
         capacity: Number(capacity),
         time: t,
-        length: `${length}m0s`,
+        lengthMinutes: Number(length),
       },
       {
         onSuccess: () => {

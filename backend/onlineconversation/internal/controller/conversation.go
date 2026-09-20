@@ -7,7 +7,6 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -15,6 +14,7 @@ import (
 func conversationRouter(c *Controller) {
 	c.Router(POST, "/onlineconversation/create", c.createConversation)
 	c.Router(DELETE, "/onlineconversation/delete", c.deleteConversation)
+	c.Router(PUT, "/onlineconversation/update", c.updateConversation)
 	c.Router(GET, "/onlineconversation/join", c.joinConversation)
 	c.Router(GET, "/onlineconversation/detail", c.getConversationDetail)
 	c.Router(POST, "/onlineconversation/ban", c.banParticipant)
@@ -44,17 +44,6 @@ func (c *Controller) createConversation(w http.ResponseWriter, r *http.Request) 
 		handleError(w, errors.New("fail to parse"))
 		return
 	}
-
-	length, err := time.ParseDuration(req.Length)
-	if err != nil {
-		slog.Error("fail to parse duration from rawLength",
-			"err", err,
-			"req.Length", req.Length,
-		)
-		handleError(w, errors.New("fail to parse"))
-		return
-	}
-
 	result, err := c.service.CreateConversation(
 		r.Context(),
 		memberId,
@@ -67,7 +56,7 @@ func (c *Controller) createConversation(w http.ResponseWriter, r *http.Request) 
 		req.Rule,
 		req.Capacity,
 		req.Time,
-		length,
+		req.LengthMinutes,
 	)
 	if err != nil {
 		handleError(w, err)
@@ -101,6 +90,26 @@ func (c *Controller) deleteConversation(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+func (c *Controller) updateConversation(w http.ResponseWriter, r *http.Request) {
+	memberId, err := uuid.Parse(r.Header.Get("X-User-Id"))
+	if err != nil {
+		slog.Error("fail to parse userId from X-User-Id header",
+			"err", err,
+		)
+		handleError(w, errors.New("fail to parse"))
+		return
+	}
+	var req dto.UpdateConversationRequest
+	err = json.NewDecoder(r.Body).Decode(&req)
+	if err != nil {
+		slog.Info("incorrect body",
+			"err", err,
+		)
+		handleError(w, errors.New("fail to parse"))
+		return
+	}
 }
 
 func (c *Controller) getConversationDetail(w http.ResponseWriter, r *http.Request) {

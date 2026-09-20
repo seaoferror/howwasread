@@ -17,7 +17,7 @@ type Conversation struct {
 	Rule            string
 	Capacity        int
 	Time            time.Time
-	Length          time.Duration
+	LengthMinutes   int
 	ModeratorIds    []uuid.UUID
 	RegistrantIds   []uuid.UUID
 	BanIds          []uuid.UUID

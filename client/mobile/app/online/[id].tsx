@@ -497,7 +497,7 @@ export default function OnlineConversationScreen() {
           writtenBy={String(detail?.writtenBy ?? "")}
           rule={String(detail?.rule ?? "")}
           time={String(detail?.time ?? "")}
-          length={String(detail?.length ?? "")}
+          length={String(detail?.lengthMinutes ?? "") + "m"}
         />
       )}
       <View style={styles.participantContainer}>
