@@ -170,19 +170,6 @@ func (r *Repository) DecrementRegistrants(ctx context.Context, session session, 
 	return nil
 }
 
-func (r *Repository) RemoveRegistrantId(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
-	_, err := session.ExecContext(ctx,
-		`DELETE FROM online_conversation_registrant WHERE conversation_id = ? AND member_id = ?`,
-		conversationId[:], memberId[:],
-	)
-	if err != nil {
-		slog.Error("fail to remove online conversation registrant id",
-			"conversationId", conversationId, "memberId", memberId, "err", err)
-		return err
-	}
-	return nil
-}
-
 func (r *Repository) AddNotificationId(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
 		`INSERT IGNORE INTO online_conversation_notification (conversation_id, member_id) VALUES (?, ?)`,
@@ -196,9 +183,22 @@ func (r *Repository) AddNotificationId(ctx context.Context, session session, con
 	return nil
 }
 
+func (r *Repository) RemoveRegistrantId(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
+	_, err := session.ExecContext(ctx,
+		`UPDATE online_conversation_registrant SET deleted_at = CURRENT_TIMESTAMP WHERE conversation_id = ? AND member_id = ?`,
+		conversationId[:], memberId[:],
+	)
+	if err != nil {
+		slog.Error("fail to remove online conversation registrant id",
+			"conversationId", conversationId, "memberId", memberId, "err", err)
+		return err
+	}
+	return nil
+}
+
 func (r *Repository) RemoveNotificationId(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
-		`DELETE FROM online_conversation_notification WHERE conversation_id = ? AND member_id = ?`,
+		`UPDATE online_conversation_notification SET deleted_at = CURRENT_TIMESTAMP WHERE conversation_id = ? AND member_id = ?`,
 		conversationId[:], memberId[:],
 	)
 	if err != nil {
