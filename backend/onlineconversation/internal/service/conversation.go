@@ -46,13 +46,18 @@ func (s *Service) CreateConversation(ctx context.Context, memberId uuid.UUID, re
 	slog.Info("success to create conversation")
 	return map[string]uuid.UUID{"conversationId": conversationId}, nil
 }
+
 func (s *Service) UpdateConversation(ctx context.Context, memberId uuid.UUID, req dto.UpdateConversationRequest) error {
 	ok, err := s.repository.UpdateConversationIfModerator(ctx, s.repository.Tx(), memberId, req)
 	if err != nil {
 		return err
 	}
 	if !ok {
-		return errors.New("not found or not moderator")
+		err = errors.New("can't update conversation")
+		slog.Warn("update failed, ui error or api abuse attempt",
+			"conversationId", req.Id,
+			"memberId", memberId)
+		return err
 	}
 	return nil
 }
@@ -63,7 +68,11 @@ func (s *Service) DeleteConversation(ctx context.Context, memberId, conversation
 		return err
 	}
 	if !ok {
-		return errors.New("not found or not moderator")
+		err = errors.New("can't delete conversation")
+		slog.Warn("delete failed, ui error or api abuse attempt",
+			"conversationId", conversationId,
+			"memberId", memberId)
+		return err
 	}
 	return nil
 }
@@ -74,7 +83,12 @@ func (s *Service) BanParticipant(ctx context.Context, modId, conversationId, ban
 		return err
 	}
 	if !ok {
-		return errors.New("you cannot ban")
+		err = errors.New("can't ban participant")
+		slog.Warn("ban failed, ui error, or api abuse attempt",
+			"conversationId", conversationId,
+			"modId", modId,
+			"banId", banId)
+		return err
 	}
 	return nil
 }

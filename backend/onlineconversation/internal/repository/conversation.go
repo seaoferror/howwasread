@@ -22,6 +22,7 @@ func (r *Repository) InsertConversation(ctx context.Context, session session, co
 	}
 	return nil
 }
+
 func (r *Repository) UpdateConversationIfModerator(ctx context.Context, session session, memberId uuid.UUID, req dto.UpdateConversationRequest) (bool, error) {
 	res, err := session.ExecContext(ctx, `
 		UPDATE online_conversation
