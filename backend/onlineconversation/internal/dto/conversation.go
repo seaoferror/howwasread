@@ -35,7 +35,6 @@ type UpdateConversationRequest struct {
 }
 
 type OnlineConversationDetailResponse struct {
-	Id                      uuid.UUID `json:"id"`
 	Novel                   string    `json:"novel,omitempty"`
 	ShortStory              string    `json:"shortStory,omitempty"`
 	Poem                    string    `json:"poem,omitempty"`

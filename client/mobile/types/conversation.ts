@@ -12,7 +12,6 @@ export interface CreateOnlineConversationRequest {
 }
 
 export interface OnlineConversationDetailResponse {
-  id: string;
   novel?: string;
   shortStory?: string;
   poem?: string;

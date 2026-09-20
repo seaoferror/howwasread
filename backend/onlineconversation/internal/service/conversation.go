@@ -94,36 +94,35 @@ func (s *Service) BanParticipant(ctx context.Context, modId, conversationId, ban
 }
 
 func (s *Service) GetConversationDetail(ctx context.Context, conversationId, memberId uuid.UUID) (*dto.OnlineConversationDetailResponse, error) {
-	c, isModerator, isRegistrant, isBanned, isNotificationScheduled, err := s.repository.FindConversationDetail(ctx, s.repository.Tx(), conversationId, memberId)
+	detail, err := s.repository.FindConversationDetail(ctx, s.repository.Tx(), conversationId, memberId)
 	if err != nil {
 		return nil, err
 	}
 	canEnter := true
-	if time.Now().UTC().Before(c.Time.Add(-15 * time.Minute)) {
+	if time.Now().UTC().Before(detail.Time.Add(-15 * time.Minute)) {
 		canEnter = false
 	}
-	if time.Now().UTC().Before(c.Time.Add(10*time.Minute)) && !isRegistrant {
+	if time.Now().UTC().Before(detail.Time.Add(10*time.Minute)) && !detail.IsRegistrant {
 		canEnter = false
 	}
-	if isBanned {
+	if detail.IsBanned {
 		canEnter = false
 	}
 	resp := dto.OnlineConversationDetailResponse{
-		Id:                      c.Id,
-		Novel:                   c.Novel,
-		ShortStory:              c.ShortStory,
-		Poem:                    c.Poem,
-		Play:                    c.Play,
-		Film:                    c.Film,
-		WrittenBy:               c.WrittenBy,
-		Rule:                    c.Rule,
-		Capacity:                c.Capacity,
-		Time:                    c.Time,
-		LengthMinutes:           c.LengthMinutes,
+		Novel:                   detail.Novel,
+		ShortStory:              detail.ShortStory,
+		Poem:                    detail.Poem,
+		Play:                    detail.Play,
+		Film:                    detail.Film,
+		WrittenBy:               detail.WrittenBy,
+		Rule:                    detail.Rule,
+		Capacity:                detail.Capacity,
+		Time:                    detail.Time,
+		LengthMinutes:           detail.LengthMinutes,
 		CanEnter:                canEnter,
-		IsModerator:             isModerator,
-		IsRegistrant:            isRegistrant,
-		IsNotificationScheduled: isNotificationScheduled,
+		IsModerator:             detail.IsModerator,
+		IsRegistrant:            detail.IsRegistrant,
+		IsNotificationScheduled: detail.IsNotificationScheduled,
 	}
 	return &resp, nil
 }

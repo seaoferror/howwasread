@@ -2,7 +2,7 @@ package repository
 
 import (
 	"backend/onlineconversation/internal/dto"
-	"backend/onlineconversation/internal/entity"
+	"backend/onlineconversation/internal/projection"
 	"context"
 	"log/slog"
 
@@ -93,29 +93,25 @@ func (r *Repository) InsertRegistrant(ctx context.Context, session session, conv
 	return nil
 }
 
-func (r *Repository) FindConversationDetail(ctx context.Context, session session, conversationId, memberId uuid.UUID) (d *entity.Conversation, isModerator, isRegistrant, isBanned, isNotificationScheduled bool, err error) {
-	d = &entity.Conversation{}
-	var idRaw []byte
-
+func (r *Repository) FindConversationDetail(ctx context.Context, session session, conversationId, memberId uuid.UUID) (d projection.Detail, err error) {
 	row := session.QueryRowContext(ctx, `
-		SELECT id, novel, short_story, poem, play, film, written_by, rule, capacity, time, length_minutes,
-		   EXISTS(SELECT 1 FROM online_conversation_moderator WHERE conversation_id = c.id AND member_id = ?),
-			EXISTS(SELECT 1 FROM online_conversation_registrant WHERE conversation_id = c.id AND member_id = ?),
-			EXISTS(SELECT 1 FROM online_conversation_ban WHERE conversation_id = c.id AND member_id = ?),
-			EXISTS(SELECT 1 FROM online_conversation_notification WHERE conversation_id = c.id AND member_id = ?)
+		SELECT novel, short_story, poem, play, film, written_by, rule, capacity, time, length_minutes,
+		   EXISTS(SELECT 1 FROM online_conversation_moderator WHERE conversation_id = c.id AND member_id = ? AND deleted_at IS NULL),
+			EXISTS(SELECT 1 FROM online_conversation_registrant WHERE conversation_id = c.id AND member_id = ? AND deleted_at IS NULL),
+			EXISTS(SELECT 1 FROM online_conversation_ban WHERE conversation_id = c.id AND member_id = ? AND deleted_at IS NULL),
+			EXISTS(SELECT 1 FROM online_conversation_notification WHERE conversation_id = c.id AND member_id = ? AND deleted_at IS NULL)
 		FROM online_conversation c
 		WHERE c.id = ?`,
 		memberId[:], memberId[:], memberId[:], memberId[:], conversationId[:],
 	)
-	err = row.Scan(&idRaw, d.Novel, d.ShortStory, d.Poem, d.Play, d.Film, d.WrittenBy, d.Rule, d.Capacity, d.Time, d.LengthMinutes,
-		&isModerator, &isRegistrant, &isBanned, &isNotificationScheduled)
+	err = row.Scan(
+		&d.Novel, &d.ShortStory, &d.Poem, &d.Play, &d.Film, &d.WrittenBy, &d.Rule, &d.Capacity, &d.Time, &d.LengthMinutes,
+		&d.IsModerator, &d.IsRegistrant, &d.IsBanned, &d.IsNotificationScheduled)
 	if err != nil {
 		slog.Error("fail to find online conversation detail", "err", err)
-		return nil, false, false, false, false, err
+		return projection.Detail{}, err
 	}
-	d.Id = uuid.UUID(idRaw)
-
-	return d, isModerator, isRegistrant, isBanned, isNotificationScheduled, nil
+	return d, nil
 }
 
 func (r *Repository) DeleteOnlineConversation(ctx context.Context, session session, id uuid.UUID) error {
