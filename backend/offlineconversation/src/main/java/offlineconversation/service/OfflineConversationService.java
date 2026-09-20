@@ -6,7 +6,6 @@ import offlineconversation.domain.OfflineConversationModerator;
 import offlineconversation.domain.OfflineConversationParticipant;
 import offlineconversation.domain.OfflineConversationReporter;
 import offlineconversation.dto.*;
-import offlineconversation.projection.OfflineConversationDetailProjection;
 import offlineconversation.repository.OfflineConversationModeratorRepository;
 import offlineconversation.repository.OfflineConversationParticipantRepository;
 import offlineconversation.repository.OfflineConversationReporterRepository;
@@ -33,68 +32,69 @@ public class OfflineConversationService {
 
   @Transactional
   public Map<String, UUID> create(
-      CreateOfflineConversationRequest request,
+      CreateOfflineConversationRequest req,
       UUID memberId
   ) {
     var convo = OfflineConversation.builder()
-        .novel(request.novel())
-        .poem(request.poem())
-        .shortStory(request.shortStory())
-        .play(request.play())
-        .film(request.film())
-        .writtenBy(request.writtenBy())
-        .rule(request.rule())
-        .time(request.time())
-        .lengthMinutes(request.lengthMinutes())
-        .mapsLink(request.mapsLink())
-        .location(request.location())
-        .latitude(request.lat())
-        .longitude(request.lng())
-        .city(request.city())
-        .h3Res5(request.h3Res5())
-        .h3Res7(request.h3Res7())
+        .novel(req.novel())
+        .poem(req.poem())
+        .shortStory(req.shortStory())
+        .play(req.play())
+        .film(req.film())
+        .writtenBy(req.writtenBy())
+        .rule(req.rule())
+        .time(req.time())
+        .lengthMinutes(req.lengthMinutes())
+        .mapsLink(req.mapsLink())
+        .location(req.location())
+        .latitude(req.lat())
+        .longitude(req.lng())
+        .city(req.city())
+        .h3Res5(req.h3Res5())
+        .h3Res7(req.h3Res7())
         .build();
     var conversationId = offlineConversationRepository.save(convo).getId();
     var key = ConversationMemberCompositeKey.builder()
         .conversationId(conversationId)
         .memberId(memberId)
         .build();
-    offlineConversationParticipantRepository.save(new OfflineConversationParticipant(key, convo));
-    offlineConversationModeratorRepository.save(new OfflineConversationModerator(key, convo));
+    offlineConversationParticipantRepository.save(
+        new OfflineConversationParticipant(key, null, null, convo));
+    offlineConversationModeratorRepository.save(
+        new OfflineConversationModerator(key, null, null, convo));
     //TODO: CDC producing kafka message for chat group room create
     //TODO: CDC producing search
     return Map.of("id", conversationId);
   }
 
   @Transactional
-  public void join(JoinOfflineConversationRequest request, UUID memberId) {
-    var conversationProxy = offlineConversationRepository.getReferenceById(request.conversationId());
+  public void join(UUID conversationId, UUID memberId) {
+    var conversationProxy = offlineConversationRepository.getReferenceById(conversationId);
     var key = ConversationMemberCompositeKey.builder()
-        .conversationId(request.conversationId())
+        .conversationId(conversationId)
         .memberId(memberId)
         .build();
-    offlineConversationParticipantRepository.save(new OfflineConversationParticipant(key, conversationProxy));
+    offlineConversationParticipantRepository.save(
+        new OfflineConversationParticipant(key, null, null, conversationProxy));
     //TODO: CDC producing kafka message for chat group room participate
   }
 
   @Transactional
-  public void quit(JoinOfflineConversationRequest request, UUID memberId) {
+  public void quit(UUID conversationId, UUID memberId) {
     var key = ConversationMemberCompositeKey.builder()
-        .conversationId(request.conversationId())
+        .conversationId(conversationId)
         .memberId(memberId)
         .build();
-    offlineConversationParticipantRepository.deleteById(key);
+    offlineConversationParticipantRepository.softDeleteById(key);
     //TODO: CDC producing kafka message for chat group room quit
   }
 
   public OfflineConversationDetailResponse detail(UUID conversationId, UUID memberId) {
-    var convo = offlineConversationRepository.findById(conversationId, OfflineConversationDetailProjection.class)
+    var convo = offlineConversationRepository.findDetail(conversationId, memberId)
         .orElseThrow(() -> new ResponseStatusException(
             HttpStatus.NOT_FOUND,
             "Conversation not found"
         ));
-    var participantIds = offlineConversationParticipantRepository.findParticipantIdsByConversationId(conversationId);
-    var moderatorIds = offlineConversationModeratorRepository.findMemberIdsByConversationId(conversationId);
     return OfflineConversationDetailResponse.builder()
         .novel(convo.getNovel())
         .poem(convo.getPoem())
@@ -107,10 +107,9 @@ public class OfflineConversationService {
         .lengthMinutes(convo.getLengthMinutes())
         .mapsLink(convo.getMapsLink())
         .location(convo.getLocation())
-        .isModerator(moderatorIds.contains(memberId))
-        .isParticipant(participantIds.contains(memberId))
-        .numberOfParticipants(participantIds.size())
-        .moderatorIds(moderatorIds)
+        .isModerator(convo.getIsModerator())
+        .isParticipant(convo.getIsParticipant())
+        .numberOfParticipants(convo.getNumberOfParticipants())
         .build();
   }
 
@@ -126,10 +125,11 @@ public class OfflineConversationService {
     }
     long reporterCount = offlineConversationReporterRepository.countByKeyConversationId(conversationId);
     if (reporterCount > 5) {
-      offlineConversationRepository.deleteById(conversationId);
+      offlineConversationParticipantRepository.softDeleteById(key);
       return;
     }
     var conversationProxy = offlineConversationRepository.getReferenceById(conversationId);
-    offlineConversationReporterRepository.save(new OfflineConversationReporter(key, conversationProxy));
+    offlineConversationReporterRepository.save(
+        new OfflineConversationReporter(key, null, null, conversationProxy));
   }
 }

@@ -33,7 +33,7 @@ public class OfflineConversationController {
       @NotNull @RequestHeader("X-User-Id") UUID memberId
   ) {
     offlineConversationService.join(
-        request,
+        request.conversationId(),
         memberId
     );
     return ResponseEntity.ok("ok");
@@ -45,7 +45,7 @@ public class OfflineConversationController {
       @NotNull @RequestHeader("X-User-Id") UUID memberId
   ) {
     offlineConversationService.quit(
-        request,
+        request.conversationId(),
         memberId
     );
     return ResponseEntity.ok("ok");

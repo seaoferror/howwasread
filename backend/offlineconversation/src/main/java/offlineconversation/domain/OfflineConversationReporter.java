@@ -6,6 +6,9 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.Instant;
 
 @Entity
 @Getter
@@ -16,6 +19,13 @@ public class OfflineConversationReporter {
   @NotNull
   @EmbeddedId
   private ConversationMemberCompositeKey key;
+
+  @CreationTimestamp
+  @Column(updatable = false)
+  private Instant createdAt;
+
+  @Column
+  private Instant deletedAt;
 
   @NotNull
   @ManyToOne(fetch = FetchType.LAZY)

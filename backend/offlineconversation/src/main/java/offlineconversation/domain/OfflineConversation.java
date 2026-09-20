@@ -71,4 +71,7 @@ public class OfflineConversation {
 
   @Column(length = 15, nullable = false)
   private String h3Res7;
+
+  @Column
+  private Instant deletedAt;
 }
