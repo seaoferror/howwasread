@@ -134,30 +134,23 @@ func (s *Service) ReportOnlineConversation(ctx context.Context, memberId, conver
 		return err
 	}
 	defer tx.Rollback()
-	ids, err := s.repository.FindReporterIds(ctx, tx, conversationId)
+	alreadyReported, count, err := s.repository.FindReportStatus(ctx, tx, conversationId, memberId)
 	if err != nil {
 		return err
 	}
-	for _, id := range ids {
-		if id == memberId {
-			return nil
-		}
+	if alreadyReported {
+		return nil
 	}
-	if len(ids) > 5 {
+	if count > 5 {
 		err = s.repository.DeleteOnlineConversation(ctx, tx, conversationId)
 		if err != nil {
 			return err
 		}
-		err = tx.Commit()
+	} else {
+		err = s.repository.AddReporterId(ctx, tx, conversationId, memberId)
 		if err != nil {
-			slog.Error("fail to commit", "err", err)
 			return err
 		}
-		return nil
-	}
-	err = s.repository.AddReporterId(ctx, tx, conversationId, memberId)
-	if err != nil {
-		return err
 	}
 	err = tx.Commit()
 	if err != nil {

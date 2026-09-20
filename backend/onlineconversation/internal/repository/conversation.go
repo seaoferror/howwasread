@@ -93,24 +93,6 @@ func (r *Repository) InsertRegistrant(ctx context.Context, session session, conv
 	return nil
 }
 
-func (r *Repository) findIds(ctx context.Context, session session, query string, conversationId uuid.UUID) ([]uuid.UUID, error) {
-	rows, err := session.QueryContext(ctx, query, conversationId[:])
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	ids := make([]uuid.UUID, 0)
-	for rows.Next() {
-		var rawId []byte
-		if err := rows.Scan(&rawId); err != nil {
-			return nil, err
-		}
-		ids = append(ids, uuid.UUID(rawId))
-	}
-	return ids, rows.Err()
-}
-
 func (r *Repository) FindConversationDetail(ctx context.Context, session session, conversationId, memberId uuid.UUID) (d *entity.Conversation, isModerator, isRegistrant, isBanned, isNotificationScheduled bool, err error) {
 	d = &entity.Conversation{}
 	var idRaw []byte
@@ -134,64 +116,6 @@ func (r *Repository) FindConversationDetail(ctx context.Context, session session
 	d.Id = uuid.UUID(idRaw)
 
 	return d, isModerator, isRegistrant, isBanned, isNotificationScheduled, nil
-}
-
-func (r *Repository) IsNotificationScheduled(ctx context.Context, session session, conversationId, memberId uuid.UUID) (bool, error) {
-	var exists bool
-	err := session.QueryRowContext(ctx,
-		`SELECT EXISTS(SELECT 1 FROM online_conversation_notification WHERE conversation_id = ? AND member_id = ?)`,
-		conversationId[:], memberId[:],
-	).Scan(&exists)
-	if err != nil {
-		slog.Error("fail to check notification", "conversationId", conversationId, "memberId", memberId, "err", err)
-		return false, err
-	}
-	return exists, nil
-}
-
-func (r *Repository) HasNotification(ctx context.Context, session session, conversationId uuid.UUID) (bool, error) {
-	var exists bool
-	err := session.QueryRowContext(ctx,
-		`SELECT EXISTS(SELECT 1 FROM online_conversation_notification WHERE conversation_id = ?)`,
-		conversationId[:],
-	).Scan(&exists)
-	if err != nil {
-		slog.Error("fail to check notification existence", "conversationId", conversationId, "err", err)
-		return false, err
-	}
-	return exists, nil
-}
-
-func (r *Repository) FindReporterIds(ctx context.Context, session session, conversationId uuid.UUID) ([]uuid.UUID, error) {
-	ids, err := r.findIds(ctx, session, `SELECT member_id FROM online_conversation_reporter WHERE conversation_id = ?`, conversationId)
-	if err != nil {
-		slog.Error("fail to find reporter ids", "err", err)
-		return nil, err
-	}
-	return ids, nil
-}
-
-func (r *Repository) FindCapacity(ctx context.Context, session session, id uuid.UUID) (int, error) {
-	var capacity int
-	err := session.QueryRowContext(ctx, `SELECT capacity FROM online_conversation WHERE id = ?`, id[:]).Scan(&capacity)
-	if err != nil {
-		slog.Error("fail to find online conversation capacity", "err", err)
-		return 0, err
-	}
-	return capacity, nil
-}
-
-func (r *Repository) AddBanId(ctx context.Context, session session, conversationId uuid.UUID, banId uuid.UUID) error {
-	_, err := session.ExecContext(ctx,
-		`INSERT IGNORE INTO online_conversation_ban (conversation_id, member_id) VALUES (?, ?)`,
-		conversationId[:], banId[:],
-	)
-	if err != nil {
-		slog.Error("fail to add ban id to online conversation",
-			"err", err, "conversationId", conversationId, "memberId", banId.String())
-		return err
-	}
-	return nil
 }
 
 func (r *Repository) DeleteOnlineConversation(ctx context.Context, session session, id uuid.UUID) error {
@@ -283,4 +207,20 @@ func (r *Repository) RemoveNotificationId(ctx context.Context, session session, 
 		return err
 	}
 	return nil
+}
+
+func (r *Repository) FindReportStatus(ctx context.Context, session session, conversationId, memberId uuid.UUID) (alreadyReported bool, count int, err error) {
+	err = session.QueryRowContext(ctx, `
+		SELECT
+			EXISTS(SELECT 1 FROM online_conversation_reporter WHERE conversation_id = ? AND member_id = ?),
+			COUNT(*)
+		FROM online_conversation_reporter
+		WHERE conversation_id = ?`,
+		conversationId[:], memberId[:], conversationId[:],
+	).Scan(&alreadyReported, &count)
+	if err != nil {
+		slog.Error("fail to find report status", "conversationId", conversationId, "err", err)
+		return false, 0, err
+	}
+	return alreadyReported, count, nil
 }
