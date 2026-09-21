@@ -2,31 +2,27 @@ package offlineconversation.domain;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.CreationTimestamp;
+import lombok.*;
+import org.hibernate.annotations.UuidGenerator;
 
-import java.time.Instant;
+import java.util.UUID;
 
 @Entity
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class OfflineConversationReporter {
-  @NotNull
-  @EmbeddedId
-  private ConversationMemberCompositeKey key;
+  @Id
+  @UuidGenerator(style = UuidGenerator.Style.VERSION_7)
+  private UUID id;
 
-  @CreationTimestamp
-  @Column(updatable = false)
-  private Instant createdAt;
+  @Column(nullable = false)
+  private UUID memberId;
 
   @NotNull
   @ManyToOne(fetch = FetchType.LAZY)
-  @MapsId("conversationId")
   @JoinColumn(
       name = "conversation_id",
       foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)

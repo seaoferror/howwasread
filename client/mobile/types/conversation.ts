@@ -127,7 +127,6 @@ export interface OfflineConversationDetailResponse {
   isModerator: boolean;
   isParticipant: boolean;
   numberOfParticipants: number;
-  moderatorIds: string[];
 }
 
 export interface GetTurnResponse {

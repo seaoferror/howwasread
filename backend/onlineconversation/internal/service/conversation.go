@@ -29,11 +29,21 @@ func (s *Service) CreateConversation(ctx context.Context, memberId uuid.UUID, re
 	if err != nil {
 		return nil, err
 	}
-	err = s.repository.InsertModerator(ctx, tx, conversationId, memberId)
+	modRowId, err := uuid.NewV7()
+	if err != nil {
+		slog.Error("fail to create uuid v7 for moderator row id", "err", err)
+		return nil, err
+	}
+	err = s.repository.InsertModerator(ctx, tx, modRowId, conversationId, memberId)
 	if err != nil {
 		return nil, err
 	}
-	err = s.repository.InsertRegistrant(ctx, tx, conversationId, memberId)
+	regRowId, err := uuid.NewV7()
+	if err != nil {
+		slog.Error("fail to create uuid v7 for moderator row id", "err", err)
+		return nil, err
+	}
+	err = s.repository.InsertRegistrant(ctx, tx, regRowId, conversationId, memberId)
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +88,11 @@ func (s *Service) DeleteConversation(ctx context.Context, memberId, conversation
 }
 
 func (s *Service) BanParticipant(ctx context.Context, modId, conversationId, banId uuid.UUID) error {
-	ok, err := s.repository.AddBanIdIfModerator(ctx, s.repository.Tx(), conversationId, modId, banId)
+	id, err := uuid.NewV7()
+	if err != nil {
+		panic(err)
+	}
+	ok, err := s.repository.AddBanIdIfModerator(ctx, s.repository.Tx(), id, conversationId, modId, banId)
 	if err != nil {
 		return err
 	}
@@ -127,38 +141,6 @@ func (s *Service) GetConversationDetail(ctx context.Context, conversationId, mem
 	return &resp, nil
 }
 
-func (s *Service) ReportOnlineConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {
-	tx, err := s.repository.BeginTx(ctx)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-	alreadyReported, count, err := s.repository.FindReportStatus(ctx, tx, conversationId, memberId)
-	if err != nil {
-		return err
-	}
-	if alreadyReported {
-		return nil
-	}
-	if count > 5 {
-		err = s.repository.DeleteOnlineConversation(ctx, tx, conversationId)
-		if err != nil {
-			return err
-		}
-	} else {
-		err = s.repository.AddReporterId(ctx, tx, conversationId, memberId)
-		if err != nil {
-			return err
-		}
-	}
-	err = tx.Commit()
-	if err != nil {
-		slog.Error("fail to commit", "err", err)
-		return err
-	}
-	return nil
-}
-
 func (s *Service) RegisterOnlineConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {
 	tx, err := s.repository.BeginTx(ctx)
 	if err != nil {
@@ -172,7 +154,12 @@ func (s *Service) RegisterOnlineConversation(ctx context.Context, memberId, conv
 	if !registered {
 		return errors.New("already fully registered")
 	}
-	err = s.repository.InsertRegistrant(ctx, tx, conversationId, memberId)
+	regRowId, err := uuid.NewV7()
+	if err != nil {
+		slog.Error("fail to create uuid v7 for moderator row id", "err", err)
+		return err
+	}
+	err = s.repository.InsertRegistrantIfNotExist(ctx, tx, regRowId, conversationId, memberId)
 	if err != nil {
 		return err
 	}
@@ -210,7 +197,13 @@ func (s *Service) DeregisterOnlineConversation(ctx context.Context, memberId, co
 }
 
 func (s *Service) ScheduleNotification(ctx context.Context, memberId, conversationId uuid.UUID) error {
-	err := s.repository.AddNotificationId(ctx, s.repository.Tx(), conversationId, memberId)
+	notificationRowId, err := uuid.NewV7()
+	if err != nil {
+		slog.Error("fail to create uuid V7 for notification row id",
+			"err", err)
+		return err
+	}
+	err = s.repository.AddNotificationId(ctx, s.repository.Tx(), notificationRowId, conversationId, memberId)
 	if err != nil {
 		return err
 	}

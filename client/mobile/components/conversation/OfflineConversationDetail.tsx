@@ -17,7 +17,6 @@ import { openBrowserAsync } from "expo-web-browser";
 import Toast from "react-native-toast-message";
 import { router } from "expo-router";
 import { useActionSheet } from "@expo/react-native-action-sheet";
-import { reportUser } from "@/api/chat";
 import { reportOfflineConversation } from "@/api/conversation";
 
 interface OfflineConversationDetailProps {
@@ -49,9 +48,6 @@ export default function OfflineConversationDetail({
             });
             if (data) {
               try {
-                await Promise.all([
-                  data.moderatorIds.map((modId) => reportUser({ id: modId })),
-                ]);
                 await reportOfflineConversation({ conversationId: String(id) });
               } catch (e) {
                 console.log(e);

@@ -18,7 +18,6 @@ func conversationRouter(c *Controller) {
 	c.Router(GET, "/onlineconversation/join", c.joinConversation)
 	c.Router(GET, "/onlineconversation/detail", c.getConversationDetail)
 	c.Router(POST, "/onlineconversation/ban", c.banParticipant)
-	c.Router(POST, "/onlineconversation/report", c.reportOnlineConversation)
 	c.Router(POST, "/onlineconversation/register", c.registerOnlineConversation)
 	c.Router(POST, "/onlineconversation/deregister", c.deregisterOnlineConversation)
 	c.Router(GET, "/onlineconversation/turn", c.getTurn)
@@ -153,28 +152,6 @@ func (c *Controller) banParticipant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = c.service.BanParticipant(r.Context(), memberId, req.ConversationId, req.BanId)
-	if err != nil {
-		handleError(w, err)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
-}
-
-func (c *Controller) reportOnlineConversation(w http.ResponseWriter, r *http.Request) {
-	memberId, err := uuid.Parse(r.Header.Get("X-User-Id"))
-	if err != nil {
-		slog.Error("fail to parse member id from raw string",
-			"err", err)
-		handleError(w, errors.New("fail to parse"))
-		return
-	}
-	var req payload.ConversationRequest
-	err = json.NewDecoder(r.Body).Decode(&req)
-	if err != nil {
-		handleError(w, errors.New("fail to parse"))
-		return
-	}
-	err = c.service.ReportOnlineConversation(r.Context(), memberId, req.Id)
 	if err != nil {
 		handleError(w, err)
 		return

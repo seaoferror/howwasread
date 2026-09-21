@@ -1,14 +1,12 @@
 package offlineconversation.service;
 
-import offlineconversation.domain.ConversationMemberCompositeKey;
+import com.github.f4b6a3.uuid.UuidCreator;
 import offlineconversation.domain.OfflineConversation;
 import offlineconversation.domain.OfflineConversationModerator;
 import offlineconversation.domain.OfflineConversationParticipant;
-import offlineconversation.domain.OfflineConversationReporter;
 import offlineconversation.dto.*;
 import offlineconversation.repository.OfflineConversationModeratorRepository;
 import offlineconversation.repository.OfflineConversationParticipantRepository;
-import offlineconversation.repository.OfflineConversationReporterRepository;
 import offlineconversation.repository.OfflineConversationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +26,6 @@ public class OfflineConversationService {
   private final OfflineConversationRepository offlineConversationRepository;
   private final OfflineConversationParticipantRepository offlineConversationParticipantRepository;
   private final OfflineConversationModeratorRepository offlineConversationModeratorRepository;
-  private final OfflineConversationReporterRepository offlineConversationReporterRepository;
 
   @Transactional
   public Map<String, UUID> create(
@@ -53,39 +50,31 @@ public class OfflineConversationService {
         .h3Res5(req.h3Res5())
         .h3Res7(req.h3Res7())
         .build();
-    var conversationId = offlineConversationRepository.save(convo).getId();
-    var key = ConversationMemberCompositeKey.builder()
-        .conversationId(conversationId)
+    var p = OfflineConversationParticipant.builder()
+        .memberId(memberId)
+        .offlineConversation(convo)
+        .build();
+    offlineConversationParticipantRepository.save(p);
+    var m = OfflineConversationModerator.builder()
+        .offlineConversation(convo)
         .memberId(memberId)
         .build();
-    offlineConversationParticipantRepository.save(
-        new OfflineConversationParticipant(key, null, null, convo));
-    offlineConversationModeratorRepository.save(
-        new OfflineConversationModerator(key, null, null, convo));
+    offlineConversationModeratorRepository.save(m);
     //TODO: CDC producing kafka message for chat group room create
     //TODO: CDC producing search
-    return Map.of("id", conversationId);
+    return Map.of("id", convo.getId());
   }
 
   @Transactional
   public void join(UUID conversationId, UUID memberId) {
-    var conversationProxy = offlineConversationRepository.getReferenceById(conversationId);
-    var key = ConversationMemberCompositeKey.builder()
-        .conversationId(conversationId)
-        .memberId(memberId)
-        .build();
-    offlineConversationParticipantRepository.save(
-        new OfflineConversationParticipant(key, null, null, conversationProxy));
+    UUID id = UuidCreator.getTimeOrderedEpoch();
+    offlineConversationParticipantRepository.insertByConversationIdAndMemberId(id, conversationId, memberId);
     //TODO: CDC producing kafka message for chat group room participate
   }
 
   @Transactional
   public void quit(UUID conversationId, UUID memberId) {
-    var key = ConversationMemberCompositeKey.builder()
-        .conversationId(conversationId)
-        .memberId(memberId)
-        .build();
-    offlineConversationParticipantRepository.softDeleteById(key);
+    offlineConversationParticipantRepository.softDeleteByConversationIdAndMemberId(conversationId, memberId);
     //TODO: CDC producing kafka message for chat group room quit
   }
 
@@ -111,25 +100,5 @@ public class OfflineConversationService {
         .isParticipant(convo.getIsParticipant())
         .numberOfParticipants(convo.getNumberOfParticipants())
         .build();
-  }
-
-  //TODO: refactor with jdbc
-  @Transactional
-  public void report(UUID conversationId, UUID memberId) {
-    var key = ConversationMemberCompositeKey.builder()
-        .conversationId(conversationId)
-        .memberId(memberId)
-        .build();
-    if (offlineConversationReporterRepository.existsById(key)) {
-      return;
-    }
-    long reporterCount = offlineConversationReporterRepository.countByKeyConversationId(conversationId);
-    if (reporterCount > 5) {
-      offlineConversationParticipantRepository.softDeleteById(key);
-      return;
-    }
-    var conversationProxy = offlineConversationRepository.getReferenceById(conversationId);
-    offlineConversationReporterRepository.save(
-        new OfflineConversationReporter(key, null, conversationProxy));
   }
 }
