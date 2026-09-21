@@ -64,7 +64,7 @@ func (s *Service) UpdateConversation(ctx context.Context, memberId uuid.UUID, re
 	}
 	if !ok {
 		err = errors.New("can't update conversation")
-		slog.Warn("update failed, ui error or api abuse attempt",
+		slog.Warn("update online conversation failed, ui error or api abuse attempt",
 			"conversationId", req.Id,
 			"memberId", memberId)
 		return err
@@ -79,7 +79,7 @@ func (s *Service) DeleteConversation(ctx context.Context, memberId, conversation
 	}
 	if !ok {
 		err = errors.New("can't delete conversation")
-		slog.Warn("delete failed, ui error or api abuse attempt",
+		slog.Warn("delete online conversation failed, ui error or api abuse attempt",
 			"conversationId", conversationId,
 			"memberId", memberId)
 		return err

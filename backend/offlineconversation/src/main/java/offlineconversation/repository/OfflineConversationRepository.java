@@ -1,6 +1,7 @@
 package offlineconversation.repository;
 
 import offlineconversation.domain.OfflineConversation;
+import offlineconversation.dto.UpdateOfflineConversationRequest;
 import offlineconversation.projection.OfflineConversationDetailProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -15,22 +16,21 @@ import java.util.UUID;
 public interface OfflineConversationRepository extends JpaRepository<OfflineConversation, UUID> {
 
   @Query(value = """
-      SELECT
-        c.novel as novel, c.poem as poem, c.short_story as shortStory,
-        c.play as play, c.film as film, c.written_by as writtenBy, c.rule as rule,
-        c.time as time, c.length_minutes as lengthMinutes, c.maps_link as mapsLink,
-        c.location as location,
-        EXISTS(SELECT 1 FROM offline_conversation_moderator m
-        WHERE m.conversation_id = c.id
-        AND m.member_id = :memberId
-        AND m.deleted_at IS NULL) as isModerator,
-        EXISTS(SELECT 1 FROM offline_conversation_participant p
-        WHERE p.conversation_id = c.id
-        AND p.member_id = :memberId
-        AND p.deleted_at IS NULL) as isParticipant,
-        (SELECT COUNT(*) FROM offline_conversation_participant p2
-        WHERE p2.conversation_id = c.id
-        AND p2.deleted_at IS NULL) as numberOfParticipants
+      SELECT c.novel as novel, c.poem as poem, c.short_story as shortStory,
+      c.play as play, c.film as film, c.written_by as writtenBy, c.rule as rule,
+      c.time as time, c.length_minutes as lengthMinutes, c.maps_link as mapsLink,
+      c.location as location,
+      EXISTS(SELECT 1 FROM offline_conversation_moderator m
+      WHERE m.conversation_id = c.id
+      AND m.member_id = :memberId
+      AND m.deleted_at IS NULL) as isModerator,
+      EXISTS(SELECT 1 FROM offline_conversation_participant p
+      WHERE p.conversation_id = c.id
+      AND p.member_id = :memberId
+      AND p.deleted_at IS NULL) as isParticipant,
+      (SELECT COUNT(*) FROM offline_conversation_participant p2
+      WHERE p2.conversation_id = c.id
+      AND p2.deleted_at IS NULL) as numberOfParticipants
       FROM offline_conversation c
       WHERE c.id = :conversationId
       """, nativeQuery = true)
@@ -38,4 +38,32 @@ public interface OfflineConversationRepository extends JpaRepository<OfflineConv
       @Param("conversationId") UUID conversationId,
       @Param("memberId") UUID memberId
   );
+
+  @Modifying
+  @Query(value = """
+      UPDATE offline_conversation
+      SET deleted_at = CURRENT_TIMESTAMP
+      WHERE id=:conversationId AND deleted_at IS NULL
+      AND EXISTS (SELECT 1 FROM offline_conversation_moderator
+      WHERE conversation_id=:conversationId AND member_id=:memberId AND deleted_at IS NULL)
+      """, nativeQuery = true)
+  int softDeleteIfModerator(
+      @Param("conversationId") UUID conversationId,
+      @Param("memberId") UUID memberId
+  );
+
+  @Modifying
+  @Query(value = """
+      UPDATE offline_conversation
+      SET novel=#{#req.id}, short_story=#{#req.shortStory}, poem=#{#req.poem},
+      play=#{#req.play}, film=#{#req.film},
+      written_by=#{#req.writtenBy}, rule=#{#req.rule},
+      time=#{#req.time}, length_minutes=#{#req.lengthMinutes}
+      WHERE id=#{#req.id}
+      AND EXISTS (SELECT 1 FROM offline_conversation_moderator
+      WHERE conversation_id=#{#req.id} AND member_id=:memberId AND deleted_at IS NULL)
+      """, nativeQuery = true)
+  int updateIfModerator(
+      @Param("req") UpdateOfflineConversationRequest req,
+      @Param("memberId") UUID memberId);
 }

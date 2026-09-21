@@ -2,6 +2,7 @@ package offlineconversation.controller;
 
 import offlineconversation.dto.CreateOfflineConversationRequest;
 import offlineconversation.dto.JoinOfflineConversationRequest;
+import offlineconversation.dto.UpdateOfflineConversationRequest;
 import offlineconversation.service.OfflineConversationService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -25,6 +26,22 @@ public class OfflineConversationController {
       @NotNull @RequestHeader("X-User-Id") UUID memberId) {
     Map<String, UUID> response = offlineConversationService.create(request, memberId);
     return ResponseEntity.ok(response);
+  }
+
+  @DeleteMapping("/delete")
+  public ResponseEntity<?> delete(
+      @NotNull @RequestParam UUID conversationId,
+      @NotNull @RequestHeader("X-User-Id") UUID memberId) {
+    offlineConversationService.delete(conversationId, memberId);
+    return ResponseEntity.ok("ok");
+  }
+
+  @PutMapping("/update")
+  public ResponseEntity<?> update(
+      @Valid @RequestBody UpdateOfflineConversationRequest req,
+      @NotNull @RequestHeader("X-User-Id") UUID memberId) {
+    offlineConversationService.update(req, memberId);
+    return ResponseEntity.ok(req.id().toString());
   }
 
   @PatchMapping("/join")
@@ -58,14 +75,5 @@ public class OfflineConversationController {
   ) {
     var response = offlineConversationService.detail(conversationId, memberId);
     return ResponseEntity.ok(response);
-  }
-
-  @PostMapping("/report")
-  public ResponseEntity<?> report(
-      @NotNull @RequestHeader("X-User-Id") UUID memberId,
-      @Valid @RequestBody JoinOfflineConversationRequest request
-  ) {
-    offlineConversationService.report(request.conversationId(), memberId);
-    return ResponseEntity.ok("ok");
   }
 }

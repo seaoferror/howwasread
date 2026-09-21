@@ -101,4 +101,38 @@ public class OfflineConversationService {
         .numberOfParticipants(convo.getNumberOfParticipants())
         .build();
   }
+
+  @Transactional
+  public void delete(UUID conversationId, UUID memberId) {
+    int n = offlineConversationRepository
+        .softDeleteIfModerator(conversationId, memberId);
+    if (n > 0) {
+      log.atWarn()
+          .setMessage("delete offline conversation failed, ui error or api abuse attempt")
+          .addKeyValue("conversationId", conversationId)
+          .addKeyValue("memberId", memberId)
+          .log();
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST,
+          "can't delete conversation"
+      );
+    }
+  }
+
+  @Transactional
+  public void update(UpdateOfflineConversationRequest req, UUID memberId) {
+    int n = offlineConversationRepository
+        .updateIfModerator(req, memberId);
+    if (n > 0) {
+      log.atWarn()
+          .setMessage("update offline conversation failed, ui error or api abuse attempt")
+          .addKeyValue("conversationId", req.id())
+          .addKeyValue("memberId", memberId)
+          .log();
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST,
+          "can't delete conversation"
+      );
+    }
+  }
 }
