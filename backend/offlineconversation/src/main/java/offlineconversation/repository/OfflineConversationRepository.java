@@ -22,15 +22,12 @@ public interface OfflineConversationRepository extends JpaRepository<OfflineConv
       c.location as location,
       EXISTS(SELECT 1 FROM offline_conversation_moderator m
       WHERE m.conversation_id = c.id
-      AND m.member_id = :memberId
-      AND m.deleted_at IS NULL) as isModerator,
+      AND m.member_id = :memberId) as isModerator,
       EXISTS(SELECT 1 FROM offline_conversation_participant p
       WHERE p.conversation_id = c.id
-      AND p.member_id = :memberId
-      AND p.deleted_at IS NULL) as isParticipant,
+      AND p.member_id = :memberId) as isParticipant,
       (SELECT COUNT(*) FROM offline_conversation_participant p2
-      WHERE p2.conversation_id = c.id
-      AND p2.deleted_at IS NULL) as numberOfParticipants
+      WHERE p2.conversation_id = c.id) as numberOfParticipants
       FROM offline_conversation c
       WHERE c.id = :conversationId
       """, nativeQuery = true)
@@ -41,13 +38,12 @@ public interface OfflineConversationRepository extends JpaRepository<OfflineConv
 
   @Modifying
   @Query(value = """
-      UPDATE offline_conversation
-      SET deleted_at = CURRENT_TIMESTAMP
-      WHERE id=:conversationId AND deleted_at IS NULL
+      DELETE FROM offline_conversation
+      WHERE id=:conversationId
       AND EXISTS (SELECT 1 FROM offline_conversation_moderator
-      WHERE conversation_id=:conversationId AND member_id=:memberId AND deleted_at IS NULL)
+      WHERE conversation_id=:conversationId AND member_id=:memberId)
       """, nativeQuery = true)
-  int softDeleteIfModerator(
+  int deleteIfModerator(
       @Param("conversationId") UUID conversationId,
       @Param("memberId") UUID memberId
   );
@@ -61,7 +57,7 @@ public interface OfflineConversationRepository extends JpaRepository<OfflineConv
       time=#{#req.time}, length_minutes=#{#req.lengthMinutes}
       WHERE id=#{#req.id}
       AND EXISTS (SELECT 1 FROM offline_conversation_moderator
-      WHERE conversation_id=#{#req.id} AND member_id=:memberId AND deleted_at IS NULL)
+      WHERE conversation_id=#{#req.id} AND member_id=:memberId)
       """, nativeQuery = true)
   int updateIfModerator(
       @Param("req") UpdateOfflineConversationRequest req,

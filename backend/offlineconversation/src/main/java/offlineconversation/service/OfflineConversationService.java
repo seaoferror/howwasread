@@ -1,6 +1,7 @@
 package offlineconversation.service;
 
 import com.github.f4b6a3.uuid.UuidCreator;
+import offlineconversation.domain.ConversationMemberCompositeKey;
 import offlineconversation.domain.OfflineConversation;
 import offlineconversation.domain.OfflineConversationModerator;
 import offlineconversation.domain.OfflineConversationParticipant;
@@ -50,16 +51,14 @@ public class OfflineConversationService {
         .h3Res5(req.h3Res5())
         .h3Res7(req.h3Res7())
         .build();
-    var p = OfflineConversationParticipant.builder()
-        .memberId(memberId)
-        .offlineConversation(convo)
-        .build();
-    offlineConversationParticipantRepository.save(p);
-    var m = OfflineConversationModerator.builder()
-        .offlineConversation(convo)
+    var conversationId = offlineConversationRepository.save(convo).getId();
+    var key = ConversationMemberCompositeKey.builder()
+        .conversationId(conversationId)
         .memberId(memberId)
         .build();
-    offlineConversationModeratorRepository.save(m);
+
+    offlineConversationParticipantRepository.save(new OfflineConversationParticipant(key, convo));
+    offlineConversationModeratorRepository.save(new OfflineConversationModerator(key, convo));
     //TODO: CDC producing kafka message for chat group room create
     //TODO: CDC producing search
     return Map.of("id", convo.getId());
@@ -67,14 +66,23 @@ public class OfflineConversationService {
 
   @Transactional
   public void join(UUID conversationId, UUID memberId) {
-    UUID id = UuidCreator.getTimeOrderedEpoch();
-    offlineConversationParticipantRepository.insertByConversationIdAndMemberId(id, conversationId, memberId);
+    var conversationProxy = offlineConversationRepository.getReferenceById(conversationId);
+    var key = ConversationMemberCompositeKey.builder()
+        .conversationId(conversationId)
+        .memberId(memberId)
+        .build();
+    offlineConversationParticipantRepository.save(
+        new OfflineConversationParticipant(key, conversationProxy));
     //TODO: CDC producing kafka message for chat group room participate
   }
 
   @Transactional
   public void quit(UUID conversationId, UUID memberId) {
-    offlineConversationParticipantRepository.softDeleteByConversationIdAndMemberId(conversationId, memberId);
+    var key = ConversationMemberCompositeKey.builder()
+        .conversationId(conversationId)
+        .memberId(memberId)
+        .build();
+    offlineConversationParticipantRepository.deleteById(key);
     //TODO: CDC producing kafka message for chat group room quit
   }
 
@@ -105,7 +113,7 @@ public class OfflineConversationService {
   @Transactional
   public void delete(UUID conversationId, UUID memberId) {
     int n = offlineConversationRepository
-        .softDeleteIfModerator(conversationId, memberId);
+        .deleteIfModerator(conversationId, memberId);
     if (n > 0) {
       log.atWarn()
           .setMessage("delete offline conversation failed, ui error or api abuse attempt")
