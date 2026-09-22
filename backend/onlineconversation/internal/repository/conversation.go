@@ -32,7 +32,7 @@ func (r *Repository) UpdateConversationIfModerator(ctx context.Context, session 
 		written_by=?, rule=?, capacity=?, time=?, length_minutes=?
 		WHERE id=?
 		AND EXISTS (SELECT 1 FROM online_conversation_moderator
-		WHERE conversation_id=? AND member_id=? AND deleted_at IS NULL)`,
+		WHERE conversation_id=? AND member_id=?)`,
 		req.Novel, req.ShortStory, req.Poem, req.Play, req.Film,
 		req.WrittenBy, req.Rule, req.Capacity, req.Time, req.LengthMinutes,
 		req.Id[:], req.Id[:], memberId[:])
@@ -45,11 +45,10 @@ func (r *Repository) UpdateConversationIfModerator(ctx context.Context, session 
 
 func (r *Repository) DeleteOnlineConversationIfModerator(ctx context.Context, session session, conversationId, memberId uuid.UUID) (bool, error) {
 	res, err := session.ExecContext(ctx, `
-		UPDATE online_conversation
-		SET deleted_at = CURRENT_TIMESTAMP
-		WHERE id=? AND deleted_at IS NULL
+		DELETE FROM online_conversation
+		WHERE id = ?
 		AND EXISTS (SELECT 1 FROM online_conversation_moderator
-		WHERE conversation_id=? AND member_id=? AND deleted_at IS NULL)`,
+		WHERE conversation_id=? AND member_id=?)`,
 		conversationId[:], conversationId[:], memberId[:])
 	if err != nil {
 		return false, err
@@ -58,17 +57,14 @@ func (r *Repository) DeleteOnlineConversationIfModerator(ctx context.Context, se
 	return n > 0, err
 }
 
-func (r *Repository) AddBanIdIfModerator(ctx context.Context, session session, id, conversationId, modId, banId uuid.UUID) (bool, error) {
+func (r *Repository) AddBanIdIfModerator(ctx context.Context, session session, conversationId, modId, banId uuid.UUID) (bool, error) {
 	res, err := session.ExecContext(ctx, `
-		INSERT INTO online_conversation_ban (id, conversation_id, member_id)
-		SELECT ?, ?, ?
+		INSERT INTO online_conversation_ban (conversation_id, member_id)
+		SELECT ?, ?
 		WHERE EXISTS (SELECT 1 FROM online_conversation_moderator
-		WHERE conversation_id=? AND member_id=? AND deleted_at IS NULL)
-		AND NOT EXISTS (SELECT 1 FROM online_conversation_ban
-		WHERE conversation_id=? AND member_id=? AND deleted_at IS NULL)`,
-		id[:], conversationId[:], banId[:],
-		conversationId[:], modId[:],
-		conversationId[:], banId[:])
+		WHERE conversation_id=? AND member_id=?)`,
+		conversationId[:], banId[:],
+		conversationId[:], modId[:])
 	if err != nil {
 		return false, err
 	}
@@ -76,11 +72,10 @@ func (r *Repository) AddBanIdIfModerator(ctx context.Context, session session, i
 	return n > 0, err
 }
 
-func (r *Repository) InsertModerator(ctx context.Context, session session, id, conversationId, memberId uuid.UUID) error {
+func (r *Repository) InsertModerator(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
-		`INSERT INTO online_conversation_moderator (id, conversation_id, member_id)
-		VALUES (?, ?, ?)`,
-		id[:], conversationId[:], memberId[:],
+		`INSERT IGNORE INTO online_conversation_moderator (conversation_id, member_id) VALUES (?, ?)`,
+		conversationId[:], memberId[:],
 	)
 	if err != nil {
 		slog.Error("fail to insert moderator",
@@ -90,28 +85,10 @@ func (r *Repository) InsertModerator(ctx context.Context, session session, id, c
 	return nil
 }
 
-func (r *Repository) InsertRegistrant(ctx context.Context, session session, id, conversationId, memberId uuid.UUID) error {
+func (r *Repository) InsertRegistrant(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
-		`INSERT INTO online_conversation_registrant (id, conversation_id, member_id)
-		VALUES (?, ?, ?)`,
-		id[:], conversationId[:], memberId[:],
-	)
-	if err != nil {
-		slog.Error("fail to insert registrant",
-			"conversationId", conversationId, "memberId", memberId, "err", err)
-		return err
-	}
-	return nil
-}
-
-func (r *Repository) InsertRegistrantIfNotExist(ctx context.Context, session session, id, conversationId, memberId uuid.UUID) error {
-	_, err := session.ExecContext(ctx,
-		`INSERT INTO online_conversation_registrant (id, conversation_id, member_id)
-		SELECT ?, ?, ?
-		WHERE NOT EXISTS (
-		SELECT 1 FROM online_conversation_registrant
-		WHERE conversation_id = ? AND member_id = ?)`,
-		id[:], conversationId[:], memberId[:],
+		`INSERT IGNORE INTO online_conversation_registrant (conversation_id, member_id)
+		VALUES (?, ?)`,
 		conversationId[:], memberId[:],
 	)
 	if err != nil {
@@ -122,14 +99,10 @@ func (r *Repository) InsertRegistrantIfNotExist(ctx context.Context, session ses
 	return nil
 }
 
-func (r *Repository) AddNotificationId(ctx context.Context, session session, id, conversationId, memberId uuid.UUID) error {
+func (r *Repository) AddNotificationId(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
-		`INSERT INTO online_conversation_notification (id, conversation_id, member_id)
-		SELECT ?, ?, ?
-		WHERE NOT EXISTS (
-		SELECT 1 FROM online_conversation_notification
-		WHERE conversation_id = ? AND member_id = ?)`,
-		id[:], conversationId[:], memberId[:],
+		`INSERT IGNORE INTO online_conversation_notification
+       (conversation_id, member_id) VALUES (?, ?)`,
 		conversationId[:], memberId[:])
 	if err != nil {
 		slog.Error("fail to add notification id to online conversation",
@@ -144,13 +117,13 @@ func (r *Repository) FindConversationDetail(ctx context.Context, session session
 		SELECT novel, short_story, poem, play, film, written_by, rule, capacity,
 		time, length_minutes,
 		EXISTS(SELECT 1 FROM online_conversation_moderator
-		WHERE conversation_id = c.id AND member_id = ? AND deleted_at IS NULL),
+		WHERE conversation_id = c.id AND member_id = ?),
 		EXISTS(SELECT 1 FROM online_conversation_registrant
-		WHERE conversation_id = c.id AND member_id = ? AND deleted_at IS NULL),
+		WHERE conversation_id = c.id AND member_id = ?),
 		EXISTS(SELECT 1 FROM online_conversation_ban
-		WHERE conversation_id = c.id AND member_id = ? AND deleted_at IS NULL),
+		WHERE conversation_id = c.id AND member_id = ?),
 		EXISTS(SELECT 1 FROM online_conversation_notification
-		WHERE conversation_id = c.id AND member_id = ? AND deleted_at IS NULL)
+		WHERE conversation_id = c.id AND member_id = ?)
 		FROM online_conversation c
 		WHERE c.id = ?`,
 		memberId[:], memberId[:], memberId[:], memberId[:], conversationId[:],
@@ -163,17 +136,6 @@ func (r *Repository) FindConversationDetail(ctx context.Context, session session
 		return projection.Detail{}, err
 	}
 	return d, nil
-}
-
-func (r *Repository) DeleteOnlineConversation(ctx context.Context, session session, id uuid.UUID) error {
-	_, err := session.ExecContext(ctx,
-		`UPDATE online_conversation SET
-		deleted_at = CURRENT_TIMESTAMP WHERE id = ?`, id[:])
-	if err != nil {
-		slog.Error("fail to soft delete online conversation", "err", err)
-		return err
-	}
-	return nil
 }
 
 func (r *Repository) TryIncrementRegistrants(ctx context.Context, session session, conversationId uuid.UUID) (bool, error) {
@@ -211,9 +173,8 @@ func (r *Repository) DecrementRegistrants(ctx context.Context, session session, 
 
 func (r *Repository) RemoveRegistrantId(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
-		`UPDATE online_conversation_registrant SET
-		deleted_at = CURRENT_TIMESTAMP WHERE conversation_id = ?
-		AND member_id = ? AND deleted_at IS NULL`,
+		`DELETE FROM online_conversation_registrant
+       WHERE conversation_id = ? AND member_id = ?`,
 		conversationId[:], memberId[:],
 	)
 	if err != nil {
@@ -226,11 +187,11 @@ func (r *Repository) RemoveRegistrantId(ctx context.Context, session session, co
 
 func (r *Repository) RemoveNotificationId(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
-		`UPDATE online_conversation_notification SET deleted_at = CURRENT_TIMESTAMP
-		WHERE conversation_id = ? AND member_id = ? AND deleted_at IS NULL`,
+		`DELETE FROM online_conversation_notification
+       WHERE conversation_id = ? AND member_id = ?`,
 		conversationId[:], memberId[:],
 	)
-	if err != nil {
+	if err != nil
 		slog.Error("fail to remove online conversation notification id",
 			"conversationId", conversationId, "memberId", memberId, "err", err)
 		return err
