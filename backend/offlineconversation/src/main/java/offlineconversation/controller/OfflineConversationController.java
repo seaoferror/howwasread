@@ -2,17 +2,14 @@ package offlineconversation.controller;
 
 import offlineconversation.dto.CreateOfflineConversationRequest;
 import offlineconversation.dto.JoinOfflineConversationRequest;
-import offlineconversation.dto.OfflineConversationMapResponse;
+import offlineconversation.dto.UpdateOfflineConversationRequest;
 import offlineconversation.service.OfflineConversationService;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -31,13 +28,29 @@ public class OfflineConversationController {
     return ResponseEntity.ok(response);
   }
 
+  @DeleteMapping("/delete")
+  public ResponseEntity<?> delete(
+      @NotNull @RequestParam UUID conversationId,
+      @NotNull @RequestHeader("X-User-Id") UUID memberId) {
+    offlineConversationService.delete(conversationId, memberId);
+    return ResponseEntity.ok("ok");
+  }
+
+  @PutMapping("/update")
+  public ResponseEntity<?> update(
+      @Valid @RequestBody UpdateOfflineConversationRequest req,
+      @NotNull @RequestHeader("X-User-Id") UUID memberId) {
+    offlineConversationService.update(req, memberId);
+    return ResponseEntity.ok(req.id().toString());
+  }
+
   @PatchMapping("/join")
   public ResponseEntity<?> join(
       @Valid @RequestBody JoinOfflineConversationRequest request,
       @NotNull @RequestHeader("X-User-Id") UUID memberId
   ) {
     offlineConversationService.join(
-        request,
+        request.conversationId(),
         memberId
     );
     return ResponseEntity.ok("ok");
@@ -49,29 +62,10 @@ public class OfflineConversationController {
       @NotNull @RequestHeader("X-User-Id") UUID memberId
   ) {
     offlineConversationService.quit(
-        request,
+        request.conversationId(),
         memberId
     );
     return ResponseEntity.ok("ok");
-  }
-
-  @GetMapping("/map")
-  public ResponseEntity<?> mapFarConvos(
-      @NotBlank @RequestParam String resolution,
-      @NotBlank @RequestParam String h3Index,
-      @RequestParam Instant time //TODO: add @NotNull after approved app
-  ) {
-    List<OfflineConversationMapResponse> response = null;
-    if(time == null) {
-      time = Instant.now();
-    }
-    if (resolution.equals("5")) {
-      response = offlineConversationService.mapRes5Convos(h3Index, time);
-    }
-    if (resolution.equals("7")) {
-      response = offlineConversationService.mapRes7Convos(h3Index, time);
-    }
-    return ResponseEntity.ok(response);
   }
 
   @GetMapping("/detail")
@@ -81,14 +75,5 @@ public class OfflineConversationController {
   ) {
     var response = offlineConversationService.detail(conversationId, memberId);
     return ResponseEntity.ok(response);
-  }
-
-  @PostMapping("/report")
-  public ResponseEntity<?> report(
-      @NotNull @RequestHeader("X-User-Id") UUID memberId,
-      @Valid @RequestBody JoinOfflineConversationRequest request
-  ) {
-    offlineConversationService.report(request.conversationId(), memberId);
-    return ResponseEntity.ok("ok");
   }
 }

@@ -2,14 +2,12 @@ package offlineconversation.domain;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class OfflineConversationParticipant {
@@ -19,7 +17,7 @@ public class OfflineConversationParticipant {
 
   @NotNull
   @ManyToOne(fetch = FetchType.LAZY)
-  @MapsId("conversationId") // maps to conversationId field in composite key
+  @MapsId("conversationId")
   @JoinColumn(
       name = "conversation_id",
       foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)

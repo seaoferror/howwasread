@@ -8,11 +8,10 @@ export interface CreateOnlineConversationRequest {
   rule?: string;
   capacity: number;
   time: string;
-  length: string;
+  lengthMinutes: number;
 }
 
 export interface OnlineConversationDetailResponse {
-  id: string;
   novel?: string;
   shortStory?: string;
   poem?: string;
@@ -22,10 +21,10 @@ export interface OnlineConversationDetailResponse {
   rule?: string;
   capacity: number;
   time: string;
-  length: string;
+  lengthMinutes: number;
   canEnter: boolean;
   isRegistrant: boolean;
-  moderatorIds: string[];
+  isModerator: boolean;
   isNotificationScheduled: boolean;
 }
 
@@ -103,7 +102,7 @@ export interface CreateOfflineConversationRequest {
   writtenBy: string;
   rule?: string;
   time: string;
-  length: number;
+  lengthMinutes: number;
   mapsLink: string;
   location: string;
   city?: string;
@@ -122,13 +121,12 @@ export interface OfflineConversationDetailResponse {
   writtenBy: string;
   rule?: string | null;
   time: string;
-  length: number;
+  lengthMinutes: number;
   mapsLink: string;
   location: string;
   isModerator: boolean;
   isParticipant: boolean;
   numberOfParticipants: number;
-  moderatorIds: string[];
 }
 
 export interface GetTurnResponse {

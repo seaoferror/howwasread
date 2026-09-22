@@ -56,8 +56,6 @@ export default function OnlineConversationDetail({
             });
             const reportPromises = [
               reportOnlineConversation({ id: id }),
-              ...(data?.moderatorIds.map((mid) => reportUser({ id: mid })) ||
-                []),
             ];
             try {
               await Promise.all(reportPromises);
@@ -103,7 +101,7 @@ export default function OnlineConversationDetail({
             })
               .format(new Date(data.time))
               .replace(/\sat\s/, " ")}
-            {`\nFor ${data.length}`.replace("0s", "")}
+            {`\nFor ${data.lengthMinutes}m`}
           </Text>
           {data.novel && <Text style={styles.detail}>Novel: {data.novel}</Text>}
           {data.shortStory && (

@@ -1,20 +1,65 @@
 package offlineconversation.repository;
 
 import offlineconversation.domain.OfflineConversation;
-import offlineconversation.projection.OfflineConversationMapProjection;
+import offlineconversation.dto.UpdateOfflineConversationRequest;
+import offlineconversation.projection.OfflineConversationDetailProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.Instant;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface OfflineConversationRepository extends JpaRepository<OfflineConversation, UUID> {
-  List<OfflineConversationMapProjection> findTop2ByH3Res5AndTimeAfter(String h3Res5, Instant now);
 
-  List<OfflineConversationMapProjection> findByH3Res7AndTimeAfter(String h3Res7, Instant now);
+  @Query(value = """
+      SELECT c.novel as novel, c.poem as poem, c.short_story as shortStory,
+      c.play as play, c.film as film, c.written_by as writtenBy, c.rule as rule,
+      c.time as time, c.length_minutes as lengthMinutes, c.maps_link as mapsLink,
+      c.location as location,
+      EXISTS(SELECT 1 FROM offline_conversation_moderator m
+      WHERE m.conversation_id = c.id
+      AND m.member_id = :memberId) as isModerator,
+      EXISTS(SELECT 1 FROM offline_conversation_participant p
+      WHERE p.conversation_id = c.id
+      AND p.member_id = :memberId) as isParticipant,
+      (SELECT COUNT(*) FROM offline_conversation_participant p2
+      WHERE p2.conversation_id = c.id) as numberOfParticipants
+      FROM offline_conversation c
+      WHERE c.id = :conversationId
+      """, nativeQuery = true)
+  Optional<OfflineConversationDetailProjection> findDetail(
+      @Param("conversationId") UUID conversationId,
+      @Param("memberId") UUID memberId
+  );
 
-  <T> Optional<T> findById(UUID id, Class<T> type);
+  @Modifying
+  @Query(value = """
+      DELETE FROM offline_conversation
+      WHERE id=:conversationId
+      AND EXISTS (SELECT 1 FROM offline_conversation_moderator
+      WHERE conversation_id=:conversationId AND member_id=:memberId)
+      """, nativeQuery = true)
+  int deleteIfModerator(
+      @Param("conversationId") UUID conversationId,
+      @Param("memberId") UUID memberId
+  );
+
+  @Modifying
+  @Query(value = """
+      UPDATE offline_conversation
+      SET novel=#{#req.id}, short_story=#{#req.shortStory}, poem=#{#req.poem},
+      play=#{#req.play}, film=#{#req.film},
+      written_by=#{#req.writtenBy}, rule=#{#req.rule},
+      time=#{#req.time}, length_minutes=#{#req.lengthMinutes}
+      WHERE id=#{#req.id}
+      AND EXISTS (SELECT 1 FROM offline_conversation_moderator
+      WHERE conversation_id=#{#req.id} AND member_id=:memberId)
+      """, nativeQuery = true)
+  int updateIfModerator(
+      @Param("req") UpdateOfflineConversationRequest req,
+      @Param("memberId") UUID memberId);
 }

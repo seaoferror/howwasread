@@ -2,11 +2,31 @@ package service
 
 import (
 	"backend/common/payload"
+	"backend/onlineconversation/internal/dto"
 	"context"
+	"crypto/hmac"
+	"crypto/sha1"
+	"encoding/base64"
+	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/google/uuid"
 )
+
+func (s *Service) GenerateTurn() *dto.GetTurnResponse {
+	res := &dto.GetTurnResponse{
+		Uris: []string{
+			fmt.Sprintf("turn:%s:3478?transport=udp", s.turnRealm),
+			fmt.Sprintf("turn:%s:5349?transport=tcp", s.turnRealm),
+		},
+		Username: fmt.Sprintf("%d", time.Now().Add(2*time.Hour).Unix()),
+	}
+	mac := hmac.New(sha1.New, []byte(s.turnSecret))
+	mac.Write([]byte(res.Username))
+	res.Credential = base64.StdEncoding.EncodeToString(mac.Sum(nil))
+	return res
+}
 
 func (s *Service) GetParticipantsWithoutMe(ctx context.Context, conversationId string, memberId uuid.UUID) ([]uuid.UUID, error) {
 	pidRaws, err := s.repository.FindParticipantIds(ctx, conversationId)

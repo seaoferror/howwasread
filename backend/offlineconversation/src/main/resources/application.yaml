@@ -13,6 +13,8 @@ spring:
     url: jdbc:mysql://${TIDB_URL}
     username: ${TIDB_USERNAME}
     password: ${TIDB_PASSWORD}
+    hikari:
+      maximum-pool-size: 10
   jpa:
     database: mysql
     database-platform: org.hibernate.dialect.MySQLDialect
@@ -29,6 +31,3 @@ logging:
   level:
     org.springframework.web.socket: INFO
     org.springframework.messaging: INFO
-valkey:
-  host: localhost
-  port: 6379

@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.UuidGenerator;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -14,12 +13,6 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(
-    indexes = {
-        @Index(name = "idx_h3_res5_time", columnList = "h3_res5, time"),
-        @Index(name = "idx_h3_res7_time", columnList = "h3_res7, time")
-    }
-)
 public class OfflineConversation {
   @Id
   @UuidGenerator(style = UuidGenerator.Style.VERSION_7)
@@ -72,4 +65,7 @@ public class OfflineConversation {
 
   @Column(length = 15, nullable = false)
   private String h3Res7;
+
+  @Column
+  private Instant deletedAt;
 }

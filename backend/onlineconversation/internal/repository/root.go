@@ -67,7 +67,13 @@ func NewRepository() *Repository {
 }
 
 func (r *Repository) BeginTx(ctx context.Context) (*sql.Tx, error) {
-	return r.db.BeginTx(ctx, nil)
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		slog.Error("fail to start transaction",
+			"err", err)
+		return nil, err
+	}
+	return tx, nil
 }
 
 func (r *Repository) Tx() session {
