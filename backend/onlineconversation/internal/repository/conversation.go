@@ -189,11 +189,12 @@ func (r *Repository) RemoveNotificationId(ctx context.Context, session session, 
 	_, err := session.ExecContext(ctx,
 		`DELETE FROM online_conversation_notification
        WHERE conversation_id = ? AND member_id = ?`,
-		conversationId[:], memberId[:],
-	)
-	if err != nil
+		conversationId[:], memberId[:])
+	if err != nil {
 		slog.Error("fail to remove online conversation notification id",
-			"conversationId", conversationId, "memberId", memberId, "err", err)
+			"err", err,
+			"conversationId", conversationId,
+			"memberId", memberId)
 		return err
 	}
 	return nil
