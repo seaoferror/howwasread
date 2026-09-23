@@ -48,18 +48,18 @@ public interface OfflineConversationRepository extends JpaRepository<OfflineConv
       @Param("memberId") UUID memberId
   );
 
-  @Modifying
+  @Modifying(clearAutomatically = true)
   @Query(value = """
       UPDATE offline_conversation
-      SET novel=#{#req.id}, short_story=#{#req.shortStory}, poem=#{#req.poem},
-      play=#{#req.play}, film=#{#req.film},
-      written_by=#{#req.writtenBy}, rule=#{#req.rule},
-      time=#{#req.time}, length_minutes=#{#req.lengthMinutes}, updated_at=CURRENT_TIMESTAMP
-      WHERE id=#{#req.id}
+      SET novel = :#{#req.novel()}, short_story = :#{#req.shortStory()}, poem = :#{#req.poem()},
+          play = :#{#req.play()}, film = :#{#req.film()},
+          written_by = :#{#req.writtenBy()}, rule = :#{#req.rule()},
+          time = :#{#req.time()}, length_minutes = :#{#req.lengthMinutes()},
+          updated_at = UTC_TIMESTAMP()
+      WHERE id = :#{#req.id()}
       AND EXISTS (SELECT 1 FROM offline_conversation_moderator
-      WHERE conversation_id=#{#req.id} AND member_id=:memberId)
+      WHERE conversation_id = :#{#req.id()} AND member_id = :memberId)
       """, nativeQuery = true)
-  int updateIfModerator(
-      @Param("req") UpdateOfflineConversationRequest req,
-      @Param("memberId") UUID memberId);
+  int updateIfModerator(@Param("req") UpdateOfflineConversationRequest req,
+                        @Param("memberId") UUID memberId);
 }

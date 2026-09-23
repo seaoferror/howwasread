@@ -19,7 +19,7 @@ data:
         film           TEXT,
         written_by     TEXT        NOT NULL,
         rule           TEXT,
-        time           DATETIME(6)  NOT NULL,
+        time           DATETIME    NOT NULL,
         length_minutes INT         NOT NULL,
         maps_link      TEXT        NOT NULL,
         location       TEXT,
@@ -28,7 +28,7 @@ data:
         city           TEXT,
         h3_res5        VARCHAR(15) NOT NULL,
         h3_res7        VARCHAR(15) NOT NULL,
-        updated_at     DATETIME(6)  NULL,
+        updated_at     DATETIME NULL,
         PRIMARY KEY (id)
     );
 
@@ -58,13 +58,13 @@ data:
         poem                TEXT,
         play                TEXT,
         film                TEXT,
-        written_by          TEXT NOT NULL,
+        written_by          TEXT     NOT NULL,
         rule                TEXT,
-        capacity            INT  NOT NULL,
-        time                DATETIME(6)  NOT NULL,
-        length_minutes      INT  NOT NULL,
-        current_registrants INT  NOT NULL DEFAULT 0,
-        updated_at          DATETIME(6)  NULL,
+        capacity            INT      NOT NULL,
+        time                DATETIME NOT NULL,
+        length_minutes      INT      NOT NULL,
+        current_registrants INT      NOT NULL DEFAULT 0,
+        updated_at          DATETIME NULL,
         PRIMARY KEY (id)
     );
 
@@ -116,8 +116,7 @@ data:
           "column_vindexes": [
             {
               "column": "conversation_id",
-              "name": "binary_md5"
-            }
+              "name": "binary_md5"}
           ]
         },
         "online_conversation_registrant": {
