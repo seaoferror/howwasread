@@ -10,11 +10,13 @@ spring:
     name: offlineconversation
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${TIDB_URL}
-    username: ${TIDB_USERNAME}
-    password: ${TIDB_PASSWORD}
+    url: jdbc:mysql://${MYSQL_URL}/conversation
+    username: ${MYSQL_USERNAME}
+    password: ${MYSQL_PASSWORD}
     hikari:
-      maximum-pool-size: 10
+      maximum-pool-size: 25
+      minimum-idle: 25
+      max-lifetime: 300000
   jpa:
     database: mysql
     database-platform: org.hibernate.dialect.MySQLDialect
