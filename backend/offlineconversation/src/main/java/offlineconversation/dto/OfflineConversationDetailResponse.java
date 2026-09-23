@@ -19,6 +19,7 @@ public record OfflineConversationDetailResponse(
     int lengthMinutes,
     String mapsLink,
     String location,
+    Instant updatedAt,
     boolean isModerator,
     boolean isParticipant,
     int numberOfParticipants,

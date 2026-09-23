@@ -19,7 +19,7 @@ public interface OfflineConversationRepository extends JpaRepository<OfflineConv
       SELECT c.novel as novel, c.poem as poem, c.short_story as shortStory,
       c.play as play, c.film as film, c.written_by as writtenBy, c.rule as rule,
       c.time as time, c.length_minutes as lengthMinutes, c.maps_link as mapsLink,
-      c.location as location,
+      c.location as location, c.updated_at as updatedAt,
       EXISTS(SELECT 1 FROM offline_conversation_moderator m
       WHERE m.conversation_id = c.id
       AND m.member_id = :memberId) as isModerator,
@@ -54,7 +54,7 @@ public interface OfflineConversationRepository extends JpaRepository<OfflineConv
       SET novel=#{#req.id}, short_story=#{#req.shortStory}, poem=#{#req.poem},
       play=#{#req.play}, film=#{#req.film},
       written_by=#{#req.writtenBy}, rule=#{#req.rule},
-      time=#{#req.time}, length_minutes=#{#req.lengthMinutes}
+      time=#{#req.time}, length_minutes=#{#req.lengthMinutes}, updated_at=CURRENT_TIMESTAMP
       WHERE id=#{#req.id}
       AND EXISTS (SELECT 1 FROM offline_conversation_moderator
       WHERE conversation_id=#{#req.id} AND member_id=:memberId)
