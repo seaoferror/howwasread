@@ -29,7 +29,7 @@ func (r *Repository) UpdateConversationIfModerator(ctx context.Context, session 
 	res, err := session.ExecContext(ctx, `
 		UPDATE online_conversation
 		SET novel=?, short_story=?, poem=?, play=?, film=?,
-		written_by=?, rule=?, capacity=?, time=?, length_minutes=?, updated_at=CURRENT_TIMESTAMP
+		written_by=?, rule=?, capacity=?, time=?, length_minutes=?, updated_at=UTC_TIMESTAMP()
 		WHERE id=?
 		AND EXISTS (SELECT 1 FROM online_conversation_moderator
 		WHERE conversation_id=? AND member_id=?)`,
