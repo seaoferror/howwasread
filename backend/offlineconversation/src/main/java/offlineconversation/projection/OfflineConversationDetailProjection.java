@@ -14,6 +14,7 @@ public interface OfflineConversationDetailProjection {
   Integer getLengthMinutes();
   String getMapsLink();
   String getLocation();
+  Instant getUpdatedAt();
   Boolean getIsModerator();
   Boolean getIsParticipant();
   Integer getNumberOfParticipants();

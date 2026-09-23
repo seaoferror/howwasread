@@ -101,6 +101,7 @@ public class OfflineConversationService {
         .writtenBy(convo.getWrittenBy())
         .rule(convo.getRule())
         .time(convo.getTime())
+        .updatedAt(convo.getUpdatedAt())
         .lengthMinutes(convo.getLengthMinutes())
         .mapsLink(convo.getMapsLink())
         .location(convo.getLocation())

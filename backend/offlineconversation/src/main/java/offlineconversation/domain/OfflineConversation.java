@@ -67,5 +67,5 @@ public class OfflineConversation {
   private String h3Res7;
 
   @Column
-  private Instant deletedAt;
+  private Instant updatedAt;
 }
