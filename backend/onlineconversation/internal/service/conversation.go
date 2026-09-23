@@ -119,6 +119,7 @@ func (s *Service) GetConversationDetail(ctx context.Context, conversationId, mem
 		Capacity:                detail.Capacity,
 		Time:                    detail.Time,
 		LengthMinutes:           detail.LengthMinutes,
+		UpdatedAt:               detail.UpdatedAt,
 		CanEnter:                canEnter,
 		IsModerator:             detail.IsModerator,
 		IsRegistrant:            detail.IsRegistrant,

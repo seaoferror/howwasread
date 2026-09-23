@@ -29,7 +29,7 @@ func (r *Repository) UpdateConversationIfModerator(ctx context.Context, session 
 	res, err := session.ExecContext(ctx, `
 		UPDATE online_conversation
 		SET novel=?, short_story=?, poem=?, play=?, film=?,
-		written_by=?, rule=?, capacity=?, time=?, length_minutes=?
+		written_by=?, rule=?, capacity=?, time=?, length_minutes=?, updated_at=CURRENT_TIMESTAMP
 		WHERE id=?
 		AND EXISTS (SELECT 1 FROM online_conversation_moderator
 		WHERE conversation_id=? AND member_id=?)`,
@@ -115,7 +115,7 @@ func (r *Repository) AddNotificationId(ctx context.Context, session session, con
 func (r *Repository) FindConversationDetail(ctx context.Context, session session, conversationId, memberId uuid.UUID) (d projection.Detail, err error) {
 	row := session.QueryRowContext(ctx, `
 		SELECT novel, short_story, poem, play, film, written_by, rule, capacity,
-		time, length_minutes,
+		time, length_minutes, updated_at,
 		EXISTS(SELECT 1 FROM online_conversation_moderator
 		WHERE conversation_id = c.id AND member_id = ?),
 		EXISTS(SELECT 1 FROM online_conversation_registrant
@@ -129,7 +129,8 @@ func (r *Repository) FindConversationDetail(ctx context.Context, session session
 		memberId[:], memberId[:], memberId[:], memberId[:], conversationId[:],
 	)
 	err = row.Scan(
-		&d.Novel, &d.ShortStory, &d.Poem, &d.Play, &d.Film, &d.WrittenBy, &d.Rule, &d.Capacity, &d.Time, &d.LengthMinutes,
+		&d.Novel, &d.ShortStory, &d.Poem, &d.Play, &d.Film, &d.WrittenBy, &d.Rule, &d.Capacity,
+		&d.Time, &d.LengthMinutes, &d.UpdatedAt,
 		&d.IsModerator, &d.IsRegistrant, &d.IsBanned, &d.IsNotificationScheduled)
 	if err != nil {
 		slog.Error("fail to find online conversation detail", "err", err)
