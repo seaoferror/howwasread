@@ -20,7 +20,7 @@ apps:
     kafka: false
     k8ssandra: true
     mongodb: false
-    tidb: false
+    mysql: false
     smtp: true
     twilio: true
     firebase: false
@@ -39,7 +39,7 @@ apps:
     kafka: true
     k8ssandra: true
     mongodb: false
-    tidb: false
+    mysql: false
     smtp: false
     twilio: false
     firebase: false
@@ -57,7 +57,7 @@ apps:
     kafka: true
     k8ssandra: true
     mongodb: false
-    tidb: false
+    mysql: false
     firebase: false
     valkey: true
 #    cpuRequests: "0.03"
@@ -73,7 +73,7 @@ apps:
     kafka: true
     k8ssandra: true
     mongodb: false
-    tidb: false
+    mysql: false
     smtp: false
     twilio: false
     firebase: true
@@ -91,7 +91,7 @@ apps:
     kafka: true
     k8ssandra: true
     mongodb: false
-    tidb: false
+    mysql: false
     smtp: false
     twilio: false
     firebase: false
@@ -109,7 +109,7 @@ apps:
     kafka: true
     k8ssandra: true
     mongodb: false
-    tidb: false
+    mysql: false
     smtp: false
     twilio: false
     firebase: false
@@ -127,7 +127,7 @@ apps:
     kafka: true
     k8ssandra: true
     mongodb: false
-    tidb: false
+    mysql: false
     smtp: false
     twilio: false
     firebase: false
@@ -145,7 +145,7 @@ apps:
     kafka: true
     k8ssandra: true
     mongodb: false
-    tidb: false
+    mysql: false
     smtp: false
     twilio: false
     firebase: false
@@ -162,8 +162,8 @@ apps:
     aws: false
     kafka: true
     k8ssandra: false
-    mongodb: true
-    tidb: false
+    mongodb: false
+    mysql: true
     smtp: false
     twilio: false
     firebase: false
@@ -182,7 +182,7 @@ apps:
     kafka: true
     k8ssandra: false
     mongodb: false
-    tidb: false
+    mysql: false
     smtp: false
     twilio: false
     firebase: false
@@ -200,7 +200,7 @@ apps:
     kafka: true
     k8ssandra: false
     mongodb: false
-    tidb: true
+    mysql: true
     smtp: false
     twilio: false
     firebase: false
@@ -220,7 +220,7 @@ apps:
     kafka: true
     k8ssandra: false
     mongodb: false
-    tidb: false
+    mysql: false
     smtp: false
     twilio: false
     firebase: false
@@ -241,7 +241,7 @@ apps:
     kafka: false
     k8ssandra: false
     mongodb: false
-    tidb: false
+    mysql: false
     smtp: false
     twilio: false
     firebase: false

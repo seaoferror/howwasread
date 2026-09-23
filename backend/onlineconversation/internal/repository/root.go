@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/go-sql-driver/mysql"
 	"github.com/valkey-io/valkey-go"
 
 	"backend/common"
@@ -27,7 +27,16 @@ type Repository struct {
 }
 
 func NewRepository() *Repository {
-	db, err := sql.Open("mysql", os.Getenv("MYSQL_DSN"))
+	mysqlConfig := mysql.Config{
+		User:                 os.Getenv("MYSQL_USERNAME"),
+		Passwd:               os.Getenv("MYSQL_PASSWORD"),
+		Net:                  "tcp",
+		Addr:                 os.Getenv("MYSQL_URL"),
+		DBName:               "conversation",
+		ParseTime:            true,
+		AllowNativePasswords: true,
+	}
+	db, err := sql.Open("mysql", mysqlConfig.FormatDSN())
 	if err != nil {
 		log.Panicf("fail to open mysql connection: %v", err)
 	}
