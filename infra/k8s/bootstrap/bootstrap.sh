@@ -42,7 +42,6 @@ kubectl get secret k8ssandra-jks -n k8ssandra -o json | \
   ' | kubectl apply -f -
 
 # do this after provisioning cluster
-
 kubectl annotate secret k8ssandra-cluster-superuser -n k8ssandra \
 reflector.v1.k8s.emberstack.com/reflection-allowed="true" \
 reflector.v1.k8s.emberstack.com/reflection-auto-enabled="true" \
