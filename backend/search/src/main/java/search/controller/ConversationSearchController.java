@@ -1,5 +1,6 @@
 package search.controller;
 
+import search.dto.OfflineConversationMapResponse;
 import search.dto.OfflineConversationSearchResponse;
 import search.dto.OnlineConversationSearchResponse;
 import search.service.ConversationSearchService;
@@ -42,6 +43,25 @@ public class ConversationSearchController {
       @RequestParam int page
   ) {
     List<OnlineConversationSearchResponse> response = conversationSearchService.searchOnlines(input, time, page);
+    return ResponseEntity.ok(response);
+  }
+
+  @GetMapping("/online/list")
+  public ResponseEntity<?> listOnlineConversations(
+      @NotNull @RequestParam Instant time,
+      @RequestParam int page
+  ) {
+    List<OnlineConversationSearchResponse> response = conversationSearchService.listOnlines(time, Math.max(page, 1));
+    return ResponseEntity.ok(response);
+  }
+
+  @GetMapping("/offline/map")
+  public ResponseEntity<?> mapOfflineConversations(
+      @NotBlank @RequestParam String resolution,
+      @NotBlank @RequestParam String h3Index,
+      @NotNull @RequestParam Instant time
+  ) {
+    List<OfflineConversationMapResponse> response = conversationSearchService.mapOfflines(resolution, h3Index, time);
     return ResponseEntity.ok(response);
   }
 }

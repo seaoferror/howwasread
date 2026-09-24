@@ -2,12 +2,14 @@ package search.service;
 
 import search.domain.OfflineConversationDocument;
 import search.domain.OnlineConversationDocument;
+import search.dto.OfflineConversationMapResponse;
 import search.dto.OfflineConversationSearchResponse;
 import search.dto.OnlineConversationSearchResponse;
 import search.repository.OfflineConversationDocumentRepository;
 import search.repository.OnlineConversationDocumentRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
@@ -20,6 +22,7 @@ import tools.jackson.databind.PropertyNamingStrategies;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -94,6 +97,49 @@ public class ConversationSearchService {
     var searchHits = onlineConversationDocumentRepository
         .findByInput(input, time.toEpochMilli(), PageRequest.of(page - 1, 5));
     return buildOnlineConversationSearchResponses(searchHits);
+  }
+
+  public List<OnlineConversationSearchResponse> listOnlines(Instant time, int page) {
+    var conversations = onlineConversationDocumentRepository.findByTimeAfter(
+        time.minus(2, ChronoUnit.HOURS).toEpochMilli(),
+        PageRequest.of(page - 1, 10, Sort.by(Sort.Direction.ASC, "time")));
+    List<OnlineConversationSearchResponse> response = new ArrayList<>();
+    for (var conversation : conversations) {
+      response.add(OnlineConversationSearchResponse.builder()
+          .id(conversation.getId())
+          .novel(conversation.getNovel())
+          .play(conversation.getPlay())
+          .poem(conversation.getPoem())
+          .shortStory(conversation.getShortStory())
+          .film(conversation.getFilm())
+          .writtenBy(conversation.getWrittenBy())
+          .time(conversation.getTime())
+          .build());
+    }
+    return response;
+  }
+
+  public List<OfflineConversationMapResponse> mapOfflines(String resolution, String h3Index, Instant time) {
+    List<OfflineConversationDocument> conversations;
+    if (resolution.equals("5")) {
+      conversations = offlineConversationDocumentRepository.findByH3Res5AndTimeAfter(
+          h3Index, time.toEpochMilli(), PageRequest.of(0, 2, Sort.by(Sort.Direction.ASC, "time")));
+    } else if (resolution.equals("7")) {
+      conversations = offlineConversationDocumentRepository.findByH3Res7AndTimeAfter(
+          h3Index, time.toEpochMilli(), PageRequest.of(0, 50, Sort.by(Sort.Direction.ASC, "time")));
+    } else {
+      return List.of();
+    }
+    List<OfflineConversationMapResponse> response = new ArrayList<>();
+    for (var conversation : conversations) {
+      response.add(OfflineConversationMapResponse.builder()
+          .id(conversation.getId())
+          .writtenBy(conversation.getWrittenBy())
+          .lat(conversation.getLatitude())
+          .lng(conversation.getLongitude())
+          .build());
+    }
+    return response;
   }
 
   private List<OnlineConversationSearchResponse> buildOnlineConversationSearchResponses(List<SearchHit<OnlineConversationDocument>> searchHits) {

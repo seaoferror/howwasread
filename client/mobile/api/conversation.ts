@@ -14,7 +14,7 @@ import {
 export async function getOnlineConversations(
   page = 1,
 ): Promise<OnlineConversationFeedResponse[]> {
-  const { data } = await axiosInstance.get(`/onlineconversation/list`, {
+  const { data } = await axiosInstance.get(`/search/conversation/online/list`, {
     params: {
       page,
       time: new Date().toISOString(),
@@ -69,7 +69,7 @@ export async function mapOfflineConversations({
   resolution: number;
   h3Index: string;
 }): Promise<OfflineConversationMapResponse[]> {
-  const { data } = await axiosInstance.get(`/offlineconversation/map`, {
+  const { data } = await axiosInstance.get(`/search/conversation/offline/map`, {
     params: {
       resolution,
       h3Index,
