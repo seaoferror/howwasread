@@ -32,7 +32,6 @@ dependencies {
     // so it does not clash with kafka-clients(4.x) of the kafka connector
     implementation "org.apache.flink:flink-sql-connector-vitess-cdc:${flinkCdcVersion}"
     implementation "org.apache.flink:flink-sql-connector-kafka:${kafkaConnectorVersion}"
-    implementation "org.apache.flink:flink-statebackend-rocksdb:${flinkVersion}"
 }
 
 shadowJar {
