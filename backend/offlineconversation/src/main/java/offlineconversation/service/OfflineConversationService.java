@@ -1,6 +1,5 @@
 package offlineconversation.service;
 
-import com.github.f4b6a3.uuid.UuidCreator;
 import offlineconversation.domain.ConversationMemberCompositeKey;
 import offlineconversation.domain.OfflineConversation;
 import offlineconversation.domain.OfflineConversationModerator;
@@ -115,7 +114,7 @@ public class OfflineConversationService {
   public void delete(UUID conversationId, UUID memberId) {
     int n = offlineConversationRepository
         .deleteIfModerator(conversationId, memberId);
-    if (n > 0) {
+    if (n == 0) {
       log.atWarn()
           .setMessage("delete offline conversation failed, ui error or api abuse attempt")
           .addKeyValue("conversationId", conversationId)
@@ -132,7 +131,7 @@ public class OfflineConversationService {
   public void update(UpdateOfflineConversationRequest req, UUID memberId) {
     int n = offlineConversationRepository
         .updateIfModerator(req, memberId);
-    if (n > 0) {
+    if (n == 0) {
       log.atWarn()
           .setMessage("update offline conversation failed, ui error or api abuse attempt")
           .addKeyValue("conversationId", req.id())
@@ -140,7 +139,7 @@ public class OfflineConversationService {
           .log();
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST,
-          "can't delete conversation"
+          "can't update conversation"
       );
     }
   }
