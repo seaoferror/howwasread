@@ -102,6 +102,58 @@ spec:
     parallelism: 2
     upgradeMode: stateless
 ---
+apiVersion: flink.apache.org/v1beta1
+kind: FlinkDeployment
+metadata:
+  name: conversation-cdc-job
+  namespace: flink
+spec:
+  image: ghcr.io/seaoferror/flink/conversationcdcjob:latest
+  podTemplate:
+    spec:
+      imagePullSecrets:
+        - name: ghcr
+      containers:
+        - name: flink-main-container
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: kafka-user
+              mountPath: "/cert/kafka/user"
+              readOnly: true
+            - name: kafka-ca
+              mountPath: "/cert/kafka/cluster"
+              readOnly: true
+          envFrom:
+            - configMapRef:
+                name: config-map
+      volumes:
+        - name: kafka-user
+          secret:
+            secretName: kafka-user
+        - name: kafka-ca
+          secret:
+            secretName: kafka-cluster-cluster-ca-cert
+  flinkVersion: v2_2
+  flinkConfiguration:
+    taskmanager.numberOfTaskSlots: "2"
+    state.backend.type: hashmap
+    execution.checkpointing.interval: "10s"
+    taskmanager.memory.managed.fraction: "0.0"
+  serviceAccount: flink
+  jobManager:
+    resource:
+      memory: "256m"
+      cpu: 0.25
+  taskManager:
+    resource:
+      memory: "256m"
+      cpu: 0.25
+  job:
+    jarURI: local:///opt/flink/usrlib/conversationcdcjob.jar
+    entryClass: conversationcdcjob.ConversationCdcJob
+    parallelism: 1
+    upgradeMode: stateless
+---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -145,3 +197,5 @@ data:
   KAFKA_USER_CERT_PATH: "/cert/kafka/user/user.crt"
   KAFKA_USER_KEY_PATH: "/cert/kafka/user/user.key"
   KAFKA_CA_CERT_PATH: "/cert/kafka/cluster/ca.crt"
+  VITESS_VTGATE_HOST: "vitess-cluster-vtgate-6e607aba.vitess.svc.cluster.local"
+  VITESS_VTGATE_GRPC_PORT: "15999"
