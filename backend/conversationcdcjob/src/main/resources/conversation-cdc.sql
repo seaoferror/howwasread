@@ -1,0 +1,239 @@
+CREATE TEMPORARY SYSTEM FUNCTION BIN_TO_UUID AS 'conversationcdcjob.function.BinToUuid';
+
+CREATE TEMPORARY TABLE vitess_source_base WITH (
+    -- vitess-cdc plus the op_ts(binlog event time) metadata column, see conversationcdcjob.source
+    'connector' = 'vitess-cdc-op-ts',
+    'hostname' = '${VITESS_VTGATE_HOST}',
+    'port' = '${VITESS_VTGATE_GRPC_PORT}',
+    'keyspace' = 'conversation',
+    -- tablet pool has a single tablet which is the primary
+    'tablet-type' = 'MASTER'
+);
+
+CREATE TEMPORARY TABLE kafka_sink_base WITH (
+    'connector' = 'upsert-kafka',
+    'topic' = 'conversation-cdc',
+    'properties.bootstrap.servers' = '${KAFKA_BOOTSTRAP_SERVERS}',
+    'properties.security.protocol' = 'SSL',
+    'properties.ssl.truststore.type' = 'PEM',
+    'properties.ssl.truststore.certificates' = '${KAFKA_CA_CERT}',
+    'properties.ssl.keystore.type' = 'PEM',
+    'properties.ssl.keystore.certificate.chain' = '${KAFKA_USER_CERT}',
+    'properties.ssl.keystore.key' = '${KAFKA_USER_KEY}',
+    'value.format' = 'json',
+    'sink.delivery-guarantee' = 'at-least-once'
+);
+
+-- ------------------------------------------------------------
+-- sources
+-- ------------------------------------------------------------
+
+CREATE TEMPORARY TABLE offline_conversation_source (
+    id             BYTES,
+    novel          STRING,
+    poem           STRING,
+    short_story    STRING,
+    play           STRING,
+    film           STRING,
+    written_by     STRING,
+    rule           STRING,
+    `time`         STRING,
+    length_minutes INT,
+    maps_link      STRING,
+    location       STRING,
+    latitude       DOUBLE,
+    longitude      DOUBLE,
+    city           STRING,
+    h3_res5        STRING,
+    h3_res7        STRING,
+    updated_at     STRING,
+    op_ts TIMESTAMP_LTZ(3) METADATA FROM 'op_ts' VIRTUAL
+) WITH (
+    'table-name' = 'conversation.offline_conversation',
+    'name' = 'offline_conversation'
+) LIKE vitess_source_base (EXCLUDING ALL INCLUDING OPTIONS);
+
+CREATE TEMPORARY TABLE offline_conversation_moderator_source (
+    conversation_id BYTES,
+    member_id       BYTES,
+    op_ts TIMESTAMP_LTZ(3) METADATA FROM 'op_ts' VIRTUAL
+) WITH (
+    'table-name' = 'conversation.offline_conversation_moderator',
+    'name' = 'offline_conversation_moderator'
+) LIKE vitess_source_base (EXCLUDING ALL INCLUDING OPTIONS);
+
+CREATE TEMPORARY TABLE offline_conversation_participant_source (
+    conversation_id BYTES,
+    member_id       BYTES,
+    op_ts TIMESTAMP_LTZ(3) METADATA FROM 'op_ts' VIRTUAL
+) WITH (
+    'table-name' = 'conversation.offline_conversation_participant',
+    'name' = 'offline_conversation_participant'
+) LIKE vitess_source_base (EXCLUDING ALL INCLUDING OPTIONS);
+
+CREATE TEMPORARY TABLE online_conversation_source (
+    id                  BYTES,
+    novel               STRING,
+    short_story         STRING,
+    poem                STRING,
+    play                STRING,
+    film                STRING,
+    written_by          STRING,
+    rule                STRING,
+    capacity            INT,
+    `time`              STRING,
+    length_minutes      INT,
+    current_registrants INT,
+    updated_at          STRING,
+    op_ts TIMESTAMP_LTZ(3) METADATA FROM 'op_ts' VIRTUAL
+) WITH (
+    'table-name' = 'conversation.online_conversation',
+    'name' = 'online_conversation'
+) LIKE vitess_source_base (EXCLUDING ALL INCLUDING OPTIONS);
+
+CREATE TEMPORARY TABLE online_conversation_moderator_source (
+    conversation_id BYTES,
+    member_id       BYTES,
+    op_ts TIMESTAMP_LTZ(3) METADATA FROM 'op_ts' VIRTUAL
+) WITH (
+    'table-name' = 'conversation.online_conversation_moderator',
+    'name' = 'online_conversation_moderator'
+) LIKE vitess_source_base (EXCLUDING ALL INCLUDING OPTIONS);
+
+CREATE TEMPORARY TABLE online_conversation_registrant_source (
+    conversation_id BYTES,
+    member_id       BYTES,
+    op_ts TIMESTAMP_LTZ(3) METADATA FROM 'op_ts' VIRTUAL
+) WITH (
+    'table-name' = 'conversation.online_conversation_registrant',
+    'name' = 'online_conversation_registrant'
+) LIKE vitess_source_base (EXCLUDING ALL INCLUDING OPTIONS);
+
+CREATE TEMPORARY TABLE online_conversation_ban_source (
+    conversation_id BYTES,
+    member_id       BYTES,
+    op_ts TIMESTAMP_LTZ(3) METADATA FROM 'op_ts' VIRTUAL
+) WITH (
+    'table-name' = 'conversation.online_conversation_ban',
+    'name' = 'online_conversation_ban'
+) LIKE vitess_source_base (EXCLUDING ALL INCLUDING OPTIONS);
+
+CREATE TEMPORARY TABLE online_conversation_notification_source (
+    conversation_id BYTES,
+    member_id       BYTES,
+    op_ts TIMESTAMP_LTZ(3) METADATA FROM 'op_ts' VIRTUAL
+) WITH (
+    'table-name' = 'conversation.online_conversation_notification',
+    'name' = 'online_conversation_notification'
+) LIKE vitess_source_base (EXCLUDING ALL INCLUDING OPTIONS);
+
+-- ------------------------------------------------------------
+-- sinks
+-- ------------------------------------------------------------
+
+CREATE TEMPORARY TABLE offline_conversation_sink (
+    id             STRING,
+    novel          STRING,
+    poem           STRING,
+    short_story    STRING,
+    play           STRING,
+    film           STRING,
+    written_by     STRING,
+    rule           STRING,
+    `time`         STRING,
+    length_minutes INT,
+    maps_link      STRING,
+    location       STRING,
+    latitude       DOUBLE,
+    longitude      DOUBLE,
+    city           STRING,
+    h3_res5        STRING,
+    h3_res7        STRING,
+    updated_at     STRING,
+    headers        MAP<STRING, BYTES> METADATA,
+    ts             TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+    PRIMARY KEY (id) NOT ENFORCED
+) WITH (
+    'key.format' = 'raw'
+) LIKE kafka_sink_base (EXCLUDING ALL INCLUDING OPTIONS);
+
+CREATE TEMPORARY TABLE online_conversation_sink (
+    id                  STRING,
+    novel               STRING,
+    short_story         STRING,
+    poem                STRING,
+    play                STRING,
+    film                STRING,
+    written_by          STRING,
+    rule                STRING,
+    capacity            INT,
+    `time`              STRING,
+    length_minutes      INT,
+    current_registrants INT,
+    updated_at          STRING,
+    headers             MAP<STRING, BYTES> METADATA,
+    ts                  TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+    PRIMARY KEY (id) NOT ENFORCED
+) WITH (
+    'key.format' = 'raw'
+) LIKE kafka_sink_base (EXCLUDING ALL INCLUDING OPTIONS);
+
+-- every member relation table (moderator, participant, registrant, ban, notification) has the same shape
+CREATE TEMPORARY TABLE conversation_member_sink (
+    conversation_id STRING,
+    member_id       STRING,
+    headers         MAP<STRING, BYTES> METADATA,
+    ts              TIMESTAMP_LTZ(3) METADATA FROM 'timestamp',
+    PRIMARY KEY (conversation_id, member_id) NOT ENFORCED
+) WITH (
+    'key.format' = 'json'
+) LIKE kafka_sink_base (EXCLUDING ALL INCLUDING OPTIONS);
+
+-- ------------------------------------------------------------
+-- pipelines, submitted together as one job
+-- ------------------------------------------------------------
+
+INSERT INTO offline_conversation_sink
+-- DATETIME is stored in UTC, 'yyyy-MM-dd HH:mm:ss' -> 'yyyy-MM-ddTHH:mm:ssZ'
+SELECT BIN_TO_UUID(id), novel, poem, short_story, play, film, written_by, rule,
+       CONCAT(REPLACE(`time`, ' ', 'T'), 'Z'), length_minutes, maps_link, location, latitude, longitude,
+       city, h3_res5, h3_res7, CONCAT(REPLACE(updated_at, ' ', 'T'), 'Z'),
+       MAP['type', ENCODE('offline_conversation', 'UTF-8')], op_ts
+FROM offline_conversation_source;
+
+INSERT INTO online_conversation_sink
+SELECT BIN_TO_UUID(id), novel, short_story, poem, play, film, written_by, rule, capacity,
+       CONCAT(REPLACE(`time`, ' ', 'T'), 'Z'), length_minutes, current_registrants,
+       CONCAT(REPLACE(updated_at, ' ', 'T'), 'Z'),
+       MAP['type', ENCODE('online_conversation', 'UTF-8')], op_ts
+FROM online_conversation_source;
+
+INSERT INTO conversation_member_sink
+SELECT BIN_TO_UUID(conversation_id), BIN_TO_UUID(member_id),
+       MAP['type', ENCODE('offline_conversation_moderator', 'UTF-8')], op_ts
+FROM offline_conversation_moderator_source;
+
+INSERT INTO conversation_member_sink
+SELECT BIN_TO_UUID(conversation_id), BIN_TO_UUID(member_id),
+       MAP['type', ENCODE('offline_conversation_participant', 'UTF-8')], op_ts
+FROM offline_conversation_participant_source;
+
+INSERT INTO conversation_member_sink
+SELECT BIN_TO_UUID(conversation_id), BIN_TO_UUID(member_id),
+       MAP['type', ENCODE('online_conversation_moderator', 'UTF-8')], op_ts
+FROM online_conversation_moderator_source;
+
+INSERT INTO conversation_member_sink
+SELECT BIN_TO_UUID(conversation_id), BIN_TO_UUID(member_id),
+       MAP['type', ENCODE('online_conversation_registrant', 'UTF-8')], op_ts
+FROM online_conversation_registrant_source;
+
+INSERT INTO conversation_member_sink
+SELECT BIN_TO_UUID(conversation_id), BIN_TO_UUID(member_id),
+       MAP['type', ENCODE('online_conversation_ban', 'UTF-8')], op_ts
+FROM online_conversation_ban_source;
+
+INSERT INTO conversation_member_sink
+SELECT BIN_TO_UUID(conversation_id), BIN_TO_UUID(member_id),
+       MAP['type', ENCODE('online_conversation_notification', 'UTF-8')], op_ts
+FROM online_conversation_notification_source;

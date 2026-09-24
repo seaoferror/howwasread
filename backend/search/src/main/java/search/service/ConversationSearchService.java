@@ -6,44 +6,74 @@ import search.dto.OfflineConversationSearchResponse;
 import search.dto.OnlineConversationSearchResponse;
 import search.repository.OfflineConversationDocumentRepository;
 import search.repository.OnlineConversationDocumentRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
+import tools.jackson.core.JacksonException;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.PropertyNamingStrategies;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
-@RequiredArgsConstructor
 @Service
 public class ConversationSearchService {
 
   private final OfflineConversationDocumentRepository offlineConversationDocumentRepository;
   private final OnlineConversationDocumentRepository onlineConversationDocumentRepository;
-  private final ObjectMapper objectMapper;
+  private final ObjectMapper cdcMapper;
 
-  @KafkaListener(topics = "search", groupId = "search")
-  public void consume(@Payload String payloadRaw, @Header("type") String type) {
-    log.info("Successfully consumed message-type: {}", type);
-    if (type.equals("offlineconversation")) {
-      OfflineConversationDocument doc = objectMapper.readValue(payloadRaw, OfflineConversationDocument.class);
-      offlineConversationDocumentRepository.save(doc);
-      return;
+  public ConversationSearchService(OfflineConversationDocumentRepository offlineConversationDocumentRepository,
+                                   OnlineConversationDocumentRepository onlineConversationDocumentRepository,
+                                   ObjectMapper objectMapper) {
+    this.offlineConversationDocumentRepository = offlineConversationDocumentRepository;
+    this.onlineConversationDocumentRepository = onlineConversationDocumentRepository;
+    this.cdcMapper = objectMapper.rebuild()
+        .propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+        .build();
+  }
+
+  @KafkaListener(topics = "conversation-cdc", groupId = "search")
+  public void consume(@Payload(required = false) String payload,
+                      @Header(KafkaHeaders.RECEIVED_KEY) byte[] key,
+                      @Header("type") String type) {
+    try {
+      switch (type) {
+        case "offline_conversation" -> {
+          if (payload == null) {
+            offlineConversationDocumentRepository.deleteById(toUuid(key));
+            return;
+          }
+          offlineConversationDocumentRepository.save(cdcMapper.readValue(payload, OfflineConversationDocument.class));
+        }
+        case "online_conversation" -> {
+          if (payload == null) {
+            onlineConversationDocumentRepository.deleteById(toUuid(key));
+            return;
+          }
+          onlineConversationDocumentRepository.save(cdcMapper.readValue(payload, OnlineConversationDocument.class));
+        }
+        // member tables are not indexed
+        default -> {
+        }
+      }
+    } catch (JacksonException | IllegalArgumentException e) {
+      log.error("skip malformed cdc message, type: {}, key: {}", type, new String(key, StandardCharsets.UTF_8), e);
     }
-    if (type.equals("onlineconversation")) {
-      OnlineConversationDocument doc = objectMapper.readValue(payloadRaw, OnlineConversationDocument.class);
-      onlineConversationDocumentRepository.save(doc);
-      return;
-    }
-    System.err.println("Unknown event type received: " + type);
+  }
+
+  private UUID toUuid(byte[] key) {
+    return UUID.fromString(new String(key, StandardCharsets.UTF_8));
   }
 
   public List<OfflineConversationSearchResponse> searchOfflines(String input, String resolution, List<String> h3Indexes, Instant time, int page) {
