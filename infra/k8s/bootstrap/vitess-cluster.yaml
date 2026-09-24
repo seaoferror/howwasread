@@ -5,7 +5,7 @@ metadata:
   namespace: vitess
 spec:
   updateStrategy:
-    type: Immediate
+    type: Immediate # reflect apply -f declaratively
   globalLockserver:
     etcd: {}
   cells:

@@ -67,4 +67,24 @@ public interface OnlineConversationDocumentRepository extends ElasticsearchRepos
       long time,
       Pageable page
   );
+
+  @Query("""
+        {
+          "bool": {
+            "filter": [
+              {
+                "range": {
+                  "time": {
+                    "gt": ?0
+                  }
+                }
+              }
+            ]
+          }
+        }
+      """)
+  List<OnlineConversationDocument> findByTimeAfter(
+      long time,
+      Pageable page
+  );
 }
