@@ -4,6 +4,8 @@ metadata:
   name: vitess-cluster
   namespace: vitess
 spec:
+  updateStrategy:
+    type: Immediate
   globalLockserver:
     etcd: {}
   cells:
@@ -25,6 +27,7 @@ spec:
               key: users.json
   keyspaces:
     - name: conversation
+      durabilityPolicy: none # single tablet set up
       partitionings:
         - equal:
             parts: 1
