@@ -4,6 +4,7 @@ import org.apache.flink.cdc.connectors.shaded.org.apache.kafka.connect.data.Stru
 import org.apache.flink.cdc.connectors.vitess.VitessSource;
 import org.apache.flink.cdc.connectors.vitess.config.SchemaAdjustmentMode;
 import org.apache.flink.cdc.connectors.vitess.config.TabletType;
+import org.apache.flink.cdc.debezium.DebeziumDeserializationSchema;
 import org.apache.flink.cdc.debezium.DebeziumSourceFunction;
 import org.apache.flink.cdc.debezium.table.MetadataConverter;
 import org.apache.flink.cdc.debezium.table.RowDataDebeziumDeserializeSchema;
@@ -36,13 +37,14 @@ public class VitessOpTsTableSource implements ScanTableSource, SupportsReadingMe
   private final String name;
   private final String username;
   private final String password;
+  private final boolean insertOnly;
 
   private DataType producedDataType;
   private List<String> metadataKeys = List.of();
 
   public VitessOpTsTableSource(DataType physicalDataType, String hostname, int port, String keyspace,
                                String tableName, TabletType tabletType, String name,
-                               String username, String password) {
+                               String username, String password, boolean insertOnly) {
     this.physicalDataType = physicalDataType;
     this.producedDataType = physicalDataType;
     this.hostname = hostname;
@@ -53,16 +55,17 @@ public class VitessOpTsTableSource implements ScanTableSource, SupportsReadingMe
     this.name = name;
     this.username = username;
     this.password = password;
+    this.insertOnly = insertOnly;
   }
 
   @Override
   public ChangelogMode getChangelogMode() {
-    return ChangelogMode.all();
+    return insertOnly ? ChangelogMode.insertOnly() : ChangelogMode.all();
   }
 
   @Override
   public ScanRuntimeProvider getScanRuntimeProvider(ScanContext context) {
-    RowDataDebeziumDeserializeSchema deserializer = RowDataDebeziumDeserializeSchema.newBuilder()
+    DebeziumDeserializationSchema<RowData> deserializer = RowDataDebeziumDeserializeSchema.newBuilder()
         .setPhysicalRowType((RowType) physicalDataType.getLogicalType())
         .setMetadataConverters(metadataConverters())
         .setResultTypeInfo(context.createTypeInformation(producedDataType))
@@ -80,7 +83,7 @@ public class VitessOpTsTableSource implements ScanTableSource, SupportsReadingMe
         // default of the 'vitess-cdc' factory, the builder's own default is NONE
         .schemaNameAdjustmentMode(SchemaAdjustmentMode.AVRO)
         .name(name)
-        .deserializer(deserializer)
+        .deserializer(insertOnly ? new InsertOnlyDeserializationSchema(deserializer) : deserializer)
         .build();
     return SourceFunctionProvider.of(sourceFunction, false);
   }
@@ -114,7 +117,7 @@ public class VitessOpTsTableSource implements ScanTableSource, SupportsReadingMe
   @Override
   public DynamicTableSource copy() {
     VitessOpTsTableSource copy = new VitessOpTsTableSource(physicalDataType, hostname, port, keyspace,
-        tableName, tabletType, name, username, password);
+        tableName, tabletType, name, username, password, insertOnly);
     copy.metadataKeys = metadataKeys;
     copy.producedDataType = producedDataType;
     return copy;

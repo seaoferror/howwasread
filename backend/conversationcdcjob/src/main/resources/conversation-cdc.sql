@@ -127,6 +127,17 @@ CREATE TEMPORARY TABLE online_conversation_notification_source (
     'name' = 'online_conversation_notification'
 ) LIKE vitess_source_base (EXCLUDING ALL INCLUDING OPTIONS);
 
+CREATE TEMPORARY TABLE outbox_source (
+    conversation_id BYTES,
+    topic           STRING,
+    payload         STRING,
+    op_ts TIMESTAMP_LTZ(3) METADATA FROM 'op_ts' VIRTUAL
+) WITH (
+    'table-name' = 'conversation.outbox',
+    'name' = 'outbox',
+    'insert-only' = 'true'
+) LIKE vitess_source_base (EXCLUDING ALL INCLUDING OPTIONS);
+
 -- ------------------------------------------------------------
 -- sinks
 -- ------------------------------------------------------------
@@ -189,6 +200,19 @@ CREATE TEMPORARY TABLE conversation_member_sink (
     'key.format' = 'json'
 ) LIKE kafka_sink_base (EXCLUDING ALL INCLUDING OPTIONS);
 
+CREATE TEMPORARY TABLE chat_message_sink (
+    conversation_id STRING,
+    payload         STRING,
+    ts              TIMESTAMP_LTZ(3) METADATA FROM 'timestamp'
+) WITH (
+    'connector' = 'kafka',
+    'topic' = 'chat-message',
+    'key.format' = 'raw',
+    'key.fields' = 'conversation_id',
+    'value.format' = 'raw',
+    'value.fields-include' = 'EXCEPT_KEY'
+) LIKE kafka_sink_base (EXCLUDING ALL OVERWRITING OPTIONS);
+
 -- ------------------------------------------------------------
 -- pipelines, submitted together as one job
 -- ------------------------------------------------------------
@@ -237,3 +261,8 @@ INSERT INTO conversation_member_sink
 SELECT BIN_TO_UUID(conversation_id), BIN_TO_UUID(member_id),
        MAP['type', ENCODE('online_conversation_notification', 'UTF-8')], op_ts
 FROM online_conversation_notification_source;
+
+INSERT INTO chat_message_sink
+SELECT BIN_TO_UUID(conversation_id), payload, op_ts
+FROM outbox_source
+WHERE topic = 'chat-message';
