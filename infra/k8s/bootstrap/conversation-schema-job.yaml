@@ -96,6 +96,21 @@ data:
         PRIMARY KEY (conversation_id, member_id)
     );
 
+    -- ============================================================
+    -- Transactional outbox, rows are inserted and deleted in the same transaction.
+    -- The CDC job forwards the inserts from the binlog to the Kafka topic in the topic column,
+    -- so the table stays empty.
+    -- ============================================================
+
+    CREATE TABLE outbox
+    (
+        id              BINARY(16)   NOT NULL,
+        conversation_id BINARY(16)   NOT NULL,
+        topic           VARCHAR(255) NOT NULL,
+        payload         TEXT         NOT NULL,
+        PRIMARY KEY (id)
+    );
+
   vschema.json: |
     {
       "sharded": true,
@@ -155,6 +170,13 @@ data:
           ]
         },
         "offline_conversation_participant": {
+          "column_vindexes": [
+            {
+              "column": "conversation_id",
+              "name": "binary_md5"}
+          ]
+        },
+        "outbox": {
           "column_vindexes": [
             {
               "column": "conversation_id",
