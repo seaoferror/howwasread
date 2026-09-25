@@ -1,5 +1,6 @@
 package offlineconversation.service;
 
+import offlineconversation.component.OutboxPublisher;
 import offlineconversation.domain.ConversationMemberCompositeKey;
 import offlineconversation.domain.OfflineConversation;
 import offlineconversation.domain.OfflineConversationModerator;
@@ -26,6 +27,7 @@ public class OfflineConversationService {
   private final OfflineConversationRepository offlineConversationRepository;
   private final OfflineConversationParticipantRepository offlineConversationParticipantRepository;
   private final OfflineConversationModeratorRepository offlineConversationModeratorRepository;
+  private final OutboxPublisher outboxPublisher;
 
   @Transactional
   public Map<String, UUID> create(
@@ -58,8 +60,7 @@ public class OfflineConversationService {
 
     offlineConversationParticipantRepository.save(new OfflineConversationParticipant(key, convo));
     offlineConversationModeratorRepository.save(new OfflineConversationModerator(key, convo));
-    //TODO: CDC producing kafka message for chat group room create
-    //TODO: CDC producing search
+    outboxPublisher.publishChatMessage(conversationId, memberId, "create", List.of(req.location()));
     return Map.of("id", convo.getId());
   }
 
@@ -72,7 +73,7 @@ public class OfflineConversationService {
         .build();
     offlineConversationParticipantRepository.save(
         new OfflineConversationParticipant(key, conversationProxy));
-    //TODO: CDC producing kafka message for chat group room participate
+    outboxPublisher.publishChatMessage(conversationId, memberId, "participate", List.of());
   }
 
   @Transactional
@@ -82,7 +83,7 @@ public class OfflineConversationService {
         .memberId(memberId)
         .build();
     offlineConversationParticipantRepository.deleteById(key);
-    //TODO: CDC producing kafka message for chat group room quit
+    outboxPublisher.publishChatMessage(conversationId, memberId, "quit", List.of());
   }
 
   public OfflineConversationDetailResponse detail(UUID conversationId, UUID memberId) {

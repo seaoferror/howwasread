@@ -22,6 +22,7 @@ public class VitessOpTsTableFactory implements DynamicTableSourceFactory {
   static final ConfigOption<String> NAME = ConfigOptions.key("name").stringType().defaultValue("flink");
   static final ConfigOption<String> USERNAME = ConfigOptions.key("username").stringType().noDefaultValue();
   static final ConfigOption<String> PASSWORD = ConfigOptions.key("password").stringType().noDefaultValue();
+  static final ConfigOption<Boolean> INSERT_ONLY = ConfigOptions.key("insert-only").booleanType().defaultValue(false);
 
   @Override
   public DynamicTableSource createDynamicTableSource(Context context) {
@@ -38,7 +39,8 @@ public class VitessOpTsTableFactory implements DynamicTableSourceFactory {
         TabletType.valueOf(options.get(TABLET_TYPE).toUpperCase()),
         options.get(NAME),
         options.getOptional(USERNAME).orElse(null),
-        options.getOptional(PASSWORD).orElse(null));
+        options.getOptional(PASSWORD).orElse(null),
+        options.get(INSERT_ONLY));
   }
 
   @Override
@@ -53,6 +55,6 @@ public class VitessOpTsTableFactory implements DynamicTableSourceFactory {
 
   @Override
   public Set<ConfigOption<?>> optionalOptions() {
-    return Set.of(PORT, TABLET_TYPE, NAME, USERNAME, PASSWORD);
+    return Set.of(PORT, TABLET_TYPE, NAME, USERNAME, PASSWORD, INSERT_ONLY);
   }
 }
