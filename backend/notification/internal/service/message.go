@@ -22,7 +22,10 @@ func (s *service) PreprocessMessageNotification(
 	content []string,
 ) {
 	log.Print("start notify message...")
-	tIds := make([]uuid.UUID, len(toIds))
+	if len(toIds) == 0 {
+		return
+	}
+	tIds := make([]uuid.UUID, 0, len(toIds))
 	for _, toId := range toIds {
 		tIds = append(tIds, uuid.UUID(toId))
 	}

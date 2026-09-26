@@ -76,13 +76,10 @@ func TestRegisterNotification(t *testing.T) {
 		assert.NoError(t, service.NewService(repo, mocks.NewMockProducer(t), mocks.NewMockCDNClient(t)).
 			RegisterNotification(context.Background(), memberId, "android", "tok"))
 	})
-	t.Run("new token", func(t *testing.T) {
-		// current behaviour: not found returns the zero id, which then counts as another owner,
-		// so the zero id row is deleted and the owner is written twice
+	t.Run("new token writes the owner once and deletes nothing", func(t *testing.T) {
 		repo := NewMockRepository(t)
 		repo.EXPECT().FindMemberIdByToken(mock.Anything, "tok").Return(gocql.UUID{}, gocql.ErrNotFound)
-		repo.EXPECT().UpdateMemberIdByToken(mock.Anything, "tok", gocql.UUID(memberId)).Return(nil).Twice()
-		repo.EXPECT().DeleteNotificationInfoByIdAndToken(mock.Anything, gocql.UUID{}, "tok").Return(nil)
+		repo.EXPECT().UpdateMemberIdByToken(mock.Anything, "tok", gocql.UUID(memberId)).Return(nil).Once()
 		repo.EXPECT().SaveNotificationInfoById(mock.Anything, gocql.UUID(memberId), "android", "tok").Return(nil)
 
 		assert.NoError(t, service.NewService(repo, mocks.NewMockProducer(t), mocks.NewMockCDNClient(t)).
@@ -130,9 +127,8 @@ func TestPreprocessScheduledNotification_tokenLookupErrorSendsNothing(t *testing
 
 // ---------------------------------------------------------------- message
 
-// current behaviour: the receiver list starts with len(toIds) zero ids, their token lookups are expected too
-func expectTokens(repo *MockRepository, receivers int, tokens ...projection.FindPushTokensById) {
-	repo.EXPECT().FindPushTokensById(mock.Anything, gocql.UUID{}).Return(nil, nil).Times(receivers)
+// expectTokens expects one token lookup per receiver, any other lookup fails the test
+func expectTokens(repo *MockRepository, tokens ...projection.FindPushTokensById) {
 	for _, tok := range tokens {
 		repo.EXPECT().FindPushTokensById(mock.Anything, tok.Id).Return([]projection.FindPushTokensById{tok}, nil)
 	}
@@ -140,7 +136,7 @@ func expectTokens(repo *MockRepository, receivers int, tokens ...projection.Find
 
 func TestPreprocessMessageNotification_personalText(t *testing.T) {
 	repo, producer := NewMockRepository(t), mocks.NewMockProducer(t)
-	expectTokens(repo, 1, android(memberId, "fcm-token"))
+	expectTokens(repo, android(memberId, "fcm-token"))
 	repo.EXPECT().FindNameById(mock.Anything, gocql.UUID(senderId)).Return("alice", nil)
 	pushes := capturePushes(producer)
 
@@ -159,7 +155,7 @@ func TestPreprocessMessageNotification_personalText(t *testing.T) {
 
 func TestPreprocessMessageNotification_groupUsesRoomNameAsTitle(t *testing.T) {
 	repo, producer := NewMockRepository(t), mocks.NewMockProducer(t)
-	expectTokens(repo, 1, ios(memberId, "apn-token"))
+	expectTokens(repo, ios(memberId, "apn-token"))
 	repo.EXPECT().FindNameById(mock.Anything, gocql.UUID(senderId)).Return("alice", nil)
 	repo.EXPECT().FindRoomNameById(mock.Anything, gocql.UUID(roomId)).Return("Seoul", nil)
 	pushes := capturePushes(producer)
@@ -175,7 +171,7 @@ func TestPreprocessMessageNotification_groupUsesRoomNameAsTitle(t *testing.T) {
 
 func TestPreprocessMessageNotification_imageIsSigned(t *testing.T) {
 	repo, producer, signer := NewMockRepository(t), mocks.NewMockProducer(t), mocks.NewMockCDNClient(t)
-	expectTokens(repo, 1, android(memberId, "fcm-token"))
+	expectTokens(repo, android(memberId, "fcm-token"))
 	repo.EXPECT().FindNameById(mock.Anything, gocql.UUID(senderId)).Return("alice", nil)
 	signer.EXPECT().SignedURL("image", "file-1").Return("https://signed", nil)
 	pushes := capturePushes(producer)
@@ -190,7 +186,7 @@ func TestPreprocessMessageNotification_imageIsSigned(t *testing.T) {
 
 func TestPreprocessMessageNotification_signFailureSendsNothing(t *testing.T) {
 	repo, signer := NewMockRepository(t), mocks.NewMockCDNClient(t)
-	expectTokens(repo, 1, android(memberId, "fcm-token"))
+	expectTokens(repo, android(memberId, "fcm-token"))
 	repo.EXPECT().FindNameById(mock.Anything, gocql.UUID(senderId)).Return("alice", nil)
 	signer.EXPECT().SignedURL(mock.Anything, mock.Anything).Return("", errors.New("bad key"))
 
@@ -200,7 +196,7 @@ func TestPreprocessMessageNotification_signFailureSendsNothing(t *testing.T) {
 
 func TestPreprocessMessageNotification_otherMediaShowsType(t *testing.T) {
 	repo, producer := NewMockRepository(t), mocks.NewMockProducer(t)
-	expectTokens(repo, 1, android(memberId, "fcm-token"))
+	expectTokens(repo, android(memberId, "fcm-token"))
 	repo.EXPECT().FindNameById(mock.Anything, gocql.UUID(senderId)).Return("alice", nil)
 	pushes := capturePushes(producer)
 

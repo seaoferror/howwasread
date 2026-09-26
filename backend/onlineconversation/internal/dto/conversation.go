@@ -45,7 +45,7 @@ type OnlineConversationDetailResponse struct {
 	Capacity                int       `json:"capacity"`
 	Time                    time.Time `json:"time"`
 	LengthMinutes           int       `json:"lengthMinutes"`
-	UpdatedAt               time.Time `json:"updatedAt"`
+	UpdatedAt               time.Time `json:"updatedAt,omitzero"`
 	CanEnter                bool      `json:"canEnter"`
 	IsRegistrant            bool      `json:"isRegistrant"`
 	IsModerator             bool      `json:"isModerator"`

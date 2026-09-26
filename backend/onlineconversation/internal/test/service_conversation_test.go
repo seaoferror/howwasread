@@ -7,7 +7,9 @@ import (
 	"backend/onlineconversation/internal/repository"
 	"backend/onlineconversation/internal/service"
 	"context"
+	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -225,4 +227,32 @@ func TestScheduleAndCancelNotification(t *testing.T) {
 
 	assert.NoError(t, s.ScheduleNotification(context.Background(), memberId, conversationId))
 	assert.ErrorIs(t, s.CancelNotification(context.Background(), memberId, conversationId), errDB)
+}
+
+func TestGetConversationDetail_updatedAtIsOmittedUntilUpdated(t *testing.T) {
+	updated := time.Date(2026, 9, 24, 1, 0, 0, 0, time.UTC)
+	tests := map[string]struct {
+		stored   *time.Time
+		want     time.Time
+		wantJSON bool
+	}{
+		"never updated": {stored: nil, want: time.Time{}, wantJSON: false},
+		"updated":       {stored: &updated, want: updated, wantJSON: true},
+	}
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			repo := NewMockRepository(t)
+			repo.EXPECT().Tx().Return(nil)
+			repo.EXPECT().FindConversationDetail(mock.Anything, mock.Anything, conversationId, memberId).Return(
+				projection.Detail{Time: time.Now().UTC(), UpdatedAt: tt.stored}, nil)
+
+			resp, err := newService(t, repo).GetConversationDetail(context.Background(), conversationId, memberId)
+
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, resp.UpdatedAt)
+			body, err := json.Marshal(resp)
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantJSON, strings.Contains(string(body), `"updatedAt"`))
+		})
+	}
 }

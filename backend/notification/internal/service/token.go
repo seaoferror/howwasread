@@ -1,7 +1,6 @@
 package service
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"log/slog"
@@ -13,19 +12,17 @@ import (
 
 func (s *service) RegisterNotification(ctx context.Context, id uuid.UUID, os, token string) error {
 	old, err := s.repository.FindMemberIdByToken(ctx, token)
-	if errors.Is(err, gocql.ErrNotFound) {
-		err = nil
+	switch {
+	case errors.Is(err, gocql.ErrNotFound):
 		err = s.repository.UpdateMemberIdByToken(ctx, token, gocql.UUID(id))
 		if err != nil {
 			return err
 		}
-	}
-	if err != nil {
+	case err != nil:
 		slog.Error("fail to find member Id by Token", "err", err,
 			"token", token)
 		return err
-	}
-	if !bytes.Equal(old[:], id[:]) {
+	case old != gocql.UUID(id):
 		err = s.repository.DeleteNotificationInfoByIdAndToken(ctx, old, token)
 		if err != nil {
 			return err
@@ -68,7 +65,6 @@ func (s *service) getEachTokenMap(ctx context.Context, toIds []uuid.UUID) (apntm
 					am.Lock()
 					apntm[d.DevicePushToken] = uuid.UUID(d.Id)
 					am.Unlock()
-					return
 				}
 				fm.Lock()
 				fcmtm[d.DevicePushToken] = uuid.UUID(d.Id)

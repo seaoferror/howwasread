@@ -15,7 +15,8 @@ public interface OfflineConversationDetailProjection {
   String getMapsLink();
   String getLocation();
   Instant getUpdatedAt();
-  Boolean getIsModerator();
-  Boolean getIsParticipant();
+  // EXISTS(...) comes back from MySQL as 0 or 1, projections can't convert it to Boolean
+  Long getIsModerator();
+  Long getIsParticipant();
   Integer getNumberOfParticipants();
 }
