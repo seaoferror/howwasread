@@ -1,7 +1,8 @@
 package internal
 
 import (
-	"backend/common/producer"
+	"backend/common"
+	"backend/signalrelay/internal/client"
 	"backend/signalrelay/internal/consumer"
 	"backend/signalrelay/internal/repository"
 	"backend/signalrelay/internal/service"
@@ -18,9 +19,9 @@ func NewServer() {
 
 	r := repository.NewRepository()
 
-	kp := producer.NewProducer("producer_signal_relay")
+	kp := common.NewProducer("producer_signal_relay")
 
-	s := service.NewService(r, kp)
+	s := service.NewService(r, kp, client.NewRelayClient())
 
 	ks := consumer.NewKafkaConsumer(s)
 

@@ -1,11 +1,12 @@
 package internal
 
 import (
+	"backend/chat/internal/client"
 	"backend/chat/internal/controller"
 	"backend/chat/internal/grpccontroller"
 	"backend/chat/internal/repository"
 	"backend/chat/internal/service"
-	"backend/common/producer"
+	"backend/common"
 	pb "backend/common/proto"
 	"log"
 	"log/slog"
@@ -22,11 +23,11 @@ func NewServer() {
 	}))
 	slog.SetDefault(logger)
 
-	p := producer.NewProducer("producer_chat")
+	p := common.NewProducer("producer_chat")
 
 	r := repository.NewRepository()
 
-	s := service.NewService(r, p)
+	s := service.NewService(r, p, client.NewStorageClient(), common.NewCDNClient())
 
 	mux := http.NewServeMux()
 

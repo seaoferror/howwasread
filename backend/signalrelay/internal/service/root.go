@@ -1,26 +1,27 @@
 package service
 
 import (
-	"backend/common/producer"
+	"backend/common"
+	"backend/signalrelay/internal/client"
 	"backend/signalrelay/internal/repository"
-	"sync"
-
-	"google.golang.org/grpc"
+	"context"
+	"encoding/json"
 )
 
-type Service struct {
-	repository  *repository.Repository
-	clientConns map[string]*grpc.ClientConn
-	ccsMutex    *sync.RWMutex
-	producer    *producer.Producer
+type Service interface {
+	PropagateSignal(ctx context.Context, toIds [][]byte, fromId []byte, signal json.RawMessage)
 }
 
-func NewService(r *repository.Repository, p *producer.Producer) *Service {
-	s := &Service{
+type service struct {
+	repository  repository.Repository
+	producer    common.Producer
+	relayClient client.RelayClient
+}
+
+func NewService(r repository.Repository, p common.Producer, relayClient client.RelayClient) Service {
+	return &service{
 		repository:  r,
-		clientConns: make(map[string]*grpc.ClientConn),
-		ccsMutex:    &sync.RWMutex{},
 		producer:    p,
+		relayClient: relayClient,
 	}
-	return s
 }

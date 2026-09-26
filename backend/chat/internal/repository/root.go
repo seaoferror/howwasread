@@ -1,7 +1,9 @@
 package repository
 
 import (
+	"backend/chat/internal/projection"
 	"backend/common"
+	"context"
 	"log"
 	"os"
 	"time"
@@ -12,12 +14,34 @@ import (
 	"github.com/valkey-io/valkey-go"
 )
 
-type Repository struct {
+type Repository interface {
+	FindChatRoomInfoById(ctx context.Context, id gocql.UUID) (name string, roomType string, err error)
+	FindProfileById(ctx context.Context, id gocql.UUID) (name string, err error)
+	SaveNameById(ctx context.Context, id gocql.UUID, name string) error
+	SetServerIP(ctx context.Context, memberId, ip string) error
+	RemoveServerIP(ctx context.Context, memberId, ip string) error
+	DeleteAccount(ctx context.Context, id gocql.UUID, email, phoneNumber string) error
+	DidBlock(ctx context.Context, blockerId gocql.UUID, blockedId gocql.UUID) (bool, error)
+	FindChatParticipantIds(ctx context.Context, roomId gocql.UUID) (ids []gocql.UUID, err error)
+	AddReporterIdByReportedId(ctx context.Context, reporterId gocql.UUID, reportedId gocql.UUID) error
+	FindReportCountById(ctx context.Context, reportedId gocql.UUID) (count int, err error)
+	FindEmailAndPhoneNumberById(ctx context.Context, id gocql.UUID) (email, phoneNumber string, err error)
+	BanPhoneNumber(ctx context.Context, phoneNumber string) error
+	AddBlockedConversation(ctx context.Context, memberId gocql.UUID, conversationId gocql.UUID) error
+	FindBlockedConversations(ctx context.Context, id gocql.UUID) (ids []gocql.UUID, err error)
+	FindRecentMessagesByToId(ctx context.Context, id, cursor gocql.UUID) (result []projection.FindMessagesByToIdAndId, err error)
+	SetFilepath(ctx context.Context, id string, filenames []string) error
+	HasFilepath(ctx context.Context, id string, filenames []string) (bool, error)
+	RemoveFilepath(ctx context.Context, id string, filenames []string) error
+	FindIdsByFilename(ctx context.Context, filename gocql.UUID) (ids []gocql.UUID, err error)
+}
+
+type repository struct {
 	session *gocql.Session
 	client  valkey.Client
 }
 
-func NewRepository() *Repository {
+func NewRepository() Repository {
 	k8ssandraHost := os.Getenv("K8SSANDRA_HOST")
 	cluster := gocql.NewCluster(k8ssandraHost)
 	cluster.Port = 9042
@@ -105,7 +129,7 @@ func NewRepository() *Repository {
 	}
 	log.Print("success to connect valkey")
 
-	r := &Repository{
+	r := &repository{
 		session: session,
 		client:  client,
 	}

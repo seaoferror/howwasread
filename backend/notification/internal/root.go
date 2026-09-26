@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"backend/common/producer"
+	"backend/common"
 	"backend/notification/internal/consumer"
 	"backend/notification/internal/controller"
 	"backend/notification/internal/repository"
@@ -19,9 +19,9 @@ func NewServer() {
 
 	r := repository.NewRepository()
 
-	p := producer.NewProducer("producer.preprocess_notification")
+	p := common.NewProducer("producer.preprocess_notification")
 
-	s := service.NewService(r, p)
+	s := service.NewService(r, p, common.NewCDNClient())
 
 	mux := http.NewServeMux()
 

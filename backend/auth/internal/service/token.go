@@ -12,7 +12,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func (s *Service) GenerateAccessToken(refreshToken string) (map[string]string, error) {
+func (s *service) GenerateAccessToken(refreshToken string) (map[string]string, error) {
 	rt, err := jwt.Parse(refreshToken, func(token *jwt.Token) (any, error) {
 		if token.Method.Alg() != jwt.SigningMethodRS256.Alg() {
 			slog.Info("unexpected signing method")
@@ -80,7 +80,7 @@ func (s *Service) GenerateAccessToken(refreshToken string) (map[string]string, e
 	return resp, nil
 }
 
-func (s *Service) RemoveJTI(refreshToken string) error {
+func (s *service) RemoveJTI(refreshToken string) error {
 	rt, err := jwt.Parse(refreshToken, func(token *jwt.Token) (any, error) {
 		if token.Method.Alg() != jwt.SigningMethodRS256.Alg() {
 			slog.Info("unexpected signing method")
@@ -133,7 +133,7 @@ func (s *Service) RemoveJTI(refreshToken string) error {
 	return nil
 }
 
-func (s *Service) createLoginTokens(id, jti, role string) (accessToken, refreshToken string, err error) {
+func (s *service) createLoginTokens(id, jti, role string) (accessToken, refreshToken string, err error) {
 	at, err := createToken(id, role, s.privateKeyAT, constant.AccessTokenTTL)
 	if err != nil {
 		slog.Error("fail to create access token",
@@ -188,7 +188,7 @@ func createTokenWithJTI(id, jti, role string, secretKey *rsa.PrivateKey, ttl int
 	return token, nil
 }
 
-func (s *Service) DeleteAccount(ctx context.Context, refreshToken string) error {
+func (s *service) DeleteAccount(ctx context.Context, refreshToken string) error {
 	rt, err := jwt.Parse(refreshToken, func(token *jwt.Token) (any, error) {
 		if token.Method.Alg() != jwt.SigningMethodRS256.Alg() {
 			slog.Info("unexpected signing method")

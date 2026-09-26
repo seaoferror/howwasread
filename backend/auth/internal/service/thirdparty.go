@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) provideSessionId(email string) (*dto.SignInWithThirdPartyResponse, string, error) {
+func (s *service) provideSessionId(email string) (*dto.SignInWithThirdPartyResponse, string, error) {
 	sessionId := uuid.New()
 	err := s.repository.SaveEmailBySessionId(gocql.UUID(sessionId), email)
 	if err != nil {
@@ -20,7 +20,7 @@ func (s *Service) provideSessionId(email string) (*dto.SignInWithThirdPartyRespo
 	return &resp, "", nil
 }
 
-func (s *Service) provideTokens(id gocql.UUID, role string) (*dto.SignInWithThirdPartyResponse, string, error) {
+func (s *service) provideTokens(id gocql.UUID, role string) (*dto.SignInWithThirdPartyResponse, string, error) {
 	jti, err := gocql.RandomUUID()
 	if err != nil {
 		slog.Error("fail to create random uuid for jti")

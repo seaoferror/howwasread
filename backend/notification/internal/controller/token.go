@@ -22,6 +22,7 @@ func (c *Controller) registerNotificationInfo(w http.ResponseWriter, r *http.Req
 			"err", err,
 			"memberIdRaw", memberIdRaw)
 		handleError(w, errors.New("incorrect body"))
+		return
 	}
 	var req dto.RegisterNotificationRequest
 	err = json.NewDecoder(r.Body).Decode(&req)
@@ -29,10 +30,12 @@ func (c *Controller) registerNotificationInfo(w http.ResponseWriter, r *http.Req
 		slog.Error("fail to parse body",
 			"err", err)
 		handleError(w, errors.New("incorrect body"))
+		return
 	}
 	err = c.service.RegisterNotification(r.Context(), memberId, req.OS, req.DevicePushToken)
 	if err != nil {
 		handleError(w, err)
+		return
 	}
 	w.WriteHeader(http.StatusOK)
 	slog.Info("200 OK device push token",

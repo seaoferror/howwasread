@@ -1,49 +1,46 @@
 package service
 
 import (
+	"backend/chat/internal/client"
+	"backend/chat/internal/dto"
 	"backend/chat/internal/repository"
-	"backend/common/producer"
+	"backend/common"
 	"context"
-	"log"
-	"os"
 
-	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/feature/cloudfront/sign"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/google/uuid"
 	_ "github.com/joho/godotenv/autoload"
 )
 
-type Service struct {
-	repository    *repository.Repository
-	producer      *producer.Producer
-	presignClient *s3.PresignClient
-	signer        *sign.URLSigner
-	bucketName    string
-	cloudfrontURL string
+type Service interface {
+	SetName(ctx context.Context, memberId uuid.UUID, name string) error
+	GetProfile(ctx context.Context, id uuid.UUID) (*dto.GetProfileResponse, error)
+	GetChatRoomInfo(ctx context.Context, id uuid.UUID) (*dto.GetChatRoomInfoResponse, error)
+	SetServerIP(ctx context.Context, memberId uuid.UUID, ip string) error
+	RemoveServerIP(ctx context.Context, memberId []byte, ip string) error
+	CheckBlock(ctx context.Context, blockerId uuid.UUID, blockedId uuid.UUID) (map[string]bool, error)
+	GetChatParticipants(ctx context.Context, roomId uuid.UUID) ([]dto.GetProfileResponse, error)
+	ReportUser(ctx context.Context, reporterId, reportedId uuid.UUID) error
+	BlockConversation(ctx context.Context, memberId, conversationId uuid.UUID) error
+	GetBlockedConversations(ctx context.Context, memberId uuid.UUID) ([]dto.BlockReport, error)
+	GetRecentMessages(ctx context.Context, id, cursor uuid.UUID) (res []dto.MessagingResponse, err error)
+	PublishMessaging(ctx context.Context, fromId uuid.UUID, toIdType string, toId uuid.UUID, contentType string, contents []string) (map[string]uuid.UUID, error)
+	GeneratePresignedURL(ctx context.Context, id uuid.UUID, contentType string, n int) (res []dto.GeneratePresignedURLResponse, err error)
+	GenerateSignedURL(ctx context.Context, memberId uuid.UUID, contentType string, filename uuid.UUID) (map[string]string, error)
 }
 
-func NewService(r *repository.Repository, kp *producer.Producer) *Service {
-	cfg, err := config.LoadDefaultConfig(
-		context.Background(),
-		config.WithRegion(os.Getenv("AWS_S3_REGION")))
-	if err != nil {
-		log.Panicf("fail to config for presigned client: %v", err)
-	}
-	presignClient := s3.NewPresignClient(s3.NewFromConfig(cfg))
+type service struct {
+	repository    repository.Repository
+	producer      common.Producer
+	storageClient client.StorageClient
+	cdnClient     common.CDNClient
+}
 
-	pk, err := sign.LoadPEMPrivKeyFile("cert/aws/aws-cloudfront-private-key.pem")
-	if err != nil {
-		log.Panicf("fail to make cloud front private key: %v", err)
-	}
-	signer := sign.NewURLSigner(os.Getenv("AWS_CLOUDFRONT_KEY_ID"), pk)
-
-	s := Service{
+func NewService(r repository.Repository, kp common.Producer, storageClient client.StorageClient, cdnClient common.CDNClient) Service {
+	s := service{
 		repository:    r,
 		producer:      kp,
-		presignClient: presignClient,
-		signer:        signer,
-		bucketName:    os.Getenv("AWS_S3_BUCKET_NAME"),
-		cloudfrontURL: os.Getenv("AWS_CLOUDFRONT_URL"),
+		storageClient: storageClient,
+		cdnClient:     cdnClient,
 	}
 	return &s
 }

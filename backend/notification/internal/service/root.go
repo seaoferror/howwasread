@@ -1,34 +1,31 @@
 package service
 
 import (
-	"backend/common/producer"
+	"backend/common"
 	"backend/notification/internal/repository"
-	"log"
-	"os"
+	"context"
 
-	"github.com/aws/aws-sdk-go-v2/feature/cloudfront/sign"
+	"github.com/google/uuid"
 	_ "github.com/joho/godotenv/autoload"
 )
 
-type Service struct {
-	repository    *repository.Repository
-	producer      *producer.Producer
-	signer        *sign.URLSigner
-	cloudfrontURL string
+type Service interface {
+	PreprocessMessageNotification(ctx context.Context, notificationId uint8, messageId uuid.UUID, toIds [][]byte, roomId, fromId uuid.UUID, contentType string, content []string)
+	PreprocessScheduledNotification(ctx context.Context, partitionId uuid.UUID, notifications map[uuid.UUID]map[int]string, contents map[int]string)
+	RegisterNotification(ctx context.Context, id uuid.UUID, os, token string) error
 }
 
-func NewService(r *repository.Repository, p *producer.Producer) *Service {
-	pk, err := sign.LoadPEMPrivKeyFile("cert/aws/aws-cloudfront-private-key.pem")
-	if err != nil {
-		log.Panicf("fail to make cloud front private key: %v", err)
-	}
-	signer := sign.NewURLSigner(os.Getenv("AWS_CLOUDFRONT_KEY_ID"), pk)
+type service struct {
+	repository repository.Repository
+	producer   common.Producer
+	cdnClient  common.CDNClient
+}
 
-	s := Service{
-		repository:    r,
-		producer:      p,
-		signer:        signer,
-		cloudfrontURL: os.Getenv("AWS_CLOUDFRONT_URL"),
+func NewService(r repository.Repository, p common.Producer, cdnClient common.CDNClient) Service {
+	s := service{
+		repository: r,
+		producer:   p,
+		cdnClient:  cdnClient,
 	}
 
 	return &s

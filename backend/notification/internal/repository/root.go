@@ -2,6 +2,8 @@ package repository
 
 import (
 	"backend/common"
+	"backend/notification/internal/projection"
+	"context"
 	"log"
 	"os"
 	"time"
@@ -10,11 +12,21 @@ import (
 	"github.com/apache/cassandra-gocql-driver/v2/lz4"
 )
 
-type Repository struct {
+type Repository interface {
+	FindNameById(ctx context.Context, id gocql.UUID) (name string, err error)
+	FindRoomNameById(ctx context.Context, id gocql.UUID) (name string, err error)
+	SaveNotificationInfoById(ctx context.Context, id gocql.UUID, os, token string) error
+	FindPushTokensById(ctx context.Context, id gocql.UUID) (result []projection.FindPushTokensById, err error)
+	FindMemberIdByToken(ctx context.Context, token string) (id gocql.UUID, err error)
+	UpdateMemberIdByToken(ctx context.Context, token string, id gocql.UUID) error
+	DeleteNotificationInfoByIdAndToken(ctx context.Context, id gocql.UUID, token string) error
+}
+
+type repository struct {
 	session *gocql.Session
 }
 
-func NewRepository() *Repository {
+func NewRepository() Repository {
 	k8ssandraHost := os.Getenv("K8SSANDRA_HOST")
 	cluster := gocql.NewCluster(k8ssandraHost)
 	cluster.Port = 9042
@@ -60,7 +72,7 @@ func NewRepository() *Repository {
 	}
 
 	log.Print("success to connect cassandra")
-	r := &Repository{
+	r := &repository{
 		session: session,
 	}
 

@@ -12,7 +12,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) PreprocessMessageNotification(
+func (s *service) PreprocessMessageNotification(
 	ctx context.Context,
 	notificationId uint8,
 	messageId uuid.UUID,
@@ -52,7 +52,7 @@ func (s *Service) PreprocessMessageNotification(
 	}
 
 	if contentType == "image" {
-		imageURL, err1 := s.generateSignedURL(contentType, content[0])
+		imageURL, err1 := s.cdnClient.SignedURL(contentType, content[0])
 		if err1 != nil {
 			slog.Error("fail to generate Signed URL", "err", err1)
 			return

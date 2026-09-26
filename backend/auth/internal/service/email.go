@@ -7,8 +7,6 @@ import (
 	"log"
 	"log/slog"
 	"math/rand"
-	"net/smtp"
-	"os"
 	"regexp"
 	"strconv"
 
@@ -18,7 +16,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func (s *Service) CreateMemberByEmail(ctx context.Context, email, password string) (map[string]uuid.UUID, error) {
+func (s *service) CreateMemberByEmail(ctx context.Context, email, password string) (map[string]uuid.UUID, error) {
 	if !isValidEmail(email) {
 		return nil, ErrSignUpWithEmail
 	}
@@ -69,7 +67,7 @@ func (s *Service) CreateMemberByEmail(ctx context.Context, email, password strin
 	return map[string]uuid.UUID{"verificationId": vid}, nil
 }
 
-func (s *Service) LoginWithEmail(email, password string) (*dto.LoginWithEmailResponse, string /*refreshToken*/, error) {
+func (s *service) LoginWithEmail(email, password string) (*dto.LoginWithEmailResponse, string /*refreshToken*/, error) {
 	var resp dto.LoginWithEmailResponse
 
 	emailVerified, phoneNumberVerified, id, dbPassword, role, err :=
@@ -121,7 +119,7 @@ func (s *Service) LoginWithEmail(email, password string) (*dto.LoginWithEmailRes
 	return &resp, rt, nil
 }
 
-func (s *Service) sendEmailOTP(email string) (uuid.UUID, error) {
+func (s *service) sendEmailOTP(email string) (uuid.UUID, error) {
 	otp := strconv.Itoa(rand.Intn(900000) + 100000)
 	vid, err := gocql.RandomUUID()
 	if err != nil {
@@ -135,24 +133,7 @@ func (s *Service) sendEmailOTP(email string) (uuid.UUID, error) {
 		return uuid.UUID{}, ErrInternalServer
 	}
 	go func() {
-		from := os.Getenv("FROM_EMAIL")
-		auth := smtp.PlainAuth(
-			"",
-			from,
-			os.Getenv("FROM_EMAIL_PASSWORD"),
-			os.Getenv("FROM_EMAIL_SMTP"),
-		)
-
-		headers := "MIME-version: 1.0;\nContent-Type: text/html; charset=\"UTF-8\";"
-		message := "Subject: Howwasread : Verify your email\n" + headers + "\n\n" + otp + "\ncode is valid for 5 minutes"
-
-		err = smtp.SendMail(
-			os.Getenv("SMTP_ADDR"),
-			auth,
-			from,
-			[]string{email},
-			[]byte(message),
-		)
+		err := s.smtpClient.SendOTP(email, otp)
 		if err != nil {
 			slog.Error("fail to send email OTP",
 				"err", err,
@@ -163,7 +144,7 @@ func (s *Service) sendEmailOTP(email string) (uuid.UUID, error) {
 	return uuid.UUID(vid), nil
 }
 
-func (s *Service) VerifyEmailOTP(otp string, verificationId uuid.UUID) (*dto.VerifyEmailOTPResponse, error) {
+func (s *service) VerifyEmailOTP(otp string, verificationId uuid.UUID) (*dto.VerifyEmailOTPResponse, error) {
 	email, dbOTP, err := s.repository.FindEmailAndOTPByVerificationId(gocql.UUID(verificationId))
 	if err != nil {
 		return nil, ErrVerifyEmailOTP
@@ -196,7 +177,7 @@ func (s *Service) VerifyEmailOTP(otp string, verificationId uuid.UUID) (*dto.Ver
 	return &resp, nil
 }
 
-func (s *Service) ForgetPassword(ctx context.Context, email string) (map[string]uuid.UUID, error) {
+func (s *service) ForgetPassword(ctx context.Context, email string) (map[string]uuid.UUID, error) {
 	e, err := s.repository.VerifiedEmailExists(ctx, email)
 	if err != nil {
 		return nil, err
@@ -211,7 +192,7 @@ func (s *Service) ForgetPassword(ctx context.Context, email string) (map[string]
 	return map[string]uuid.UUID{"verificationId": vid}, nil
 }
 
-func (s *Service) SetNewPassword(ctx context.Context, password string, sessionId uuid.UUID) error {
+func (s *service) SetNewPassword(ctx context.Context, password string, sessionId uuid.UUID) error {
 	email, err := s.repository.FindEmailBySessionId(gocql.UUID(sessionId))
 	if err != nil {
 		return err

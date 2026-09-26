@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) SetServerIP(ctx context.Context, memberId uuid.UUID, ip string) error {
+func (s *service) SetServerIP(ctx context.Context, memberId uuid.UUID, ip string) error {
 	err := s.repository.SetServerIP(ctx, string(memberId[:]), ip)
 	if err != nil {
 		return err
@@ -17,7 +17,7 @@ func (s *Service) SetServerIP(ctx context.Context, memberId uuid.UUID, ip string
 	return nil
 }
 
-func (s *Service) RemoveServerIP(ctx context.Context, memberId []byte, ip string) error {
+func (s *service) RemoveServerIP(ctx context.Context, memberId []byte, ip string) error {
 	err := s.repository.RemoveServerIP(ctx, string(memberId), ip)
 	if err != nil {
 		return err
@@ -25,7 +25,7 @@ func (s *Service) RemoveServerIP(ctx context.Context, memberId []byte, ip string
 	return nil
 }
 
-func (s *Service) CheckBlock(ctx context.Context, blockerId uuid.UUID, blockedId uuid.UUID) (map[string]bool, error) {
+func (s *service) CheckBlock(ctx context.Context, blockerId uuid.UUID, blockedId uuid.UUID) (map[string]bool, error) {
 	w, err := s.repository.DidBlock(ctx, gocql.UUID(blockerId), gocql.UUID(blockedId))
 	if err != nil {
 		return nil, err
@@ -33,7 +33,7 @@ func (s *Service) CheckBlock(ctx context.Context, blockerId uuid.UUID, blockedId
 	return map[string]bool{"didBlock": w}, nil
 }
 
-func (s *Service) GetChatParticipants(ctx context.Context, roomId uuid.UUID) ([]dto.GetProfileResponse, error) {
+func (s *service) GetChatParticipants(ctx context.Context, roomId uuid.UUID) ([]dto.GetProfileResponse, error) {
 	ps, err := s.repository.FindChatParticipantIds(ctx, gocql.UUID(roomId))
 	if err != nil {
 		return nil, err
@@ -48,7 +48,7 @@ func (s *Service) GetChatParticipants(ctx context.Context, roomId uuid.UUID) ([]
 	return res, nil
 }
 
-func (s *Service) ReportUser(ctx context.Context, reporterId, reportedId uuid.UUID) error {
+func (s *service) ReportUser(ctx context.Context, reporterId, reportedId uuid.UUID) error {
 	err := s.repository.AddReporterIdByReportedId(ctx, gocql.UUID(reporterId), gocql.UUID(reportedId))
 	if err != nil {
 		return err
@@ -75,7 +75,7 @@ func (s *Service) ReportUser(ctx context.Context, reporterId, reportedId uuid.UU
 	return nil
 }
 
-func (s *Service) BlockConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {
+func (s *service) BlockConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {
 	err := s.repository.AddBlockedConversation(ctx, gocql.UUID(memberId), gocql.UUID(conversationId))
 	if err != nil {
 		return err
@@ -83,7 +83,7 @@ func (s *Service) BlockConversation(ctx context.Context, memberId, conversationI
 	return nil
 }
 
-func (s *Service) GetBlockedConversations(ctx context.Context, memberId uuid.UUID) ([]dto.BlockReport, error) {
+func (s *service) GetBlockedConversations(ctx context.Context, memberId uuid.UUID) ([]dto.BlockReport, error) {
 	ids, err := s.repository.FindBlockedConversations(ctx, gocql.UUID(memberId))
 	if err != nil {
 		return nil, err

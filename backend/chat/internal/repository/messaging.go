@@ -8,7 +8,7 @@ import (
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
 )
 
-func (r *Repository) FindRecentMessagesByToId(ctx context.Context, id, cursor gocql.UUID) (result []projection.FindMessagesByToIdAndId, err error) {
+func (r *repository) FindRecentMessagesByToId(ctx context.Context, id, cursor gocql.UUID) (result []projection.FindMessagesByToIdAndId, err error) {
 	iter := r.session.Query(`SELECT id, room_id, from_id, content_type, contents FROM message_by_to_id 
                                                    WHERE to_id = ? AND id > ?`,
 		id, cursor).IterContext(ctx)
@@ -33,7 +33,7 @@ func (r *Repository) FindRecentMessagesByToId(ctx context.Context, id, cursor go
 	return result, err
 }
 
-func (r *Repository) SetFilepath(ctx context.Context, id string, filenames []string) error {
+func (r *repository) SetFilepath(ctx context.Context, id string, filenames []string) error {
 	result := r.client.Do(ctx, r.client.B().Sadd().Key(id).Member(filenames...).Build())
 	if result.Error() != nil {
 		slog.Error("fail to save member ip", "err", result.Error())
@@ -42,7 +42,7 @@ func (r *Repository) SetFilepath(ctx context.Context, id string, filenames []str
 	return nil
 }
 
-func (r *Repository) HasFilepath(ctx context.Context, id string, filenames []string) (bool, error) {
+func (r *repository) HasFilepath(ctx context.Context, id string, filenames []string) (bool, error) {
 	for _, f := range filenames {
 		result := r.client.Do(ctx, r.client.B().Sismember().Key(id).Member(f).Build())
 		if result.Error() != nil {
@@ -62,7 +62,7 @@ func (r *Repository) HasFilepath(ctx context.Context, id string, filenames []str
 	return true, nil
 }
 
-func (r *Repository) RemoveFilepath(ctx context.Context, id string, filenames []string) error {
+func (r *repository) RemoveFilepath(ctx context.Context, id string, filenames []string) error {
 	result := r.client.Do(ctx, r.client.B().Srem().Key(id).Member(filenames...).Build())
 	if result.Error() != nil {
 		slog.Error("fail to check file path", "err", result.Error())
@@ -71,7 +71,7 @@ func (r *Repository) RemoveFilepath(ctx context.Context, id string, filenames []
 	return nil
 }
 
-func (r *Repository) FindIdsByFilename(ctx context.Context, filename gocql.UUID) (ids []gocql.UUID, err error) {
+func (r *repository) FindIdsByFilename(ctx context.Context, filename gocql.UUID) (ids []gocql.UUID, err error) {
 	err = r.session.Query("SELECT ids FROM ids_by_filename WHERE filename = ?", filename).ScanContext(ctx, &ids)
 	if err != nil {
 		slog.Error("fail to find ids by filename",

@@ -1,7 +1,6 @@
-package producer
+package common
 
 import (
-	"backend/common"
 	"log"
 	"log/slog"
 	"os"
@@ -11,11 +10,16 @@ import (
 	"github.com/google/uuid"
 )
 
-type Producer struct {
+type Producer interface {
+	PushMessage(topic string, key, value []byte, headers []sarama.RecordHeader)
+	Close() error
+}
+
+type producer struct {
 	asyncProducer sarama.AsyncProducer
 }
 
-func NewProducer(clientIdPrefix string) *Producer {
+func NewProducer(clientIdPrefix string) Producer {
 	asyncProducer, err := createProducer(clientIdPrefix)
 	if err != nil {
 		slog.Error("fail to create producer",
@@ -24,7 +28,7 @@ func NewProducer(clientIdPrefix string) *Producer {
 		panic(err)
 	}
 	log.Print("success to create kafka producer")
-	kp := Producer{asyncProducer}
+	kp := producer{asyncProducer}
 
 	go kp.drainErrorChannel()
 
@@ -39,7 +43,7 @@ func createProducer(clientIdPrefix string) (sarama.AsyncProducer, error) {
 		return nil, err
 	}
 
-	tlsConfig, err1 := common.CreateTlSConfig(os.Getenv("KAFKA_USER_CERT_PATH"), os.Getenv("KAFKA_USER_KEY_PATH"), os.Getenv("KAFKA_CA_CERT_PATH"))
+	tlsConfig, err1 := CreateTlSConfig(os.Getenv("KAFKA_USER_CERT_PATH"), os.Getenv("KAFKA_USER_KEY_PATH"), os.Getenv("KAFKA_CA_CERT_PATH"))
 	if err1 != nil {
 		return nil, err1
 	}
@@ -70,7 +74,7 @@ func createProducer(clientIdPrefix string) (sarama.AsyncProducer, error) {
 	return sarama.NewAsyncProducer([]string{os.Getenv("KAFKA_ADDRESS")}, cfg)
 }
 
-func (p *Producer) PushMessage(topic string, key, value []byte, headers []sarama.RecordHeader) {
+func (p *producer) PushMessage(topic string, key, value []byte, headers []sarama.RecordHeader) {
 	msg := sarama.ProducerMessage{
 		Topic:   topic,
 		Headers: headers,
@@ -83,11 +87,11 @@ func (p *Producer) PushMessage(topic string, key, value []byte, headers []sarama
 	p.asyncProducer.Input() <- &msg
 }
 
-func (p *Producer) Close() error {
+func (p *producer) Close() error {
 	return p.asyncProducer.Close()
 }
 
-func (p *Producer) drainErrorChannel() {
+func (p *producer) drainErrorChannel() {
 	for err := range p.asyncProducer.Errors() {
 		log.Print(
 			"Failed to produce payload",

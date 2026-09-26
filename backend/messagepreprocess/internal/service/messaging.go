@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) ManageMessage(ctx context.Context, id, fromId uuid.UUID, toIdType string, toId uuid.UUID, contentType string, contents []string) error {
+func (s *service) ManageMessage(ctx context.Context, id, fromId uuid.UUID, toIdType string, toId uuid.UUID, contentType string, contents []string) error {
 	var toIds [][]byte
 	roomId := toId
 	if toIdType == "personal" {
@@ -86,6 +86,7 @@ func (s *Service) ManageMessage(ctx context.Context, id, fromId uuid.UUID, toIdT
 					em.Lock()
 					es = append(es, err)
 					em.Unlock()
+					return
 				}
 				var castedIds []gocql.UUID
 				for _, tid := range toIds {

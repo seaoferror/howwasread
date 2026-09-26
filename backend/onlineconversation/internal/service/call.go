@@ -14,7 +14,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) GenerateTurn() *dto.GetTurnResponse {
+func (s *service) GenerateTurn() *dto.GetTurnResponse {
 	res := &dto.GetTurnResponse{
 		Uris: []string{
 			fmt.Sprintf("turn:%s:3478?transport=udp", s.turnRealm),
@@ -28,7 +28,7 @@ func (s *Service) GenerateTurn() *dto.GetTurnResponse {
 	return res
 }
 
-func (s *Service) GetParticipantsWithoutMe(ctx context.Context, conversationId string, memberId uuid.UUID) ([]uuid.UUID, error) {
+func (s *service) GetParticipantsWithoutMe(ctx context.Context, conversationId string, memberId uuid.UUID) ([]uuid.UUID, error) {
 	pidRaws, err := s.repository.FindParticipantIds(ctx, conversationId)
 	if err != nil {
 		return nil, err
@@ -50,7 +50,7 @@ func (s *Service) GetParticipantsWithoutMe(ctx context.Context, conversationId s
 	return pids, nil
 }
 
-func (s *Service) AddParticipant(ctx context.Context, conversationId string, memberId uuid.UUID) error {
+func (s *service) AddParticipant(ctx context.Context, conversationId string, memberId uuid.UUID) error {
 	err := s.repository.AddParticipantId(ctx, conversationId, memberId)
 	if err != nil {
 		return err
@@ -58,7 +58,7 @@ func (s *Service) AddParticipant(ctx context.Context, conversationId string, mem
 	return nil
 }
 
-func (s *Service) RemoveParticipant(ctx context.Context, conversationId string, memberId uuid.UUID) error {
+func (s *service) RemoveParticipant(ctx context.Context, conversationId string, memberId uuid.UUID) error {
 	err := s.repository.RemoveParticipantId(ctx, conversationId, memberId)
 	if err != nil {
 		return err
@@ -66,7 +66,7 @@ func (s *Service) RemoveParticipant(ctx context.Context, conversationId string, 
 	return nil
 }
 
-func (s *Service) SetServerIP(ctx context.Context, memberId uuid.UUID, ip string) error {
+func (s *service) SetServerIP(ctx context.Context, memberId uuid.UUID, ip string) error {
 	err := s.repository.SetServerIP(ctx, string(memberId[:]), ip)
 	if err != nil {
 		return err
@@ -74,7 +74,7 @@ func (s *Service) SetServerIP(ctx context.Context, memberId uuid.UUID, ip string
 	return nil
 }
 
-func (s *Service) RemoveServerIP(ctx context.Context, memberId uuid.UUID) error {
+func (s *service) RemoveServerIP(ctx context.Context, memberId uuid.UUID) error {
 	err := s.repository.RemoveServerIP(ctx, string(memberId[:]))
 	if err != nil {
 		return err
@@ -82,7 +82,7 @@ func (s *Service) RemoveServerIP(ctx context.Context, memberId uuid.UUID) error 
 	return nil
 }
 
-func (s *Service) PublishConversationSignal(fromId uuid.UUID, toIds [][]byte, signal []byte) error {
+func (s *service) PublishConversationSignal(fromId uuid.UUID, toIds [][]byte, signal []byte) error {
 	value := payload.Marshal(payload.OnlineConversationSignal{
 		FromId: fromId[:],
 		ToIds:  toIds,

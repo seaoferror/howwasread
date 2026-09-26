@@ -9,7 +9,7 @@ import (
 	"github.com/apache/cassandra-gocql-driver/v2"
 )
 
-func (r *Repository) SaveEmailLoginInfo(id gocql.UUID, email, password string) error {
+func (r *repository) SaveEmailLoginInfo(id gocql.UUID, email, password string) error {
 	err := r.session.Batch(gocql.LoggedBatch).
 		Query(
 			`INSERT INTO member_by_email (
@@ -32,7 +32,7 @@ func (r *Repository) SaveEmailLoginInfo(id gocql.UUID, email, password string) e
 	return nil
 }
 
-func (r *Repository) VerifiedEmailExists(ctx context.Context, email string) (bool, error) {
+func (r *repository) VerifiedEmailExists(ctx context.Context, email string) (bool, error) {
 	var emailVerified bool
 	err := r.session.Query(
 		`SELECT email_verified FROM member_by_email WHERE email = ?`,
@@ -51,7 +51,7 @@ func (r *Repository) VerifiedEmailExists(ctx context.Context, email string) (boo
 	return emailVerified, nil
 }
 
-func (r *Repository) FindLoginInfoByEmail(email string) (emailVerified, phoneNumberVerified bool, id gocql.UUID, password, role string, err error) {
+func (r *repository) FindLoginInfoByEmail(email string) (emailVerified, phoneNumberVerified bool, id gocql.UUID, password, role string, err error) {
 	err = r.session.Query(
 		`SELECT email_verified, phone_number_verified, id, password, role FROM member_by_email WHERE email = ?`,
 		email,
@@ -66,7 +66,7 @@ func (r *Repository) FindLoginInfoByEmail(email string) (emailVerified, phoneNum
 	return emailVerified, phoneNumberVerified, id, password, role, nil
 }
 
-func (r *Repository) SaveEmailAndOtpByVerificationId(verificationId gocql.UUID, email, otp string) error {
+func (r *repository) SaveEmailAndOtpByVerificationId(verificationId gocql.UUID, email, otp string) error {
 	err := r.session.Query(
 		"INSERT INTO member_by_verification_id (verification_id, email, otp) VALUES (?, ?, ?) USING TTL ?",
 		verificationId, email, otp, constant.AuthIdTTL,
@@ -80,7 +80,7 @@ func (r *Repository) SaveEmailAndOtpByVerificationId(verificationId gocql.UUID, 
 	return nil
 }
 
-func (r *Repository) FindEmailAndOTPByVerificationId(verificationId gocql.UUID) (email string, otp string, err error) {
+func (r *repository) FindEmailAndOTPByVerificationId(verificationId gocql.UUID) (email string, otp string, err error) {
 	err = r.session.Query(
 		"SELECT email, otp FROM member_by_verification_id WHERE verification_id = ?",
 		verificationId,
@@ -95,7 +95,7 @@ func (r *Repository) FindEmailAndOTPByVerificationId(verificationId gocql.UUID) 
 	return email, otp, nil
 }
 
-func (r *Repository) MarkEmailVerified(email string) error {
+func (r *repository) MarkEmailVerified(email string) error {
 	var id gocql.UUID
 	err := r.session.Query(
 		"SELECT id FROM member_by_email WHERE email = ?",
@@ -135,7 +135,7 @@ func (r *Repository) MarkEmailVerified(email string) error {
 	return nil
 }
 
-func (r *Repository) SaveEmailBySessionId(sessionId gocql.UUID, email string) error {
+func (r *repository) SaveEmailBySessionId(sessionId gocql.UUID, email string) error {
 	err := r.session.Query(
 		"INSERT INTO member_by_session_id (session_id, email) VALUES (?, ?) USING TTL ?",
 		sessionId, email, constant.AuthIdTTL,
@@ -151,7 +151,7 @@ func (r *Repository) SaveEmailBySessionId(sessionId gocql.UUID, email string) er
 	return nil
 }
 
-func (r *Repository) FindEmailBySessionId(sessionId gocql.UUID) (email string, err error) {
+func (r *repository) FindEmailBySessionId(sessionId gocql.UUID) (email string, err error) {
 	err = r.session.Query(
 		"SELECT email FROM member_by_session_id WHERE session_id = ?",
 		sessionId,
@@ -165,7 +165,7 @@ func (r *Repository) FindEmailBySessionId(sessionId gocql.UUID) (email string, e
 	return email, nil
 }
 
-func (r *Repository) UpdatePasswordByEmail(ctx context.Context, password string, email string) error {
+func (r *repository) UpdatePasswordByEmail(ctx context.Context, password string, email string) error {
 	err := r.session.Query(`UPDATE member_by_email SET password = ? WHERE email = ?`, password, email).ExecContext(ctx)
 	if err != nil {
 		slog.Error("fail to update password by email",

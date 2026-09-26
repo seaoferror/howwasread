@@ -8,7 +8,7 @@ import (
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
 )
 
-func (r *Repository) FindParticipantIds(ctx context.Context, roomId gocql.UUID) (participantIds []gocql.UUID, err error) {
+func (r *repository) FindParticipantIds(ctx context.Context, roomId gocql.UUID) (participantIds []gocql.UUID, err error) {
 	err = r.session.Query(`SELECT participant_ids FROM chat_room_by_id WHERE id = ?`,
 		roomId).ScanContext(ctx, &participantIds)
 	if err != nil {
@@ -18,7 +18,7 @@ func (r *Repository) FindParticipantIds(ctx context.Context, roomId gocql.UUID) 
 	return participantIds, nil
 }
 
-func (r *Repository) SaveIdsByFileName(ctx context.Context, ids []gocql.UUID, filename gocql.UUID) error {
+func (r *repository) SaveIdsByFileName(ctx context.Context, ids []gocql.UUID, filename gocql.UUID) error {
 	err := r.session.Query(`INSERT INTO ids_by_filename (ids, filename) VALUES (?, ?)`,
 		ids, filename).ExecContext(ctx)
 	if err != nil {
@@ -28,7 +28,7 @@ func (r *Repository) SaveIdsByFileName(ctx context.Context, ids []gocql.UUID, fi
 	return nil
 }
 
-func (r *Repository) CreateChatRoom(ctx context.Context, roomId gocql.UUID, memberId gocql.UUID, roomName string) error {
+func (r *repository) CreateChatRoom(ctx context.Context, roomId gocql.UUID, memberId gocql.UUID, roomName string) error {
 	err := r.session.Query(`INSERT INTO chat_room_by_id (id, name, room_type, participant_ids) VALUES (?, ?, ?, ?)`,
 		roomId, roomName, "group", []gocql.UUID{memberId}).ExecContext(ctx)
 	if err != nil {
@@ -40,7 +40,7 @@ func (r *Repository) CreateChatRoom(ctx context.Context, roomId gocql.UUID, memb
 	return nil
 }
 
-func (r *Repository) AddParticipantId(ctx context.Context, roomId gocql.UUID, participantId gocql.UUID) error {
+func (r *repository) AddParticipantId(ctx context.Context, roomId gocql.UUID, participantId gocql.UUID) error {
 	err := r.session.Query(`UPDATE chat_room_by_id SET participant_ids = participant_ids + ? WHERE id = ?`,
 		[]gocql.UUID{participantId}, roomId).ExecContext(ctx)
 	if err != nil {
@@ -52,7 +52,7 @@ func (r *Repository) AddParticipantId(ctx context.Context, roomId gocql.UUID, pa
 	return nil
 }
 
-func (r *Repository) RemoveParticipantId(ctx context.Context, roomId gocql.UUID, participantId gocql.UUID) error {
+func (r *repository) RemoveParticipantId(ctx context.Context, roomId gocql.UUID, participantId gocql.UUID) error {
 	err := r.session.Query(
 		`UPDATE chat_room_by_id SET participant_ids = participant_ids - ? WHERE id = ?`,
 		[]gocql.UUID{participantId}, roomId).
@@ -66,7 +66,7 @@ func (r *Repository) RemoveParticipantId(ctx context.Context, roomId gocql.UUID,
 	return nil
 }
 
-func (r *Repository) IsBlocked(ctx context.Context, blockerId gocql.UUID, blockedId gocql.UUID) (bool, error) {
+func (r *repository) IsBlocked(ctx context.Context, blockerId gocql.UUID, blockedId gocql.UUID) (bool, error) {
 	var a gocql.UUID
 	err := r.session.Query(
 		`SELECT blocked_id FROM block WHERE blocker_id = ? AND blocked_id = ?`, blockerId, blockedId,
@@ -83,7 +83,7 @@ func (r *Repository) IsBlocked(ctx context.Context, blockerId gocql.UUID, blocke
 	return true, nil
 }
 
-func (r *Repository) AddBlock(ctx context.Context, blockerId gocql.UUID, blockedId gocql.UUID) error {
+func (r *repository) AddBlock(ctx context.Context, blockerId gocql.UUID, blockedId gocql.UUID) error {
 	err := r.session.Query(
 		`INSERT INTO block (blocker_id, blocked_id) VALUES (?, ?)`,
 		blockerId, blockedId).ExecContext(ctx)
@@ -96,7 +96,7 @@ func (r *Repository) AddBlock(ctx context.Context, blockerId gocql.UUID, blocked
 	return nil
 }
 
-func (r *Repository) RemoveBlock(ctx context.Context, blockerId gocql.UUID, blockedId gocql.UUID) error {
+func (r *repository) RemoveBlock(ctx context.Context, blockerId gocql.UUID, blockedId gocql.UUID) error {
 	err := r.session.Query(
 		`DELETE FROM block WHERE blocker_id = ? AND blocked_id = ?`,
 		blockerId, blockedId).ExecContext(ctx)

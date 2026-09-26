@@ -2,21 +2,51 @@ package repository
 
 import (
 	"backend/common"
+	"context"
 	"log"
 	"log/slog"
 	"os"
 	"time"
 
-	"github.com/apache/cassandra-gocql-driver/v2"
+	gocql "github.com/apache/cassandra-gocql-driver/v2"
 	"github.com/apache/cassandra-gocql-driver/v2/lz4"
 	_ "github.com/joho/godotenv/autoload"
 )
 
-type Repository struct {
+type Repository interface {
+	SaveEmailLoginInfo(id gocql.UUID, email, password string) error
+	VerifiedEmailExists(ctx context.Context, email string) (bool, error)
+	FindLoginInfoByEmail(email string) (emailVerified, phoneNumberVerified bool, id gocql.UUID, password, role string, err error)
+	SaveEmailAndOtpByVerificationId(verificationId gocql.UUID, email, otp string) error
+	FindEmailAndOTPByVerificationId(verificationId gocql.UUID) (email string, otp string, err error)
+	MarkEmailVerified(email string) error
+	SaveEmailBySessionId(sessionId gocql.UUID, email string) error
+	FindEmailBySessionId(sessionId gocql.UUID) (email string, err error)
+	UpdatePasswordByEmail(ctx context.Context, password string, email string) error
+	FindRefreshTokenJTIsById(id gocql.UUID) (jtis []gocql.UUID, err error)
+	SaveRefreshTokenJTIById(id, jti gocql.UUID) error
+	RemoveRefreshTokenJTIById(id, jti gocql.UUID) error
+	FindEmailAndPhoneNumberById(ctx context.Context, id gocql.UUID) (email, phoneNumber string, err error)
+	DeleteAccount(ctx context.Context, id gocql.UUID, email, phoneNumber string) error
+	SaveProfileId(id gocql.UUID) error
+	SavePhoneNumberByVerificationId(verificationId gocql.UUID, phoneNumber string) error
+	FindPhoneNumberByVerificationId(verificationId gocql.UUID) (phoneNumber string, err error)
+	SavePhoneNumberLoginInfo(phoneNumber string, id gocql.UUID) error
+	LinkAndMarkVerifiedPhoneNumber(id gocql.UUID, email, phoneNumber, role string) error
+	FindIdByPhoneNumber(phoneNumber string) (id gocql.UUID, err error)
+	FindEmailByPhoneNumber(phoneNumber string) (email string, err error)
+	ReplaceAndLinkMemberWithOldAccount(newId, oldAccountId gocql.UUID, email, phoneNumber string) error
+	WasBanned(phoneNumber string) error
+	CheckNonce(nonce string) (bool, error)
+	SaveNonce(nonce string) error
+	SaveThirdPartySignInInfo(ctx context.Context, id gocql.UUID, email string, phoneNumberVerified, emailVerified bool) error
+}
+
+type repository struct {
 	session *gocql.Session
 }
 
-func NewRepository() *Repository {
+func NewRepository() Repository {
 	k8ssandraHost := os.Getenv("K8SSANDRA_HOST")
 	cluster := gocql.NewCluster(k8ssandraHost)
 	cluster.Port = 9042
@@ -76,7 +106,7 @@ func NewRepository() *Repository {
 		}
 	}
 	log.Print("success to connect cassandra")
-	r := &Repository{
+	r := &repository{
 		session: session,
 	}
 

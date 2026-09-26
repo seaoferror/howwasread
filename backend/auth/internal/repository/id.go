@@ -8,7 +8,7 @@ import (
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
 )
 
-func (r *Repository) FindRefreshTokenJTIsById(id gocql.UUID) (jtis []gocql.UUID, err error) {
+func (r *repository) FindRefreshTokenJTIsById(id gocql.UUID) (jtis []gocql.UUID, err error) {
 	err = r.session.Query(
 		"SELECT refresh_token_jtis FROM member_by_id WHERE id = ?",
 		id,
@@ -22,7 +22,7 @@ func (r *Repository) FindRefreshTokenJTIsById(id gocql.UUID) (jtis []gocql.UUID,
 	return jtis, nil
 }
 
-func (r *Repository) SaveRefreshTokenJTIById(id, jti gocql.UUID) error {
+func (r *repository) SaveRefreshTokenJTIById(id, jti gocql.UUID) error {
 	err := r.session.Query(
 		"UPDATE member_by_id USING TTL ? SET refresh_token_jtis += ? WHERE id = ?",
 		constant.RefreshTokenTTL, []gocql.UUID{jti}, id,
@@ -36,7 +36,7 @@ func (r *Repository) SaveRefreshTokenJTIById(id, jti gocql.UUID) error {
 	return nil
 }
 
-func (r *Repository) RemoveRefreshTokenJTIById(id, jti gocql.UUID) error {
+func (r *repository) RemoveRefreshTokenJTIById(id, jti gocql.UUID) error {
 	err := r.session.Query(
 		"UPDATE member_by_id SET refresh_token_jtis -= ? WHERE id = ?",
 		[]gocql.UUID{jti}, id,
@@ -50,7 +50,7 @@ func (r *Repository) RemoveRefreshTokenJTIById(id, jti gocql.UUID) error {
 	return nil
 }
 
-func (r *Repository) FindEmailAndPhoneNumberById(ctx context.Context, id gocql.UUID) (email, phoneNumber string, err error) {
+func (r *repository) FindEmailAndPhoneNumberById(ctx context.Context, id gocql.UUID) (email, phoneNumber string, err error) {
 	err = r.session.Query("SELECT email, phone_number FROM member_by_id WHERE id = ?", id).
 		ScanContext(ctx, &email, &phoneNumber)
 	if err != nil {
@@ -62,7 +62,7 @@ func (r *Repository) FindEmailAndPhoneNumberById(ctx context.Context, id gocql.U
 	return email, phoneNumber, nil
 }
 
-func (r *Repository) DeleteAccount(ctx context.Context, id gocql.UUID, email, phoneNumber string) error {
+func (r *repository) DeleteAccount(ctx context.Context, id gocql.UUID, email, phoneNumber string) error {
 	batch := r.session.Batch(gocql.LoggedBatch)
 	batch.Query("DELETE FROM member_by_id WHERE id = ?", id)
 	batch.Query("DELETE FROM profile_by_id WHERE id = ?", id)

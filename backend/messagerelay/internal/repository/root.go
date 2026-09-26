@@ -2,17 +2,23 @@ package repository
 
 import (
 	"backend/common"
+	"context"
 	"log"
 	"os"
 
 	"github.com/valkey-io/valkey-go"
 )
 
-type Repository struct {
+type Repository interface {
+	GetServerIPs(ctx context.Context, id string) ([]string, error)
+	RemoveServerIP(ctx context.Context, memberId, ip string) error
+}
+
+type repository struct {
 	client valkey.Client
 }
 
-func NewRepository() *Repository {
+func NewRepository() Repository {
 	clientOption := valkey.ClientOption{
 		InitAddress: []string{os.Getenv("VALKEY_ADDRESS")},
 	}
@@ -31,7 +37,7 @@ func NewRepository() *Repository {
 		log.Panicf("Fail to connect to redis: %v", err)
 	}
 
-	r := Repository{
+	r := repository{
 		client: client,
 	}
 

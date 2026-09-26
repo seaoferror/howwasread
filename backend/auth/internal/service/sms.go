@@ -5,16 +5,14 @@ import (
 	"backend/auth/internal/dto"
 	"errors"
 	"log/slog"
-	"os"
 
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
 	"github.com/google/uuid"
-	verify "github.com/twilio/twilio-go/rest/verify/v2"
 
 	_ "github.com/joho/godotenv/autoload"
 )
 
-func (s *Service) SendSMSOTP(sessionId uuid.UUID, phoneNumber string) (map[string]uuid.UUID, error) {
+func (s *service) SendSMSOTP(sessionId uuid.UUID, phoneNumber string) (map[string]uuid.UUID, error) {
 	err := s.repository.WasBanned(phoneNumber)
 	if err == nil {
 		return nil, errors.New("this phone number is not usable")
@@ -39,13 +37,7 @@ func (s *Service) SendSMSOTP(sessionId uuid.UUID, phoneNumber string) (map[strin
 		}
 	}
 
-	serviceSid := os.Getenv("TWILIO_SERVICE_SID")
-
-	params := &verify.CreateVerificationParams{}
-	params.SetTo(phoneNumber)
-	params.SetChannel("sms")
-
-	resp, err := s.twilioClient.VerifyV2.CreateVerification(serviceSid, params)
+	to, err := s.smsClient.SendOTP(phoneNumber)
 	if err != nil {
 		slog.Info("fail to send sms otp code",
 			"err", err,
@@ -53,18 +45,12 @@ func (s *Service) SendSMSOTP(sessionId uuid.UUID, phoneNumber string) (map[strin
 		)
 		return nil, ErrSendSMSOTP
 	}
-	if resp.Status != nil {
-		slog.Info("success to send sms otp code",
-			"phoneNumber", resp.To,
-			"status", *resp.Status,
-		)
-	}
 	vid, err := gocql.RandomUUID()
 	if err != nil {
 		slog.Error("fail to make random uuid for verification id")
 		return nil, ErrInternalServer
 	}
-	err = s.repository.SavePhoneNumberByVerificationId(vid, *resp.To)
+	err = s.repository.SavePhoneNumberByVerificationId(vid, to)
 	if err != nil {
 		return nil, ErrInternalServer
 	}
@@ -72,7 +58,7 @@ func (s *Service) SendSMSOTP(sessionId uuid.UUID, phoneNumber string) (map[strin
 	return res, nil
 }
 
-func (s *Service) VerifySMSOTP(sessionId uuid.UUID, verificationId uuid.UUID, otp string) (*dto.VerifySMSOTPResponse, string, error) {
+func (s *service) VerifySMSOTP(sessionId uuid.UUID, verificationId uuid.UUID, otp string) (*dto.VerifySMSOTPResponse, string, error) {
 	var email string
 	var err error
 	if sessionId != uuid.Nil {
@@ -98,28 +84,15 @@ func (s *Service) VerifySMSOTP(sessionId uuid.UUID, verificationId uuid.UUID, ot
 		}
 	}
 
-	params := &verify.CreateVerificationCheckParams{}
-	params.SetTo(phoneNumber)
-	params.SetCode(otp)
-
-	serviceSid := os.Getenv("TWILIO_SERVICE_SID")
-
-	resp, err := s.twilioClient.VerifyV2.CreateVerificationCheck(serviceSid, params)
+	approved, err := s.smsClient.CheckOTP(phoneNumber, otp)
 	if err != nil {
 		slog.Error("fail to verify phone number otp",
 			"err", err,
 		)
 		return nil, "", ErrVerifySMSOTP
 	}
-	if resp.Status == nil {
-		slog.Error("status is nil pointer")
-		return nil, "", ErrVerifySMSOTP
-	}
-	if *resp.Status != "approved" {
-		slog.Info("otp is not correct",
-			"otp", otp,
-			"status", *resp.Status,
-		)
+	if !approved {
+		slog.Info("otp is not correct", "otp", otp)
 		return nil, "", ErrVerifySMSOTP
 	}
 

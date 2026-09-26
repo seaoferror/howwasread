@@ -13,7 +13,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) SignInWithApple(ctx context.Context, identityToken string) (*dto.SignInWithThirdPartyResponse, string, error) {
+func (s *service) SignInWithApple(ctx context.Context, identityToken string) (*dto.SignInWithThirdPartyResponse, string, error) {
 	idt, err := jwt.Parse(identityToken, s.appleKeyFunc)
 	if err != nil {
 		slog.Info("fail to parse identityToken with apple JWKs", "err", err)

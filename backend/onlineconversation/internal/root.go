@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"backend/common/producer"
+	"backend/common"
 	pb "backend/common/proto"
 	"backend/onlineconversation/internal/controller"
 	"backend/onlineconversation/internal/grpccontroller"
@@ -22,7 +22,7 @@ func NewServer() {
 	}))
 	slog.SetDefault(logger)
 
-	kp := producer.NewProducer("producer_online_conversation")
+	kp := common.NewProducer("producer_online_conversation")
 
 	r := repository.NewRepository()
 

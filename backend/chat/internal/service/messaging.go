@@ -5,18 +5,14 @@ import (
 	"backend/common/payload"
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"slices"
-	"time"
 
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
 )
 
-func (s *Service) GetRecentMessages(ctx context.Context, id, cursor uuid.UUID) (res []dto.MessagingResponse, err error) {
+func (s *service) GetRecentMessages(ctx context.Context, id, cursor uuid.UUID) (res []dto.MessagingResponse, err error) {
 	result, err := s.repository.FindRecentMessagesByToId(ctx, gocql.UUID(id), gocql.UUID(cursor))
 	if err != nil {
 		return nil, err
@@ -37,7 +33,7 @@ func (s *Service) GetRecentMessages(ctx context.Context, id, cursor uuid.UUID) (
 	return res, nil
 }
 
-func (s *Service) PublishMessaging(ctx context.Context, fromId uuid.UUID, toIdType string, toId uuid.UUID, contentType string, contents []string) (map[string]uuid.UUID, error) {
+func (s *service) PublishMessaging(ctx context.Context, fromId uuid.UUID, toIdType string, toId uuid.UUID, contentType string, contents []string) (map[string]uuid.UUID, error) {
 	id, err := uuid.NewV7()
 	if err != nil {
 		return nil, err
@@ -67,7 +63,7 @@ func (s *Service) PublishMessaging(ctx context.Context, fromId uuid.UUID, toIdTy
 	return map[string]uuid.UUID{"id": id}, nil
 }
 
-func (s *Service) GeneratePresignedURL(ctx context.Context, id uuid.UUID, contentType string, n int) (res []dto.GeneratePresignedURLResponse, err error) {
+func (s *service) GeneratePresignedURL(ctx context.Context, id uuid.UUID, contentType string, n int) (res []dto.GeneratePresignedURLResponse, err error) {
 	var filenames []string
 	for range n {
 		filename, err1 := uuid.NewV7()
@@ -84,27 +80,18 @@ func (s *Service) GeneratePresignedURL(ctx context.Context, id uuid.UUID, conten
 		return nil, err
 	}
 	for i := range n {
-		p, err1 := s.presignClient.PresignPostObject(ctx, &s3.PutObjectInput{
-			Bucket: aws.String(s.bucketName),
-			Key:    aws.String(fmt.Sprintf("%s/%s", contentType, filenames[i])),
-		}, func(opts *s3.PresignPostOptions) {
-			opts.Expires = 1 * time.Hour
-			opts.Conditions = []any{
-				[]any{"content-length-range", 1, 1024 * 1024 * 1024},
-				[]any{"starts-with", "$Content-Type", contentType},
-			}
-		})
+		url, fields, err1 := s.storageClient.PresignUpload(ctx, contentType, filenames[i])
 		if err1 != nil {
 			slog.Error("fail to generate presigned URL", "err", err1)
 			return nil, err1
 		}
-		res[i].URL = p.URL
-		res[i].Fields = p.Values
+		res[i].URL = url
+		res[i].Fields = fields
 	}
 	return res, nil
 }
 
-func (s *Service) GenerateSignedURL(ctx context.Context, memberId uuid.UUID, contentType string, filename uuid.UUID) (map[string]string, error) {
+func (s *service) GenerateSignedURL(ctx context.Context, memberId uuid.UUID, contentType string, filename uuid.UUID) (map[string]string, error) {
 	ids, err := s.repository.FindIdsByFilename(ctx, gocql.UUID(filename))
 	if err != nil {
 		return nil, err
@@ -113,13 +100,8 @@ func (s *Service) GenerateSignedURL(ctx context.Context, memberId uuid.UUID, con
 		slog.Warn("this member id don't have authority to see file")
 		return nil, errors.New("unauthorized request")
 	}
-	signedURL, err := s.signer.Sign(
-		fmt.Sprintf("%s/%s/%s",
-			s.cloudfrontURL, contentType, filename),
-		time.Now().Add(1*time.Hour))
+	signedURL, err := s.cdnClient.SignedURL(contentType, filename.String())
 	if err != nil {
-		slog.Error("fail to generate signed URL",
-			"err", err)
 		return nil, err
 	}
 	slog.Info("success to sign url", "signedURL", signedURL)

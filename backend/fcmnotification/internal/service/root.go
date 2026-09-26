@@ -1,34 +1,26 @@
 package service
 
 import (
-	"backend/common/producer"
+	"backend/common"
+	"backend/fcmnotification/internal/client"
 	"backend/fcmnotification/internal/repository"
 	"context"
 
-	firebase "firebase.google.com/go/v4"
-	"firebase.google.com/go/v4/messaging"
-	"google.golang.org/api/option"
+	"github.com/google/uuid"
 )
 
-type Service struct {
-	producer   *producer.Producer
-	repository *repository.Repository
-	fcmClient  *messaging.Client
+type Service interface {
+	SendNotification(ctx context.Context, messageId uuid.UUID, notificationId uint8, value []byte)
 }
 
-func NewService(r *repository.Repository, p *producer.Producer) *Service {
-	opt := option.WithCredentialsFile("cert/firebase/firebase-adminsdk.json")
-	app, err := firebase.NewApp(context.Background(), nil, opt)
-	if err != nil {
-		panic(err)
-	}
+type service struct {
+	producer   common.Producer
+	repository repository.Repository
+	fcmClient  client.FCMClient
+}
 
-	fcmClient, err := app.Messaging(context.Background())
-	if err != nil {
-		panic(err)
-	}
-
-	s := Service{
+func NewService(r repository.Repository, p common.Producer, fcmClient client.FCMClient) Service {
+	s := service{
 		producer:   p,
 		repository: r,
 		fcmClient:  fcmClient,

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"backend/common"
+	"context"
 	"log"
 	"os"
 
@@ -9,11 +10,16 @@ import (
 	"github.com/valkey-io/valkey-go"
 )
 
-type Repository struct {
+type Repository interface {
+	GetServerIP(ctx context.Context, id string) (string, error)
+	RemoveServerIP(ctx context.Context, memberId string) error
+}
+
+type repository struct {
 	client valkey.Client
 }
 
-func NewRepository() *Repository {
+func NewRepository() Repository {
 	clientOption := valkey.ClientOption{
 		InitAddress: []string{os.Getenv("VALKEY_ADDRESS")},
 	}
@@ -33,7 +39,7 @@ func NewRepository() *Repository {
 	}
 	log.Print("success to connect valkey")
 
-	r := Repository{client: client}
+	r := repository{client: client}
 
 	return &r
 }

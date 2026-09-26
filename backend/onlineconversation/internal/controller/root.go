@@ -22,14 +22,14 @@ const (
 )
 
 type Controller struct {
-	service *service.Service
+	service service.Service
 	mux     *http.ServeMux
 	conns   map[uuid.UUID]*websocket.Conn
 	csMutex *sync.RWMutex
 	podIP   string
 }
 
-func NewController(s *service.Service, m *http.ServeMux) *Controller {
+func NewController(s service.Service, m *http.ServeMux) *Controller {
 
 	c := &Controller{
 		service: s,

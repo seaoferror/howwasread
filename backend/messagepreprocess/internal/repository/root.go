@@ -2,6 +2,7 @@ package repository
 
 import (
 	"backend/common"
+	"context"
 	"log"
 	"os"
 	"time"
@@ -12,12 +13,23 @@ import (
 	"github.com/valkey-io/valkey-go"
 )
 
-type Repository struct {
+type Repository interface {
+	FindParticipantIds(ctx context.Context, roomId gocql.UUID) ([]gocql.UUID, error)
+	SaveIdsByFileName(ctx context.Context, ids []gocql.UUID, filename gocql.UUID) error
+	CreateChatRoom(ctx context.Context, roomId gocql.UUID, memberId gocql.UUID, roomName string) error
+	AddParticipantId(ctx context.Context, roomId gocql.UUID, participantId gocql.UUID) error
+	RemoveParticipantId(ctx context.Context, roomId gocql.UUID, participantId gocql.UUID) error
+	IsBlocked(ctx context.Context, blockerId gocql.UUID, blockedId gocql.UUID) (bool, error)
+	AddBlock(ctx context.Context, blockerId gocql.UUID, blockedId gocql.UUID) error
+	RemoveBlock(ctx context.Context, blockerId gocql.UUID, blockedId gocql.UUID) error
+}
+
+type repository struct {
 	client  valkey.Client
 	session *gocql.Session
 }
 
-func NewRepository() *Repository {
+func NewRepository() Repository {
 	k8ssandraHost := os.Getenv("K8SSANDRA_HOST")
 	cluster := gocql.NewCluster(k8ssandraHost)
 	cluster.Port = 9042
@@ -83,7 +95,7 @@ func NewRepository() *Repository {
 		log.Panicf("Fail to connect to redis: %v", err)
 	}
 
-	r := Repository{
+	r := repository{
 		session: session,
 		client:  client,
 	}
