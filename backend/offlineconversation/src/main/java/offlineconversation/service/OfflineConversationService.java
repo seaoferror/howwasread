@@ -105,8 +105,8 @@ public class OfflineConversationService {
         .lengthMinutes(convo.getLengthMinutes())
         .mapsLink(convo.getMapsLink())
         .location(convo.getLocation())
-        .isModerator(convo.getIsModerator())
-        .isParticipant(convo.getIsParticipant())
+        .isModerator(convo.getIsModerator() == 1)
+        .isParticipant(convo.getIsParticipant() == 1)
         .numberOfParticipants(convo.getNumberOfParticipants())
         .build();
   }

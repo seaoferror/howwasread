@@ -152,8 +152,8 @@ class OfflineConversationServiceTest {
     when(projection.getLengthMinutes()).thenReturn(60);
     when(projection.getMapsLink()).thenReturn("https://maps");
     when(projection.getLocation()).thenReturn("Seoul");
-    when(projection.getIsModerator()).thenReturn(true);
-    when(projection.getIsParticipant()).thenReturn(true);
+    when(projection.getIsModerator()).thenReturn(1L);
+    when(projection.getIsParticipant()).thenReturn(0L);
     when(projection.getNumberOfParticipants()).thenReturn(3);
     when(offlineConversationRepository.findDetail(conversationId, memberId)).thenReturn(Optional.of(projection));
 
@@ -166,7 +166,7 @@ class OfflineConversationServiceTest {
     assertThat(response.mapsLink()).isEqualTo("https://maps");
     assertThat(response.location()).isEqualTo("Seoul");
     assertThat(response.isModerator()).isTrue();
-    assertThat(response.isParticipant()).isTrue();
+    assertThat(response.isParticipant()).isFalse();
     assertThat(response.numberOfParticipants()).isEqualTo(3);
   }
 
