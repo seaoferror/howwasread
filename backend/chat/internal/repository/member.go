@@ -8,7 +8,7 @@ import (
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
 )
 
-func (r *Repository) SetServerIP(ctx context.Context, memberId, ip string) error {
+func (r *repository) SetServerIP(ctx context.Context, memberId, ip string) error {
 	result := r.client.Do(ctx, r.client.B().Sadd().Key(memberId).Member(ip).Build())
 	if result.Error() != nil {
 		slog.Error("fail to save member ip", "err", result.Error())
@@ -17,7 +17,7 @@ func (r *Repository) SetServerIP(ctx context.Context, memberId, ip string) error
 	return nil
 }
 
-func (r *Repository) RemoveServerIP(ctx context.Context, memberId, ip string) error {
+func (r *repository) RemoveServerIP(ctx context.Context, memberId, ip string) error {
 	result := r.client.Do(ctx, r.client.B().Srem().Key(memberId).Member(ip).Build())
 	if result.Error() != nil {
 		slog.Error("fail to remove member ip", "err", result.Error())
@@ -26,7 +26,7 @@ func (r *Repository) RemoveServerIP(ctx context.Context, memberId, ip string) er
 	return nil
 }
 
-func (r *Repository) DeleteAccount(ctx context.Context, id gocql.UUID, email, phoneNumber string) error {
+func (r *repository) DeleteAccount(ctx context.Context, id gocql.UUID, email, phoneNumber string) error {
 	err := r.session.Batch(gocql.LoggedBatch).
 		Query("DELETE FROM member_by_id WHERE id = ?", id).
 		Query("DELETE FROM profile_by_id WHERE id = ?", id).
@@ -43,7 +43,7 @@ func (r *Repository) DeleteAccount(ctx context.Context, id gocql.UUID, email, ph
 	return nil
 }
 
-func (r *Repository) DidBlock(ctx context.Context, blockerId gocql.UUID, blockedId gocql.UUID) (bool, error) {
+func (r *repository) DidBlock(ctx context.Context, blockerId gocql.UUID, blockedId gocql.UUID) (bool, error) {
 	var a gocql.UUID
 	err := r.session.Query(
 		`SELECT blocked_id FROM block WHERE blocker_id = ? AND blocked_id = ?`, blockerId, blockedId,
@@ -60,7 +60,7 @@ func (r *Repository) DidBlock(ctx context.Context, blockerId gocql.UUID, blocked
 	return true, nil
 }
 
-func (r *Repository) FindChatParticipantIds(ctx context.Context, roomId gocql.UUID) (ids []gocql.UUID, err error) {
+func (r *repository) FindChatParticipantIds(ctx context.Context, roomId gocql.UUID) (ids []gocql.UUID, err error) {
 	err = r.session.Query(
 		`SELECT participant_ids FROM chat_room_by_id WHERE id = ?`, roomId).
 		ScanContext(ctx, &ids)
@@ -72,7 +72,7 @@ func (r *Repository) FindChatParticipantIds(ctx context.Context, roomId gocql.UU
 	return ids, nil
 }
 
-func (r *Repository) AddReporterIdByReportedId(ctx context.Context, reporterId gocql.UUID, reportedId gocql.UUID) error {
+func (r *repository) AddReporterIdByReportedId(ctx context.Context, reporterId gocql.UUID, reportedId gocql.UUID) error {
 	err := r.session.Query(`UPDATE profile_by_id USING TTL ? SET reporter_ids = reporter_ids + ? WHERE id = ?`,
 		30*24*60*60, []gocql.UUID{reporterId}, reportedId).ExecContext(ctx)
 	if err != nil {
@@ -85,7 +85,7 @@ func (r *Repository) AddReporterIdByReportedId(ctx context.Context, reporterId g
 	return nil
 }
 
-func (r *Repository) FindReportCountById(ctx context.Context, reportedId gocql.UUID) (count int, err error) {
+func (r *repository) FindReportCountById(ctx context.Context, reportedId gocql.UUID) (count int, err error) {
 	var reporterIds []gocql.UUID
 	err = r.session.Query(
 		`SELECT reporter_ids FROM profile_by_id WHERE id = ?`,
@@ -100,7 +100,7 @@ func (r *Repository) FindReportCountById(ctx context.Context, reportedId gocql.U
 	return len(reporterIds), nil
 }
 
-func (r *Repository) FindEmailAndPhoneNumberById(ctx context.Context, id gocql.UUID) (email, phoneNumber string, err error) {
+func (r *repository) FindEmailAndPhoneNumberById(ctx context.Context, id gocql.UUID) (email, phoneNumber string, err error) {
 	err = r.session.Query("SELECT email, phone_number FROM member_by_id WHERE id = ?", id).
 		ScanContext(ctx, &email, &phoneNumber)
 	if err != nil {
@@ -112,7 +112,7 @@ func (r *Repository) FindEmailAndPhoneNumberById(ctx context.Context, id gocql.U
 	return email, phoneNumber, nil
 }
 
-func (r *Repository) BanPhoneNumber(ctx context.Context, phoneNumber string) error {
+func (r *repository) BanPhoneNumber(ctx context.Context, phoneNumber string) error {
 	err := r.session.Query(`INSERT INTO banned_phone_number (phone_number) VALUES (?)`, phoneNumber).ExecContext(ctx)
 	if err != nil {
 		slog.Error("fail to ban phone number",
@@ -122,7 +122,7 @@ func (r *Repository) BanPhoneNumber(ctx context.Context, phoneNumber string) err
 	return nil
 }
 
-func (r *Repository) AddBlockedConversation(ctx context.Context, memberId gocql.UUID, conversationId gocql.UUID) error {
+func (r *repository) AddBlockedConversation(ctx context.Context, memberId gocql.UUID, conversationId gocql.UUID) error {
 	err := r.session.Query(`UPDATE profile_by_id USING TTL ? SET blocked_conversations = blocked_conversations + ? WHERE id = ?`,
 		360*24*60*60, []gocql.UUID{conversationId}, memberId).ExecContext(ctx)
 	if err != nil {
@@ -134,7 +134,7 @@ func (r *Repository) AddBlockedConversation(ctx context.Context, memberId gocql.
 	return nil
 }
 
-func (r *Repository) FindBlockedConversations(ctx context.Context, id gocql.UUID) (ids []gocql.UUID, err error) {
+func (r *repository) FindBlockedConversations(ctx context.Context, id gocql.UUID) (ids []gocql.UUID, err error) {
 	err = r.session.Query(`SELECT blocked_conversations FROM profile_by_id WHERE id = ?`, id).ScanContext(ctx, &ids)
 	if err != nil {
 		slog.Error("fail to find blocked conversations by id", "err", err,

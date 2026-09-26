@@ -7,7 +7,7 @@ import (
 	"github.com/apache/cassandra-gocql-driver/v2"
 )
 
-func (r *Repository) SavePhoneNumberByVerificationId(verificationId gocql.UUID, phoneNumber string) error {
+func (r *repository) SavePhoneNumberByVerificationId(verificationId gocql.UUID, phoneNumber string) error {
 	err := r.session.Query("INSERT INTO member_by_verification_id (phone_number, verification_id) values (?,?) USING TTL ?",
 		phoneNumber, verificationId, constant.OtpTTL,
 	).Exec()
@@ -22,7 +22,7 @@ func (r *Repository) SavePhoneNumberByVerificationId(verificationId gocql.UUID, 
 	return nil
 }
 
-func (r *Repository) FindPhoneNumberByVerificationId(verificationId gocql.UUID) (phoneNumber string, err error) {
+func (r *repository) FindPhoneNumberByVerificationId(verificationId gocql.UUID) (phoneNumber string, err error) {
 	err = r.session.Query(
 		"SELECT phone_number FROM member_by_verification_id WHERE verification_id = ?",
 		verificationId,
@@ -37,7 +37,7 @@ func (r *Repository) FindPhoneNumberByVerificationId(verificationId gocql.UUID) 
 	return phoneNumber, nil
 }
 
-func (r *Repository) SavePhoneNumberLoginInfo(phoneNumber string, id gocql.UUID) error {
+func (r *repository) SavePhoneNumberLoginInfo(phoneNumber string, id gocql.UUID) error {
 	err := r.session.Batch(gocql.LoggedBatch).
 		Query(
 			"INSERT INTO member_by_phone_number (phone_number_verified, id, phone_number, role) VALUES (?, ?, ?, ?)",
@@ -57,7 +57,7 @@ func (r *Repository) SavePhoneNumberLoginInfo(phoneNumber string, id gocql.UUID)
 	return nil
 }
 
-func (r *Repository) LinkAndMarkVerifiedPhoneNumber(id gocql.UUID, email, phoneNumber, role string) error {
+func (r *repository) LinkAndMarkVerifiedPhoneNumber(id gocql.UUID, email, phoneNumber, role string) error {
 	err := r.session.Batch(gocql.LoggedBatch).
 		Query("UPDATE member_by_email SET phone_number_verified = ?, phone_number = ? WHERE email = ?",
 			true, phoneNumber, email).
@@ -78,7 +78,7 @@ func (r *Repository) LinkAndMarkVerifiedPhoneNumber(id gocql.UUID, email, phoneN
 	return nil
 }
 
-func (r *Repository) FindIdByPhoneNumber(phoneNumber string) (id gocql.UUID, err error) {
+func (r *repository) FindIdByPhoneNumber(phoneNumber string) (id gocql.UUID, err error) {
 	err = r.session.Query(
 		"SELECT id FROM member_by_phone_number WHERE phone_number = ?",
 		phoneNumber,
@@ -90,7 +90,7 @@ func (r *Repository) FindIdByPhoneNumber(phoneNumber string) (id gocql.UUID, err
 	return id, nil
 }
 
-func (r *Repository) FindEmailByPhoneNumber(phoneNumber string) (email string, err error) {
+func (r *repository) FindEmailByPhoneNumber(phoneNumber string) (email string, err error) {
 	err = r.session.Query(
 		"SELECT email FROM member_by_phone_number WHERE phone_number = ?",
 		phoneNumber,
@@ -105,7 +105,7 @@ func (r *Repository) FindEmailByPhoneNumber(phoneNumber string) (email string, e
 	return email, nil
 }
 
-func (r *Repository) ReplaceAndLinkMemberWithOldAccount(newId, oldAccountId gocql.UUID, email, phoneNumber string) error {
+func (r *repository) ReplaceAndLinkMemberWithOldAccount(newId, oldAccountId gocql.UUID, email, phoneNumber string) error {
 	err := r.session.Batch(gocql.LoggedBatch).
 		Query("DELETE FROM member_by_id WHERE id = ?",
 			newId).
@@ -125,7 +125,7 @@ func (r *Repository) ReplaceAndLinkMemberWithOldAccount(newId, oldAccountId gocq
 	return nil
 }
 
-func (r *Repository) WasBanned(phoneNumber string) error {
+func (r *repository) WasBanned(phoneNumber string) error {
 	var p string
 	err := r.session.Query(`SELECT phone_number FROM banned_phone_number WHERE phone_number = ?`, phoneNumber).Scan(&p)
 	if err != nil {

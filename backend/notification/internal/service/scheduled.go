@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) PreprocessScheduledNotification(ctx context.Context, partitionId uuid.UUID, notifications map[uuid.UUID]map[int]string, contents map[int]string) {
+func (s *service) PreprocessScheduledNotification(ctx context.Context, partitionId uuid.UUID, notifications map[uuid.UUID]map[int]string, contents map[int]string) {
 	memberIds := make([]uuid.UUID, 0, len(notifications))
 	for memberId, _ := range notifications {
 		memberIds = append(memberIds, memberId)

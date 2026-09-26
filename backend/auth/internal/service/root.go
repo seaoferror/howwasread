@@ -1,97 +1,58 @@
 package service
 
 import (
+	"backend/auth/internal/client"
+	"backend/auth/internal/dto"
 	"backend/auth/internal/repository"
+	"context"
 	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
-	"log"
 	"os"
 
-	"github.com/MicahParks/keyfunc/v3"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	_ "github.com/joho/godotenv/autoload"
-	"github.com/twilio/twilio-go"
 )
 
-type Service struct {
-	repository              *repository.Repository
-	privateKeyAT            *rsa.PrivateKey
-	privateKeyRT            *rsa.PrivateKey
-	publicKeyRT             *rsa.PublicKey
-	issuer                  string
-	audience                string
-	googleSignInWebClientId string
-	twilioClient            *twilio.RestClient
-	appleKeyFunc            func(token *jwt.Token) (interface{}, error)
+type Service interface {
+	SignInWithApple(ctx context.Context, identityToken string) (*dto.SignInWithThirdPartyResponse, string, error)
+	CreateMemberByEmail(ctx context.Context, email, password string) (map[string]uuid.UUID, error)
+	LoginWithEmail(email, password string) (*dto.LoginWithEmailResponse, string /*refreshToken*/, error)
+	VerifyEmailOTP(otp string, verificationId uuid.UUID) (*dto.VerifyEmailOTPResponse, error)
+	ForgetPassword(ctx context.Context, email string) (map[string]uuid.UUID, error)
+	SetNewPassword(ctx context.Context, password string, sessionId uuid.UUID) error
+	SignInWithGoogle(ctx context.Context, token string) (*dto.SignInWithThirdPartyResponse, string, error)
+	SendSMSOTP(sessionId uuid.UUID, phoneNumber string) (map[string]uuid.UUID, error)
+	VerifySMSOTP(sessionId uuid.UUID, verificationId uuid.UUID, otp string) (*dto.VerifySMSOTPResponse, string, error)
+	GenerateAccessToken(refreshToken string) (map[string]string, error)
+	RemoveJTI(refreshToken string) error
+	DeleteAccount(ctx context.Context, refreshToken string) error
 }
 
-func NewService(r *repository.Repository) *Service {
-	accountSid := os.Getenv("TWILIO_ACCOUNT_SID")
-	apiKey := os.Getenv("TWILIO_API_KEY")
-	apiSecret := os.Getenv("TWILIO_API_SECRET")
-
-	twilioClient := twilio.NewRestClientWithParams(twilio.ClientParams{
-		Username:   apiKey,
-		Password:   apiSecret,
-		AccountSid: accountSid,
-	})
-	appleJWKs, err := keyfunc.NewDefault([]string{"https://appleid.apple.com/auth/keys"})
-	if err != nil {
-		log.Fatalf("Failed to create JWKS from Apple: %v", err)
-	}
-
-	return &Service{
-		repository:              r,
-		privateKeyAT:            loadRSAPrivateKey("cert/authentication/private-key-at.pem"),
-		privateKeyRT:            loadRSAPrivateKey("cert/authentication/private-key-rt.pem"),
-		publicKeyRT:             loadRSAPublicKey("cert/authentication/public-key-rt.pem"),
-		issuer:                  os.Getenv("ISSUER"),
-		audience:                os.Getenv("BUNDLE_IDENTIFIER"),
-		googleSignInWebClientId: os.Getenv("GOOGLE_SIGN_IN_WEB_CLIENT_ID"),
-		twilioClient:            twilioClient,
-		appleKeyFunc:            appleJWKs.Keyfunc,
-	}
+type service struct {
+	repository       repository.Repository
+	privateKeyAT     *rsa.PrivateKey
+	privateKeyRT     *rsa.PrivateKey
+	publicKeyRT      *rsa.PublicKey
+	issuer           string
+	audience         string
+	smsClient        client.SMSClient
+	googleAuthClient client.GoogleAuthClient
+	appleKeyFunc     jwt.Keyfunc
+	smtpClient       client.SMTPClient
 }
 
-func loadRSAPrivateKey(filepath string) *rsa.PrivateKey {
-	keyBytes, err := os.ReadFile(filepath)
-	if err != nil {
-		log.Panicf("failed to read private key file: %v", err)
+func NewService(r repository.Repository, keys Keys, smsClient client.SMSClient, googleAuthClient client.GoogleAuthClient,
+	appleKeyFunc jwt.Keyfunc, smtpClient client.SMTPClient) Service {
+	return &service{
+		repository:       r,
+		privateKeyAT:     keys.PrivateKeyAT,
+		privateKeyRT:     keys.PrivateKeyRT,
+		publicKeyRT:      keys.PublicKeyRT,
+		issuer:           os.Getenv("ISSUER"),
+		audience:         os.Getenv("BUNDLE_IDENTIFIER"),
+		smsClient:        smsClient,
+		googleAuthClient: googleAuthClient,
+		appleKeyFunc:     appleKeyFunc,
+		smtpClient:       smtpClient,
 	}
-
-	block, _ := pem.Decode(keyBytes)
-	if block == nil {
-		log.Panic("failed to decode PEM block from file")
-	}
-
-	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
-	if err != nil {
-		log.Panicf("failed to parse RSA private key: %v", err)
-	}
-
-	return privateKey
-}
-
-func loadRSAPublicKey(filepath string) *rsa.PublicKey {
-	keyBytes, err := os.ReadFile(filepath)
-	if err != nil {
-		log.Panicf("failed to read public key file: %v", err)
-	}
-
-	block, _ := pem.Decode(keyBytes)
-	if block == nil {
-		log.Panic("failed to decode PEM block from file")
-	}
-
-	pubInterface, err := x509.ParsePKIXPublicKey(block.Bytes)
-	if err != nil {
-		log.Panicf("failed to parse RSA public key: %v", err)
-	}
-
-	publicKey, ok := pubInterface.(*rsa.PublicKey)
-	if !ok {
-		log.Panic("key is not an RSA public key")
-	}
-	return publicKey
 }

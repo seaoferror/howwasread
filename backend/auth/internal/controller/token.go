@@ -39,6 +39,10 @@ func (c *Controller) logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	err = c.service.RemoveJTI(rt.Value)
+	if err != nil {
+		handleError(w, err)
+		return
+	}
 	http.SetCookie(w, &http.Cookie{Name: "refresh_token",
 		Value:    "",
 		Expires:  time.Now(),

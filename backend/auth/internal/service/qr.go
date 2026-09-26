@@ -9,7 +9,7 @@ import (
 	"rsc.io/qr"
 )
 
-func (s *Service) generateUserQR(email, secret string) ([]byte, error) {
+func (s *service) generateUserQR(email, secret string) ([]byte, error) {
 	u, err := url.Parse("otpauth://totp")
 	if err != nil {
 		log.Printf("fail to parse totp base url: %v", err)

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"backend/common"
+	"context"
 	"log"
 	"os"
 	"time"
@@ -11,12 +12,18 @@ import (
 	"github.com/valkey-io/valkey-go"
 )
 
-type Repository struct {
+type Repository interface {
+	DidNotification(ctx context.Context, messageId, notificationId string) (bool, error)
+	MarkNotification(ctx context.Context, messageId, notificationId string) error
+	RemoveNotificationInfoByIdAndToken(ctx context.Context, id gocql.UUID, token string) error
+}
+
+type repository struct {
 	session *gocql.Session
 	client  valkey.Client
 }
 
-func NewRepository() *Repository {
+func NewRepository() Repository {
 	k8ssandraHost := os.Getenv("K8SSANDRA_HOST")
 	cluster := gocql.NewCluster(k8ssandraHost)
 	cluster.Port = 9042
@@ -66,7 +73,7 @@ func NewRepository() *Repository {
 	}
 	log.Print("success to connect redis")
 
-	r := &Repository{
+	r := &repository{
 		session: session,
 		client:  client,
 	}

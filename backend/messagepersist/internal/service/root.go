@@ -2,14 +2,21 @@ package service
 
 import (
 	"backend/messagepersist/internal/repository"
+	"context"
+
+	"github.com/google/uuid"
 )
 
-type Service struct {
-	repository *repository.Repository
+type Service interface {
+	PersistMessage(ctx context.Context, id uuid.UUID, toIds [][]byte, roomId, fromId uuid.UUID, contentType string, contents []string)
 }
 
-func NewService(r *repository.Repository) *Service {
-	s := &Service{
+type service struct {
+	repository repository.Repository
+}
+
+func NewService(r repository.Repository) Service {
+	s := &service{
 		repository: r,
 	}
 	return s

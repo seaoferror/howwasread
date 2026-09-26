@@ -21,10 +21,10 @@ import (
 
 type Consumer struct {
 	consumerGroup sarama.ConsumerGroup
-	service       *service.Service
+	service       service.Service
 }
 
-func NewConsumer(s *service.Service) *Consumer {
+func NewConsumer(s service.Service) *Consumer {
 	consumerGroup, err := connectConsumer("relay_message")
 	if err != nil {
 		log.Panicf("fail to create consumer group client: %v", err)

@@ -21,10 +21,10 @@ import (
 
 type Consumer struct {
 	consumerGroup sarama.ConsumerGroup
-	service       *service.Service
+	service       service.Service
 }
 
-func NewKafkaConsumer(s *service.Service) *Consumer {
+func NewKafkaConsumer(s service.Service) *Consumer {
 	consumer, err := connectConsumer("relay_signal")
 	if err != nil {
 		log.Panicf("fail to create consumer group client: %v", err)

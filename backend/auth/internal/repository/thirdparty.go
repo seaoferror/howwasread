@@ -8,7 +8,7 @@ import (
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
 )
 
-func (r *Repository) CheckNonce(nonce string) (bool, error) {
+func (r *repository) CheckNonce(nonce string) (bool, error) {
 	var c int64
 	err := r.session.Query(
 		`SELECT COUNT(1) FROM nonce WHERE nonce = ?`,
@@ -27,7 +27,7 @@ func (r *Repository) CheckNonce(nonce string) (bool, error) {
 	return true, nil
 }
 
-func (r *Repository) SaveNonce(nonce string) error {
+func (r *repository) SaveNonce(nonce string) error {
 	err := r.session.Query(
 		`INSERT INTO nonce (nonce) VALUES (?)`, nonce).Exec()
 	if err != nil {
@@ -39,7 +39,7 @@ func (r *Repository) SaveNonce(nonce string) error {
 	return nil
 }
 
-func (r *Repository) SaveThirdPartySignInInfo(ctx context.Context, id gocql.UUID, email string, phoneNumberVerified, emailVerified bool) error {
+func (r *repository) SaveThirdPartySignInInfo(ctx context.Context, id gocql.UUID, email string, phoneNumberVerified, emailVerified bool) error {
 	err := r.session.Batch(gocql.LoggedBatch).
 		Query(
 			`INSERT INTO member_by_id (

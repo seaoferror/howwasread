@@ -10,12 +10,11 @@ import (
 	"sync"
 	"time"
 
-	"firebase.google.com/go/v4/messaging"
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
 	"github.com/google/uuid"
 )
 
-func (s *Service) SendNotification(
+func (s *service) SendNotification(
 	ctx context.Context,
 	//originTopic string,
 	//retryBackoff time.Duration,
@@ -59,17 +58,9 @@ func (s *Service) SendNotification(
 	if p.SubTitle != "" {
 		text = fmt.Sprintf("%v: %v", p.SubTitle, text)
 	}
-	message := &messaging.MulticastMessage{
-		Notification: &messaging.Notification{
-			Title:    p.Title,
-			Body:     text,
-			ImageURL: imageURL,
-		},
-		Tokens: ts,
-	}
 	ctxf, cancel := context.WithTimeout(ctx, 4*time.Second)
 	defer cancel()
-	br, err := s.fcmClient.SendEachForMulticast(ctxf, message)
+	invalidTokens, err := s.fcmClient.Send(ctxf, ts, p.Title, text, imageURL)
 	if err != nil {
 		return
 	}
@@ -77,22 +68,17 @@ func (s *Service) SendNotification(
 	if err != nil {
 		return
 	}
-	if br.FailureCount > 0 {
-		for i, resp := range br.Responses {
-			if messaging.IsUnregistered(resp.Error) || messaging.IsInvalidArgument(resp.Error) {
-				wg.Add(1)
-				go func() {
-					defer wg.Done()
-					err2 := s.repository.RemoveNotificationInfoByIdAndToken(
-						ctx, gocql.UUID(tokenMap[ts[i]]), ts[i])
-					if err2 != nil {
-						em.Lock()
-						es = append(es, err2)
-						em.Unlock()
-					}
-				}()
+	for _, token := range invalidTokens {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err2 := s.repository.RemoveNotificationInfoByIdAndToken(ctx, gocql.UUID(tokenMap[token]), token)
+			if err2 != nil {
+				em.Lock()
+				es = append(es, err2)
+				em.Unlock()
 			}
-		}
+		}()
 	}
 	wg.Wait()
 	err = errors.Join(es...)

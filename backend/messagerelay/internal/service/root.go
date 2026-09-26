@@ -1,26 +1,28 @@
 package service
 
 import (
-	"backend/common/producer"
+	"backend/common"
+	"backend/messagerelay/internal/client"
 	"backend/messagerelay/internal/repository"
-	"sync"
+	"context"
 
-	"google.golang.org/grpc"
+	"github.com/google/uuid"
 )
 
-type Service struct {
-	repository  *repository.Repository
-	clientConns map[string]*grpc.ClientConn
-	ccsMutex    *sync.RWMutex
-	producer    *producer.Producer
+type Service interface {
+	RelayMessage(ctx context.Context, id uuid.UUID, toIds [][]byte, roomId, fromId uuid.UUID, contentType string, contents []string)
 }
 
-func NewService(r *repository.Repository, p *producer.Producer) *Service {
-	s := &Service{
+type service struct {
+	repository  repository.Repository
+	producer    common.Producer
+	relayClient client.RelayClient
+}
+
+func NewService(r repository.Repository, p common.Producer, relayClient client.RelayClient) Service {
+	return &service{
 		repository:  r,
-		clientConns: make(map[string]*grpc.ClientConn),
-		ccsMutex:    &sync.RWMutex{},
 		producer:    p,
+		relayClient: relayClient,
 	}
-	return s
 }

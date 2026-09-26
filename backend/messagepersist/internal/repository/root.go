@@ -2,6 +2,7 @@ package repository
 
 import (
 	"backend/common"
+	"context"
 	"log"
 	"os"
 	"time"
@@ -11,11 +12,15 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 )
 
-type Repository struct {
+type Repository interface {
+	SaveMessage(ctx context.Context, id, toId, fromId, roomId gocql.UUID, contentType string, contents []string) error
+}
+
+type repository struct {
 	session *gocql.Session
 }
 
-func NewRepository() *Repository {
+func NewRepository() Repository {
 	k8ssandraHost := os.Getenv("K8SSANDRA_HOST")
 	cluster := gocql.NewCluster(k8ssandraHost)
 	cluster.Port = 9042
@@ -46,7 +51,7 @@ func NewRepository() *Repository {
 
 	log.Print("success to connect cassandra")
 
-	r := Repository{
+	r := repository{
 		session: session,
 	}
 

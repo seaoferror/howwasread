@@ -1,7 +1,7 @@
 package internal
 
 import (
-	"backend/common/producer"
+	"backend/common"
 	"backend/messagepreprocess/internal/consumer"
 	"backend/messagepreprocess/internal/repository"
 	"backend/messagepreprocess/internal/service"
@@ -18,7 +18,7 @@ func NewServer() {
 
 	r := repository.NewRepository()
 
-	p := producer.NewProducer("message_preprocess")
+	p := common.NewProducer("message_preprocess")
 
 	s := service.NewService(r, p)
 

@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) PersistMessage(
+func (s *service) PersistMessage(
 	ctx context.Context,
 	id uuid.UUID,
 	toIds [][]byte,

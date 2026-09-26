@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) RegisterNotification(ctx context.Context, id uuid.UUID, os, token string) error {
+func (s *service) RegisterNotification(ctx context.Context, id uuid.UUID, os, token string) error {
 	old, err := s.repository.FindMemberIdByToken(ctx, token)
 	if errors.Is(err, gocql.ErrNotFound) {
 		err = nil
@@ -42,7 +42,7 @@ func (s *Service) RegisterNotification(ctx context.Context, id uuid.UUID, os, to
 	return nil
 }
 
-func (s *Service) getEachTokenMap(ctx context.Context, toIds []uuid.UUID) (apntm map[string]uuid.UUID, fcmtm map[string]uuid.UUID, err0 error) {
+func (s *service) getEachTokenMap(ctx context.Context, toIds []uuid.UUID) (apntm map[string]uuid.UUID, fcmtm map[string]uuid.UUID, err0 error) {
 	var em sync.Mutex
 	var es []error
 	var wg sync.WaitGroup

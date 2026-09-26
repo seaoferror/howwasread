@@ -5,7 +5,7 @@ import (
 	"log/slog"
 )
 
-func (r *Repository) DidNotification(ctx context.Context, messageId, notificationId string) (bool, error) {
+func (r *repository) DidNotification(ctx context.Context, messageId, notificationId string) (bool, error) {
 	result := r.client.Do(ctx, r.client.B().Sismember().Key("fcm"+messageId).Member(notificationId).Build())
 	if result.Error() != nil {
 		slog.Error("fail to check file path", "err", result.Error())
@@ -19,7 +19,7 @@ func (r *Repository) DidNotification(ctx context.Context, messageId, notificatio
 	return did, nil
 }
 
-func (r *Repository) MarkNotification(ctx context.Context, messageId, notificationId string) error {
+func (r *repository) MarkNotification(ctx context.Context, messageId, notificationId string) error {
 	key := "fcm" + messageId
 	result := r.client.Do(ctx, r.client.B().Sadd().Key(key).Member(notificationId).Build())
 	if result.Error() != nil {

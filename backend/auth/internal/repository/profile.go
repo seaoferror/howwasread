@@ -6,7 +6,7 @@ import (
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
 )
 
-func (r *Repository) SaveProfileId(id gocql.UUID) error {
+func (r *repository) SaveProfileId(id gocql.UUID) error {
 	err := r.session.Query("INSERT INTO profile_by_id (id) VALUES (?)", id).Exec()
 	if err != nil {
 		slog.Error("fail to insert profile id",

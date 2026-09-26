@@ -16,11 +16,11 @@ const (
 )
 
 type Controller struct {
-	service *service.Service
+	service service.Service
 	mux     *http.ServeMux
 }
 
-func SetController(s *service.Service, m *http.ServeMux) {
+func SetController(s service.Service, m *http.ServeMux) {
 
 	c := &Controller{
 		service: s,

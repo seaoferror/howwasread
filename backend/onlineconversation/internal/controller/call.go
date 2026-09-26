@@ -32,7 +32,7 @@ func (c *Controller) joinConversation(w http.ResponseWriter, r *http.Request) {
 		InsecureSkipVerify: false,
 	})
 	if err != nil {
-		slog.Error("fail to accept connection", err)
+		slog.Error("fail to accept connection", "err", err)
 		handleError(w, errors.New("fail to accept ws connection"))
 		return
 	}

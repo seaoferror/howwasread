@@ -8,20 +8,15 @@ import (
 
 	gocql "github.com/apache/cassandra-gocql-driver/v2"
 	"github.com/google/uuid"
-	"google.golang.org/api/idtoken"
 )
 
-func (s *Service) SignInWithGoogle(ctx context.Context, token string) (
+func (s *service) SignInWithGoogle(ctx context.Context, token string) (
 	*dto.SignInWithThirdPartyResponse,
 	string,
 	error,
 ) {
-	payload, err := idtoken.Validate(ctx, token, s.googleSignInWebClientId)
+	email, err := s.googleAuthClient.Email(ctx, token)
 	if err != nil {
-		return nil, "", ErrSignInWithGoogle
-	}
-	email, ok := payload.Claims["email"].(string)
-	if !ok {
 		return nil, "", ErrSignInWithGoogle
 	}
 	emailVerified, phoneNumberVerified, id, _, role1, err1 := s.repository.FindLoginInfoByEmail(email)

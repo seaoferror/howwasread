@@ -3,7 +3,6 @@ package consumer
 import (
 	"backend/common"
 	"backend/common/payload"
-	"backend/common/producer"
 	"backend/messagepreprocess/internal/service"
 	"bytes"
 	"context"
@@ -23,11 +22,11 @@ import (
 
 type Consumer struct {
 	consumerGroup sarama.ConsumerGroup
-	service       *service.Service
-	producer      *producer.Producer
+	service       service.Service
+	producer      common.Producer
 }
 
-func NewConsumer(s *service.Service, p *producer.Producer) *Consumer {
+func NewConsumer(s service.Service, p common.Producer) *Consumer {
 	consumerGroup, err := connectConsumer("preprocess_message")
 	if err != nil {
 		log.Panicf("fail to create consumer group client: %v", err)

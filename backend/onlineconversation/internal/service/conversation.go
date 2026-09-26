@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) CreateConversation(ctx context.Context, memberId uuid.UUID, req dto.CreateConversationRequest) (map[string]uuid.UUID, error) {
+func (s *service) CreateConversation(ctx context.Context, memberId uuid.UUID, req dto.CreateConversationRequest) (map[string]uuid.UUID, error) {
 	conversationId, err := uuid.NewV7()
 	if err != nil {
 		slog.Error("fail to create uuid v7 for online conversation id", "err", err)
@@ -47,7 +47,7 @@ func (s *Service) CreateConversation(ctx context.Context, memberId uuid.UUID, re
 	return map[string]uuid.UUID{"conversationId": conversationId}, nil
 }
 
-func (s *Service) UpdateConversation(ctx context.Context, memberId uuid.UUID, req dto.UpdateConversationRequest) error {
+func (s *service) UpdateConversation(ctx context.Context, memberId uuid.UUID, req dto.UpdateConversationRequest) error {
 	ok, err := s.repository.UpdateConversationIfModerator(ctx, s.repository.Tx(), memberId, req)
 	if err != nil {
 		return err
@@ -62,7 +62,7 @@ func (s *Service) UpdateConversation(ctx context.Context, memberId uuid.UUID, re
 	return nil
 }
 
-func (s *Service) DeleteConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {
+func (s *service) DeleteConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {
 	ok, err := s.repository.DeleteOnlineConversationIfModerator(ctx, s.repository.Tx(), conversationId, memberId)
 	if err != nil {
 		return err
@@ -77,7 +77,7 @@ func (s *Service) DeleteConversation(ctx context.Context, memberId, conversation
 	return nil
 }
 
-func (s *Service) BanParticipant(ctx context.Context, modId, conversationId, banId uuid.UUID) error {
+func (s *service) BanParticipant(ctx context.Context, modId, conversationId, banId uuid.UUID) error {
 	ok, err := s.repository.AddBanIdIfModerator(ctx, s.repository.Tx(), conversationId, modId, banId)
 	if err != nil {
 		return err
@@ -93,7 +93,7 @@ func (s *Service) BanParticipant(ctx context.Context, modId, conversationId, ban
 	return nil
 }
 
-func (s *Service) GetConversationDetail(ctx context.Context, conversationId, memberId uuid.UUID) (*dto.OnlineConversationDetailResponse, error) {
+func (s *service) GetConversationDetail(ctx context.Context, conversationId, memberId uuid.UUID) (*dto.OnlineConversationDetailResponse, error) {
 	detail, err := s.repository.FindConversationDetail(ctx, s.repository.Tx(), conversationId, memberId)
 	if err != nil {
 		return nil, err
@@ -128,7 +128,7 @@ func (s *Service) GetConversationDetail(ctx context.Context, conversationId, mem
 	return &resp, nil
 }
 
-func (s *Service) RegisterOnlineConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {
+func (s *service) RegisterOnlineConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {
 	tx, err := s.repository.BeginTx(ctx)
 	if err != nil {
 		return err
@@ -153,7 +153,7 @@ func (s *Service) RegisterOnlineConversation(ctx context.Context, memberId, conv
 	return nil
 }
 
-func (s *Service) DeregisterOnlineConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {
+func (s *service) DeregisterOnlineConversation(ctx context.Context, memberId, conversationId uuid.UUID) error {
 	tx, err := s.repository.BeginTx(ctx)
 	if err != nil {
 		return err
@@ -178,7 +178,7 @@ func (s *Service) DeregisterOnlineConversation(ctx context.Context, memberId, co
 	return nil
 }
 
-func (s *Service) ScheduleNotification(ctx context.Context, memberId, conversationId uuid.UUID) error {
+func (s *service) ScheduleNotification(ctx context.Context, memberId, conversationId uuid.UUID) error {
 	err := s.repository.AddNotificationId(ctx, s.repository.Tx(), conversationId, memberId)
 	if err != nil {
 		return err
@@ -186,7 +186,7 @@ func (s *Service) ScheduleNotification(ctx context.Context, memberId, conversati
 	return nil
 }
 
-func (s *Service) CancelNotification(ctx context.Context, memberId, conversationId uuid.UUID) error {
+func (s *service) CancelNotification(ctx context.Context, memberId, conversationId uuid.UUID) error {
 	err := s.repository.RemoveNotificationId(ctx, s.repository.Tx(), conversationId, memberId)
 	if err != nil {
 		return err

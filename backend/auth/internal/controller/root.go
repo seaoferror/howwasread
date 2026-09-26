@@ -17,11 +17,11 @@ const (
 )
 
 type Controller struct {
-	service *service.Service
+	service service.Service
 	mux     *http.ServeMux
 }
 
-func NewController(s *service.Service, m *http.ServeMux) *Controller {
+func NewController(s service.Service, m *http.ServeMux) *Controller {
 	c := &Controller{
 		service: s,
 		mux:     m,

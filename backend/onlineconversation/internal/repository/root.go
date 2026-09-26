@@ -9,24 +9,58 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
+	"github.com/google/uuid"
 	"github.com/valkey-io/valkey-go"
 
 	"backend/common"
+	"backend/onlineconversation/internal/dto"
+	"backend/onlineconversation/internal/projection"
 
 	_ "github.com/joho/godotenv/autoload"
 )
 
-type session interface {
+// Session runs queries, both *sql.DB and *sql.Tx satisfy it
+type Session interface {
 	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
 	QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error)
 	QueryRowContext(ctx context.Context, query string, args ...any) *sql.Row
 }
-type Repository struct {
+
+// Tx is a transaction started by BeginTx, *sql.Tx satisfies it
+type Tx interface {
+	Session
+	Commit() error
+	Rollback() error
+}
+
+type Repository interface {
+	FindParticipantIds(ctx context.Context, conversationId string) ([]string, error)
+	AddParticipantId(ctx context.Context, conversationId string, memberId uuid.UUID) error
+	RemoveParticipantId(ctx context.Context, conversationId string, memberId uuid.UUID) error
+	SetServerIP(ctx context.Context, memberId, ip string) error
+	RemoveServerIP(ctx context.Context, memberId string) error
+	InsertConversation(ctx context.Context, session Session, conversationId uuid.UUID, req dto.CreateConversationRequest) error
+	UpdateConversationIfModerator(ctx context.Context, session Session, memberId uuid.UUID, req dto.UpdateConversationRequest) (bool, error)
+	DeleteOnlineConversationIfModerator(ctx context.Context, session Session, conversationId, memberId uuid.UUID) (bool, error)
+	AddBanIdIfModerator(ctx context.Context, session Session, conversationId, modId, banId uuid.UUID) (bool, error)
+	InsertModerator(ctx context.Context, session Session, conversationId, memberId uuid.UUID) error
+	InsertRegistrant(ctx context.Context, session Session, conversationId, memberId uuid.UUID) error
+	AddNotificationId(ctx context.Context, session Session, conversationId, memberId uuid.UUID) error
+	FindConversationDetail(ctx context.Context, session Session, conversationId, memberId uuid.UUID) (d projection.Detail, err error)
+	TryIncrementRegistrants(ctx context.Context, session Session, conversationId uuid.UUID) (bool, error)
+	DecrementRegistrants(ctx context.Context, session Session, conversationId uuid.UUID) error
+	RemoveRegistrantId(ctx context.Context, session Session, conversationId, memberId uuid.UUID) error
+	RemoveNotificationId(ctx context.Context, session Session, conversationId, memberId uuid.UUID) error
+	BeginTx(ctx context.Context) (Tx, error)
+	Tx() Session
+}
+
+type repository struct {
 	db           *sql.DB
 	valkeyClient valkey.Client
 }
 
-func NewRepository() *Repository {
+func NewRepository() Repository {
 	mysqlConfig := mysql.Config{
 		User:                 os.Getenv("MYSQL_USERNAME"),
 		Passwd:               os.Getenv("MYSQL_PASSWORD"),
@@ -69,13 +103,13 @@ func NewRepository() *Repository {
 		log.Panicf("fail to connect to redis: %v", err)
 	}
 
-	return &Repository{
+	return &repository{
 		db:           db,
 		valkeyClient: v,
 	}
 }
 
-func (r *Repository) BeginTx(ctx context.Context) (*sql.Tx, error) {
+func (r *repository) BeginTx(ctx context.Context) (Tx, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
 		slog.Error("fail to start transaction",
@@ -85,6 +119,6 @@ func (r *Repository) BeginTx(ctx context.Context) (*sql.Tx, error) {
 	return tx, nil
 }
 
-func (r *Repository) Tx() session {
+func (r *repository) Tx() Session {
 	return r.db
 }

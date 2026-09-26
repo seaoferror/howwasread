@@ -12,11 +12,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
-func (s *Service) RelayMessage(
+func (s *service) RelayMessage(
 	ctx context.Context,
 	id uuid.UUID,
 	toIds [][]byte,
@@ -75,30 +73,6 @@ func (s *Service) RelayMessage(
 		go func() {
 			defer wg.Done()
 			log.Printf("relay start ip: %v, tids: %v", ip, tids)
-			s.ccsMutex.RLock()
-			cc, ok := s.clientConns[ip]
-			s.ccsMutex.RUnlock()
-			var err error
-			if !ok {
-				log.Printf("try to make connection...")
-				var opts []grpc.DialOption
-				opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
-				cc, err = grpc.NewClient(ip+":50051", opts...)
-				if err != nil {
-					slog.Error("fail to get *ClientConn for relay",
-						"err", err)
-					if contentType != "quit" && contentType != "participate" && contentType != "create" {
-						pm.Lock()
-						pushToIds = append(pushToIds, tids...)
-						pm.Unlock()
-					}
-					return
-				}
-				s.ccsMutex.Lock()
-				s.clientConns[ip] = cc
-				s.ccsMutex.Unlock()
-			}
-			client := proto.NewMessagingServiceClient(cc)
 			req := proto.RelayMessagingRequest{
 				Id:          id[:],
 				ToIds:       tids,
@@ -109,7 +83,7 @@ func (s *Service) RelayMessage(
 			}
 			ctxt, cancel := context.WithTimeout(ctx, time.Second*5)
 			defer cancel()
-			res, err := client.RelayMessaging(ctxt, &req)
+			undelivered, err := s.relayClient.Do(ctxt, ip, &req)
 			if err != nil {
 				slog.Error("fail to relay messaging", "err", err)
 				if contentType != "quit" && contentType != "participate" && contentType != "create" {
@@ -117,46 +91,19 @@ func (s *Service) RelayMessage(
 					pushToIds = append(pushToIds, tids...)
 					pm.Unlock()
 				}
-				//st, ok := status.FromError(err)
-				//if ok && (st.Code() == codes.Unavailable || st.Code() == codes.DeadlineExceeded) {
-				s.ccsMutex.Lock()
-				err = s.clientConns[ip].Close()
-				if err != nil {
-					slog.Error("fail to close grpc client connection", "err", err)
-				}
-				delete(s.clientConns, ip)
-				s.ccsMutex.Unlock()
-				var wg1 sync.WaitGroup
-				for _, tid := range tids {
-					wg1.Add(1)
-					go func() {
-						defer wg1.Done()
-						s.checkAndRemoveStaleIP(tid, ip)
-					}()
-				}
-				wg1.Wait()
-				//}
+				s.removeStaleIPs(tids, ip)
 				return
 			}
-
-			if res == nil || len(res.PushToIds) == 0 {
+			if len(undelivered) == 0 {
 				return
 			}
 			if contentType != "quit" && contentType != "participate" && contentType != "create" {
-				slog.Info("add push id", "res.PushToIds", res.PushToIds)
+				slog.Info("add push id", "undelivered", undelivered)
 				pm.Lock()
-				pushToIds = append(pushToIds, res.PushToIds...)
+				pushToIds = append(pushToIds, undelivered...)
 				pm.Unlock()
 			}
-			var wg1 sync.WaitGroup
-			for _, tid := range res.PushToIds {
-				wg1.Add(1)
-				go func() {
-					defer wg1.Done()
-					s.checkAndRemoveStaleIP(tid, ip)
-				}()
-			}
-			wg1.Wait()
+			s.removeStaleIPs(undelivered, ip)
 		}()
 	}
 	wg.Wait()
@@ -184,7 +131,20 @@ func (s *Service) RelayMessage(
 	return
 }
 
-func (s *Service) checkAndRemoveStaleIP(tid []byte, ip string) {
+// removeStaleIPs forgets ip for the members that are not connected there anymore
+func (s *service) removeStaleIPs(tids [][]byte, ip string) {
+	var wg sync.WaitGroup
+	for _, tid := range tids {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			s.checkAndRemoveStaleIP(tid, ip)
+		}()
+	}
+	wg.Wait()
+}
+
+func (s *service) checkAndRemoveStaleIP(tid []byte, ip string) {
 	ctxr, cancel1 := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel1()
 	currentIPs, err1 := s.repository.GetServerIPs(ctxr, string(tid))

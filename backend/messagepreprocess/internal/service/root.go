@@ -1,17 +1,24 @@
 package service
 
 import (
-	"backend/common/producer"
+	"backend/common"
 	"backend/messagepreprocess/internal/repository"
+	"context"
+
+	"github.com/google/uuid"
 )
 
-type Service struct {
-	repository *repository.Repository
-	producer   *producer.Producer
+type Service interface {
+	ManageMessage(ctx context.Context, id, fromId uuid.UUID, toIdType string, toId uuid.UUID, contentType string, contents []string) error
 }
 
-func NewService(r *repository.Repository, kp *producer.Producer) *Service {
-	s := &Service{
+type service struct {
+	repository repository.Repository
+	producer   common.Producer
+}
+
+func NewService(r repository.Repository, kp common.Producer) Service {
+	s := &service{
 		repository: r,
 		producer:   kp,
 	}

@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (r *Repository) InsertConversation(ctx context.Context, session session, conversationId uuid.UUID, req dto.CreateConversationRequest) error {
+func (r *repository) InsertConversation(ctx context.Context, session Session, conversationId uuid.UUID, req dto.CreateConversationRequest) error {
 	_, err := session.ExecContext(ctx, `
 		INSERT INTO online_conversation
 		(id, novel, short_story, poem, play, film, written_by, rule, capacity,
@@ -25,7 +25,7 @@ func (r *Repository) InsertConversation(ctx context.Context, session session, co
 	return nil
 }
 
-func (r *Repository) UpdateConversationIfModerator(ctx context.Context, session session, memberId uuid.UUID, req dto.UpdateConversationRequest) (bool, error) {
+func (r *repository) UpdateConversationIfModerator(ctx context.Context, session Session, memberId uuid.UUID, req dto.UpdateConversationRequest) (bool, error) {
 	res, err := session.ExecContext(ctx, `
 		UPDATE online_conversation
 		SET novel=?, short_story=?, poem=?, play=?, film=?,
@@ -43,7 +43,7 @@ func (r *Repository) UpdateConversationIfModerator(ctx context.Context, session 
 	return n > 0, err
 }
 
-func (r *Repository) DeleteOnlineConversationIfModerator(ctx context.Context, session session, conversationId, memberId uuid.UUID) (bool, error) {
+func (r *repository) DeleteOnlineConversationIfModerator(ctx context.Context, session Session, conversationId, memberId uuid.UUID) (bool, error) {
 	res, err := session.ExecContext(ctx, `
 		DELETE FROM online_conversation
 		WHERE id = ?
@@ -57,7 +57,7 @@ func (r *Repository) DeleteOnlineConversationIfModerator(ctx context.Context, se
 	return n > 0, err
 }
 
-func (r *Repository) AddBanIdIfModerator(ctx context.Context, session session, conversationId, modId, banId uuid.UUID) (bool, error) {
+func (r *repository) AddBanIdIfModerator(ctx context.Context, session Session, conversationId, modId, banId uuid.UUID) (bool, error) {
 	res, err := session.ExecContext(ctx, `
 		INSERT INTO online_conversation_ban (conversation_id, member_id)
 		SELECT ?, ?
@@ -72,7 +72,7 @@ func (r *Repository) AddBanIdIfModerator(ctx context.Context, session session, c
 	return n > 0, err
 }
 
-func (r *Repository) InsertModerator(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
+func (r *repository) InsertModerator(ctx context.Context, session Session, conversationId, memberId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
 		`INSERT IGNORE INTO online_conversation_moderator (conversation_id, member_id) VALUES (?, ?)`,
 		conversationId[:], memberId[:],
@@ -85,7 +85,7 @@ func (r *Repository) InsertModerator(ctx context.Context, session session, conve
 	return nil
 }
 
-func (r *Repository) InsertRegistrant(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
+func (r *repository) InsertRegistrant(ctx context.Context, session Session, conversationId, memberId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
 		`INSERT IGNORE INTO online_conversation_registrant (conversation_id, member_id)
 		VALUES (?, ?)`,
@@ -99,7 +99,7 @@ func (r *Repository) InsertRegistrant(ctx context.Context, session session, conv
 	return nil
 }
 
-func (r *Repository) AddNotificationId(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
+func (r *repository) AddNotificationId(ctx context.Context, session Session, conversationId, memberId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
 		`INSERT IGNORE INTO online_conversation_notification
        (conversation_id, member_id) VALUES (?, ?)`,
@@ -112,7 +112,7 @@ func (r *Repository) AddNotificationId(ctx context.Context, session session, con
 	return nil
 }
 
-func (r *Repository) FindConversationDetail(ctx context.Context, session session, conversationId, memberId uuid.UUID) (d projection.Detail, err error) {
+func (r *repository) FindConversationDetail(ctx context.Context, session Session, conversationId, memberId uuid.UUID) (d projection.Detail, err error) {
 	row := session.QueryRowContext(ctx, `
 		SELECT novel, short_story, poem, play, film, written_by, rule, capacity,
 		time, length_minutes, updated_at,
@@ -139,7 +139,7 @@ func (r *Repository) FindConversationDetail(ctx context.Context, session session
 	return d, nil
 }
 
-func (r *Repository) TryIncrementRegistrants(ctx context.Context, session session, conversationId uuid.UUID) (bool, error) {
+func (r *repository) TryIncrementRegistrants(ctx context.Context, session Session, conversationId uuid.UUID) (bool, error) {
 	result, err := session.ExecContext(ctx,
 		`UPDATE online_conversation SET
 		current_registrants = current_registrants + 1
@@ -158,7 +158,7 @@ func (r *Repository) TryIncrementRegistrants(ctx context.Context, session sessio
 	return rows > 0, nil
 }
 
-func (r *Repository) DecrementRegistrants(ctx context.Context, session session, conversationId uuid.UUID) error {
+func (r *repository) DecrementRegistrants(ctx context.Context, session Session, conversationId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
 		`UPDATE online_conversation SET
 		current_registrants = current_registrants - 1 WHERE id = ?`,
@@ -172,7 +172,7 @@ func (r *Repository) DecrementRegistrants(ctx context.Context, session session, 
 	return nil
 }
 
-func (r *Repository) RemoveRegistrantId(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
+func (r *repository) RemoveRegistrantId(ctx context.Context, session Session, conversationId, memberId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
 		`DELETE FROM online_conversation_registrant
        WHERE conversation_id = ? AND member_id = ?`,
@@ -186,7 +186,7 @@ func (r *Repository) RemoveRegistrantId(ctx context.Context, session session, co
 	return nil
 }
 
-func (r *Repository) RemoveNotificationId(ctx context.Context, session session, conversationId, memberId uuid.UUID) error {
+func (r *repository) RemoveNotificationId(ctx context.Context, session Session, conversationId, memberId uuid.UUID) error {
 	_, err := session.ExecContext(ctx,
 		`DELETE FROM online_conversation_notification
        WHERE conversation_id = ? AND member_id = ?`,
