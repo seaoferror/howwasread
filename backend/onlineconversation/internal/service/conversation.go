@@ -108,6 +108,10 @@ func (s *service) GetConversationDetail(ctx context.Context, conversationId, mem
 	if detail.IsBanned {
 		canEnter = false
 	}
+	var updatedAt time.Time // zero, so omitted from the response, until the first update
+	if detail.UpdatedAt != nil {
+		updatedAt = *detail.UpdatedAt
+	}
 	resp := dto.OnlineConversationDetailResponse{
 		Novel:                   detail.Novel,
 		ShortStory:              detail.ShortStory,
@@ -119,7 +123,7 @@ func (s *service) GetConversationDetail(ctx context.Context, conversationId, mem
 		Capacity:                detail.Capacity,
 		Time:                    detail.Time,
 		LengthMinutes:           detail.LengthMinutes,
-		UpdatedAt:               detail.UpdatedAt,
+		UpdatedAt:               updatedAt,
 		CanEnter:                canEnter,
 		IsModerator:             detail.IsModerator,
 		IsRegistrant:            detail.IsRegistrant,

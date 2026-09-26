@@ -7,6 +7,7 @@ import (
 type Detail struct {
 	Novel, ShortStory, Poem, Play, Film, WrittenBy, Rule         string
 	Capacity, LengthMinutes                                      int
-	UpdatedAt, Time                                              time.Time
+	Time                                                         time.Time
+	UpdatedAt                                                    *time.Time // nil until the conversation is updated
 	IsModerator, IsRegistrant, IsBanned, IsNotificationScheduled bool
 }
