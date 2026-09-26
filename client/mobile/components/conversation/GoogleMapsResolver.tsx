@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
 import { WebView, type WebViewNavigation } from "react-native-webview";
+import { parseGoogleMapsUrl } from "@/util/geo";
+import { GeoInfo } from "@/types/conversation";
 
 interface GoogleMapsResolverProps {
   shortUrl: string;
-  onGeoInfoResolved: (coords: { lat: number; lng: number; placeName: string }) => void;
+  onGeoInfoResolved: (coords: GeoInfo) => void;
 }
 
 export default function GoogleMapsResolver({
@@ -12,25 +14,16 @@ export default function GoogleMapsResolver({
   onGeoInfoResolved,
 }: GoogleMapsResolverProps) {
   const [isResolving, setIsResolving] = useState(true);
+  const resolvedRef = useRef(false);
 
   const handleNavigationStateChange = (navState: WebViewNavigation) => {
-    const currentUrl = navState.url;
-    const coordsMatch = currentUrl.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
-    const placeNameMatch = currentUrl.match(/\/maps\/place\/([^/@]+)/);
+    if (resolvedRef.current) return;
+    const info = parseGoogleMapsUrl(navState.url);
+    if (!info) return;
 
-    if (coordsMatch && placeNameMatch) {
-      setIsResolving(false);
-      const lat = parseFloat(coordsMatch[1]);
-      const lng = parseFloat(coordsMatch[2]);
-
-      const spaceCleaned = placeNameMatch[1].replace(/\+/g, " ");
-      const decodedPlaceName = decodeURIComponent(spaceCleaned);
-      const isCoords = /^[-]?\d+\.\d+,\s*[-]?\d+\.\d+$/.test(
-        decodedPlaceName,
-      );
-      const placeName = isCoords ? "Dropped Pin" : decodedPlaceName;
-      onGeoInfoResolved({ lat, lng, placeName });
-    }
+    resolvedRef.current = true;
+    setIsResolving(false);
+    onGeoInfoResolved(info);
   };
 
   if (!isResolving) return null;

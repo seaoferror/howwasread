@@ -134,3 +134,9 @@ export interface GetTurnResponse {
   username: string;
   credential: string;
 }
+
+export interface GeoInfo {
+  lat: number;
+  lng: number;
+  placeName: string;
+}
