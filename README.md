@@ -6,4 +6,4 @@ appstore
 https://apps.apple.com/us/app/howwasread/id6783131522
 
 android apk
-https://drive.google.com/file/d/1k01vw5Gt7eoSVRUs0q0O7XN-HUtOlCw4/view?usp=sharing
+https://github.com/seaoferror/howwasread/releases/download/android-1.3.0(6)/application-8f1d2bbd-d41a-470d-a3f5-9b47a9905f51.apk
